@@ -1348,7 +1348,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
 /* 18차 — 세탁·수선 / 쇼룸 카탈로그 */
 .g-day.careg{background:#8fa3b8!important}
 .g-legend .lg.careg{background:#8fa3b8}
-.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,230px));gap:14px;justify-content:start}
 .cat-card{background:var(--sf);border:1px solid var(--bd);border-radius:3px;overflow:hidden;cursor:pointer;transition:box-shadow .15s}
 .cat-card:hover{box-shadow:var(--shadow-md)}
 .cat-ph{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:var(--sf3)}
@@ -2107,6 +2107,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
             <button type="button" class="u-opt" id="rv-stats-btn" onclick="setRentalView('stats')">수익 분석</button>
           </span>
           <button class="action-btn" onclick="startAudit()" style="margin-left:2px"><i class="ti ti-scan"></i>재고 실사</button>
+          <button class="action-btn" id="qr-reissue-btn" style="display:none;border-color:var(--wt);color:var(--wt)" onclick="printQrTags(state.rentals.filter(r=>(r.qrFail||0)>=2).map(r=>r.code))" title="인식 실패 누적 태그만 골라 인쇄"><i class="ti ti-qrcode"></i>재발급 QR 인쇄 (<span id="qr-reissue-n">0</span>)</button>
           <div class="g-nav" id="g-nav" style="display:none">
             <button class="cal-nav-btn" onclick="ganttMove(-1)"><i class="ti ti-chevron-left"></i></button>
             <span id="g-title" style="font-weight:800;font-size:14px;min-width:104px;text-align:center"></span>
@@ -5253,7 +5254,7 @@ function renderOrders(){
       <td>${o.fitDt||'<span style="color:var(--t3)">직봉</span>'}</td>
       <td><b>${o.doneDt||'-'}</b></td>
       <td>${fmt(o.total)}</td>
-      <td><span class="badge ${o.status==='완료'?'b-ok':'b-info'}">${o.status}</span></td>
+      <td><span class="badge ${o.status==='완료'?'b-ok':'b-info'}">${o.status}</span>${o.status!=='완료' && o.fac && o.fac.stage>0 ? `<div style="font-size:10px;color:var(--it);font-weight:800;margin-top:3px">${facStageName(o.fac.stage)} 완료${o.fac.stage<4?' ·진행중':''}</div>`:''}</td>
       <td><div style="display:flex;gap:5px;justify-content:center">
         <button class="mini-act" onclick="event.stopPropagation();openFitModal('${o.no}')" title="가봉 수정 기록${o.fitFix?' (작성됨)':''}" style="${o.fitFix?'border-color:var(--okt);color:var(--okt)':''}"><i class="ti ti-needle-thread"></i></button>
         <button class="mini-act" onclick="event.stopPropagation();deleteOrder('${o.no}')" title="휴지통으로 이동"><i class="ti ti-trash"></i></button>
@@ -5548,7 +5549,7 @@ function renderRental(){
       <td>${r.size}</td>
       <td>${r.color}</td>
       <td>${fmt(r.fee)}</td>
-      <td><span class="badge ${rentalStatusBadge(r.status)}">${r.status}</span>${overdue?' <span class="badge b-err">연체</span>':''}</td>
+      <td><span class="badge ${rentalStatusBadge(r.status)}">${r.status}</span>${overdue?' <span class="badge b-err">연체</span>':''}${(r.qrFail||0)>=2?' <span class="badge b-warn" title="실사에서 QR 인식 실패 누적 — 태그 재발급 권장"><i class="ti ti-qrcode"></i></span>':''}</td>
       <td>${who}</td>
       <td>${act}</td>
     </tr>`;
@@ -5558,6 +5559,12 @@ function renderRental(){
       ${state.rentals.length ? `<button class="action-btn es-btn" onclick="$('#q-rental').value='';renderRental()"><i class="ti ti-x"></i>필터 초기화</button>`
                              : `<button class="action-btn es-btn" onclick="openProdModal()"><i class="ti ti-plus"></i>렌탈 상품 등록</button>`}
     </div></td></tr>`;
+  const _qrFlag = state.rentals.filter(r=>(r.qrFail||0)>=2);
+  const _qb = $('#qr-reissue-btn');
+  if (_qb){
+    _qb.style.display = _qrFlag.length ? 'inline-flex' : 'none';
+    const qn = $('#qr-reissue-n'); if (qn) qn.textContent = _qrFlag.length;
+  }
   if (state.rentalView==='gantt' && typeof renderRentalGantt==='function') renderRentalGantt();
   if (state.rentalView==='stats' && typeof renderRentalStats==='function') renderRentalStats();
 }
@@ -5818,6 +5825,7 @@ function finishCare(code){
 let _auditStream = null, _auditTimer = null;
 async function startAudit(){
   state.auditSet = new Set();
+  state.auditManual = new Set();
   $('#audit-modal').classList.add('open');
   renderAuditList();
   const st = $('#audit-status');
@@ -5853,14 +5861,19 @@ async function startAudit(){
     st.textContent = '카메라 접근 실패 — 코드를 직접 입력하세요';
   }
 }
-function auditCheck(code){
+function auditCheck(code, manual){
   const c = String(code).toUpperCase().trim();
   const r = state.rentals.find(x=>x.code.toUpperCase()===c);
   const st = $('#audit-status');
   if (!r){ if (st) st.textContent = `'${c}' — 등록되지 않은 코드입니다`; return; }
   if (!state.auditSet.has(r.code)){
     state.auditSet.add(r.code);
-    if (st) st.textContent = `${r.code} ${r.name} 확인 ✓`;
+    // 카메라가 돌고 있는데 수동 입력 = QR 태그 인식 실패 의심 → 품질 카운트
+    if (manual && _auditTimer){
+      state.auditManual.add(r.code);
+      r.qrFail = (r.qrFail||0) + 1;
+    }
+    if (st) st.textContent = `${r.code} ${r.name} 확인 ✓${manual&&_auditTimer?' (수동 — QR 품질 기록)':''}`;
     renderAuditList();
   }
 }
@@ -5868,7 +5881,7 @@ function auditManual(){
   const v = ($('#audit-input')?.value||'').trim();
   if (!v) return;
   $('#audit-input').value = '';
-  auditCheck(v);
+  auditCheck(v, true);
 }
 function renderAuditList(){
   const total = state.rentals.length;
@@ -5918,7 +5931,24 @@ function finishAudit(){
         ${lost.map(r=>`<tr><td style="border:1px solid #ccc;padding:6px;text-align:center"><b>${r.code}</b></td><td style="border:1px solid #ccc;padding:6px">${r.name}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${r.status}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${r.loc||'-'}</td></tr>`).join('')}
       </table>` : `<div style="color:#16a085;font-weight:700;margin-bottom:12px">✓ 매장 보유 상품 전수 확인 — 분실 의심 없음</div>`}
     ${out.length? `<div style="font-size:12px;color:#555">출고중 ${out.length}건은 대여 중으로 매장에 없는 것이 정상입니다: ${out.map(r=>r.code).join(', ')}</div>`:''}
+    ${(()=>{
+      const flagged = state.rentals.filter(r=> (state.auditManual && state.auditManual.has(r.code)) || (r.qrFail||0)>=2);
+      if (!flagged.length) return '';
+      return `<div style="font-weight:800;margin:14px 0 6px;font-size:14px">🏷 QR 태그 품질 — 재발급 검토</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+        <tr style="background:#f4f5f6"><th style="border:1px solid #ccc;padding:6px">코드</th><th style="border:1px solid #ccc;padding:6px">품명</th><th style="border:1px solid #ccc;padding:6px">이번 실사</th><th style="border:1px solid #ccc;padding:6px">누적 인식실패</th><th style="border:1px solid #ccc;padding:6px">판정</th></tr>
+        ${flagged.map(r=>`<tr>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center"><b>${r.code}</b></td>
+          <td style="border:1px solid #ccc;padding:6px">${r.name}</td>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center">${state.auditManual&&state.auditManual.has(r.code)?'수동 입력':'스캔 OK'}</td>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center">${r.qrFail||0}회</td>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center;font-weight:800;color:${(r.qrFail||0)>=2?'#c0392b':'#e67e22'}">${(r.qrFail||0)>=2?'재발급 권장':'관찰'}</td>
+        </tr>`).join('')}
+      </table>
+      <div style="font-size:11px;color:#777;margin-top:5px">실사 중 카메라 인식이 안 되어 수동 입력한 태그는 자동으로 기록됩니다. 2회 누적 시 렌탈 화면에서 '재발급 QR 인쇄' 버튼으로 해당 태그만 출력하세요.</div>`;
+    })()}
   </div>`;
+  saveDB();
   const tt = $('#prv-title-text'); if (tt) tt.textContent = '재고 실사 리포트';
   const ts = $('#prv-sub-text');   if (ts) ts.textContent = `${dStr(today())} · 미확인 ${lost.length}건`;
   $('#prv-modal').classList.add('open');
@@ -6579,9 +6609,9 @@ function renderMonthlySettle(){
 }
 
 /* ─── QR 태그 시트 인쇄 ─────────────────── */
-function printQrTags(){
+function printQrTags(only){
   if (typeof qrcode === 'undefined'){ toast('QR 모듈을 불러오지 못했습니다 — 인터넷 연결 확인','err'); return; }
-  const items = state.rentals;
+  const items = (Array.isArray(only) && only.length) ? state.rentals.filter(r=>only.includes(r.code)) : state.rentals;
   if (!items.length){ toast('등록된 상품이 없습니다','warn'); return; }
   const tags = items.map(r=>{
     const q = qrcode(0, 'M');
@@ -7484,6 +7514,59 @@ function delTodo(id){
   saveDB(); renderTodos();
 }
 
+/* ─── 공장 발주 추적 (재단→봉제→마무리→입고) ─────────── */
+const FAC_STAGES = ['재단','봉제','마무리','입고'];
+function facStageName(st){ return st<=0 ? '작지 대기' : (FAC_STAGES[st-1]||''); }
+function facStepperHTML(o){
+  const st = (o.fac && o.fac.stage) || 0;
+  const tStr = dStr(today());
+  let warn = '';
+  if (o.fitDt && o.status!=='완료' && st < 3){
+    const dd = Math.round((new Date(o.fitDt) - new Date(tStr))/86400000);
+    if (dd <= 3) warn = `<div style="margin-top:9px;font-size:12.5px;font-weight:700;color:var(--et)"><i class="ti ti-alert-triangle"></i> 가봉 ${dd<0?`${-dd}일 경과`:dd===0?'오늘':'D-'+dd} — 현재 '${facStageName(st)}' 단계, 공정 지연 위험</div>`;
+  }
+  const cells = [0,1,2,3,4].map(i=>{
+    const done = st>0 && i>0 && i<=st;
+    const logE = o.fac && (o.fac.log||[]).find(l=>l.stage===i);
+    return `<div style="flex:1;min-width:50px;text-align:center">
+      <div style="width:28px;height:28px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;${done?'background:#1ab394;color:#fff':'background:var(--sf3);color:var(--t3)'}">${done?'<i class="ti ti-check"></i>':(i===0?'<i class="ti ti-clock"></i>':i)}</div>
+      <div style="font-size:11px;font-weight:700;color:${done?'var(--okt)':'var(--t3)'}">${i===0?'대기':FAC_STAGES[i-1]}</div>
+      ${logE&&logE.dt?`<div style="font-size:10px;color:var(--t3)">${String(logE.dt).slice(5)}</div>`:''}
+    </div>`;
+  }).join('<div style="flex:0 0 8px;border-top:2px solid var(--bd);margin-top:14px"></div>');
+  return `
+    <div style="display:flex;align-items:flex-start">${cells}</div>
+    ${warn}
+    <div style="display:flex;gap:6px;margin-top:11px;align-items:center">
+      ${st<4
+        ? `<button class="action-btn" onclick="facAdvance('${o.no}')" style="border-color:#1ab394;color:#1ab394;font-weight:700"><i class="ti ti-arrow-right"></i>${FAC_STAGES[st]} 완료 처리</button>`
+        : `<span class="badge b-ok" style="padding:7px 12px">입고 완료 — 가봉·완성 준비됨</span>`}
+      ${st>0?`<button class="mini-act" onclick="facBack('${o.no}')" title="한 단계 되돌리기"><i class="ti ti-arrow-back-up"></i></button>`:''}
+    </div>`;
+}
+function facAdvance(no){
+  const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
+  if (!o) return;
+  if (!o.fac) o.fac = { stage:0, log:[] };
+  if (o.fac.stage>=4) return;
+  o.fac.stage++;
+  o.fac.log = o.fac.log||[];
+  o.fac.log.push({ stage:o.fac.stage, dt:dStr(today()), by:(state.user&&state.user.name)||'' });
+  saveDB();
+  toast(`#${o.no} ${facStageName(o.fac.stage)} 완료${o.fac.stage===4?' — 입고됨':''}`,'ok','공장 공정');
+  openOrderDet(no);
+  if (state.view==='orders') renderOrders();
+}
+function facBack(no){
+  const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
+  if (!o || !o.fac || o.fac.stage<=0) return;
+  o.fac.log = (o.fac.log||[]).filter(l=>l.stage!==o.fac.stage);
+  o.fac.stage--;
+  saveDB();
+  openOrderDet(no);
+  if (state.view==='orders') renderOrders();
+}
+
 /* ─── 주문 상세 컨텍스트 패널 (재무 롤업·가봉·코멘트) ── */
 function openOrderDet(no){
   const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
@@ -7519,6 +7602,10 @@ function openOrderDet(no){
         <div class="dp-f"><div class="dp-fl">예상 순이익</div><div class="dp-fv" style="font-weight:800;color:${profit>=0?'var(--okt)':'var(--et)'}">${cost?fmt(profit):'-'}</div></div>
       </div>
       <div style="font-size:11px;color:var(--t3);margin-top:7px">공급가 ${fmt(o.sup)} · VAT ${fmt(o.vat)}${fab?' · 원단 '+fab.no:''}${lin?' · 안감 '+lin.no:''}${btn?' · 단추 '+btn.no:''}</div>
+    </div>
+    <div class="dp-sec">
+      <div class="dp-sec-title"><i class="ti ti-building-factory-2"></i>공장 공정 추적</div>
+      ${facStepperHTML(o)}
     </div>
     <div class="dp-sec">
       <div class="dp-sec-title"><i class="ti ti-needle-thread"></i>가봉 기록</div>
