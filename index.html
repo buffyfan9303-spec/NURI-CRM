@@ -3401,7 +3401,7 @@ const state = {
   comments: [],         // 코멘트 타임라인 (고객/주문 인수인계)
   facCounter: 1000,
   view: 'dash',
-  calDate: new Date(2026,4,1), // 2026-05
+  calDate: (()=>{ const t=new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); })(), // 현재 달
   selDate: null,
   invTab: 'fab',
   detCust: null,
