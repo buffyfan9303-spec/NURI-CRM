@@ -1108,117 +1108,150 @@ select.f-input{padding-right:38px}
 }
 
 /* ════════════════════════════════════════════════════════
-   PRIX 스타일 재구현 — 화이트 사이드바·헤어라인·파스텔 칩
-   (NURI 브랜드 네이비+골드는 유지)
+   INSPINIA 스타일 — 다크 슬레이트 사이드바 · 그레이 캔버스 · 틸 액센트
    ════════════════════════════════════════════════════════ */
 :root{
-  --bg:#f7f8fa; --sf:#ffffff; --sf2:#f7f8fa; --sf3:#eef0f3;
-  --bd:rgba(15,23,42,.07); --bd2:rgba(15,23,42,.13);
-  --t:#1f2533; --t2:#5d6470; --t3:#9aa1ad;
-  --acc:#0c1f35; --gold:#c8914a; --acc-soft:rgba(12,31,53,.07);
-  --shadow-sm:0 1px 2px rgba(15,23,42,.03);
-  --shadow-md:0 4px 14px rgba(15,23,42,.07);
-  --shadow-lg:0 14px 32px rgba(15,23,42,.12);
-  /* 사이드바 — 프릭스 화이트 */
-  --sbg:#ffffff; --sbt:#3f4654; --sbt2:#8b919c; --sbsec:#b8893f;
-  --sbh:#f2f4f7; --sba:#eaeff7; --sbbd:rgba(15,23,42,.08); --sbact:#c8914a;
+  --bg:#f3f3f4; --sf:#ffffff; --sf2:#f7f9fa; --sf3:#eef1f3;
+  --bd:#e7eaec; --bd2:#d5dbe0;
+  --t:#2f4050; --t2:#676a6c; --t3:#a7b1c2;
+  --acc:#1ab394; --gold:#c8914a; --acc-soft:rgba(26,179,148,.13);
+  --okb:#e4f6f1; --okt:#17a589;
+  --ib:#e7f1fa;  --it:#1c84c6;
+  --wb:#fdf3e4;  --wt:#e8950c;
+  --eb:#fdeaec;  --et:#ed5565;
+  --pb:#f0eafa;  --pt:#8e6bc8;
+  --shadow-sm:0 1px 2px rgba(47,64,80,.04);
+  --shadow-md:0 3px 10px rgba(47,64,80,.08);
+  --shadow-lg:0 12px 28px rgba(47,64,80,.14);
+  /* 사이드바 — INSPINIA 다크 슬레이트 */
+  --sbg:#2f4050; --sbt:#a7b1c2; --sbt2:#8095a8; --sbsec:#7f8fa0;
+  --sbh:#293846; --sba:#293846; --sbbd:rgba(255,255,255,.06); --sbact:#1ab394;
 }
 body.dk{
-  --sbg:#15171c; --sbt:#c8c6c0; --sbt2:#7d7a74; --sbsec:#d4a96f;
-  --sbh:rgba(255,255,255,.05); --sba:rgba(255,255,255,.09);
-  --sbbd:rgba(255,255,255,.07); --sbact:#d4a96f;
+  --sbg:#1c2731; --sbh:#16202a; --sba:#16202a;
 }
+body{font-size:13px}
 
-/* 사이드바 — 화이트 모드 타이포 */
-.sidebar{border-right:1px solid var(--sbbd)}
-body:not(.dk) .nuri-wordmark .n{color:#0c1f35}
-body:not(.dk) .nuri-wordmark .crm{color:#9aa1ad}
-body:not(.dk) .nuri-tagline{color:#9aa1ad}
-body:not(.dk) .sb-item{color:#3f4654;font-weight:600}
-body:not(.dk) .sb-item:hover{background:#f2f4f7;color:#0c1f35}
-body:not(.dk) .sb-item .ti{color:#9aa1ad;opacity:1}
-body:not(.dk) .sb-item:hover .ti{color:#0c1f35}
-body:not(.dk) .sb-item.active{background:#eaeff7;color:#0c1f35;font-weight:800}
-body:not(.dk) .sb-item.active .ti{color:#c8914a}
-body:not(.dk) .sb-sec{color:#b8893f}
-body:not(.dk) .sb-sec::after{background:rgba(184,137,63,.18)}
-body:not(.dk) .sb-user{color:#8b919c}
-body:not(.dk) .sb-logout{color:#8b919c;border-color:rgba(15,23,42,.14)}
-body:not(.dk) .sb-logout:hover{color:#1f2533;border-color:rgba(15,23,42,.3)}
+/* 사이드바 */
+.sidebar{border-right:0}
+.nuri-wordmark .n{color:#ffffff}
+.nuri-wordmark .uri{color:#1ab394}
+.nuri-wordmark .crm{color:#8095a8}
+.nuri-tagline{color:#8095a8}
+.nuri-accent-line{background:#1ab394}
+.sb-sec{color:#7f8fa0}
+.sb-sec::after{background:rgba(255,255,255,.07)}
+.sb-item{color:#a7b1c2;font-weight:600;border-left:3px solid transparent;border-radius:0;margin:0;padding:11px 18px}
+.sb-item:hover{background:#293846;color:#fff}
+.sb-item.active{background:#293846;color:#fff;border-left:3px solid #1ab394;padding-left:15px;border-radius:0}
+.sb-item.active .ti{color:#1ab394}
+.sb-nav{padding:6px 0 14px}
+.sb-foot{border-top:1px solid rgba(255,255,255,.06)}
+.sb-logout{color:#8095a8;border-color:rgba(255,255,255,.14)}
+.sb-logout:hover{color:#fff;border-color:rgba(255,255,255,.35)}
 
-/* 카드 — 헤어라인, 그림자 제거 */
+/* 프로필 블록 (INSPINIA 시그니처) */
+.sb-profile{display:flex;align-items:center;gap:11px;padding:18px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.12)}
+.sb-prof-av{width:44px;height:44px;border-radius:50%;background:#1ab394;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0}
+.sb-prof-name{font-size:13.5px;font-weight:700;color:#fff;line-height:1.25}
+.sb-prof-role{font-size:11px;color:#8095a8;margin-top:2px}
+
+/* 탑바 — 흰색 + 틸 햄버거 + 검색 */
+.topbar{background:#fff!important;border-bottom:1px solid var(--bd)!important;min-height:56px;padding:10px 18px;gap:12px}
+.topbar-menu{display:flex!important;width:40px;height:36px;background:#1ab394;color:#fff;border-radius:3px;flex-shrink:0}
+.topbar-menu:hover{background:#18a689;color:#fff}
+.topbar-menu .ti{font-size:18px}
+.topbar-title{flex:0 0 auto;font-size:15px;font-weight:800;color:#2f4050;letter-spacing:-.2px}
+.topbar-search{flex:1;display:flex;align-items:center;gap:9px;color:#a7b1c2;min-width:0;padding:0 6px}
+.topbar-search .ti{font-size:15px;flex-shrink:0}
+.topbar-search input{flex:1;border:0;outline:none;background:transparent;font-size:13px;color:var(--t);font-family:inherit;min-width:0}
+.topbar-search input::placeholder{color:#b9c2cd}
+
+/* 카드 = ibox (각진 라운드 · 헤어라인) */
 .stat-card,.cal-card,.ev-panel,.shortcut-card,.settle-card,.form-card,.section-card,.table-wrap,.gantt-wrap{
   border:1px solid var(--bd)!important;
   box-shadow:none!important;
-  border-radius:12px!important;
+  border-radius:3px!important;
 }
-.stat-card:hover{box-shadow:var(--shadow-md)!important}
+.suit-tabs,.suit-head,.pick-card,.modi-block,.qty-cell,.spec-table,.price-summary,.info-box{border-radius:3px!important}
+.f-input,.action-btn,.btn-primary,.btn-ghost,.opt-btn,.mini-act,.badge,.search-inp,.search-wrap{border-radius:3px!important}
 
-/* 표 — 프릭스 밀도 (44px 행 · 회색 캡션 헤더) */
-.data-table th{background:transparent!important;border-bottom:1px solid var(--bd2);font-size:11px;color:var(--t3);font-weight:700;letter-spacing:.3px;padding:10px 12px}
-.data-table td{padding:12px;font-size:13.5px;border-bottom:1px solid var(--bd)}
-.data-table tbody tr:last-child td{border-bottom:0}
-.data-table tbody tr:hover{background:#f7f9fc}
+/* ibox 타이틀 줄 (헤더에 헤어라인) */
+.cal-header{border-bottom:1px solid var(--bd);padding-bottom:13px;margin-bottom:15px}
+.cal-title{font-size:15px;font-weight:700;color:#2f4050}
+.ev-panel-head{border-bottom:1px solid var(--bd);padding-bottom:11px;margin-bottom:12px}
+.form-card-title,.section-card-title{font-size:14px;font-weight:700;color:#2f4050;border-bottom:1px solid var(--bd)}
+.chart-head{border-bottom:1px solid var(--bd);padding-bottom:11px}
+
+/* 간격 — INSPINIA 20px 거터 */
+.page-content{padding:20px;background:var(--bg)}
+.stat-grid{gap:18px;margin-bottom:18px}
+.dash-grid{gap:18px}
+.settle-card{margin-top:18px!important}
+
+/* 통계 박스 — 큰 숫자 + 작은 회색 캡션 */
+.stat-card{padding:16px 18px}
+.stat-lbl{font-size:11px;color:#a7b1c2;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px}
+.stat-val{font-size:26px;font-weight:700;color:#2f4050;letter-spacing:-.5px}
+.stat-note{font-size:11.5px;color:#a7b1c2;margin-top:5px}
+.stat-note.up{color:#1ab394}
+
+/* 표 */
+.data-table th{background:transparent!important;border-bottom:1px solid var(--bd2);font-size:11px;color:#a7b1c2;font-weight:700;padding:10px 12px;letter-spacing:.3px}
+.data-table td{padding:11px 12px;font-size:13px;border-bottom:1px solid var(--bd)}
+.data-table tbody tr:hover{background:#f7f9fa}
 body.dk .data-table tbody tr:hover{background:rgba(255,255,255,.03)}
 
-/* 칩(배지) — 파스텔 저채도 */
-.badge{border-radius:6px;font-weight:600;padding:3px 9px;font-size:11.5px;letter-spacing:0}
-body:not(.dk) .b-ok{background:#e8f5ee;color:#177245}
-body:not(.dk) .b-info{background:#e9f0fb;color:#2456b3}
-body:not(.dk) .b-warn{background:#fbf3e3;color:#9a6a14}
-body:not(.dk) .b-err{background:#fdebeb;color:#c0392b}
-body:not(.dk) .b-resv{background:#f0eafa;color:#6d3fbf}
+/* 버튼 — 틸 프라이머리 */
+.btn-primary,.login-btn{background:#1ab394!important;border-color:#1ab394!important}
+.btn-primary:hover,.login-btn:hover{background:#18a689!important}
+.action-btn{border:1px solid var(--bd2);background:#fff;color:var(--t2);font-weight:600}
+.action-btn:hover{border-color:#1ab394;color:#1ab394;background:#fff}
+.prv-btn.primary{background:#1ab394}
 
-/* 버튼 — 흰 바탕 헤어라인 */
-.action-btn{border-radius:8px;border:1px solid var(--bd2);background:var(--sf);color:var(--t);font-weight:600;box-shadow:none}
-.action-btn:hover{border-color:var(--acc);background:#f7f9fc;color:var(--acc)}
-.mini-act{background:var(--sf)}
+/* 탭/토글/옵션 액티브 — 틸 */
+.tab.active{background:#1ab394;color:#fff;border-color:#1ab394}
+.suit-tab.active{background:#1ab394!important}
+.opt-btn.active{background:#1ab394;border-color:#1ab394}
+.unit-toggle .u-opt.active{background:#1ab394}
+.pick-card.active{background:#1ab394;border-color:#1ab394}
+.modi-btn.active{background:#1ab394!important;border-color:#1ab394!important}
+.step-badge{background:#1ab394!important}
+.cal-nav-btn.today-btn{color:#1ab394;border-color:rgba(26,179,148,.45)}
+.cal-nav-btn.today-btn:hover{background:rgba(26,179,148,.08);color:#1ab394}
 
-/* 엔티티 링크 — 프릭스 파란 링크 */
-.ent-link{color:#2456b3;font-weight:700;cursor:pointer}
+/* 캘린더 — 오늘/선택 틸 */
+.cal-d.today .n{color:#1ab394;box-shadow:inset 0 0 0 1.5px #1ab394}
+.cal-d.sel .n{background:#1ab394}
+.cal-d.today.sel .n{background:#1ab394;color:#fff}
+.cal-legend-dot{background:#f8ac59}
+.cal-legend-dot.fit{background:#1c84c6}
+.cal-legend-dot.deliver{background:#1ab394}
+.cal-d-dots .d.consult{background:#f8ac59}
+.cal-d-dots .d.fit{background:#1c84c6}
+.cal-d-dots .d.deliver{background:#1ab394}
+
+/* 엔티티 링크 */
+.ent-link{color:#1c84c6;font-weight:700;cursor:pointer}
 .ent-link:hover{text-decoration:underline}
-body.dk .ent-link{color:#82b4f8}
 
-/* 탑바 */
-.topbar{border-bottom:1px solid var(--bd)!important;min-height:56px}
-.topbar-title{font-size:16px;font-weight:800;letter-spacing:-.3px}
+/* 사이드바 푸터 보더 위 알림류 색 보정 */
+.noti-bell{border-radius:3px}
+.noti-panel{border-radius:3px}
 
-/* 통계 카드 타이포 */
-.stat-lbl{font-size:11px;font-weight:700;letter-spacing:.4px}
-.stat-val{font-size:24px;font-weight:800;letter-spacing:-.6px}
+/* 놓친 일정 */
+.cal-nav-btn.missed-btn:hover{color:#ed5565;border-color:rgba(237,85,101,.4);background:#fdeaec}
+.missed-item:hover{background:#f7f9fa}
 
-/* 옵션 버튼/픽카드 — 화이트+헤어라인 */
-.opt-btn{background:var(--sf);border:1px solid var(--bd2)}
-.pick-card{border:1px solid var(--bd2);box-shadow:none}
-#view-mtm-suit .form-row3 > div, #view-mtm-suit .form-row4 > div{background:var(--sf);border:1px solid var(--bd)}
-#view-mtm-suit .form-row3 > div:focus-within, #view-mtm-suit .form-row4 > div:focus-within{border-color:var(--gold);background:var(--sf)}
+/* 코멘트 타임라인 */
+.cm-item{padding:10px 12px;border:1px solid var(--bd);border-radius:3px;margin-bottom:7px;background:var(--sf)}
+.cm-head{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t3);margin-bottom:4px}
+.cm-head b{color:var(--t);font-size:12px}
+.cm-text{font-size:12.5px;color:var(--t);line-height:1.55;white-space:pre-wrap}
 
-/* 입력 — 차분하게 */
-.f-input{background:var(--sf)!important;border:1px solid var(--bd2)!important}
-.f-input:focus{border-color:var(--acc)!important;box-shadow:0 0 0 3px var(--acc-soft)!important}
-
-/* 정산 카드 */
-.settle-card{padding:18px 22px}
-.ms-val{font-size:18px}
-
-/* 캘린더 — 점 정리 */
-.cal-d-dots{gap:3px}
-.cal-d-dots .d{width:5px;height:5px}
-.cal-nav-btn.missed-btn{font-size:11.5px;font-weight:700;color:var(--t2);padding:0 13px}
-.cal-nav-btn.missed-btn:hover{color:#c0392b;border-color:rgba(192,57,43,.4);background:#fdebeb}
-
-/* 스케줄 아이템 */
-.ev-item{border:1px solid var(--bd);box-shadow:none}
-.ev-item:hover{background:#f7f9fc;border-color:var(--bd2)}
-
-/* 놓친 일정 리스트 */
-.missed-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .12s}
-.missed-item:hover{background:#f7f9fc}
-.missed-item:last-child{border-bottom:0}
-.missed-date{font-size:11px;font-weight:800;color:#c0392b;min-width:78px}
-.missed-body{flex:1;min-width:0}
-.missed-title{font-size:13px;font-weight:700;color:var(--t)}
-.missed-sub{font-size:11.5px;color:var(--t3);margin-top:1px}
+/* 사이즈표 헤더 톤 */
+.spec-table th{background:var(--sf2)!important}
+.spec-table input.final{border-color:#1ab394;color:#17a589}
 
 </style>
 </head>
@@ -1539,6 +1572,14 @@ body.dk .ent-link{color:#82b4f8}
       <div class="nuri-accent-line"></div>
     </div>
 
+    <div class="sb-profile">
+      <div class="sb-prof-av" id="sb-prof-av">관</div>
+      <div>
+        <div class="sb-prof-name" id="sb-prof-name">관리자</div>
+        <div class="sb-prof-role" id="sb-prof-role">—</div>
+      </div>
+    </div>
+
     <nav class="sb-nav">
       <div class="sb-item" id="gnb-dash" onclick="go('dash')">
         <i class="ti ti-layout-dashboard"></i><span class="sb-item-label">대시보드</span>
@@ -1607,7 +1648,12 @@ body.dk .ent-link{color:#82b4f8}
     <div class="topbar">
       <button class="topbar-menu" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
       <div class="topbar-title" id="topbar-title">대시보드</div>
+      <div class="topbar-search">
+        <i class="ti ti-search"></i>
+        <input id="global-q" placeholder="고객 검색 — 이름 / 초성 / 연락처 (Enter)" onkeydown="if(event.key==='Enter')globalSearch()">
+      </div>
       <div class="topbar-right">
+        <button class="noti-bell" onclick="toggleDark()" title="다크 모드 전환"><i class="ti ti-moon" id="theme-ic"></i></button>
         <span id="cloud-badge" title="클라우드 동기화 작동 중 — 저장 시 자동 업로드" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--okt);background:var(--okb);padding:6px 11px;border-radius:999px;opacity:.55;transition:opacity .3s"><i class="ti ti-cloud-check"></i>동기화</span>
         <div class="noti-wrap">
           <button class="noti-bell" onclick="toggleNoti(event)" title="알림 센터"><i class="ti ti-bell"></i><span class="noti-badge" id="noti-badge" style="display:none">0</span></button>
@@ -3352,6 +3398,7 @@ const state = {
   rentCounter: 5000,    // 대여 매출 전표번호 (R5001~)
   prodCounter: 100,     // 렌탈 상품 코드 (R-P101~)
   trash: [],            // 휴지통 (30일 보관 후 자동 삭제)
+  comments: [],         // 코멘트 타임라인 (고객/주문 인수인계)
   facCounter: 1000,
   view: 'dash',
   calDate: new Date(2026,4,1), // 2026-05
@@ -4872,7 +4919,7 @@ function renderOrders(){
   if (q) rows = rows.filter(o=> String(o.no).includes(q) || o.nm.toLowerCase().includes(q) || ((o.pattern?.top||'')+'').toLowerCase().includes(q));
   $('#orders-tbody').innerHTML = rows.map(o=>{
     const qy = o.qty ? `S${o.qty.s||0}·P${o.qty.p||0}${o.qty.v?'·V'+o.qty.v:''}${o.qty.c?'·C'+o.qty.c:''}` : '-';
-    return `<tr>
+    return `<tr onclick="openOrderDet('${o.no}')" style="cursor:pointer">
       <td><b>#${o.no}</b></td>
       <td>${o.date}</td>
       <td><span class="ent-link" onclick="event.stopPropagation();openCustByName('${o.nm}')">${o.nm}</span></td>
@@ -4883,8 +4930,8 @@ function renderOrders(){
       <td>${fmt(o.total)}</td>
       <td><span class="badge ${o.status==='완료'?'b-ok':'b-info'}">${o.status}</span></td>
       <td><div style="display:flex;gap:5px;justify-content:center">
-        <button class="mini-act" onclick="openFitModal('${o.no}')" title="가봉 수정 기록${o.fitFix?' (작성됨)':''}" style="${o.fitFix?'border-color:var(--okt);color:var(--okt)':''}"><i class="ti ti-needle-thread"></i></button>
-        <button class="mini-act" onclick="deleteOrder('${o.no}')" title="휴지통으로 이동"><i class="ti ti-trash"></i></button>
+        <button class="mini-act" onclick="event.stopPropagation();openFitModal('${o.no}')" title="가봉 수정 기록${o.fitFix?' (작성됨)':''}" style="${o.fitFix?'border-color:var(--okt);color:var(--okt)':''}"><i class="ti ti-needle-thread"></i></button>
+        <button class="mini-act" onclick="event.stopPropagation();deleteOrder('${o.no}')" title="휴지통으로 이동"><i class="ti ti-trash"></i></button>
       </div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="10"><div class="empty-state"><i class="ti ti-clipboard-off"></i><div class="empty-state-title">주문이 없습니다</div><div class="empty-state-sub">정장 주문서에서 첫 주문을 등록하세요</div></div></td></tr>`;
@@ -6383,6 +6430,98 @@ function openCustDet(id){
       <div class="dp-sec-title"><i class="ti ti-note"></i>특이사항</div>
       <div class="dp-f full"><div class="dp-fv">${c.memo||'-'}</div></div>
     </div>
+    ${commentsHTML('cust', c.id)}
+  `;
+  $('#det-ov').classList.add('open');
+}
+
+/* ─── 코멘트 타임라인 (인수인계 기록) ─────────── */
+function commentsHTML(kind, ref){
+  const list = (state.comments||[]).filter(x=>x.kind===kind && String(x.ref)===String(ref));
+  const items = list.map(cm=>`
+    <div class="cm-item">
+      <div class="cm-head"><b>${cm.by}</b><span>${cm.at}</span>
+        <button class="mini-act" style="width:22px;height:22px;font-size:10px;margin-left:auto" onclick="delComment('${cm.id}','${kind}','${ref}')" title="삭제"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="cm-text">${cm.text}</div>
+    </div>`).join('') || '<div style="color:var(--t3);font-size:12px;padding:6px 2px">아직 코멘트가 없습니다 — 인수인계 메모를 남겨보세요</div>';
+  return `
+    <div class="dp-sec">
+      <div class="dp-sec-title"><i class="ti ti-message-circle"></i>코멘트 (${list.length})</div>
+      <div>${items}</div>
+      <div style="display:flex;gap:6px;margin-top:9px">
+        <input id="cm-input-${kind}" class="f-input" placeholder="메모 입력 후 Enter" style="flex:1;min-height:38px;padding:8px 11px;font-size:13px" onkeydown="if(event.key==='Enter')addComment('${kind}','${ref}')">
+        <button class="action-btn" onclick="addComment('${kind}','${ref}')" style="min-height:38px"><i class="ti ti-send"></i></button>
+      </div>
+    </div>`;
+}
+function addComment(kind, ref){
+  const inp = document.getElementById('cm-input-'+kind);
+  const text = (inp && inp.value || '').trim();
+  if (!text) return;
+  state.comments = state.comments||[];
+  state.comments.unshift({
+    id: 'cm'+Date.now()+Math.floor(Math.random()*999),
+    kind, ref: String(ref), text,
+    by: (state.user && state.user.name) || '직원',
+    at: dStr(today()) + ' ' + new Date().toTimeString().slice(0,5)
+  });
+  saveDB();
+  if (kind==='cust') openCustDet(ref); else openOrderDet(ref);
+}
+function delComment(id, kind, ref){
+  state.comments = (state.comments||[]).filter(x=>x.id!==id);
+  saveDB();
+  if (kind==='cust') openCustDet(ref); else openOrderDet(ref);
+}
+
+/* ─── 주문 상세 컨텍스트 패널 (재무 롤업·가봉·코멘트) ── */
+function openOrderDet(no){
+  const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
+  if (!o) return;
+  $('#dp-av').className = 'dp-av av-c1';
+  $('#dp-av').textContent = '#';
+  $('#dp-nm').textContent = `주문 #${o.no} · ${o.nm}`;
+  $('#dp-ph').textContent = `${o.date} 주문`;
+
+  const fab = state.fabrics.find(f=>f.no===o.fabNo);
+  const lin = state.linings.find(f=>f.no===o.lin);
+  const btn = state.buttons.find(f=>f.no===o.btn);
+  const cost = (fab?fab.price:0) + (lin?lin.price:0) + (btn?btn.price*10:0);
+  const profit = (o.total||0) - cost;
+
+  $('#dp-bd').innerHTML = `
+    <div class="dp-sec">
+      <div class="dp-sec-title"><i class="ti ti-clipboard-list"></i>주문 정보</div>
+      <div class="dp-g2">
+        <div class="dp-f"><div class="dp-fl">고객</div><div class="dp-fv"><span class="ent-link" onclick="openCustByName('${o.nm}')">${o.nm}</span></div></div>
+        <div class="dp-f"><div class="dp-fl">상태</div><div class="dp-fv"><span class="badge ${o.status==='완료'?'b-ok':'b-info'}">${o.status}</span></div></div>
+        <div class="dp-f"><div class="dp-fl">패턴 / 호칭</div><div class="dp-fv">${o.pattern?.top||'-'} ${o.size?.top||''}</div></div>
+        <div class="dp-f"><div class="dp-fl">수량</div><div class="dp-fv">S${o.qty?.s||0} · P${o.qty?.p||0}${o.qty?.v?' · V'+o.qty.v:''}${o.qty?.c?' · C'+o.qty.c:''}</div></div>
+        <div class="dp-f"><div class="dp-fl">가봉 출고</div><div class="dp-fv">${o.fitDt||'직봉'}</div></div>
+        <div class="dp-f"><div class="dp-fl">완성 출고</div><div class="dp-fv"><b>${o.doneDt||'-'}</b></div></div>
+      </div>
+    </div>
+    <div class="dp-sec">
+      <div class="dp-sec-title"><i class="ti ti-coin"></i>재무 롤업</div>
+      <div class="dp-g3">
+        <div class="dp-f"><div class="dp-fl">매출 (VAT포함)</div><div class="dp-fv" style="font-weight:800">${fmt(o.total)}</div></div>
+        <div class="dp-f"><div class="dp-fl">자재 원가</div><div class="dp-fv">${cost?fmt(cost):'-'}</div></div>
+        <div class="dp-f"><div class="dp-fl">예상 순이익</div><div class="dp-fv" style="font-weight:800;color:${profit>=0?'var(--okt)':'var(--et)'}">${cost?fmt(profit):'-'}</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:7px">공급가 ${fmt(o.sup)} · VAT ${fmt(o.vat)}${fab?' · 원단 '+fab.no:''}${lin?' · 안감 '+lin.no:''}${btn?' · 단추 '+btn.no:''}</div>
+    </div>
+    <div class="dp-sec">
+      <div class="dp-sec-title"><i class="ti ti-needle-thread"></i>가봉 기록</div>
+      ${o.fitFix ? `
+        <div class="dp-f full"><div class="dp-fl">기록일 ${o.fitFix.date||''}</div>
+        <div class="dp-fv" style="font-size:12px">${(o.fitFix.top||[]).filter(d=>d.fix||d.fin).map(d=>`${d.part} ${d.fix||''} → ${d.fin||''}`).join(' · ')||'수정값 없음'}</div></div>
+        <button class="action-btn" style="margin-top:8px" onclick="buildFitSheet(state.orders.find(x=>String(x.no)==='${o.no}'))"><i class="ti ti-printer"></i>가봉지시서 인쇄</button>
+      ` : `<div style="color:var(--t3);font-size:12px;padding:4px 2px">가봉 수정 기록 없음</div>
+        <button class="action-btn" style="margin-top:6px" onclick="closeDet();openFitModal('${o.no}')"><i class="ti ti-plus"></i>가봉 기록 작성</button>`}
+    </div>
+    ${o.memo?`<div class="dp-sec"><div class="dp-sec-title"><i class="ti ti-note"></i>특이사항</div><div class="dp-f full"><div class="dp-fv">${o.memo}</div></div></div>`:''}
+    ${commentsHTML('order', o.no)}
   `;
   $('#det-ov').classList.add('open');
 }
@@ -6613,7 +6752,7 @@ function saveDB(){
       customers: state.customers, orders: state.orders, events: state.events,
       rentals: state.rentals, rentalLog: state.rentalLog,
       fabrics: state.fabrics, linings: state.linings, buttons: state.buttons,
-      facCounter: state.facCounter, rentCounter: state.rentCounter, prodCounter: state.prodCounter, trash: state.trash
+      facCounter: state.facCounter, rentCounter: state.rentCounter, prodCounter: state.prodCounter, trash: state.trash, comments: state.comments
     }));
   }catch(e){}
   pushCloud();
@@ -6638,6 +6777,7 @@ function loadDB(){
     state.trash = (d.trash||[]).filter(it=>{
       try{ return (nowD - new Date(it.deletedAt)) / 86400000 <= 30; }catch(e){ return false; }
     });
+    state.comments = d.comments||[];
     return true;
   }catch(e){ return false; }
 }
@@ -6660,6 +6800,10 @@ async function enterApp(){
     const W = ['일','월','화','수','목','금','토'];
     brandDate.textContent = `${u.name}${u.role==='admin'?'':' (직원)'} · ${t.getFullYear()}.${pad(t.getMonth()+1)}.${pad(t.getDate())} (${W[t.getDay()]})`;
   }
+  const pav = $('#sb-prof-av'), pnm = $('#sb-prof-name'), prl = $('#sb-prof-role');
+  if (pav) pav.textContent = (u.name||'관')[0];
+  if (pnm) pnm.textContent = u.name || '관리자';
+  if (prl) prl.textContent = u.role==='admin' ? '관리자 · 마스터' : '직원';
 
   applyRole();
 
@@ -6696,10 +6840,20 @@ function logout(){
 }
 function toggleDark(){
   document.body.classList.toggle('dk');
+  const on = document.body.classList.contains('dk');
   const ic = $('#theme-ic');
-  if (document.body.classList.contains('dk')) ic.className='ti ti-sun';
-  else ic.className='ti ti-moon';
+  if (ic) ic.className = on ? 'ti ti-sun' : 'ti ti-moon';
+  try{ localStorage.setItem('nuri_dark', on ? '1' : '0'); }catch(e){}
   if (state.view==='dash' && typeof renderSalesChart==='function') renderSalesChart();
+}
+// 탑바 글로벌 검색 → 고객 조회로 라우팅
+function globalSearch(){
+  const v = ($('#global-q')?.value||'').trim();
+  if (!v) return;
+  go('list');
+  const q = $('#q-cust');
+  if (q){ q.value = v; renderCustList(); }
+  $('#global-q').value = '';
 }
 
 /* 더미 데이터 주입 */
@@ -6795,6 +6949,10 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   ensureDefaultAccount();
   loadShop();
   applyShop();
+  if (localStorage.getItem('nuri_dark')==='1'){
+    document.body.classList.add('dk');
+    const ic = $('#theme-ic'); if (ic) ic.className='ti ti-sun';
+  }
   window.addEventListener('beforeunload', saveDB);
   window.addEventListener('resize', ()=>{ if (state.view==='dash') renderSalesChart(); });
   const okAuto = await tryAutoLogin();
