@@ -3434,7 +3434,7 @@ const $$ = sel => document.querySelectorAll(sel);
 const fmt = n => '₩' + Math.round(n||0).toLocaleString();
 const pad = n => String(n).padStart(2,'0');
 const dStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const today = () => { const d=new Date(2026,4,20); return d; }; // 데모용 고정
+const today = () => new Date(); // 실제 오늘 (라이브 전환 — 데모 고정 해제)
 
 function toast(msg, type='ok', title=''){
   const ICONS = { ok:'circle-check', info:'info-circle', warn:'alert-triangle', err:'x' };
