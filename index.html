@@ -1345,6 +1345,31 @@ body.dk .cm-item{background:var(--sf2)}
 .ev-empty .ti{font-size:30px}
 body.dk .empty-state .ti{background:var(--sf2)}
 
+/* 18차 — 세탁·수선 / 쇼룸 카탈로그 */
+.g-day.careg{background:#8fa3b8!important}
+.g-legend .lg.careg{background:#8fa3b8}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.cat-card{background:var(--sf);border:1px solid var(--bd);border-radius:3px;overflow:hidden;cursor:pointer;transition:box-shadow .15s}
+.cat-card:hover{box-shadow:var(--shadow-md)}
+.cat-ph{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:var(--sf3)}
+.cat-ph-empty{width:100%;aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;font-size:42px;color:var(--bd2);background:var(--sf2)}
+.cat-info{padding:10px 12px}
+.cat-name{font-size:14px;font-weight:700;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-sub{font-size:11.5px;color:var(--t3);margin-top:2px}
+.cat-fee{font-size:15px;font-weight:800;color:var(--okt);margin-top:7px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.cat-chip{padding:8px 15px;border:1px solid var(--bd2);border-radius:3px;font-size:13.5px;font-weight:700;color:var(--t2);cursor:pointer;background:var(--sf)}
+.cat-chip.active{background:#1ab394;border-color:#1ab394;color:#fff}
+.cat-light{position:fixed;inset:0;background:rgba(20,28,36,.78);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+.cat-light.open{display:flex}
+.cat-light-card{background:var(--sf);border-radius:4px;max-width:780px;width:100%;max-height:92vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr}
+@media (max-width:700px){ .cat-light-card{grid-template-columns:1fr} }
+.cl-ph{width:100%;height:100%;min-height:400px;object-fit:cover;background:var(--sf3)}
+.cl-body{padding:22px}
+.cl-name{font-size:20px;font-weight:800;color:var(--t)}
+.cl-fee{font-size:22px;font-weight:800;color:var(--okt);margin:10px 0 14px}
+.cl-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--bd);font-size:13.5px;color:var(--t2)}
+.cl-row b{color:var(--t)}
+
 </style>
 </head>
 <body>
@@ -1689,6 +1714,9 @@ body.dk .empty-state .ti{background:var(--sf2)}
       <div class="sb-item" id="gnb-rental" onclick="go('rental')">
         <i class="ti ti-shirt"></i><span class="sb-item-label">렌탈 상품 관리</span>
       </div>
+      <div class="sb-item" id="gnb-catalog" onclick="go('catalog')">
+        <i class="ti ti-layout-grid"></i><span class="sb-item-label">쇼룸 카탈로그</span>
+      </div>
 
       <div class="sb-sec">MTM 주문</div>
       <div class="sb-item" id="gnb-mtm-suit" onclick="go('mtm-suit')">
@@ -1767,7 +1795,10 @@ body.dk .empty-state .ti{background:var(--sf2)}
             <div class="dw-title" id="dw-title">안녕하세요</div>
             <div class="dw-sub" id="dw-sub">오늘 현황을 불러오는 중...</div>
           </div>
-          <div class="dw-date" id="dw-date"></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="dw-date" id="dw-date"></div>
+            <button class="action-btn" onclick="buildWeeklyBrief()"><i class="ti ti-clipboard-list"></i>주간 브리핑</button>
+          </div>
         </div>
         <div class="stat-grid">
           <div class="stat-card c1 sc-link" onclick="go('list')">
@@ -1904,6 +1935,21 @@ body.dk .empty-state .ti{background:var(--sf2)}
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ───── 쇼룸 카탈로그 ───── -->
+    <div class="view" id="view-catalog">
+      <div class="page-content">
+        <div class="form-card" style="padding:13px 16px;margin-bottom:16px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div id="cat-f-cat" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            <div style="flex:1"></div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--t2);font-weight:600;cursor:pointer"><input type="checkbox" id="cat-f-avail" onchange="renderCatalog()" style="width:17px;height:17px;accent-color:#1ab394">대여가능만</label>
+            <input class="f-input" id="cat-f-q" placeholder="품명·코드·색상 검색" style="max-width:230px;min-height:40px;padding:8px 12px" oninput="renderCatalog()">
+          </div>
+        </div>
+        <div class="cat-grid" id="catalog-grid"></div>
       </div>
     </div>
 
@@ -2865,7 +2911,35 @@ body.dk .empty-state .ti{background:var(--sf2)}
     </div>
   </div>
   <div class="prv-scroll">
-<div id="print-area" class="print-area">
+<!-- 세탁·수선 케어 모달 -->
+  <div class="signup-overlay" id="care-modal" onclick="if(event.target===this)this.classList.remove('open')">
+    <div style="background:var(--sf);border-radius:4px;padding:22px;max-width:480px;width:94%;border:1px solid var(--bd)" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:17px;font-weight:800;color:var(--t)" id="care-title">세탁·수선</div>
+        <button class="mini-act" onclick="$('#care-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      </div>
+      <div style="font-size:12.5px;color:var(--t3);margin-bottom:14px">단계 선택 후 업체·비용·복귀 예정일을 기록하세요 — 간트에도 표시됩니다</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="pick-card active" data-v="세탁" onclick="pickCareType(this)"><div class="pc-title">세탁</div><div class="pc-sub">드라이 · 오염 제거</div></div>
+        <div class="pick-card" data-v="수선" onclick="pickCareType(this)"><div class="pc-title">수선</div><div class="pc-sub">단추 · 박음질 · 사이즈</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><div class="f-label">업체</div><input class="f-input" id="care-vendor" placeholder="예: 명동크리닝"></div>
+        <div><div class="f-label">비용 (원)</div><input class="f-input" id="care-cost" type="number" placeholder="0"></div>
+        <div><div class="f-label">보낸 날</div><input class="f-input" id="care-sent" type="date"></div>
+        <div><div class="f-label">복귀 예정일</div><input class="f-input" id="care-due" type="date"></div>
+      </div>
+      <div style="margin-top:10px"><div class="f-label">메모</div><input class="f-input" id="care-memo" placeholder="얼룩 위치, 수선 부위 등"></div>
+      <button class="login-btn" style="width:100%;margin-top:14px;border:0;color:#fff;padding:12px;border-radius:3px;cursor:pointer;font-family:inherit;font-size:14.5px;font-weight:700" onclick="doSaveCare()"><i class="ti ti-check"></i> 저장</button>
+    </div>
+  </div>
+
+  <!-- 쇼룸 라이트박스 -->
+  <div class="cat-light" id="cat-light" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="cat-light-card" id="cat-light-card"></div>
+  </div>
+
+  <div id="print-area" class="print-area">
   <div class="prn-top">
     <div class="prn-brand">
       <div class="prn-mark">N<span>URI</span> <span class="prn-crm">CRM</span></div>
@@ -3584,7 +3658,7 @@ function i2c(inp){
 /* ④ Navigation ────────────────────────────────────────── */
 const VIEW_TITLE = {
   'dash':'대시보드', 'reg':'고객 등록', 'list':'고객 조회',
-  'rental':'렌탈 상품 관리', 'orders':'정장 주문 목록', 'settings':'매장 설정', 'trash':'휴지통',
+  'rental':'렌탈 상품 관리', 'catalog':'쇼룸 카탈로그', 'orders':'정장 주문 목록', 'settings':'매장 설정', 'trash':'휴지통',
   'mtm-suit':'정장 주문서', 'mtm-shirt':'셔츠 주문서', 'mtm-shoe':'구두 주문서',
   'fab':'원단 발주', 'sales-day':'일 매출', 'sales-period':'기간 매출', 'inv':'재고 현황'
 };
@@ -3622,6 +3696,7 @@ function go(view, fromPop){
   }
   if (view==='inv') invTab(state.invTab);
   if (view==='rental') renderRental();
+  if (view==='catalog') renderCatalog();
   if (view==='orders') renderOrders();
   if (view==='settings') renderSettings();
   if (view==='trash') renderTrash();
@@ -3838,6 +3913,14 @@ function renderDash(){
   const _wd = $('#dw-date');
   if (_wd){ const _t=today(); const _W=['일','월','화','수','목','금','토']; _wd.textContent = `${_t.getFullYear()}.${pad(_t.getMonth()+1)}.${pad(_t.getDate())} (${_W[_t.getDay()]})`; }
   if (typeof renderTodos==='function') renderTodos();
+  // 월요일 첫 접속 시 주간 브리핑 자동 표시 (주 1회)
+  try{
+    const _wk = `${today().getFullYear()}-${Math.ceil((((today()-new Date(today().getFullYear(),0,1))/86400000)+new Date(today().getFullYear(),0,1).getDay()+1)/7)}`;
+    if (today().getDay()===1 && localStorage.getItem('nuri_brief_w')!==_wk){
+      localStorage.setItem('nuri_brief_w', _wk);
+      setTimeout(()=>{ if (typeof buildWeeklyBrief==='function') buildWeeklyBrief(); }, 700);
+    }
+  }catch(e){}
   if (!state.selDate) state.selDate = tStr;
   renderCal();
   renderEvents();
@@ -4596,7 +4679,7 @@ function saveSuit(){
   });
 
   const order = {
-    no: facNo, type:'정장',
+    no: facNo, type:'정장', by:(state.user&&state.user.name)||'',
     custId: $('#o-cust').value||'',
     nm, ph:$('#o-ph').value.trim(),
     pattern:{ top:$('#o-pTop').value, bot:$('#o-pBot').value, vest:$('#o-pVest').value, coat:$('#o-pCoat').value },
@@ -5174,6 +5257,30 @@ function renderSalesPeriod(){
   $('#sp-tbody').innerHTML = keys.map(d=>`
     <tr><td>${d}</td><td>${byDay[d].cnt}</td><td>${fmt(byDay[d].sup)}</td><td>${fmt(byDay[d].vat)}</td><td><b>${fmt(byDay[d].tot)}</b></td></tr>
   `).join('') || `<tr><td colspan="5"><div class="empty-state"><i class="ti ti-chart-bar"></i><div class="empty-state-title">선택한 기간에 매출이 없습니다</div><div class="empty-state-sub">조회 기간을 넓히거나 다른 월을 선택해 확인해 보세요</div></div></td></tr>`;
+
+  // 직원별 실적 (선택 기간 — 관리자 전용 뷰)
+  let sc = $('#sp-staff');
+  if (!sc){
+    sc = document.createElement('div');
+    sc.id = 'sp-staff';
+    const pc = document.querySelector('#view-sales-period .page-content');
+    if (pc) pc.appendChild(sc);
+  }
+  if (sc){
+    const byStaff = {};
+    rows.forEach(o=>{ const k = o.by || '미지정'; if (!byStaff[k]) byStaff[k]={cnt:0,tot:0}; byStaff[k].cnt++; byStaff[k].tot += (o.total||0); });
+    const sk = Object.keys(byStaff).sort((a,b)=>byStaff[b].tot-byStaff[a].tot);
+    sc.innerHTML = sk.length ? `
+      <div class="form-card" style="margin-top:18px;padding:16px 18px">
+        <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-users"></i> 직원별 실적 (선택 기간)</div>
+        <div class="table-wrap" style="border:0!important"><table class="data-table">
+          <thead><tr><th>직원</th><th>건수</th><th>매출 합계</th><th>평균 단가</th><th>비중</th></tr></thead>
+          <tbody>${sk.map(k=>{ const s=byStaff[k]; const pct = tot? Math.round(s.tot/tot*100) : 0;
+            return `<tr><td><b>${k}</b></td><td>${s.cnt}건</td><td><b>${fmt(s.tot)}</b></td><td>${fmt(s.cnt?Math.round(s.tot/s.cnt):0)}</td><td><span class="badge ${pct>=40?'b-ok':'b-info'}">${pct}%</span></td></tr>`; }).join('')}</tbody>
+        </table></div>
+        <div style="font-size:11.5px;color:var(--t3);margin-top:8px">'미지정'은 직원 기록 도입(2026-06-11) 이전에 등록된 건입니다 · 인센티브 산정 참고용</div>
+      </div>` : '';
+  }
 }
 
 /* ⑧.4 매출 리포트 인쇄 (MTM/렌탈 분리 집계, A4) ─────── */
@@ -5284,6 +5391,7 @@ function renderRental(){
       act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="action-btn" onclick="openRentModal('${r.code}','resv')" style="background:var(--pb);color:var(--pt);border-color:transparent"><i class="ti ti-calendar-plus"></i>예약</button>
         <button class="action-btn" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button>
+        <button class="mini-act" onclick="openCareModal('${r.code}')" title="세탁·수선 보내기"><i class="ti ti-wash"></i></button>
       </div>`;
     } else if (r.status==='예약중'){
       act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
@@ -5296,10 +5404,18 @@ function renderRental(){
         <button class="action-btn" onclick="buildRentContract('${r.code}')" style="background:var(--sf3);border-color:transparent"><i class="ti ti-file-text"></i>계약서</button>
       </div>`;
     } else {
-      act = `<button class="action-btn" onclick="finishCare('${r.code}')"><i class="ti ti-check"></i>완료</button>`;
+      const lateCare = r.care && r.care.dueDt && r.care.dueDt < todayS;
+      act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="action-btn" onclick="finishCare('${r.code}')" style="background:var(--okb);color:var(--okt);border-color:transparent"><i class="ti ti-check"></i>복귀 완료</button>
+        <button class="action-btn" onclick="openCareModal('${r.code}')"><i class="ti ti-wash"></i>기록${lateCare?' <span class="badge b-err" style="font-size:10px;padding:1px 5px">지연</span>':''}</button>
+      </div>`;
     }
     act += ` <button class="mini-act" onclick="openProdModal('${r.code}')" title="상품 정보 수정"><i class="ti ti-pencil"></i></button>`;
     let who = '-';
+    if ((r.status==='세탁중'||r.status==='수선중') && r.care){
+      const late = r.care.dueDt && r.care.dueDt < todayS;
+      who = `<span style="font-weight:700;color:var(--t2)">${r.care.vendor||r.care.type}</span><div style="font-size:10.5px;color:${late?'var(--et)':'var(--t3)'}">복귀 ~ ${r.care.dueDt||'미정'}${late?' · 지연':''}</div>`;
+    }
     if (r.status==='출고중' && r.renter) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.renter}')">${r.renter}</span><div style="font-size:10.5px;color:var(--t3)">~ ${r.dueDt||''}</div>`;
     else if (r.status==='예약중' && r.resv) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.resv.nm}')">${r.resv.nm}</span><div style="font-size:10.5px;color:var(--pt);font-weight:700">사용 ${r.resv.useDt}</div>`;
     return `<tr>
@@ -5410,7 +5526,7 @@ function doRent(){
   const ordNo = 'R'+state.rentCounter;
   const sup = Math.round(r.fee/1.1);
   state.orders.unshift({
-    no: ordNo, type:'대여', nm, ph,
+    no: ordNo, type:'대여', by:(state.user&&state.user.name)||'', nm, ph,
     rentalCode: r.code, custId: c.id,
     date: r.rentDt, sup, vat: r.fee-sup, total: r.fee,
     status:'출고중'
@@ -5545,7 +5661,7 @@ function finalizeReturn(code, deduct, reason){
     state.rentCounter++;
     const sup = Math.round(deduct/1.1);
     state.orders.unshift({
-      no:'D'+state.rentCounter, type:'손상비', nm:r.renter, ph:r.ph,
+      no:'D'+state.rentCounter, type:'손상비', by:(state.user&&state.user.name)||'', nm:r.renter, ph:r.ph,
       rentalCode:r.code, date:dStr(today()),
       sup, vat:deduct-sup, total:deduct, status:'완료',
       memo:reason
@@ -5553,6 +5669,8 @@ function finalizeReturn(code, deduct, reason){
   }
   r.depositHeld = 0;
   r.status='세탁중';
+  r.care = { type:'세탁', vendor:'', cost:0, sentDt:dStr(today()),
+    dueDt:(()=>{ const d=new Date(today()); d.setDate(d.getDate()+3); return dStr(d); })(), memo:'' };
   r.renter=''; r.ph=''; r.rentDt=''; r.dueDt='';
   saveDB();
   if (held > 0) toast(`${code} 회수 — 보증금 ${fmt(refund)} 반환${deduct?` · 손상비 ${fmt(deduct)} 매출 반영`:''}`,'ok','보증금 정산');
@@ -5562,10 +5680,157 @@ function finalizeReturn(code, deduct, reason){
 function finishCare(code){
   const r = state.rentals.find(x=>x.code===code);
   if (!r) return;
+  const c = r.care || {};
+  state.rentalLog.unshift({ code:r.code, nm:c.vendor||'-', status:'케어완료',
+    careType:c.type||'세탁', cost:c.cost||0, rentDt:c.sentDt||'', returnDt:dStr(today()),
+    by:(state.user&&state.user.name)||'' });
+  r.care = null;
   r.status='대여가능';
   saveDB();
-  toast(`${r.code} 케어 완료 — 출고 가능 상태`,'ok');
+  toast(`${r.code} 케어 완료 — 출고 가능 상태${c.cost?` · 비용 ${fmt(c.cost)}`:''}`,'ok');
   renderRental();
+}
+
+/* ─── 세탁·수선 케어 모달 ─────────────────── */
+function openCareModal(code){
+  const r = state.rentals.find(x=>x.code===code);
+  if (!r) return;
+  state.careTarget = code;
+  $('#care-title').textContent = `${r.code} · ${r.name}`;
+  const c = r.care || {};
+  document.querySelectorAll('#care-modal .pick-card').forEach(p=>p.classList.toggle('active', p.dataset.v===(c.type||'세탁')));
+  $('#care-vendor').value = c.vendor||'';
+  $('#care-cost').value = c.cost||'';
+  $('#care-sent').value = c.sentDt||dStr(today());
+  const d = new Date(today()); d.setDate(d.getDate()+3);
+  $('#care-due').value = c.dueDt||dStr(d);
+  $('#care-memo').value = c.memo||'';
+  $('#care-modal').classList.add('open');
+}
+function pickCareType(el){
+  document.querySelectorAll('#care-modal .pick-card').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+function doSaveCare(){
+  const code = state.careTarget;
+  const r = state.rentals.find(x=>x.code===code);
+  if (!r) return;
+  const type = document.querySelector('#care-modal .pick-card.active')?.dataset.v || '세탁';
+  r.care = { type,
+    vendor: $('#care-vendor').value.trim(),
+    cost: parseInt($('#care-cost').value)||0,
+    sentDt: $('#care-sent').value||dStr(today()),
+    dueDt: $('#care-due').value||'',
+    memo: $('#care-memo').value.trim() };
+  r.status = type==='수선' ? '수선중' : '세탁중';
+  state.rentalLog.unshift({ code:r.code, nm:r.care.vendor||'-', status:'케어',
+    careType:type, cost:r.care.cost, rentDt:r.care.sentDt, dueDt:r.care.dueDt,
+    by:(state.user&&state.user.name)||'' });
+  saveDB();
+  $('#care-modal').classList.remove('open');
+  toast(`${r.code} ${type} 등록 — 복귀 예정 ${r.care.dueDt||'미정'}`,'ok','세탁·수선');
+  renderRental();
+}
+
+/* ─── 쇼룸 카탈로그 ─────────────────── */
+function renderCatalog(){
+  const grid = $('#catalog-grid');
+  if (!grid) return;
+  const cats = [...new Set(state.rentals.map(r=>r.cat).filter(Boolean))];
+  if (!state.catFilter) state.catFilter = 'all';
+  const fc = $('#cat-f-cat');
+  if (fc) fc.innerHTML = [`<div class="cat-chip ${state.catFilter==='all'?'active':''}" onclick="state.catFilter='all';renderCatalog()">전체</div>`]
+    .concat(cats.map(c=>`<div class="cat-chip ${state.catFilter===c?'active':''}" onclick="state.catFilter='${c}';renderCatalog()">${c}</div>`)).join('');
+  const q = ($('#cat-f-q')?.value||'').trim().toLowerCase();
+  const availOnly = $('#cat-f-avail')?.checked;
+  let rows = state.rentals.filter(r=> state.catFilter==='all' || r.cat===state.catFilter);
+  if (availOnly) rows = rows.filter(r=>r.status==='대여가능');
+  if (q) rows = rows.filter(r=> (r.name+r.code+(r.color||'')+(r.size||'')+(r.brand||'')).toLowerCase().includes(q));
+  grid.innerHTML = rows.map(r=>`
+    <div class="cat-card" onclick="openCatLightbox('${r.code}')">
+      ${r.photo? `<img class="cat-ph" src="${r.photo}" loading="lazy">` : `<div class="cat-ph-empty"><i class="ti ti-hanger"></i></div>`}
+      <div class="cat-info">
+        <div class="cat-name">${r.name}</div>
+        <div class="cat-sub">${r.code} · ${r.size||'F'} · ${r.color||'-'}</div>
+        <div class="cat-fee">${fmt(r.fee)}<span class="badge ${rentalStatusBadge(r.status)}" style="font-size:10.5px">${r.status}</span></div>
+      </div>
+    </div>`).join('') || `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-hanger"></i><div class="empty-state-title">조건에 맞는 상품이 없습니다</div><div class="empty-state-sub">카테고리·검색어를 바꾸거나 상품을 등록해 보세요</div><button class="action-btn es-btn" onclick="openProdModal()"><i class="ti ti-plus"></i>렌탈 상품 등록</button></div>`;
+}
+function openCatLightbox(code){
+  const r = state.rentals.find(x=>x.code===code);
+  if (!r) return;
+  $('#cat-light-card').innerHTML = `
+    ${r.photo? `<img class="cl-ph" src="${r.photo}">` : `<div class="cl-ph" style="display:flex;align-items:center;justify-content:center;font-size:64px;color:var(--bd2)"><i class="ti ti-hanger"></i></div>`}
+    <div class="cl-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="cl-name">${r.name}</div>
+        <button class="mini-act" onclick="$('#cat-light').classList.remove('open')"><i class="ti ti-x"></i></button>
+      </div>
+      <div style="font-size:12px;color:var(--t3);margin-top:3px">${r.code}${r.brand?' · '+r.brand:''}</div>
+      <div class="cl-fee">${fmt(r.fee)} <span style="font-size:12px;color:var(--t3);font-weight:600">/ 1회 대여${r.deposit?` · 보증금 ${fmt(r.deposit)}`:''}</span></div>
+      <div class="cl-row"><span>카테고리</span><b>${r.cat||'-'}</b></div>
+      <div class="cl-row"><span>사이즈</span><b>${r.size||'F'}</b></div>
+      <div class="cl-row"><span>색상</span><b>${r.color||'-'}</b></div>
+      <div class="cl-row"><span>소재</span><b>${r.mat||'-'}</b></div>
+      <div class="cl-row"><span>상태</span><b><span class="badge ${rentalStatusBadge(r.status)}">${r.status}</span></b></div>
+      ${r.status==='대여가능'? `<div style="display:flex;gap:8px;margin-top:16px">
+        <button class="action-btn" style="flex:1" onclick="$('#cat-light').classList.remove('open');go('rental');openRentModal('${r.code}','resv')"><i class="ti ti-calendar-plus"></i>예약</button>
+        <button class="btn-primary" style="flex:1;border:0;color:#fff;padding:10px;border-radius:3px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700" onclick="$('#cat-light').classList.remove('open');go('rental');openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i> 바로 출고</button>
+      </div>`:''}
+    </div>`;
+  $('#cat-light').classList.add('open');
+}
+
+/* ─── 주간 업무 브리핑 ─────────────────── */
+function buildWeeklyBrief(){
+  const t = today();
+  const mon = new Date(t); mon.setDate(t.getDate() - ((t.getDay()+6)%7));
+  const days = [];
+  for (let i=0;i<7;i++){ const d = new Date(mon); d.setDate(mon.getDate()+i); days.push(dStr(d)); }
+  const wS = days[0], wE = days[6], tStr = dStr(t);
+  const W = ['일','월','화','수','목','금','토'];
+  const items = {}; days.forEach(d=>items[d]=[]);
+  const push = (d, tag, text)=>{ if (items[d]) items[d].push({tag, text}); };
+  const TAG = { consult:'상담', fit:'가봉', deliver:'출고' };
+  state.events.filter(e=>e.date>=wS && e.date<=wE).forEach(e=>{
+    push(e.date, TAG[e.type]||'일정', `${e.nm||e.title||''} ${e.memo||''}`.trim()||'(일정)');
+  });
+  state.orders.filter(o=>o.type==='정장').forEach(o=>{
+    if (o.fitDt && o.fitDt>=wS && o.fitDt<=wE) push(o.fitDt, '가봉', `#${o.no} ${o.nm}`);
+    if (o.doneDt && o.doneDt>=wS && o.doneDt<=wE) push(o.doneDt, '완성출고', `#${o.no} ${o.nm}`);
+  });
+  state.rentals.forEach(r=>{
+    if (r.status==='출고중' && r.dueDt && r.dueDt>=wS && r.dueDt<=wE) push(r.dueDt, '반납예정', `${r.code} ${r.renter||''}`);
+    if (r.status==='예약중' && r.resv && r.resv.useDt>=wS && r.resv.useDt<=wE) push(r.resv.useDt, '렌탈출고', `${r.code} ${r.resv.nm||''}`);
+    if ((r.status==='세탁중'||r.status==='수선중') && r.care && r.care.dueDt && r.care.dueDt>=wS && r.care.dueDt<=wE) push(r.care.dueDt, '케어복귀', `${r.code} ${r.care.vendor||r.status}`);
+  });
+  const over = state.rentals.filter(r=>r.status==='출고중' && r.dueDt && r.dueDt<tStr).length;
+  const flat = Object.values(items).flat();
+  const cnt = tag => flat.filter(x=>x.tag===tag).length;
+  const sum = [['가봉',cnt('가봉')],['완성출고',cnt('완성출고')],['렌탈출고',cnt('렌탈출고')],['반납예정',cnt('반납예정')],['케어복귀',cnt('케어복귀')],['연체 (현재)',over]];
+  const chips = sum.map(([k,v])=>`<div style="flex:1;min-width:92px;border:1px solid #ccc;border-radius:4px;padding:9px;text-align:center"><div style="font-size:11px;color:#777">${k}</div><div style="font-size:21px;font-weight:800;${k.startsWith('연체')&&v?'color:#c0392b':''}">${v}</div></div>`).join('');
+  const daysHtml = days.map((d,i)=>{
+    const list = items[d];
+    const isToday = d===tStr;
+    return `<div style="border:1px solid #ccc;border-radius:4px;margin-bottom:7px;${isToday?'outline:2px solid #1ab394;':''}">
+      <div style="padding:6px 12px;background:#f4f5f6;font-weight:800;font-size:13px;border-bottom:1px solid #ddd">${d.slice(5).replace('-','/')} (${W[(1+i)%7]})${isToday?' — 오늘':''}</div>
+      <div style="padding:7px 12px">
+        ${list.length? list.map(x=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:13px"><span style="display:inline-block;min-width:58px;text-align:center;border:1px solid #aaa;border-radius:3px;font-size:11px;font-weight:700;padding:2px 6px">${x.tag}</span><span style="display:inline-block;width:13px;height:13px;border:1.5px solid #999;border-radius:2px;flex-shrink:0"></span>${x.text}</div>`).join('') : '<div style="color:#999;font-size:12px;padding:1px 0">일정 없음</div>'}
+      </div>
+    </div>`;
+  }).join('');
+  $('#print-area').innerHTML = `<div class="wo-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <div style="font-size:20px;font-weight:800">주간 업무 브리핑</div>
+      <div style="font-size:12px;color:#666">${wS} ~ ${wE} · ${shopName()}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:13px;flex-wrap:wrap">${chips}</div>
+    ${daysHtml}
+    <div style="font-size:11px;color:#999;margin-top:9px">체크박스는 인쇄 후 수기 확인용 · 생성일 ${tStr}</div>
+  </div>`;
+  const tt = $('#prv-title-text'); if (tt) tt.textContent = '주간 업무 브리핑';
+  const ts = $('#prv-sub-text');   if (ts) ts.textContent = `${wS} ~ ${wE} · 인쇄하여 카운터에 두세요`;
+  $('#prv-modal').classList.add('open');
 }
 
 /* ─── 렌탈 상품 등록/수정/삭제 ─────────────────── */
@@ -6237,6 +6502,10 @@ function renderRentalGantt(){
       else if (r.status==='예약중' && r.resv && inR(ds, r.resv.useDt, r.resv.dueDt)){
         cls='resv'; tip=`${r.resv.nm} · 예약 ${r.resv.useDt} ~ ${r.resv.dueDt}`;
         if (prevCls!=='resv') lbl = r.resv.nm;
+      }
+      else if ((r.status==='세탁중'||r.status==='수선중') && r.care && inR(ds, r.care.sentDt, r.care.dueDt||tStr)){
+        cls='careg'; tip=`${r.status} · ${r.care.vendor||''} 복귀예정 ${r.care.dueDt||'미정'}`;
+        if (prevCls!=='careg') lbl = r.status==='수선중'?'수선':'세탁';
       }
       if (cls) busy++;
       const free = !cls && r.status==='대여가능';
