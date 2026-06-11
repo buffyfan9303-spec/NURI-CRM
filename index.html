@@ -5524,7 +5524,7 @@ function deleteOrder(no){
 }
 
 /* ─── 직원 권한 (관리자/직원) ─────────────── */
-function isAdmin(){ return !state.user || state.user.role==='admin'; }
+function isAdmin(){ return !state.user || state.user.role==='admin'; } // crm_staff: admin/staff
 function applyRole(){
   const admin = isAdmin();
   ['sec-sales','gnb-sales-day','gnb-sales-period','sec-settings','gnb-settings','gnb-trash'].forEach(id=>{
@@ -6141,13 +6141,24 @@ async function doLogin(){
     try{
       const { data, error } = await sb.auth.signInWithPassword({ email:id, password:pw });
       if (!error && data && data.session){
+        // CRM 직원 명단(crm_staff) 검사 — 미등록 계정은 접근 차단
+        let staffRow = null;
+        try{
+          const { data: st } = await sb.from('crm_staff').select('role,name').eq('email', id).maybeSingle();
+          staffRow = st;
+        }catch(e){}
+        if (!staffRow){
+          try{ await sb.auth.signOut(); }catch(e){}
+          toast('이 계정은 CRM 직원으로 등록되지 않았습니다 — 관리자에게 승인을 요청하세요','err','접근 제한');
+          return;
+        }
         const meta = (data.user && data.user.user_metadata) || {};
         const localAcc = loadAccounts().find(a=>a.id.toLowerCase()===id);
         state.user = {
           id,
-          name: meta.name || (localAcc && localAcc.name) || id.split('@')[0],
+          name: staffRow.name || meta.name || (localAcc && localAcc.name) || id.split('@')[0],
           store: meta.store || (localAcc && localAcc.store) || '본점',
-          role: meta.role || (localAcc && localAcc.role) || 'user'
+          role: staffRow.role || 'staff'
         };
         state._cloud = true;
         if ($('#lg-remember')?.checked) localStorage.setItem(SESSION_KEY, JSON.stringify({ id, t: Date.now() }));
@@ -6224,18 +6235,28 @@ async function tryAutoLogin(){
   // ① Supabase 세션
   const ses = await cloudSession();
   if (ses && ses.user){
-    const meta = ses.user.user_metadata || {};
     const email = (ses.user.email || '').toLowerCase();
-    const localAcc = loadAccounts().find(a=>a.id.toLowerCase()===email);
-    state.user = {
-      id: email,
-      name: meta.name || (localAcc && localAcc.name) || email.split('@')[0],
-      store: meta.store || '본점',
-      role: meta.role || (localAcc && localAcc.role) || 'user'
-    };
-    state._cloud = true;
-    await enterApp();
-    return true;
+    // CRM 직원 명단 검사
+    let staffRow = null;
+    try{
+      const { data: st } = await sb.from('crm_staff').select('role,name').eq('email', email).maybeSingle();
+      staffRow = st;
+    }catch(e){}
+    if (staffRow){
+      const meta = ses.user.user_metadata || {};
+      const localAcc = loadAccounts().find(a=>a.id.toLowerCase()===email);
+      state.user = {
+        id: email,
+        name: staffRow.name || meta.name || (localAcc && localAcc.name) || email.split('@')[0],
+        store: meta.store || '본점',
+        role: staffRow.role || 'staff'
+      };
+      state._cloud = true;
+      await enterApp();
+      return true;
+    }
+    // 명단 미등록 — 세션 정리 후 로컬 폴백
+    try{ await sb.auth.signOut(); }catch(e){}
   }
   // ② 로컬 세션
   try{
