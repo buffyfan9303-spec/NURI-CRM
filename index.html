@@ -1106,6 +1106,120 @@ select.f-input{padding-right:38px}
   .modi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .section-card{padding:16px}
 }
+
+/* ════════════════════════════════════════════════════════
+   PRIX 스타일 재구현 — 화이트 사이드바·헤어라인·파스텔 칩
+   (NURI 브랜드 네이비+골드는 유지)
+   ════════════════════════════════════════════════════════ */
+:root{
+  --bg:#f7f8fa; --sf:#ffffff; --sf2:#f7f8fa; --sf3:#eef0f3;
+  --bd:rgba(15,23,42,.07); --bd2:rgba(15,23,42,.13);
+  --t:#1f2533; --t2:#5d6470; --t3:#9aa1ad;
+  --acc:#0c1f35; --gold:#c8914a; --acc-soft:rgba(12,31,53,.07);
+  --shadow-sm:0 1px 2px rgba(15,23,42,.03);
+  --shadow-md:0 4px 14px rgba(15,23,42,.07);
+  --shadow-lg:0 14px 32px rgba(15,23,42,.12);
+  /* 사이드바 — 프릭스 화이트 */
+  --sbg:#ffffff; --sbt:#3f4654; --sbt2:#8b919c; --sbsec:#b8893f;
+  --sbh:#f2f4f7; --sba:#eaeff7; --sbbd:rgba(15,23,42,.08); --sbact:#c8914a;
+}
+body.dk{
+  --sbg:#15171c; --sbt:#c8c6c0; --sbt2:#7d7a74; --sbsec:#d4a96f;
+  --sbh:rgba(255,255,255,.05); --sba:rgba(255,255,255,.09);
+  --sbbd:rgba(255,255,255,.07); --sbact:#d4a96f;
+}
+
+/* 사이드바 — 화이트 모드 타이포 */
+.sidebar{border-right:1px solid var(--sbbd)}
+body:not(.dk) .nuri-wordmark .n{color:#0c1f35}
+body:not(.dk) .nuri-wordmark .crm{color:#9aa1ad}
+body:not(.dk) .nuri-tagline{color:#9aa1ad}
+body:not(.dk) .sb-item{color:#3f4654;font-weight:600}
+body:not(.dk) .sb-item:hover{background:#f2f4f7;color:#0c1f35}
+body:not(.dk) .sb-item .ti{color:#9aa1ad;opacity:1}
+body:not(.dk) .sb-item:hover .ti{color:#0c1f35}
+body:not(.dk) .sb-item.active{background:#eaeff7;color:#0c1f35;font-weight:800}
+body:not(.dk) .sb-item.active .ti{color:#c8914a}
+body:not(.dk) .sb-sec{color:#b8893f}
+body:not(.dk) .sb-sec::after{background:rgba(184,137,63,.18)}
+body:not(.dk) .sb-user{color:#8b919c}
+body:not(.dk) .sb-logout{color:#8b919c;border-color:rgba(15,23,42,.14)}
+body:not(.dk) .sb-logout:hover{color:#1f2533;border-color:rgba(15,23,42,.3)}
+
+/* 카드 — 헤어라인, 그림자 제거 */
+.stat-card,.cal-card,.ev-panel,.shortcut-card,.settle-card,.form-card,.section-card,.table-wrap,.gantt-wrap{
+  border:1px solid var(--bd)!important;
+  box-shadow:none!important;
+  border-radius:12px!important;
+}
+.stat-card:hover{box-shadow:var(--shadow-md)!important}
+
+/* 표 — 프릭스 밀도 (44px 행 · 회색 캡션 헤더) */
+.data-table th{background:transparent!important;border-bottom:1px solid var(--bd2);font-size:11px;color:var(--t3);font-weight:700;letter-spacing:.3px;padding:10px 12px}
+.data-table td{padding:12px;font-size:13.5px;border-bottom:1px solid var(--bd)}
+.data-table tbody tr:last-child td{border-bottom:0}
+.data-table tbody tr:hover{background:#f7f9fc}
+body.dk .data-table tbody tr:hover{background:rgba(255,255,255,.03)}
+
+/* 칩(배지) — 파스텔 저채도 */
+.badge{border-radius:6px;font-weight:600;padding:3px 9px;font-size:11.5px;letter-spacing:0}
+body:not(.dk) .b-ok{background:#e8f5ee;color:#177245}
+body:not(.dk) .b-info{background:#e9f0fb;color:#2456b3}
+body:not(.dk) .b-warn{background:#fbf3e3;color:#9a6a14}
+body:not(.dk) .b-err{background:#fdebeb;color:#c0392b}
+body:not(.dk) .b-resv{background:#f0eafa;color:#6d3fbf}
+
+/* 버튼 — 흰 바탕 헤어라인 */
+.action-btn{border-radius:8px;border:1px solid var(--bd2);background:var(--sf);color:var(--t);font-weight:600;box-shadow:none}
+.action-btn:hover{border-color:var(--acc);background:#f7f9fc;color:var(--acc)}
+.mini-act{background:var(--sf)}
+
+/* 엔티티 링크 — 프릭스 파란 링크 */
+.ent-link{color:#2456b3;font-weight:700;cursor:pointer}
+.ent-link:hover{text-decoration:underline}
+body.dk .ent-link{color:#82b4f8}
+
+/* 탑바 */
+.topbar{border-bottom:1px solid var(--bd)!important;min-height:56px}
+.topbar-title{font-size:16px;font-weight:800;letter-spacing:-.3px}
+
+/* 통계 카드 타이포 */
+.stat-lbl{font-size:11px;font-weight:700;letter-spacing:.4px}
+.stat-val{font-size:24px;font-weight:800;letter-spacing:-.6px}
+
+/* 옵션 버튼/픽카드 — 화이트+헤어라인 */
+.opt-btn{background:var(--sf);border:1px solid var(--bd2)}
+.pick-card{border:1px solid var(--bd2);box-shadow:none}
+#view-mtm-suit .form-row3 > div, #view-mtm-suit .form-row4 > div{background:var(--sf);border:1px solid var(--bd)}
+#view-mtm-suit .form-row3 > div:focus-within, #view-mtm-suit .form-row4 > div:focus-within{border-color:var(--gold);background:var(--sf)}
+
+/* 입력 — 차분하게 */
+.f-input{background:var(--sf)!important;border:1px solid var(--bd2)!important}
+.f-input:focus{border-color:var(--acc)!important;box-shadow:0 0 0 3px var(--acc-soft)!important}
+
+/* 정산 카드 */
+.settle-card{padding:18px 22px}
+.ms-val{font-size:18px}
+
+/* 캘린더 — 점 정리 */
+.cal-d-dots{gap:3px}
+.cal-d-dots .d{width:5px;height:5px}
+.cal-nav-btn.missed-btn{font-size:11.5px;font-weight:700;color:var(--t2);padding:0 13px}
+.cal-nav-btn.missed-btn:hover{color:#c0392b;border-color:rgba(192,57,43,.4);background:#fdebeb}
+
+/* 스케줄 아이템 */
+.ev-item{border:1px solid var(--bd);box-shadow:none}
+.ev-item:hover{background:#f7f9fc;border-color:var(--bd2)}
+
+/* 놓친 일정 리스트 */
+.missed-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .12s}
+.missed-item:hover{background:#f7f9fc}
+.missed-item:last-child{border-bottom:0}
+.missed-date{font-size:11px;font-weight:800;color:#c0392b;min-width:78px}
+.missed-body{flex:1;min-width:0}
+.missed-title{font-size:13px;font-weight:700;color:var(--t)}
+.missed-sub{font-size:11.5px;color:var(--t3);margin-top:1px}
+
 </style>
 </head>
 <body>
@@ -1395,6 +1509,18 @@ select.f-input{padding-right:38px}
   </div>
 </div>
 
+<!-- ═══ 놓친 일정 모달 ═══ -->
+<div id="missed-modal" class="signup-overlay" onclick="closeMissed(event)">
+  <div class="signup-card" onclick="event.stopPropagation()" style="max-width:520px">
+    <button class="signup-x" onclick="closeMissed()"><i class="ti ti-x"></i></button>
+    <div class="signup-head" style="margin-bottom:12px">
+      <h2 class="signup-title">놓친 일정</h2>
+      <p class="signup-sub" id="missed-sub">오늘 이전 30일의 지난 일정</p>
+    </div>
+    <div id="missed-list" style="max-height:56vh;overflow-y:auto;border:1px solid var(--bd);border-radius:10px"></div>
+  </div>
+</div>
+
 
 
 <!-- ═══════════════════════════════════════════
@@ -1539,6 +1665,7 @@ select.f-input{padding-right:38px}
               <div class="cal-nav">
                 <button class="cal-nav-btn" onclick="calMove(-1)"><i class="ti ti-chevron-left"></i></button>
                 <button class="cal-nav-btn today-btn" onclick="calMove(0)" title="오늘 날짜로 이동">오늘</button>
+                <button class="cal-nav-btn missed-btn" onclick="openMissed()" title="오늘 이전의 지난 일정 모아보기"><i class="ti ti-history" style="font-size:13px;margin-right:4px"></i>놓친 일정</button>
                 <button class="cal-nav-btn" onclick="calMove(1)"><i class="ti ti-chevron-right"></i></button>
               </div>
             </div>
@@ -3450,6 +3577,45 @@ function doAddEvt(){
   $('#evt-modal').classList.remove('open');
   toast(`${date} 일정이 등록되었습니다`,'ok','일정 추가');
 }
+// 놓친 일정 — 오늘 이전 30일의 지난 일정 모아보기 (프릭스 패턴)
+function openMissed(){
+  const t = dStr(today());
+  const lim = new Date(today()); lim.setDate(lim.getDate()-30);
+  const limS = dStr(lim);
+  const TAG = { consult:'상담', fit:'가봉', deliver:'출고' };
+  const missed = state.events
+    .filter(e=>e.date < t && e.date >= limS)
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  state._missed = missed;
+  $('#missed-sub').textContent = missed.length
+    ? `오늘 이전 30일 — ${missed.length}건 (클릭하면 해당 화면으로 이동)`
+    : '지난 30일간 놓친 일정이 없습니다';
+  $('#missed-list').innerHTML = missed.length ? missed.map((e,i)=>`
+    <div class="missed-item" onclick="missedGo(${i})">
+      <div class="missed-date">${e.date.slice(5).replace('-','/')}</div>
+      <div class="missed-body">
+        <div class="missed-title">${e.name} <span class="ev-item-tag ${e.type}" style="margin-left:5px">${TAG[e.type]||e.type}</span></div>
+        <div class="missed-sub">${e.sub||''}</div>
+      </div>
+      <i class="ti ti-chevron-right" style="color:var(--t3)"></i>
+    </div>`).join('') : '<div class="noti-empty">깨끗합니다 — 놓친 일정 없음 ✓</div>';
+  $('#missed-modal').classList.add('open');
+}
+function closeMissed(e){
+  if (e && e.target && !e.target.classList.contains('signup-overlay')) return;
+  $('#missed-modal').classList.remove('open');
+}
+function missedGo(i){
+  const e = (state._missed||[])[i];
+  if (!e) return;
+  $('#missed-modal').classList.remove('open');
+  if (e.type==='consult' && e.name){
+    const c = state.customers.find(x=>x.nm===e.name);
+    if (c){ openCustDet(c.id); return; }
+  }
+  if (e.orderNo) goEvent(e.orderNo);
+  else { state.selDate = e.date; state.calDate = new Date(e.date); renderCal(); renderEvents(); }
+}
 
 // 일정 클릭 → 번호 체계로 목적지 판별 (R- 렌탈 / F- 원단 / 숫자 MTM 주문)
 function goEvent(no){
@@ -3608,6 +3774,12 @@ function renderCustList(){
     </tr>`).join('');
 }
 
+// 이름으로 고객 상세 열기 (엔티티 링크)
+function openCustByName(nm){
+  const c = state.customers.find(x=>x.nm===nm);
+  if (c) openCustDet(c.id);
+  else toast('고객 정보를 찾을 수 없습니다','warn');
+}
 // 고객 목록 → 원클릭 주문서 시작 (고객 자동 선택)
 function quickOrder(id){
   const c = state.customers.find(x=>x.id===id);
@@ -4703,7 +4875,7 @@ function renderOrders(){
     return `<tr>
       <td><b>#${o.no}</b></td>
       <td>${o.date}</td>
-      <td>${o.nm}</td>
+      <td><span class="ent-link" onclick="event.stopPropagation();openCustByName('${o.nm}')">${o.nm}</span></td>
       <td>${o.pattern?.top||'-'} ${o.size?.top||''}</td>
       <td>${qy}</td>
       <td>${o.fitDt||'<span style="color:var(--t3)">직봉</span>'}</td>
@@ -4921,8 +5093,8 @@ function renderRental(){
     }
     act += ` <button class="mini-act" onclick="openProdModal('${r.code}')" title="상품 정보 수정"><i class="ti ti-pencil"></i></button>`;
     let who = '-';
-    if (r.status==='출고중' && r.renter) who = `${r.renter}<div style="font-size:10.5px;color:var(--t3)">~ ${r.dueDt||''}</div>`;
-    else if (r.status==='예약중' && r.resv) who = `${r.resv.nm}<div style="font-size:10.5px;color:var(--pt);font-weight:700">사용 ${r.resv.useDt}</div>`;
+    if (r.status==='출고중' && r.renter) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.renter}')">${r.renter}</span><div style="font-size:10.5px;color:var(--t3)">~ ${r.dueDt||''}</div>`;
+    else if (r.status==='예약중' && r.resv) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.resv.nm}')">${r.resv.nm}</span><div style="font-size:10.5px;color:var(--pt);font-weight:700">사용 ${r.resv.useDt}</div>`;
     return `<tr>
       <td><b>${r.code}</b></td>
       <td>${r.cat}</td>
@@ -6150,7 +6322,7 @@ function applySig(){
 // ESC 키 — 열려있는 모달/패널 닫기
 window.addEventListener('keydown', e=>{
   if (e.key !== 'Escape') return;
-  ['prv-modal','signup-modal','rent-modal','fab-modal','prod-modal','fit-modal','settle-modal','sig-modal','hist-modal','evt-modal'].forEach(id=>{
+  ['prv-modal','signup-modal','rent-modal','fab-modal','prod-modal','fit-modal','settle-modal','sig-modal','hist-modal','evt-modal','missed-modal'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
   });
