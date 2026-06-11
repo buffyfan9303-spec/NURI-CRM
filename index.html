@@ -1383,6 +1383,12 @@ body.dk .empty-state .ti{background:var(--sf2)}
 .sb-branch select{flex:1;background:#293846;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:3px;padding:7px 8px;font-family:inherit;font-size:12.5px;outline:none;cursor:pointer}
 @media (max-width:1100px){ #view-analytics .dash-grid{grid-template-columns:1fr!important} }
 
+/* 22차 — 활동 타임라인 */
+.act-tab{flex:1;border:1px solid var(--bd2);border-radius:3px;padding:6px;background:var(--sf);color:var(--t2);font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
+.act-tab.active{background:#1ab394;border-color:#1ab394;color:#fff}
+#act-panel .noti-head{display:flex;align-items:center;gap:6px}
+#act-panel .noti-readall{margin-left:auto}
+
 </style>
 </head>
 <body>
@@ -1795,6 +1801,19 @@ body.dk .empty-state .ti{background:var(--sf2)}
       </div>
       <div class="topbar-right">
         <button class="noti-bell" onclick="toggleDark()" title="다크 모드 전환"><i class="ti ti-moon" id="theme-ic"></i></button>
+        <div class="noti-wrap">
+          <button class="noti-bell" onclick="toggleActs(event)" title="오늘 한 일 타임라인"><i class="ti ti-history"></i><span class="noti-badge" id="act-badge" style="display:none;background:#1ab394">0</span></button>
+          <div class="noti-panel" id="act-panel">
+            <div class="noti-head"><i class="ti ti-history" style="color:#1ab394"></i> 오늘 한 일
+              <button class="noti-readall" onclick="event.stopPropagation();printActs()">일지 인쇄</button>
+            </div>
+            <div style="display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--bd)">
+              <button class="act-tab active" id="act-d0" onclick="event.stopPropagation();renderActs(0)">오늘</button>
+              <button class="act-tab" id="act-d1" onclick="event.stopPropagation();renderActs(1)">어제</button>
+            </div>
+            <div class="noti-list" id="act-list"></div>
+          </div>
+        </div>
         <span id="cloud-badge" title="클라우드 동기화 작동 중 — 저장 시 자동 업로드" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--okt);background:var(--okb);padding:6px 11px;border-radius:999px;opacity:.55;transition:opacity .3s"><i class="ti ti-cloud-check"></i>동기화</span>
         <div class="noti-wrap">
           <button class="noti-bell" onclick="toggleNoti(event)" title="알림 센터"><i class="ti ti-bell"></i><span class="noti-badge" id="noti-badge" style="display:none">0</span></button>
@@ -3678,6 +3697,7 @@ const state = {
   trash: [],            // 휴지통 (30일 보관 후 자동 삭제)
   comments: [],         // 코멘트 타임라인 (고객/주문 인수인계)
   todos: [],            // 할 일 (대시보드 To-Do, 직원 공유)
+  acts: [],             // 활동 로그 (오늘 한 일 타임라인)
   facCounter: 1000,
   view: 'dash',
   calDate: (()=>{ const t=new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); })(), // 현재 달
@@ -3715,7 +3735,165 @@ const pad = n => String(n).padStart(2,'0');
 const dStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const today = () => new Date(); // 실제 오늘 (라이브 전환 — 데모 고정 해제)
 
+/* ─── 활동 로그 (오늘 한 일 타임라인) ─────────── */
+const ACT_SKIP = ['클라우드 로그인','Storage','지점 전환','검색'];
+function refreshActBadge(){
+  const ab = $('#act-badge');
+  if (!ab) return;
+  const n = (state.acts||[]).filter(a=>a.d===dStr(today())).length;
+  ab.textContent = n>99?'99+':n;
+  ab.style.display = n?'flex':'none';
+}
+function actLog(text, title){
+  try{
+    if (!state || !Array.isArray(state.acts)) return;
+    state.acts.unshift({
+      id: 'a'+Date.now().toString(36)+Math.floor(Math.random()*99),
+      d: dStr(today()),
+      hm: new Date().toTimeString().slice(0,5),
+      title: title||'',
+      text: String(text).replace(/<[^>]*>/g,'').slice(0,140),
+      by: (state.user&&state.user.name)||''
+    });
+    if (state.acts.length>500) state.acts.length = 500;
+    clearTimeout(window._actT);
+    window._actT = setTimeout(()=>{ try{ saveDB(); }catch(e){} }, 2500);
+    refreshActBadge();
+    if (state._actOff===0 && $('#act-panel')?.classList.contains('open')) renderActs(0);
+  }catch(e){}
+}
+function toggleActs(e){
+  if (e) e.stopPropagation();
+  const np = $('#noti-panel');
+  if (np) np.classList.remove('open');
+  const p = $('#act-panel');
+  if (!p) return;
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) renderActs(0);
+}
+function _actDayStr(off){
+  const d = new Date(today()); d.setDate(d.getDate()-off); return dStr(d);
+}
+function renderActs(off){
+  state._actOff = off;
+  ['act-d0','act-d1'].forEach((id,i)=>{ const b=$('#'+id); if (b) b.classList.toggle('active', i===off); });
+  const ds = _actDayStr(off);
+  const list = (state.acts||[]).filter(a=>a.d===ds);
+  const el = $('#act-list');
+  if (!el) return;
+  el.innerHTML = list.length ? list.map(a=>`
+    <div style="display:flex;gap:9px;padding:9px 12px;border-bottom:1px dashed var(--bd);font-size:12.5px;align-items:flex-start">
+      <b style="color:var(--okt);flex-shrink:0;font-variant-numeric:tabular-nums">${a.hm}</b>
+      <div style="flex:1;min-width:0">
+        ${a.title?`<div style="font-weight:700;color:var(--t)">${a.title}</div>`:''}
+        <div style="color:var(--t2);word-break:break-word">${a.text}</div>
+      </div>
+      <span style="font-size:10.5px;color:var(--t3);flex-shrink:0">${a.by}</span>
+    </div>`).join('')
+  : `<div class="noti-empty">${off?'어제':'오늘'} 기록된 활동이 없습니다</div>`;
+}
+function printActs(){
+  const off = state._actOff||0;
+  const ds = _actDayStr(off);
+  const list = (state.acts||[]).filter(a=>a.d===ds).slice().reverse();
+  $('#print-area').innerHTML = `<div class="wo-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <div style="font-size:20px;font-weight:800">업무 일지</div>
+      <div style="font-size:12px;color:#666">${ds} · ${shopName()}</div>
+    </div>
+    ${list.length? `<table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <tr style="background:#f4f5f6"><th style="border:1px solid #ccc;padding:6px;width:58px">시각</th><th style="border:1px solid #ccc;padding:6px">내용</th><th style="border:1px solid #ccc;padding:6px;width:78px">담당</th></tr>
+      ${list.map(a=>`<tr><td style="border:1px solid #ccc;padding:6px;text-align:center">${a.hm}</td><td style="border:1px solid #ccc;padding:6px">${a.title?`<b>${a.title}</b> — `:''}${a.text}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${a.by}</td></tr>`).join('')}
+    </table>` : '<div style="color:#777">기록된 활동이 없습니다</div>'}
+    <div style="font-size:11px;color:#999;margin-top:10px">총 ${list.length}건 · 마감 검토 / 직원 인수인계용 · 생성 ${dStr(today())} ${(state.user&&state.user.name)||''}</div>
+  </div>`;
+  $('#act-panel').classList.remove('open');
+  const tt = $('#prv-title-text'); if (tt) tt.textContent = '업무 일지';
+  const ts = $('#prv-sub-text');   if (ts) ts.textContent = `${ds} · ${list.length}건`;
+  $('#prv-modal').classList.add('open');
+}
+
+/* ─── 데스크톱 알림 (Notification API) ─────────── */
+function pushEnabled(){
+  return localStorage.getItem('nuri_push')==='1' && typeof Notification!=='undefined' && Notification.permission==='granted';
+}
+async function enableDesktopPush(){
+  if (typeof Notification==='undefined'){ toast('이 브라우저는 데스크톱 알림을 지원하지 않습니다','err'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm==='granted'){
+    localStorage.setItem('nuri_push','1');
+    try{ new Notification('NURI CRM 알림 활성화', { body:'연체 · 가봉 · 반납 · 공정 지연을 데스크톱으로 알려드립니다' }); }catch(e){}
+    toast('데스크톱 알림이 켜졌습니다 — 30분마다 자동 점검','ok','알림');
+    checkDesktopNoti(true);
+  } else {
+    toast('브라우저에서 알림이 거부되었습니다 — 주소창 자물쇠 아이콘에서 허용으로 변경하세요','warn','알림');
+  }
+  renderPushCard();
+}
+function disableDesktopPush(){
+  localStorage.setItem('nuri_push','0');
+  toast('데스크톱 알림을 껐습니다','info');
+  renderPushCard();
+}
+function _pushOnce(key, title, body){
+  const tStr = dStr(today());
+  const tag = tStr+':'+key;
+  let sent = {};
+  try{ sent = JSON.parse(localStorage.getItem('nuri_push_sent')||'{}'); }catch(e){}
+  if (sent[tag]) return;
+  Object.keys(sent).forEach(k=>{ if (!k.startsWith(tStr)) delete sent[k]; });
+  sent[tag] = 1;
+  try{ localStorage.setItem('nuri_push_sent', JSON.stringify(sent)); }catch(e){}
+  try{ new Notification(title, { body }); }catch(e){}
+}
+function checkDesktopNoti(){
+  if (!pushEnabled()) return;
+  const tStr = dStr(today());
+  const over = state.rentals.filter(r=>r.status==='출고중' && r.dueDt && r.dueDt<tStr);
+  if (over.length) _pushOnce('over', `🔴 렌탈 연체 ${over.length}건`, over.slice(0,3).map(r=>`${r.code} ${r.renter||''} (반납예정 ${r.dueDt})`).join('\n') + (over.length>3?`\n외 ${over.length-3}건`:''));
+  const fits = state.orders.filter(o=>o.type==='정장' && o.fitDt===tStr && o.status!=='완료');
+  if (fits.length) _pushOnce('fit', `👔 오늘 가봉 ${fits.length}건`, fits.slice(0,3).map(o=>`#${o.no} ${o.nm}`).join('\n'));
+  const dues = state.rentals.filter(r=>r.status==='출고중' && r.dueDt===tStr);
+  if (dues.length) _pushOnce('due', `📦 오늘 반납 예정 ${dues.length}건`, dues.slice(0,3).map(r=>`${r.code} ${r.renter||''}`).join('\n'));
+  const lateFac = state.orders.filter(o=>{
+    if (o.type!=='정장' || o.status==='완료' || !o.fitDt) return false;
+    const st = (o.fac && o.fac.stage)||0;
+    const dd = Math.round((new Date(o.fitDt)-new Date(tStr))/86400000);
+    return dd>=0 && dd<=3 && st<3;
+  });
+  if (lateFac.length) _pushOnce('fac', `⚠ 공정 지연 위험 ${lateFac.length}건`, lateFac.slice(0,3).map(o=>`#${o.no} ${o.nm} — 가봉 ${o.fitDt} · 현재 ${facStageName((o.fac&&o.fac.stage)||0)}`).join('\n'));
+  const lateCare = state.rentals.filter(r=>(r.status==='세탁중'||r.status==='수선중') && r.care && r.care.dueDt && r.care.dueDt<tStr);
+  if (lateCare.length) _pushOnce('care', `🧺 세탁·수선 복귀 지연 ${lateCare.length}건`, lateCare.slice(0,3).map(r=>`${r.code} (${r.care.vendor||r.status})`).join('\n'));
+}
+function renderPushCard(){
+  let pcD = $('#set-push-card');
+  if (!pcD){
+    pcD = document.createElement('div');
+    pcD.id = 'set-push-card';
+    const pc = document.querySelector('#view-settings .page-content');
+    if (pc) pc.appendChild(pcD);
+  }
+  if (!pcD) return;
+  const on = pushEnabled();
+  const denied = typeof Notification!=='undefined' && Notification.permission==='denied';
+  pcD.innerHTML = `
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-bell-ringing"></i> 데스크톱 알림</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span class="badge ${on?'b-ok':''}">${on?'켜짐':'꺼짐'}</span>
+        ${on
+          ? `<button class="action-btn" onclick="disableDesktopPush()"><i class="ti ti-bell-off"></i>알림 끄기</button>`
+          : `<button class="action-btn es-btn" style="margin-top:0" onclick="enableDesktopPush()"><i class="ti ti-bell-ringing"></i>알림 켜기</button>`}
+        ${denied?'<span style="font-size:12px;color:var(--et)">브라우저에서 차단됨 — 주소창 자물쇠에서 허용으로 변경 후 다시 켜기</span>':''}
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:9px;line-height:1.6">사이트가 열려 있는 동안 <b>연체 발생 · 오늘 가봉 · 오늘 반납 · 공정 지연 위험 · 세탁/수선 복귀 지연</b>을 데스크톱 알림으로 보냅니다. 항목별 하루 1회, 30분마다 자동 점검.</div>
+    </div>`;
+}
 function toast(msg, type='ok', title=''){
+  if (type==='ok'){
+    const _t = title||'', _m = String(msg);
+    if (!ACT_SKIP.some(k=>_t.includes(k)) && !_m.includes('업로드') && !_m.includes('동기화')) actLog(msg, title);
+  }
   const ICONS = { ok:'circle-check', info:'info-circle', warn:'alert-triangle', err:'x' };
   const div = document.createElement('div');
   div.className = `toast t-${type}`;
@@ -6521,7 +6699,7 @@ function markAllNotiRead(e){
   updateNotiBadge();
   toast('모든 알림을 읽음 처리했습니다','ok');
 }
-function toggleNoti(e){
+function toggleNoti(e){ const _ap=$('#act-panel'); if (_ap) _ap.classList.remove('open');
   if (e) e.stopPropagation();
   const p = document.getElementById('noti-panel');
   if (!p) return;
@@ -7205,6 +7383,7 @@ function renderSettings(){
   else { pv.style.backgroundImage=''; pv.innerHTML = '<i class="ti ti-photo" style="font-size:22px"></i>로고 추가'; }
   state.shopLogoTmp = undefined;
   renderBranchCard();
+  renderPushCard();
 }
 function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
@@ -7848,7 +8027,7 @@ function saveDB(){
       customers: state.customers, orders: state.orders, events: state.events,
       rentals: state.rentals, rentalLog: state.rentalLog,
       fabrics: state.fabrics, linings: state.linings, buttons: state.buttons,
-      facCounter: state.facCounter, rentCounter: state.rentCounter, prodCounter: state.prodCounter, trash: state.trash, comments: state.comments, todos: state.todos
+      facCounter: state.facCounter, rentCounter: state.rentCounter, prodCounter: state.prodCounter, trash: state.trash, comments: state.comments, todos: state.todos, acts: state.acts
     }));
   }catch(e){}
   pushCloud();
@@ -7875,6 +8054,7 @@ function loadDB(){
     });
     state.comments = d.comments||[];
     state.todos = d.todos||[];
+    state.acts = d.acts||[];
     return true;
   }catch(e){ return false; }
 }
@@ -7902,6 +8082,11 @@ async function enterApp(){
   if (pnm) pnm.textContent = u.name || '관리자';
   if (prl) prl.textContent = u.role==='admin' ? '관리자 · 마스터' : '직원';
   if (typeof populateBranchSel==='function') populateBranchSel();
+  if (typeof refreshActBadge==='function') refreshActBadge();
+  if (typeof checkDesktopNoti==='function'){
+    setTimeout(checkDesktopNoti, 2500);
+    if (!window._pushIv) window._pushIv = setInterval(checkDesktopNoti, 30*60*1000);
+  }
 
   applyRole();
 
@@ -8065,6 +8250,10 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   loadShop();
   applyShop();
   state.curBranch = localStorage.getItem('nuri_branch') || 'all';
+  document.addEventListener('click', (e)=>{
+    const p = $('#act-panel');
+    if (p && p.classList.contains('open') && !e.target.closest('.noti-wrap')) p.classList.remove('open');
+  });
   if (localStorage.getItem('nuri_dark')==='1'){
     document.body.classList.add('dk');
     const ic = $('#theme-ic'); if (ic) ic.className='ti ti-sun';
