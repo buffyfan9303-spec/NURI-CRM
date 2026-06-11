@@ -1370,6 +1370,19 @@ body.dk .empty-state .ti{background:var(--sf2)}
 .cl-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--bd);font-size:13.5px;color:var(--t2)}
 .cl-row b{color:var(--t)}
 
+/* 19차 — 스와치/실사 */
+.swatch-th{width:48px;height:36px;object-fit:cover;border-radius:3px;cursor:zoom-in;border:1px solid var(--bd2);display:block}
+.swatch-add{display:flex;width:44px;height:32px;align-items:center;justify-content:center;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);cursor:pointer;font-size:15px}
+.swatch-add:hover{color:#1ab394;border-color:#1ab394}
+.pc-swatch{height:50px;background-size:cover;background-position:center;border-radius:2px;margin-bottom:6px;border:1px solid rgba(0,0,0,.07)}
+.pick-card.active .pc-swatch{border-color:rgba(255,255,255,.4)}
+
+/* 20차 — 지점 선택기 */
+.sb-branch{display:flex;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,.06);color:#8095a8}
+.sb-branch .ti{font-size:15px;flex-shrink:0}
+.sb-branch select{flex:1;background:#293846;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:3px;padding:7px 8px;font-family:inherit;font-size:12.5px;outline:none;cursor:pointer}
+@media (max-width:1100px){ #view-analytics .dash-grid{grid-template-columns:1fr!important} }
+
 </style>
 </head>
 <body>
@@ -1697,6 +1710,11 @@ body.dk .empty-state .ti{background:var(--sf2)}
       </div>
     </div>
 
+    <div class="sb-branch" id="sb-branch" style="display:none">
+      <i class="ti ti-building-store"></i>
+      <select id="branch-sel" onchange="setBranch(this.value)"></select>
+    </div>
+
     <nav class="sb-nav">
       <div class="sb-item" id="gnb-dash" onclick="go('dash')">
         <i class="ti ti-layout-dashboard"></i><span class="sb-item-label">대시보드</span>
@@ -1735,6 +1753,9 @@ body.dk .empty-state .ti{background:var(--sf2)}
       </div>
       <div class="sb-item" id="gnb-sales-period" onclick="go('sales-period')">
         <i class="ti ti-chart-bar"></i><span class="sb-item-label">기간 매출</span>
+      </div>
+      <div class="sb-item" id="gnb-analytics" onclick="go('analytics')">
+        <i class="ti ti-chart-dots"></i><span class="sb-item-label">연간 분석</span>
       </div>
 
       <div class="sb-sec">재고 관리</div>
@@ -1938,6 +1959,42 @@ body.dk .empty-state .ti{background:var(--sf2)}
       </div>
     </div>
 
+    <!-- ───── 연간 분석 ───── -->
+    <div class="view" id="view-analytics">
+      <div class="page-content">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="cal-nav-btn" onclick="anMove(-1)"><i class="ti ti-chevron-left"></i></button>
+          <b id="an-year" style="font-size:17px;min-width:74px;text-align:center;color:var(--t)">—</b>
+          <button class="cal-nav-btn" onclick="anMove(1)"><i class="ti ti-chevron-right"></i></button>
+          <div style="flex:1"></div>
+          <div id="an-summary" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+        </div>
+        <div class="form-card" style="padding:16px 18px;margin-bottom:18px">
+          <div class="form-card-title" style="padding-bottom:11px;margin-bottom:14px"><i class="ti ti-chart-bar"></i> 월별 매출 — 유형별 누적</div>
+          <canvas id="an-rev" style="width:100%;height:230px;display:block"></canvas>
+          <div style="display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:var(--t2);flex-wrap:wrap">
+            <span><span style="display:inline-block;width:11px;height:11px;background:#1ab394;border-radius:2px;vertical-align:-1px"></span> 정장 MTM</span>
+            <span><span style="display:inline-block;width:11px;height:11px;background:#1c84c6;border-radius:2px;vertical-align:-1px"></span> 대여</span>
+            <span><span style="display:inline-block;width:11px;height:11px;background:#ed5565;border-radius:2px;vertical-align:-1px"></span> 손상비</span>
+          </div>
+        </div>
+        <div class="dash-grid" style="grid-template-columns:1fr 1fr">
+          <div class="form-card" style="padding:16px 18px">
+            <div class="form-card-title" style="padding-bottom:11px;margin-bottom:14px"><i class="ti ti-trending-up"></i> 월별 건수 — 성수기 패턴</div>
+            <canvas id="an-cnt" style="width:100%;height:200px;display:block"></canvas>
+            <div style="display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:var(--t2)">
+              <span><span style="display:inline-block;width:11px;height:11px;background:#1ab394;border-radius:99px;vertical-align:-1px"></span> 가봉 건수</span>
+              <span><span style="display:inline-block;width:11px;height:11px;background:#8e6bc8;border-radius:99px;vertical-align:-1px"></span> 렌탈 출고 건수</span>
+            </div>
+          </div>
+          <div class="form-card" style="padding:16px 18px">
+            <div class="form-card-title" style="padding-bottom:11px;margin-bottom:14px"><i class="ti ti-hanger"></i> 카테고리별 렌탈 가동률 (연간)</div>
+            <div id="an-cat"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ───── 쇼룸 카탈로그 ───── -->
     <div class="view" id="view-catalog">
       <div class="page-content">
@@ -2049,6 +2106,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
             <button type="button" class="u-opt" id="rv-gantt-btn" onclick="setRentalView('gantt')">월간 가용성</button>
             <button type="button" class="u-opt" id="rv-stats-btn" onclick="setRentalView('stats')">수익 분석</button>
           </span>
+          <button class="action-btn" onclick="startAudit()" style="margin-left:2px"><i class="ti ti-scan"></i>재고 실사</button>
           <div class="g-nav" id="g-nav" style="display:none">
             <button class="cal-nav-btn" onclick="ganttMove(-1)"><i class="ti ti-chevron-left"></i></button>
             <span id="g-title" style="font-weight:800;font-size:14px;min-width:104px;text-align:center"></span>
@@ -2764,7 +2822,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
         <div class="table-wrap">
           <div class="table-scroll">
             <table class="data-table">
-              <thead><tr><th style="width:14%">투입번호</th><th style="width:24%">고객</th><th style="width:14%">유형</th><th style="width:14%">공급가</th><th style="width:14%">VAT</th><th style="width:20%">합계</th></tr></thead>
+              <thead><tr><th style="width:14%">투입번호</th><th style="width:24%">고객</th><th style="width:14%">유형</th><th style="width:14%">공급가</th><th style="width:14%">VAT</th><th style="width:14%">합계</th><th style="width:12%">발행</th></tr></thead>
               <tbody id="sd-tbody"></tbody>
             </table>
           </div>
@@ -2911,7 +2969,28 @@ body.dk .empty-state .ti{background:var(--sf2)}
     </div>
   </div>
   <div class="prv-scroll">
-<!-- 세탁·수선 케어 모달 -->
+<!-- 재고 실사 모달 -->
+  <div id="audit-modal" class="signup-overlay" onclick="if(event.target===this)closeAudit()">
+    <div class="signup-card" onclick="event.stopPropagation()" style="max-width:560px">
+      <button class="signup-x" onclick="closeAudit()"><i class="ti ti-x"></i></button>
+      <div class="signup-head" style="margin-bottom:10px">
+        <h2 class="signup-title">재고 실사</h2>
+        <p class="signup-sub" id="audit-status">카메라 준비 중...</p>
+      </div>
+      <video id="audit-video" playsinline muted style="width:100%;max-height:240px;border-radius:4px;background:#000;object-fit:cover;display:block"></video>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="audit-input" class="f-input" placeholder="또는 코드 직접 입력 후 Enter (R-T01)" style="flex:1;min-height:40px;padding:8px 12px" onkeydown="if(event.key==='Enter')auditManual()">
+        <button class="action-btn" onclick="auditManual()" style="min-height:40px"><i class="ti ti-plus"></i></button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px">
+        <b id="audit-prog" style="font-size:14.5px;color:var(--t)">0 / 0</b>
+        <button class="action-btn es-btn" onclick="finishAudit()"><i class="ti ti-flag-check"></i>실사 종료 · 리포트</button>
+      </div>
+      <div id="audit-list" style="max-height:200px;overflow:auto"></div>
+    </div>
+  </div>
+
+  <!-- 세탁·수선 케어 모달 -->
   <div class="signup-overlay" id="care-modal" onclick="if(event.target===this)this.classList.remove('open')">
     <div style="background:var(--sf);border-radius:4px;padding:22px;max-width:480px;width:94%;border:1px solid var(--bd)" onclick="event.stopPropagation()">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -3660,11 +3739,11 @@ const VIEW_TITLE = {
   'dash':'대시보드', 'reg':'고객 등록', 'list':'고객 조회',
   'rental':'렌탈 상품 관리', 'catalog':'쇼룸 카탈로그', 'orders':'정장 주문 목록', 'settings':'매장 설정', 'trash':'휴지통',
   'mtm-suit':'정장 주문서', 'mtm-shirt':'셔츠 주문서', 'mtm-shoe':'구두 주문서',
-  'fab':'원단 발주', 'sales-day':'일 매출', 'sales-period':'기간 매출', 'inv':'재고 현황'
+  'fab':'원단 발주', 'sales-day':'일 매출', 'sales-period':'기간 매출', 'analytics':'연간 분석', 'inv':'재고 현황'
 };
 function go(view, fromPop){
   // 직원 권한 — 매출/설정/휴지통은 관리자 전용
-  if (!isAdmin() && ['sales-day','sales-period','settings','trash'].includes(view)){
+  if (!isAdmin() && ['sales-day','sales-period','analytics','settings','trash'].includes(view)){
     toast('관리자 전용 메뉴입니다','warn','권한 제한');
     return;
   }
@@ -3694,6 +3773,7 @@ function go(view, fromPop){
     $('#sp-from').value=dStr(f); $('#sp-to').value=dStr(t);
     renderSalesPeriod();
   }
+  if (view==='analytics') renderAnalytics();
   if (view==='inv') invTab(state.invTab);
   if (view==='rental') renderRental();
   if (view==='catalog') renderCatalog();
@@ -3889,25 +3969,25 @@ function goEvent(no){
   toast(`주문 #${no} 검색됨`,'info');
 }
 function renderDash(){
-  $('#stat-cust').textContent = state.customers.length;
-  $('#stat-ord').textContent  = state.orders.filter(o=>o.type==='정장' && o.status!=='완료').length;
+  $('#stat-cust').textContent = state.customers.filter(brMatch).length;
+  $('#stat-ord').textContent  = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료').length;
   const tStr = dStr(today());
-  const sum = state.orders.filter(o=>o.date===tStr).reduce((s,o)=>s+o.total,0);
+  const sum = state.orders.filter(brMatch).filter(o=>o.date===tStr).reduce((s,o)=>s+o.total,0);
   $('#stat-sales').textContent = isAdmin() ? fmt(sum) : '관리자 전용';
   $('#stat-fab').textContent  = state.fabrics.length;
   // 렌탈 출고중 + 연체
-  const _rentOut = state.rentals.filter(r=>r.status==='출고중');
+  const _rentOut = state.rentals.filter(brMatch).filter(r=>r.status==='출고중');
   const _over = _rentOut.filter(r=>r.dueDt && tStr>r.dueDt).length;
   const _sr = $('#stat-rent'); if (_sr) _sr.textContent = _rentOut.length;
   const _srn = $('#stat-rent-note');
   if (_srn){ _srn.textContent = _over>0 ? `연체 ${_over}건 — 확인 필요` : '연체 없음'; _srn.style.color = _over>0 ? 'var(--et)' : ''; }
   // 이번 달 매출 (전체 유형)
   const _mPre = tStr.slice(0,7);
-  const _mSum = state.orders.filter(o=>o.date && String(o.date).startsWith(_mPre)).reduce((s,o)=>s+(o.total||0),0);
+  const _mSum = state.orders.filter(brMatch).filter(o=>o.date && String(o.date).startsWith(_mPre)).reduce((s,o)=>s+(o.total||0),0);
   const _sm = $('#stat-month'); if (_sm) _sm.textContent = isAdmin() ? fmt(_mSum) : '관리자 전용';
   // 웰컴 헤더
   const _evN = state.events.filter(e=>e.date===tStr).length;
-  const _ing = state.orders.filter(o=>o.type==='정장' && o.status!=='완료').length;
+  const _ing = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료').length;
   const _wt = $('#dw-title'); if (_wt) _wt.innerHTML = `안녕하세요, <b>${(state.user&&state.user.name)||'관리자'}</b>님`;
   const _ws = $('#dw-sub'); if (_ws) _ws.textContent = `오늘 일정 ${_evN}건 · 진행중 주문 ${_ing}건 · 출고중 렌탈 ${_rentOut.length}건${_over?` · 연체 ${_over}건`:''}`;
   const _wd = $('#dw-date');
@@ -4003,6 +4083,7 @@ function saveReg(){
     orders: 0, total: 0,
     status:'신규'
   };
+  c.br = curBr();
   state.customers.unshift(c);
   saveDB();
   toast(`${nm} 고객이 등록되었습니다`, 'ok', '등록 완료');
@@ -4033,7 +4114,7 @@ function avatarCls(s){ const arr=['av-c0','av-c1','av-c2','av-c3','av-c4','av-c5
 function renderCustList(){
   const q = ($('#q-cust')?.value||'').trim().toLowerCase();
   const tb = $('#cust-tbody');
-  const rows = state.customers.filter(c=>custMatch(c, q));
+  const rows = state.customers.filter(brMatch).filter(c=>custMatch(c, q));
   if (!rows.length){
     tb.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-user-off"></i>
       <div class="empty-state-title">${q ? `'${q}' 검색 결과가 없습니다` : '아직 등록된 고객이 없습니다'}</div>
@@ -4379,6 +4460,7 @@ function renderFabCards(){
   if (!box) return;
   box.innerHTML = state.fabrics.map(f=>`
     <div class="pick-card" data-v="${f.no}" onclick="pickFab('${f.no}', this)">
+      ${f.photo?`<div class="pc-swatch" style="background-image:url(${f.photo})"></div>`:''}
       <div class="pc-title">${f.no}</div>
       <div class="pc-sub">${f.vendor} · ${f.color}</div>
       <span class="pc-tag">${f.yard} Y</span>
@@ -4679,7 +4761,7 @@ function saveSuit(){
   });
 
   const order = {
-    no: facNo, type:'정장', by:(state.user&&state.user.name)||'',
+    no: facNo, type:'정장', by:(state.user&&state.user.name)||'', br: curBr(),
     custId: $('#o-cust').value||'',
     nm, ph:$('#o-ph').value.trim(),
     pattern:{ top:$('#o-pTop').value, bot:$('#o-pBot').value, vest:$('#o-pVest').value, coat:$('#o-pCoat').value },
@@ -5152,7 +5234,7 @@ function togglePrvEdit(){
 
 /* ⑦.4 Orders list — 정장 주문 목록 ────────────────────── */
 function renderOrders(){
-  const all = state.orders.filter(o=>o.type==='정장');
+  const all = state.orders.filter(brMatch).filter(o=>o.type==='정장');
   $('#od-total').textContent = all.length;
   $('#od-prog').textContent  = all.filter(o=>o.status!=='완료').length;
   $('#od-fit').textContent   = all.filter(o=>o.fitDt).length;
@@ -5226,9 +5308,26 @@ function doFabOrder(){
 }
 
 /* ⑧ Sales ─────────────────────────────────────────────── */
+/* ─── 세금계산서·현금영수증 발행 체크 ─────────── */
+const TAX_SEQ = ['미발행','현금영수증','세금계산서','해당없음'];
+function taxBadge(o){
+  const t = (o.tax && o.tax.type) || '미발행';
+  const cls = t==='세금계산서' ? 'b-ok' : t==='현금영수증' ? 'b-info' : t==='해당없음' ? '' : 'b-err';
+  return `<span class="badge ${cls}" style="cursor:pointer" title="클릭하여 발행 상태 변경${o.tax&&o.tax.dt?' · 발행일 '+o.tax.dt:''}" onclick="event.stopPropagation();cycleTax('${o.no}')">${t}</span>`;
+}
+function cycleTax(no){
+  const o = state.orders.find(x=>String(x.no)===String(no));
+  if (!o) return;
+  const cur = (o.tax && o.tax.type) || '미발행';
+  const next = TAX_SEQ[(TAX_SEQ.indexOf(cur)+1) % TAX_SEQ.length];
+  o.tax = { type: next, dt: (next==='미발행'||next==='해당없음') ? '' : dStr(today()) };
+  saveDB();
+  if (state.view==='sales-day') renderSalesDay();
+  if (state.view==='sales-period') renderSalesPeriod();
+}
 function renderSalesDay(){
   const d = $('#sd-date').value || dStr(today());
-  const rows = state.orders.filter(o=>o.date===d);
+  const rows = state.orders.filter(brMatch).filter(o=>o.date===d);
   let sup=0, vat=0, tot=0;
   rows.forEach(o=>{ sup+=o.sup; vat+=o.vat; tot+=o.total; });
   $('#sd-cnt').textContent = rows.length;
@@ -5236,13 +5335,13 @@ function renderSalesDay(){
   $('#sd-vat').textContent = fmt(vat);
   $('#sd-tot').textContent = fmt(tot);
   $('#sd-tbody').innerHTML = rows.map(o=>`
-    <tr><td><b>#${o.no}</b></td><td>${o.nm}</td><td>${o.type}</td><td>${fmt(o.sup)}</td><td>${fmt(o.vat)}</td><td><b>${fmt(o.total)}</b></td></tr>
-  `).join('') || `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-receipt-off"></i><div class="empty-state-title">이 날짜의 매출이 없습니다</div><div class="empty-state-sub">위 날짜 선택에서 다른 날을 확인하거나, 새 주문을 등록해 보세요</div><button class="action-btn es-btn" onclick="go('mtm-suit')"><i class="ti ti-pencil"></i>정장 주문서 작성</button></div></td></tr>`;
+    <tr><td><b>#${o.no}</b></td><td>${o.nm}</td><td>${o.type}</td><td>${fmt(o.sup)}</td><td>${fmt(o.vat)}</td><td><b>${fmt(o.total)}</b></td><td>${taxBadge(o)}</td></tr>
+  `).join('') || `<tr><td colspan="7"><div class="empty-state"><i class="ti ti-receipt-off"></i><div class="empty-state-title">이 날짜의 매출이 없습니다</div><div class="empty-state-sub">위 날짜 선택에서 다른 날을 확인하거나, 새 주문을 등록해 보세요</div><button class="action-btn es-btn" onclick="go('mtm-suit')"><i class="ti ti-pencil"></i>정장 주문서 작성</button></div></td></tr>`;
 }
 function renderSalesPeriod(){
   const f = $('#sp-from').value, t = $('#sp-to').value;
   if (!f||!t) return;
-  const rows = state.orders.filter(o=>o.date>=f && o.date<=t);
+  const rows = state.orders.filter(brMatch).filter(o=>o.date>=f && o.date<=t);
   let sup=0, vat=0, tot=0;
   rows.forEach(o=>{ sup+=o.sup; vat+=o.vat; tot+=o.total; });
   $('#sp-cnt').textContent = rows.length;
@@ -5280,6 +5379,28 @@ function renderSalesPeriod(){
         </table></div>
         <div style="font-size:11.5px;color:var(--t3);margin-top:8px">'미지정'은 직원 기록 도입(2026-06-11) 이전에 등록된 건입니다 · 인센티브 산정 참고용</div>
       </div>` : '';
+  }
+
+  // 발행 관리 — 미발행 모아보기
+  let tc = $('#sp-tax');
+  if (!tc){
+    tc = document.createElement('div');
+    tc.id = 'sp-tax';
+    const pc = document.querySelector('#view-sales-period .page-content');
+    if (pc) pc.appendChild(tc);
+  }
+  if (tc){
+    const unissued = rows.filter(o=> !o.tax || o.tax.type==='미발행');
+    tc.innerHTML = `
+      <div class="form-card" style="margin-top:18px;padding:16px 18px">
+        <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between"><span><i class="ti ti-receipt-2"></i> 발행 관리</span><span class="badge ${unissued.length?'b-err':'b-ok'}">미발행 ${unissued.length}건</span></div>
+        ${unissued.length? `<div class="table-wrap" style="border:0!important"><table class="data-table">
+          <thead><tr><th>일자</th><th>번호</th><th>고객</th><th>유형</th><th>금액</th><th>발행</th></tr></thead>
+          <tbody>${unissued.map(o=>`<tr><td>${o.date}</td><td><b>#${o.no}</b></td><td>${o.nm}</td><td>${o.type}</td><td><b>${fmt(o.total)}</b></td><td>${taxBadge(o)}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <div style="font-size:11.5px;color:var(--t3);margin-top:8px">발행 뱃지 클릭 → 미발행 → 현금영수증 → 세금계산서 → 해당없음 순으로 변경 · 발행일 자동 기록</div>`
+        : `<div style="color:var(--okt);font-size:13.5px;font-weight:700;padding:4px 2px"><i class="ti ti-circle-check"></i> 선택 기간의 모든 전표가 발행 처리되었습니다</div>`}
+      </div>`;
   }
 }
 
@@ -5345,8 +5466,10 @@ function invTab(t){
   ['fab','lin','btn'].forEach(k=>{ const el=$('#tab-inv-'+k); if (el) el.classList.toggle('active', k===t); });
   const head = $('#inv-thead'), body = $('#inv-tbody');
   if (t==='fab'){
-    head.innerHTML = '<th>원단번호</th><th>거래처</th><th>조성</th><th>컬러</th><th>요척</th><th>단가</th><th>재고</th>';
-    body.innerHTML = state.fabrics.map(f=>`<tr><td><b>${f.no}</b></td><td>${f.vendor}</td><td>${f.comp}</td><td>${f.color}</td><td>${f.yard} Y</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<5?'b-err':f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td></tr>`).join('');
+    head.innerHTML = '<th style="width:62px">스와치</th><th>원단번호</th><th>거래처</th><th>조성</th><th>컬러</th><th>요척</th><th>단가</th><th>재고</th>';
+    body.innerHTML = state.fabrics.map(f=>`<tr><td>${f.photo
+        ? `<img class="swatch-th" src="${f.photo}" onclick="openFabSwatch('${f.no}')" title="클릭하여 크게 보기">`
+        : `<label class="swatch-add" title="스와치 사진 등록"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="fabPhotoPick(this,'${f.no}')"></label>`}</td><td><b>${f.no}</b></td><td>${f.vendor}</td><td>${f.comp}</td><td>${f.color}</td><td>${f.yard} Y</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<5?'b-err':f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td></tr>`).join('');
   } else if (t==='lin'){
     head.innerHTML = '<th>안감번호</th><th>거래처</th><th>조성</th><th>컬러</th><th>단가</th><th>재고</th>';
     body.innerHTML = state.linings.map(f=>`<tr><td><b>${f.no}</b></td><td>${f.vendor}</td><td>${f.comp}</td><td>${f.color}</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td></tr>`).join('');
@@ -5362,7 +5485,7 @@ function rentalStatusBadge(s){
   return s==='대여가능' ? 'b-ok' : s==='예약중' ? 'b-resv' : s==='출고중' ? 'b-info' : s==='세탁중' ? 'b-warn' : 'b-err';
 }
 function renderRental(){
-  const list = state.rentals;
+  const list = state.rentals.filter(brMatch);
   const todayS = dStr(today());
 
   $('#rt-total').textContent  = list.length;
@@ -5526,7 +5649,7 @@ function doRent(){
   const ordNo = 'R'+state.rentCounter;
   const sup = Math.round(r.fee/1.1);
   state.orders.unshift({
-    no: ordNo, type:'대여', by:(state.user&&state.user.name)||'', nm, ph,
+    no: ordNo, type:'대여', by:(state.user&&state.user.name)||'', br: curBr(), nm, ph,
     rentalCode: r.code, custId: c.id,
     date: r.rentDt, sup, vat: r.fee-sup, total: r.fee,
     status:'출고중'
@@ -5661,7 +5784,7 @@ function finalizeReturn(code, deduct, reason){
     state.rentCounter++;
     const sup = Math.round(deduct/1.1);
     state.orders.unshift({
-      no:'D'+state.rentCounter, type:'손상비', by:(state.user&&state.user.name)||'', nm:r.renter, ph:r.ph,
+      no:'D'+state.rentCounter, type:'손상비', by:(state.user&&state.user.name)||'', br: curBr(), nm:r.renter, ph:r.ph,
       rentalCode:r.code, date:dStr(today()),
       sup, vat:deduct-sup, total:deduct, status:'완료',
       memo:reason
@@ -5689,6 +5812,116 @@ function finishCare(code){
   saveDB();
   toast(`${r.code} 케어 완료 — 출고 가능 상태${c.cost?` · 비용 ${fmt(c.cost)}`:''}`,'ok');
   renderRental();
+}
+
+/* ─── 재고 실사 (QR 연속 스캔 → 미확인 리포트) ─────────── */
+let _auditStream = null, _auditTimer = null;
+async function startAudit(){
+  state.auditSet = new Set();
+  $('#audit-modal').classList.add('open');
+  renderAuditList();
+  const st = $('#audit-status');
+  const v = $('#audit-video');
+  try{
+    _auditStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    v.srcObject = _auditStream;
+    await v.play();
+    if ('BarcodeDetector' in window){
+      const det = new BarcodeDetector({ formats:['qr_code'] });
+      st.textContent = 'QR을 연속으로 비춰주세요 — 자동 체크됩니다';
+      _auditTimer = setInterval(async ()=>{
+        try{ const cs = await det.detect(v); if (cs.length) auditCheck(cs[0].rawValue); }catch(e){}
+      }, 350);
+    } else if (typeof jsQR === 'function'){
+      const cv = document.createElement('canvas');
+      const cx = cv.getContext('2d', { willReadFrequently:true });
+      st.textContent = 'QR을 연속으로 비춰주세요 — 자동 체크됩니다';
+      _auditTimer = setInterval(()=>{
+        try{
+          if (!v.videoWidth) return;
+          cv.width = v.videoWidth; cv.height = v.videoHeight;
+          cx.drawImage(v, 0, 0);
+          const im = cx.getImageData(0, 0, cv.width, cv.height);
+          const c = jsQR(im.data, im.width, im.height, { inversionAttempts:'dontInvert' });
+          if (c && c.data) auditCheck(c.data);
+        }catch(e){}
+      }, 380);
+    } else {
+      st.textContent = '카메라 스캔 미지원 — 코드를 직접 입력하세요';
+    }
+  }catch(e){
+    st.textContent = '카메라 접근 실패 — 코드를 직접 입력하세요';
+  }
+}
+function auditCheck(code){
+  const c = String(code).toUpperCase().trim();
+  const r = state.rentals.find(x=>x.code.toUpperCase()===c);
+  const st = $('#audit-status');
+  if (!r){ if (st) st.textContent = `'${c}' — 등록되지 않은 코드입니다`; return; }
+  if (!state.auditSet.has(r.code)){
+    state.auditSet.add(r.code);
+    if (st) st.textContent = `${r.code} ${r.name} 확인 ✓`;
+    renderAuditList();
+  }
+}
+function auditManual(){
+  const v = ($('#audit-input')?.value||'').trim();
+  if (!v) return;
+  $('#audit-input').value = '';
+  auditCheck(v);
+}
+function renderAuditList(){
+  const total = state.rentals.length;
+  const done = state.auditSet ? state.auditSet.size : 0;
+  const pg = $('#audit-prog');
+  if (pg) pg.innerHTML = `<span style="color:var(--okt)">${done}</span> / ${total} 확인됨`;
+  const el = $('#audit-list');
+  if (!el) return;
+  const sorted = [...state.rentals].sort((a,b)=>{
+    const ah = state.auditSet && state.auditSet.has(a.code) ? 1 : 0;
+    const bh = state.auditSet && state.auditSet.has(b.code) ? 1 : 0;
+    return ah - bh;
+  });
+  el.innerHTML = sorted.map(r=>{
+    const hit = state.auditSet && state.auditSet.has(r.code);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px dashed var(--bd);font-size:13px;${hit?'opacity:.5':''}">
+      <i class="ti ${hit?'ti-circle-check-filled':'ti-circle'}" style="color:${hit?'var(--okt)':'var(--t3)'};font-size:16px"></i>
+      <b>${r.code}</b><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t2)">${r.name}</span>
+      <span class="badge ${rentalStatusBadge(r.status)}" style="font-size:10px">${r.status}</span>
+    </div>`;
+  }).join('');
+}
+function closeAudit(){
+  if (_auditTimer){ clearInterval(_auditTimer); _auditTimer = null; }
+  if (_auditStream){ _auditStream.getTracks().forEach(t=>t.stop()); _auditStream = null; }
+  $('#audit-modal').classList.remove('open');
+}
+function finishAudit(){
+  const missing = state.rentals.filter(r=>!(state.auditSet && state.auditSet.has(r.code)));
+  const out = missing.filter(r=>r.status==='출고중');
+  const lost = missing.filter(r=>r.status!=='출고중');
+  closeAudit();
+  $('#print-area').innerHTML = `<div class="wo-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <div style="font-size:20px;font-weight:800">재고 실사 리포트</div>
+      <div style="font-size:12px;color:#666">${dStr(today())} · ${shopName()} · 담당 ${(state.user&&state.user.name)||'-'}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">전체 상품</div><div style="font-size:22px;font-weight:800">${state.rentals.length}</div></div>
+      <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">스캔 확인</div><div style="font-size:22px;font-weight:800;color:#16a085">${state.auditSet?state.auditSet.size:0}</div></div>
+      <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">출고중 (정상 부재)</div><div style="font-size:22px;font-weight:800;color:#2980b9">${out.length}</div></div>
+      <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">미확인 (분실 의심)</div><div style="font-size:22px;font-weight:800;color:${lost.length?'#c0392b':'#16a085'}">${lost.length}</div></div>
+    </div>
+    ${lost.length? `<div style="font-weight:800;margin-bottom:6px;font-size:14px">⚠ 미확인 상품 — 보관 위치를 확인하세요</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px">
+        <tr style="background:#f4f5f6"><th style="border:1px solid #ccc;padding:6px">코드</th><th style="border:1px solid #ccc;padding:6px">품명</th><th style="border:1px solid #ccc;padding:6px">상태</th><th style="border:1px solid #ccc;padding:6px">보관 위치</th></tr>
+        ${lost.map(r=>`<tr><td style="border:1px solid #ccc;padding:6px;text-align:center"><b>${r.code}</b></td><td style="border:1px solid #ccc;padding:6px">${r.name}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${r.status}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${r.loc||'-'}</td></tr>`).join('')}
+      </table>` : `<div style="color:#16a085;font-weight:700;margin-bottom:12px">✓ 매장 보유 상품 전수 확인 — 분실 의심 없음</div>`}
+    ${out.length? `<div style="font-size:12px;color:#555">출고중 ${out.length}건은 대여 중으로 매장에 없는 것이 정상입니다: ${out.map(r=>r.code).join(', ')}</div>`:''}
+  </div>`;
+  const tt = $('#prv-title-text'); if (tt) tt.textContent = '재고 실사 리포트';
+  const ts = $('#prv-sub-text');   if (ts) ts.textContent = `${dStr(today())} · 미확인 ${lost.length}건`;
+  $('#prv-modal').classList.add('open');
 }
 
 /* ─── 세탁·수선 케어 모달 ─────────────────── */
@@ -5732,6 +5965,128 @@ function doSaveCare(){
   renderRental();
 }
 
+/* ─── 연간 분석 (계절·성수기·가동률) ─────────── */
+function anMove(d){
+  state.anYear = (state.anYear || today().getFullYear()) + d;
+  renderAnalytics();
+}
+function renderAnalytics(){
+  const y = state.anYear || (state.anYear = today().getFullYear());
+  $('#an-year').textContent = y + '년';
+  const ords = state.orders.filter(brMatch).filter(o=>o.date && String(o.date).startsWith(y+'-'));
+  const M = Array.from({length:12}, (_,i)=>i);
+  const sumT = (type, m) => ords.filter(o=>o.type===type && +String(o.date).slice(5,7)===m+1).reduce((s,o)=>s+(o.total||0),0);
+  const suit = M.map(m=>sumT('정장',m)), rent = M.map(m=>sumT('대여',m)), dmg = M.map(m=>sumT('손상비',m));
+  const totByM = M.map(m=>suit[m]+rent[m]+dmg[m]);
+  const totAll = totByM.reduce((a,b)=>a+b,0);
+  const bestM = totByM.indexOf(Math.max(...totByM));
+  const fitCnt = M.map(m=> state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.fitDt && String(o.fitDt).startsWith(`${y}-${pad(m+1)}`)).length );
+  const rentCnt = M.map(m=> state.rentalLog.filter(l=>l.rentDt && String(l.rentDt).startsWith(`${y}-${pad(m+1)}`)).length );
+  const bestRentM = rentCnt.indexOf(Math.max(...rentCnt));
+  $('#an-summary').innerHTML = [
+    ['연 매출', totAll? fmt(totAll) : '₩0'],
+    ['월 평균', fmt(Math.round(totAll/12))],
+    ['최고 매출 월', totAll? (bestM+1)+'월' : '-'],
+    ['렌탈 성수기', Math.max(...rentCnt)>0? (bestRentM+1)+'월' : '-']
+  ].map(([k,v])=>`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:3px;padding:8px 14px"><span style="font-size:11px;color:var(--t3);display:block">${k}</span><b style="font-size:15px;color:var(--t)">${v}</b></div>`).join('');
+  drawStackedBars('an-rev', [suit, rent, dmg], ['#1ab394','#1c84c6','#ed5565']);
+  drawLines('an-cnt', [fitCnt, rentCnt], ['#1ab394','#8e6bc8']);
+  // 카테고리별 가동률 — 연중 대여일수 / (보유수 × 365)
+  const yS = `${y}-01-01`, yE = `${y}-12-31`;
+  const dayCount = (a,b)=>{
+    if (!a) return 0;
+    const s = a>yS ? a : yS, e = (b && b<yE) ? b : yE;
+    if (e<s) return 0;
+    return Math.min(366, Math.round((new Date(e)-new Date(s))/86400000)+1);
+  };
+  const cats = {};
+  state.rentals.filter(brMatch).forEach(r=>{
+    const k = r.cat||'기타';
+    if (!cats[k]) cats[k] = {items:0, days:0};
+    cats[k].items++;
+  });
+  state.rentalLog.forEach(l=>{
+    const r = state.rentals.find(x=>x.code===l.code);
+    if (!r) return;
+    const k = r.cat||'기타';
+    if (!cats[k]) return;
+    if (l.rentDt) cats[k].days += dayCount(l.rentDt, l.returnDt||l.dueDt||l.rentDt);
+  });
+  state.rentals.filter(brMatch).forEach(r=>{
+    if (r.status==='출고중' && r.rentDt){
+      const k = r.cat||'기타';
+      if (cats[k]) cats[k].days += dayCount(r.rentDt, dStr(today()));
+    }
+  });
+  const ck = Object.keys(cats);
+  $('#an-cat').innerHTML = ck.length ? ck.map(c=>{
+    const u = cats[c];
+    const denom = u.items*365;
+    const pct = denom ? Math.min(100, Math.round(u.days/denom*100)) : 0;
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><b style="color:var(--t)">${c}</b><span style="color:var(--t3)">${u.items}벌 · 대여 ${u.days}일 · <b style="color:${pct>=40?'var(--okt)':'var(--t2)'}">${pct}%</b></span></div>
+      <div style="height:9px;background:var(--sf3);border-radius:99px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${pct>=40?'#1ab394':'#1c84c6'}"></div></div>
+    </div>`;
+  }).join('') : '<div style="color:var(--t3);font-size:13px;padding:14px 2px">렌탈 데이터가 없습니다</div>';
+}
+function _anCv(id){
+  const cv = document.getElementById(id);
+  if (!cv || !cv.parentElement) return null;
+  const W = (cv.parentElement.clientWidth - 36) || 600;
+  const H = parseInt(cv.style.height)||200;
+  const dpr = window.devicePixelRatio||1;
+  cv.width = W*dpr; cv.height = H*dpr;
+  cv.style.width = W+'px';
+  const cx = cv.getContext('2d');
+  cx.scale(dpr, dpr);
+  const cs = getComputedStyle(document.body);
+  return { cx, W, H, txt: cs.getPropertyValue('--t3').trim()||'#a7b1c2' };
+}
+function drawStackedBars(id, series, colors){
+  const c = _anCv(id); if (!c) return;
+  const { cx, W, H } = c;
+  const padL = 6, padB = 20, padT = 16;
+  const tot = Array.from({length:12}, (_,m)=>series.reduce((s,sr)=>s+sr[m],0));
+  const max = Math.max(...tot, 1);
+  const bw = (W-padL*2)/12;
+  cx.font = '11px sans-serif';
+  for (let m=0;m<12;m++){
+    let yCur = H-padB;
+    series.forEach((sr,si)=>{
+      const h = (H-padB-padT) * (sr[m]/max);
+      if (h>0.5){ cx.fillStyle = colors[si]; cx.fillRect(padL+m*bw+bw*0.2, yCur-h, bw*0.6, h); yCur -= h; }
+    });
+    cx.fillStyle = c.txt; cx.textAlign = 'center';
+    cx.fillText((m+1)+'월', padL+m*bw+bw/2, H-5);
+    if (tot[m]>0 && tot[m]===Math.max(...tot)){
+      cx.fillText(Math.round(tot[m]/10000).toLocaleString()+'만', padL+m*bw+bw/2, yCur-5);
+    }
+  }
+}
+function drawLines(id, series, colors){
+  const c = _anCv(id); if (!c) return;
+  const { cx, W, H } = c;
+  const padL = 10, padB = 20, padT = 12;
+  const max = Math.max(...series.flat(), 1);
+  const step = (W-padL*2)/11;
+  series.forEach((sr,si)=>{
+    cx.strokeStyle = colors[si]; cx.lineWidth = 2;
+    cx.beginPath();
+    sr.forEach((v,m)=>{
+      const x = padL+m*step, y = H-padB-(H-padB-padT)*(v/max);
+      m ? cx.lineTo(x,y) : cx.moveTo(x,y);
+    });
+    cx.stroke();
+    cx.fillStyle = colors[si];
+    sr.forEach((v,m)=>{
+      const x = padL+m*step, y = H-padB-(H-padB-padT)*(v/max);
+      cx.beginPath(); cx.arc(x, y, 2.6, 0, 7); cx.fill();
+    });
+  });
+  cx.fillStyle = c.txt; cx.font = '11px sans-serif'; cx.textAlign = 'center';
+  for (let m=0;m<12;m++) cx.fillText(String(m+1), padL+m*step, H-5);
+}
+
 /* ─── 쇼룸 카탈로그 ─────────────────── */
 function renderCatalog(){
   const grid = $('#catalog-grid');
@@ -5743,7 +6098,7 @@ function renderCatalog(){
     .concat(cats.map(c=>`<div class="cat-chip ${state.catFilter===c?'active':''}" onclick="state.catFilter='${c}';renderCatalog()">${c}</div>`)).join('');
   const q = ($('#cat-f-q')?.value||'').trim().toLowerCase();
   const availOnly = $('#cat-f-avail')?.checked;
-  let rows = state.rentals.filter(r=> state.catFilter==='all' || r.cat===state.catFilter);
+  let rows = state.rentals.filter(brMatch).filter(r=> state.catFilter==='all' || r.cat===state.catFilter);
   if (availOnly) rows = rows.filter(r=>r.status==='대여가능');
   if (q) rows = rows.filter(r=> (r.name+r.code+(r.color||'')+(r.size||'')+(r.brand||'')).toLowerCase().includes(q));
   grid.innerHTML = rows.map(r=>`
@@ -5875,6 +6230,49 @@ async function uploadPhotoToStorage(dataURL, path){
   }catch(e){ return null; }
 }
 // 사진 선택 → 480px 리사이즈 → Storage 업로드 (오프라인이면 base64 폴백)
+/* ─── 원단 스와치 사진첩 ─────────── */
+function fabPhotoPick(inp, no){
+  const f = state.fabrics.find(x=>x.no===no);
+  const file = inp.files && inp.files[0];
+  if (!f || !file) return;
+  const img = new Image();
+  img.onload = async ()=>{
+    const MAX = 420;
+    const sc = Math.min(1, MAX/Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    const dataURL = cv.toDataURL('image/jpeg', .85);
+    f.photo = dataURL;
+    saveDB();
+    if (state.view==='inv') invTab('fab');
+    if (typeof renderFabCards==='function') renderFabCards();
+    toast(`${no} 스와치 등록 완료`,'ok','원단 사진첩');
+    URL.revokeObjectURL(img.src);
+    const url = await uploadPhotoToStorage(dataURL, 'fab/' + no + '.jpg');
+    if (url){ f.photo = url; saveDB(); if (state.view==='inv') invTab('fab'); }
+  };
+  img.src = URL.createObjectURL(file);
+}
+function openFabSwatch(no){
+  const f = state.fabrics.find(x=>x.no===no);
+  if (!f || !f.photo) return;
+  $('#cat-light-card').innerHTML = `
+    <img class="cl-ph" src="${f.photo}" style="min-height:320px">
+    <div class="cl-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="cl-name">${f.no} 스와치</div>
+        <button class="mini-act" onclick="$('#cat-light').classList.remove('open')"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="cl-row" style="margin-top:12px"><span>거래처</span><b>${f.vendor||'-'}</b></div>
+      <div class="cl-row"><span>컬러</span><b>${f.color||'-'}</b></div>
+      <div class="cl-row"><span>조성</span><b>${f.comp||'-'}</b></div>
+      <div class="cl-row"><span>요척</span><b>${f.yard||'-'} Y</b></div>
+      <div class="cl-row"><span>단가</span><b>${fmt(f.price)}</b></div>
+      <label class="action-btn" style="margin-top:14px;justify-content:center;cursor:pointer;display:flex"><i class="ti ti-camera"></i>사진 교체<input type="file" accept="image/*" hidden onchange="$('#cat-light').classList.remove('open');fabPhotoPick(this,'${f.no}')"></label>
+    </div>`;
+  $('#cat-light').classList.add('open');
+}
 function prodPhotoPick(inp){
   const file = inp.files && inp.files[0];
   if (!file) return;
@@ -5928,7 +6326,7 @@ function doSaveProd(){
   } else {
     state.prodCounter++;
     const code = 'R-P' + state.prodCounter;
-    state.rentals.unshift({ code, status:'대여가능', photo: state.prodPhotoTmp||'', ...fields });
+    state.rentals.unshift({ code, status:'대여가능', br: curBr(), photo: state.prodPhotoTmp||'', ...fields });
     toast(`${code} 상품이 등록되었습니다`,'ok','상품 등록');
   }
   saveDB();
@@ -6486,7 +6884,7 @@ function renderRentalGantt(){
   }
   head += '</div>';
 
-  const rows = state.rentals.map(r=>{
+  const rows = state.rentals.filter(brMatch).map(r=>{
     let cells = '', prevCls = '', busy = 0;
     for (let i=1;i<=last;i++){
       const ds = `${y}-${pad(m+1)}-${pad(i)}`;
@@ -6649,6 +7047,87 @@ function loadShop(){
     state.shop = { name:'NURI CRM', tag:'MTM 통합 관리 시스템', ph:'', addr:'', bizno:'', owner:'', logo:'' };
   }
 }
+/* ─── 다중 지점 (지점 분리 구조) ─────────── */
+function ensureBranches(){
+  if (!state.shop) loadShop();
+  if (!state.shop.branches || !state.shop.branches.length){
+    state.shop.branches = [{ id:'main', name:'본점' }];
+  }
+}
+function curBr(){ const v = state.curBranch||'all'; return v==='all' ? 'main' : v; }
+function brMatch(x){ const v = state.curBranch||'all'; if (v==='all') return true; return (x.br||'main')===v; }
+function setBranch(v){
+  state.curBranch = v;
+  try{ localStorage.setItem('nuri_branch', v); }catch(e){}
+  populateBranchSel();
+  go(state.view||'dash');
+  ensureBranches();
+  const b = state.shop.branches.find(x=>x.id===v);
+  toast(v==='all' ? '전체 지점 데이터를 표시합니다' : `'${b?b.name:v}' 데이터만 표시합니다`,'info','지점 전환');
+}
+function populateBranchSel(){
+  ensureBranches();
+  const wrap = $('#sb-branch'), sel = $('#branch-sel');
+  if (!wrap || !sel) return;
+  const bs = state.shop.branches;
+  wrap.style.display = bs.length>1 ? 'flex' : 'none';
+  sel.innerHTML = `<option value="all">전체 지점</option>` + bs.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  sel.value = state.curBranch||'all';
+}
+function addBranch(){
+  ensureBranches();
+  const inp = $('#br-new');
+  const name = (inp && inp.value || '').trim();
+  if (!name){ toast('지점 이름을 입력하세요','warn'); return; }
+  state.shop.branches.push({ id:'b'+Date.now().toString(36), name });
+  saveShop();
+  if (inp) inp.value = '';
+  populateBranchSel(); renderBranchCard();
+  toast(`지점 '${name}' 추가 — 사이드바 프로필 아래에서 전환하세요`,'ok','다중 지점');
+}
+function delBranch(id){
+  if (id==='main'){ toast('본점은 삭제할 수 없습니다','warn'); return; }
+  const used = state.customers.some(x=>x.br===id) || state.orders.some(x=>x.br===id) || state.rentals.some(x=>x.br===id);
+  if (used){ toast('해당 지점으로 기록된 데이터가 있어 삭제할 수 없습니다','err','지점 관리'); return; }
+  state.shop.branches = state.shop.branches.filter(b=>b.id!==id);
+  if (state.curBranch===id) setBranch('all');
+  saveShop(); populateBranchSel(); renderBranchCard();
+}
+function renameBranch(id){
+  ensureBranches();
+  const b = state.shop.branches.find(x=>x.id===id);
+  if (!b) return;
+  const nm = prompt('지점 이름 변경', b.name);
+  if (nm && nm.trim()){ b.name = nm.trim(); saveShop(); populateBranchSel(); renderBranchCard(); }
+}
+function renderBranchCard(){
+  ensureBranches();
+  let bc = $('#set-branch-card');
+  if (!bc){
+    bc = document.createElement('div');
+    bc.id = 'set-branch-card';
+    const pc = document.querySelector('#view-settings .page-content');
+    if (pc) pc.appendChild(bc);
+  }
+  if (!bc) return;
+  bc.innerHTML = `
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-building-store"></i> 지점 관리 (다중 매장 대비)</div>
+      ${state.shop.branches.map(b=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px dashed var(--bd)">
+          <i class="ti ti-building-store" style="color:var(--t3)"></i>
+          <b style="flex:1;color:var(--t)">${b.name}</b>
+          ${b.id==='main'?'<span class="badge b-info">기본</span>':''}
+          <button class="mini-act" onclick="renameBranch('${b.id}')" title="이름 변경"><i class="ti ti-pencil"></i></button>
+          ${b.id!=='main'?`<button class="mini-act" onclick="delBranch('${b.id}')" title="삭제"><i class="ti ti-x"></i></button>`:''}
+        </div>`).join('')}
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <input id="br-new" class="f-input" placeholder="새 지점 이름 (예: 강남점)" style="flex:1;min-height:38px;padding:8px 11px" onkeydown="if(event.key==='Enter')addBranch()">
+        <button class="action-btn" onclick="addBranch()"><i class="ti ti-plus"></i>추가</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:8px;line-height:1.6">지점이 2개 이상이면 사이드바에 지점 선택이 나타납니다. 신규 고객·주문·렌탈 상품은 선택된 지점으로 기록되며, '전체 지점'을 선택하면 모든 데이터가 보입니다. 기존 데이터는 본점 소속입니다.</div>
+    </div>`;
+}
 function shopName(){ return (state.shop && state.shop.name) || 'NURI CRM'; }
 function shopBrandBig(){
   const s = state.shop||{};
@@ -6695,6 +7174,7 @@ function renderSettings(){
   if (s.logo){ pv.style.backgroundImage = `url(${s.logo})`; pv.innerHTML=''; }
   else { pv.style.backgroundImage=''; pv.innerHTML = '<i class="ti ti-photo" style="font-size:22px"></i>로고 추가'; }
   state.shopLogoTmp = undefined;
+  renderBranchCard();
 }
 function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
@@ -7334,6 +7814,7 @@ async function enterApp(){
   if (pav) pav.textContent = (u.name||'관')[0];
   if (pnm) pnm.textContent = u.name || '관리자';
   if (prl) prl.textContent = u.role==='admin' ? '관리자 · 마스터' : '직원';
+  if (typeof populateBranchSel==='function') populateBranchSel();
 
   applyRole();
 
@@ -7496,6 +7977,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   ensureDefaultAccount();
   loadShop();
   applyShop();
+  state.curBranch = localStorage.getItem('nuri_branch') || 'all';
   if (localStorage.getItem('nuri_dark')==='1'){
     document.body.classList.add('dk');
     const ic = $('#theme-ic'); if (ic) ic.className='ti ti-sun';
