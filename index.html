@@ -925,6 +925,24 @@ select.f-input{padding-right:38px}
 .noti-txt{font-size:12.5px;line-height:1.45;color:var(--t);font-weight:600}
 .noti-sub{font-size:11px;color:var(--t3);margin-top:2px}
 .noti-empty{padding:30px;text-align:center;color:var(--t3);font-size:12px}
+.noti-readall{margin-left:auto;padding:5px 11px;border:1px solid var(--bd2);border-radius:999px;background:var(--sf);color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s}
+.noti-readall:hover{border-color:var(--gold);color:var(--gold)}
+.noti-item.read{opacity:.42}
+
+/* 고객 등록 — 한 화면 압축 */
+#view-reg .form-card{max-width:1100px!important;padding:22px 28px!important}
+#view-reg .form-card-title{margin-bottom:14px!important;font-size:16px}
+#view-reg .form-row,#view-reg .form-row3,#view-reg .form-row4{gap:12px!important;margin-bottom:10px!important}
+#view-reg .form-full{margin-bottom:10px!important}
+#view-reg .f-input{min-height:40px!important;padding:9px 12px!important;font-size:13.5px!important}
+#view-reg textarea.f-input{min-height:54px!important}
+#view-reg .f-label{margin-bottom:5px!important;font-size:11.5px!important}
+#view-reg .form-section-hd{margin:12px 0 8px!important}
+#view-reg .pick-box{margin-bottom:0!important}
+#view-reg .pick-grid-sm{grid-template-columns:repeat(9,minmax(0,1fr))!important;gap:6px!important}
+#view-reg .pick-grid-sm .pick-card{min-height:36px!important;padding:5px 2px!important}
+#view-reg .pick-grid-sm .pick-card .pc-title{font-size:13px!important}
+#view-reg .form-actions{margin-top:12px!important;padding-top:12px!important}
 
 /* ─── 렌탈 간트 (월간 가용성) ─────────────────── */
 .rv-switch{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
@@ -1351,6 +1369,32 @@ select.f-input{padding-right:38px}
   </div>
 </div>
 
+<!-- ═══ 일정 직접 추가 모달 ═══ -->
+<div id="evt-modal" class="signup-overlay" onclick="closeEvtModal(event)">
+  <div class="signup-card" onclick="event.stopPropagation()" style="max-width:420px">
+    <button class="signup-x" onclick="closeEvtModal()"><i class="ti ti-x"></i></button>
+    <div class="signup-head" style="margin-bottom:16px">
+      <h2 class="signup-title">일정 추가</h2>
+      <p class="signup-sub">캘린더에 직접 등록 (주문과 무관한 일정)</p>
+    </div>
+    <div class="signup-form">
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin-bottom:0"><label>날짜 <span class="rq">*</span></label><input id="evt-date" type="date"></div>
+        <div class="form-group" style="margin-bottom:0"><label>유형</label>
+          <select id="evt-type" style="width:100%;padding:11px 14px;border:1px solid var(--bd2);border-radius:8px;background:var(--sf2);color:var(--t);font-size:14px;font-family:inherit">
+            <option value="consult">상담</option>
+            <option value="fit">가봉</option>
+            <option value="deliver">출고·반납</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px"><label>이름 / 대상</label><input id="evt-name" placeholder="홍길동"></div>
+      <div class="form-group"><label>내용</label><input id="evt-sub" placeholder="예: 2차 상담 / 원단 미팅" onkeydown="if(event.key==='Enter')doAddEvt()"></div>
+      <button class="login-btn" style="margin-top:14px" onclick="doAddEvt()">일정 등록</button>
+    </div>
+  </div>
+</div>
+
 
 
 <!-- ═══════════════════════════════════════════
@@ -1442,7 +1486,9 @@ select.f-input{padding-right:38px}
         <div class="noti-wrap">
           <button class="noti-bell" onclick="toggleNoti(event)" title="알림 센터"><i class="ti ti-bell"></i><span class="noti-badge" id="noti-badge" style="display:none">0</span></button>
           <div class="noti-panel" id="noti-panel">
-            <div class="noti-head"><i class="ti ti-bell" style="color:var(--gold)"></i> 알림 센터</div>
+            <div class="noti-head"><i class="ti ti-bell" style="color:var(--gold)"></i> 알림 센터
+              <button class="noti-readall" onclick="markAllNotiRead(event)">모두 읽음</button>
+            </div>
             <div class="noti-list" id="noti-list"></div>
           </div>
         </div>
@@ -1479,40 +1525,6 @@ select.f-input{padding-right:38px}
           </div>
         </div>
 
-        <div class="settle-card">
-          <div class="ms-gauge-wrap">
-            <div class="ms-donut" id="ms-donut"><div class="ms-donut-in"><b id="ms-pct">—</b><span>달성률</span></div></div>
-            <div>
-              <div class="ms-lbl">이번 달 매출 / 목표</div>
-              <div class="ms-val"><b id="ms-cur">₩0</b> <span style="color:var(--t3);font-weight:600">/ <span id="ms-goal">미설정</span></span></div>
-              <div class="ms-sub" id="ms-goal-hint">설정 > 매장 설정에서 월 목표 입력</div>
-            </div>
-          </div>
-          <div class="ms-div"></div>
-          <div class="ms-block">
-            <div class="ms-lbl">전월 대비</div>
-            <div class="ms-val" id="ms-mom">—</div>
-            <div class="ms-sub" id="ms-mom-sub">—</div>
-          </div>
-          <div class="ms-div"></div>
-          <div class="ms-block">
-            <div class="ms-lbl">보유 보증금</div>
-            <div class="ms-val" id="ms-dep">₩0</div>
-            <div class="ms-sub" id="ms-dep-sub">출고중 0건</div>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-head">
-            <div class="form-card-title" style="margin:0"><i class="ti ti-chart-line"></i>최근 30일 매출 추이</div>
-            <div class="chart-legend">
-              <span><i class="dot" style="background:var(--acc)"></i>MTM <b id="sc-mtm">₩0</b></span>
-              <span><i class="dot" style="background:var(--gold)"></i>렌탈·정산 <b id="sc-rent">₩0</b></span>
-            </div>
-          </div>
-          <div class="chart-body"><canvas id="sales-chart"></canvas></div>
-        </div>
-
         <div class="dash-grid">
           <div class="cal-card">
             <div class="cal-header">
@@ -1536,9 +1548,35 @@ select.f-input{padding-right:38px}
           <div class="ev-panel">
             <div class="ev-panel-head">
               <div class="ev-panel-label">오늘의 스케줄</div>
-              <div class="ev-panel-date" id="ev-date">— 선택된 날짜 —</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="ev-panel-date" id="ev-date">— 선택된 날짜 —</div>
+                <button class="mini-act" onclick="openEvtModal()" title="이 날짜에 일정 직접 추가"><i class="ti ti-plus"></i></button>
+              </div>
             </div>
             <div id="ev-list"></div>
+          </div>
+        </div>
+
+        <div class="settle-card" style="margin-top:16px;margin-bottom:0">
+          <div class="ms-gauge-wrap">
+            <div class="ms-donut" id="ms-donut"><div class="ms-donut-in"><b id="ms-pct">—</b><span>달성률</span></div></div>
+            <div>
+              <div class="ms-lbl">이번 달 매출 / 목표</div>
+              <div class="ms-val"><b id="ms-cur">₩0</b> <span style="color:var(--t3);font-weight:600">/ <span id="ms-goal">미설정</span></span></div>
+              <div class="ms-sub" id="ms-goal-hint">설정 > 매장 설정에서 월 목표 입력</div>
+            </div>
+          </div>
+          <div class="ms-div"></div>
+          <div class="ms-block">
+            <div class="ms-lbl">전월 대비</div>
+            <div class="ms-val" id="ms-mom">—</div>
+            <div class="ms-sub" id="ms-mom-sub">—</div>
+          </div>
+          <div class="ms-div"></div>
+          <div class="ms-block">
+            <div class="ms-lbl">보유 보증금</div>
+            <div class="ms-val" id="ms-dep">₩0</div>
+            <div class="ms-sub" id="ms-dep-sub">출고중 0건</div>
           </div>
         </div>
 
@@ -1576,7 +1614,7 @@ select.f-input{padding-right:38px}
     <div id="view-reg">
       <div class="page-content">
         <div class="form-card">
-          <div class="form-card-title"><i class="ti ti-user-plus"></i>고객 등록 <span class="form-card-sub">새 고객 카르테</span></div>
+          <div class="form-card-title"><i class="ti ti-user-plus"></i>고객 등록</div>
           <div class="form-row">
             <div><label class="f-label">고객명<span class="f-req">*</span></label><input id="r-nm" class="f-input" placeholder="홍길동"></div>
             <div><label class="f-label">연락처<span class="f-req">*</span></label><input id="r-ph" class="f-input" placeholder="010-1234-5678"></div>
@@ -1615,9 +1653,9 @@ select.f-input{padding-right:38px}
               </div>
             </div>
           </div>
-          <label class="f-label" style="margin-top:14px">상의 호칭 (카드를 누르세요)</label>
+          <label class="f-label" style="margin-top:10px">상의 호칭</label>
           <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-r-top"></div></div>
-          <label class="f-label" style="margin-top:14px">하의 호칭 (카드를 누르세요)</label>
+          <label class="f-label" style="margin-top:10px">하의 호칭</label>
           <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-r-bot"></div></div>
           <select id="r-top" style="display:none"></select>
           <select id="r-bot" style="display:none"></select>
@@ -1643,7 +1681,7 @@ select.f-input{padding-right:38px}
           <div class="table-scroll">
             <table class="data-table">
               <thead><tr>
-                <th style="width:30%">고객</th><th style="width:18%">연락처</th><th style="width:12%">상의/하의</th><th style="width:15%">최근 주문</th><th style="width:13%">누적 매출</th><th style="width:12%">상태</th>
+                <th style="width:30%">고객</th><th style="width:18%">연락처</th><th style="width:12%">상의/하의</th><th style="width:15%">최근 주문</th><th style="width:13%">누적 매출</th><th style="width:12%">VIP</th>
               </tr></thead>
               <tbody id="cust-tbody"></tbody>
             </table>
@@ -2524,6 +2562,7 @@ select.f-input{padding-right:38px}
   <div class="prv-head">
     <div class="prv-title"><i class="ti ti-file-description"></i><span id="prv-title-text">작업지시서 미리보기</span> <span class="prv-sub" id="prv-sub-text">엑셀 작지서 양식 · A4</span></div>
     <div class="prv-actions">
+      <button type="button" class="prv-btn ghost" id="prv-edit-btn" onclick="togglePrvEdit()"><i class="ti ti-pencil"></i>편집</button>
       <button type="button" class="prv-btn ghost" onclick="closePrintPreview()"><i class="ti ti-x"></i>닫기</button>
       <button type="button" class="prv-btn primary" onclick="window.print()"><i class="ti ti-printer"></i>인쇄</button>
     </div>
@@ -3250,7 +3289,7 @@ const VIEW_TITLE = {
   'mtm-suit':'정장 주문서', 'mtm-shirt':'셔츠 주문서', 'mtm-shoe':'구두 주문서',
   'fab':'원단 발주', 'sales-day':'일 매출', 'sales-period':'기간 매출', 'inv':'재고 현황'
 };
-function go(view){
+function go(view, fromPop){
   // 직원 권한 — 매출/설정/휴지통은 관리자 전용
   if (!isAdmin() && ['sales-day','sales-period','settings','trash'].includes(view)){
     toast('관리자 전용 메뉴입니다','warn','권한 제한');
@@ -3287,7 +3326,17 @@ function go(view){
   if (view==='orders') renderOrders();
   if (view==='settings') renderSettings();
   if (view==='trash') renderTrash();
+  // 브라우저 뒤로가기 지원 — 뷰 전환을 히스토리에 기록
+  if (!fromPop){
+    try{ history.pushState({ view }, '', '#' + view); }catch(e){}
+  }
 }
+window.addEventListener('popstate', (e)=>{
+  if (!document.getElementById('pg-app') || document.getElementById('pg-app').style.display==='none') return;
+  const v = (e.state && e.state.view) || (location.hash||'').replace('#','') || 'dash';
+  if (document.getElementById('view-' + v)) go(v, true);
+  else go('dash', true);
+});
 
 /* ⑤ Calendar ──────────────────────────────────────────── */
 function calMove(dir){
@@ -3327,34 +3376,79 @@ function renderCal(){
   for (let i=1;i<=tail;i++) html += `<div class="cal-d ot"><span class="n">${i}</span><div class="cal-d-dots"></div></div>`;
   grid.innerHTML = html;
 }
-function selDate(ds){
-  state.selDate = ds;
-  renderCal();
-  renderEvents();
-}
+
 function renderEvents(){
   const ds = state.selDate || dStr(today());
   const [y,m,d] = ds.split('-');
   $('#ev-date').textContent = `${y}.${m}.${d}`;
   const evs = state.events.filter(e=>e.date===ds);
+  state._dayEvs = evs;
   const list = $('#ev-list');
   if (!evs.length){
     list.innerHTML = `<div class="ev-empty"><i class="ti ti-calendar-off"></i>등록된 일정이 없습니다</div>`;
     return;
   }
   const TAG = { consult:'상담', fit:'가봉', deliver:'출고' };
-  list.innerHTML = evs.map(e=>`
-    <div class="ev-item" onclick="goEvent('${e.orderNo||''}')" title="${e.orderNo?'클릭하면 해당 주문으로 이동':''}">
+  list.innerHTML = evs.map((e,i)=>`
+    <div class="ev-item" onclick="dayEvClick(${i})" title="${e.type==='consult'?'클릭 — 고객 정보 열기':(e.orderNo?'클릭 — 해당 항목으로 이동':'')}">
       <div class="ev-item-dot ${e.type}"></div>
       <div class="ev-item-body">
         <div class="ev-item-top">
           <span class="ev-item-name">${e.name}</span>
-          <span class="ev-item-tag ${e.type}">${TAG[e.type]}</span>
+          <span class="ev-item-tag ${e.type}">${TAG[e.type]||e.type}</span>
+          ${e.manual?`<button class="mini-act" style="margin-left:auto;width:24px;height:24px;font-size:11px" onclick="event.stopPropagation();delManualEvent(${i})" title="일정 삭제"><i class="ti ti-x"></i></button>`:''}
         </div>
         <div class="ev-item-sub">${e.sub||''}</div>
         ${e.orderNo?`<div class="ev-item-meta">투입번호 #${e.orderNo} <i class="ti ti-arrow-right" style="font-size:10px"></i></div>`:''}
       </div>
     </div>`).join('');
+}
+// 일정 클릭 — 상담은 고객 정보, 그 외는 번호 라우팅
+function dayEvClick(i){
+  const e = (state._dayEvs||[])[i];
+  if (!e) return;
+  if (e.type==='consult' && e.name){
+    const c = state.customers.find(x=>x.nm===e.name);
+    if (c){ openCustDet(c.id); return; }
+  }
+  if (e.orderNo) goEvent(e.orderNo);
+}
+// 수동 일정 삭제
+function delManualEvent(i){
+  const e = (state._dayEvs||[])[i];
+  if (!e || !e.manual) return;
+  if (!confirm(`'${e.sub||e.name}' 일정을 삭제할까요?`)) return;
+  const idx = state.events.indexOf(e);
+  if (idx >= 0) state.events.splice(idx, 1);
+  saveDB();
+  renderCal(); renderEvents();
+  toast('일정이 삭제되었습니다','info');
+}
+// 수동 일정 등록 모달
+function openEvtModal(){
+  $('#evt-date').value = state.selDate || dStr(today());
+  $('#evt-type').value = 'consult';
+  $('#evt-name').value = '';
+  $('#evt-sub').value = '';
+  $('#evt-modal').classList.add('open');
+  setTimeout(()=>$('#evt-name')?.focus(), 80);
+}
+function closeEvtModal(e){
+  if (e && e.target && !e.target.classList.contains('signup-overlay')) return;
+  $('#evt-modal').classList.remove('open');
+}
+function doAddEvt(){
+  const date = $('#evt-date').value;
+  const name = $('#evt-name').value.trim();
+  const sub  = $('#evt-sub').value.trim();
+  if (!date){ toast('날짜를 선택하세요','warn'); return; }
+  if (!name && !sub){ toast('이름 또는 내용을 입력하세요','warn'); return; }
+  state.events.push({ date, type: $('#evt-type').value, name: name||'일정', sub, orderNo:'', manual:true });
+  saveDB();
+  state.selDate = date;
+  renderCal(); renderEvents();
+  $('#evt-modal').classList.remove('open');
+  toast(`${date} 일정이 등록되었습니다`,'ok','일정 추가');
 }
 
 // 일정 클릭 → 번호 체계로 목적지 판별 (R- 렌탈 / F- 원단 / 숫자 MTM 주문)
@@ -3388,8 +3482,7 @@ function renderDash(){
   renderEvents();
   const __adm = isAdmin();
   const __sc = document.querySelector('.settle-card'); if (__sc) __sc.style.display = __adm ? '' : 'none';
-  const __cc = document.querySelector('.chart-card');  if (__cc) __cc.style.display = __adm ? '' : 'none';
-  if (__adm){ renderSalesChart(); renderMonthlySettle(); }
+  if (__adm){ renderMonthlySettle(); }
 }
 
 /* ⑥ Customer ──────────────────────────────────────────── */
@@ -3509,7 +3602,7 @@ function renderCustList(){
       <td>${c.lastOrd||'-'}</td>
       <td>${fmt(c.total)}</td>
       <td><div style="display:flex;gap:7px;align-items:center;justify-content:space-between">
-        <span class="badge ${c.status==='VIP'?'b-warn':c.status==='활성'?'b-ok':'b-info'}">${c.status||'신규'}</span>
+        ${c.status==='VIP'?'<span class="badge b-warn">VIP</span>':'<span style="color:var(--t3);font-size:12px">—</span>'}
         <button class="mini-act" onclick="event.stopPropagation();quickOrder('${c.id}')" title="이 고객으로 정장 주문서 작성"><i class="ti ti-hanger"></i></button>
       </div></td>
     </tr>`).join('');
@@ -4570,6 +4663,29 @@ function printSuit(){
 function closePrintPreview(e){
   if (e && e.target && !e.target.classList.contains('prv-overlay')) return;
   $('#prv-modal').classList.remove('open');
+  const pa = document.getElementById('print-area');
+  if (pa){ pa.removeAttribute('contenteditable'); pa.style.outline=''; }
+  const eb = document.getElementById('prv-edit-btn');
+  if (eb) eb.innerHTML = '<i class="ti ti-pencil"></i>편집';
+}
+// 문서 직접 편집 토글 — 계약서·작업지시서·리포트 모두 수정 후 인쇄 가능
+function togglePrvEdit(){
+  const pa = document.getElementById('print-area');
+  const btn = document.getElementById('prv-edit-btn');
+  if (!pa) return;
+  const on = pa.getAttribute('contenteditable') === 'true';
+  if (on){
+    pa.removeAttribute('contenteditable');
+    pa.style.outline = '';
+    btn.innerHTML = '<i class="ti ti-pencil"></i>편집';
+    toast('편집 종료 — 이 상태로 인쇄됩니다','info');
+  } else {
+    pa.setAttribute('contenteditable','true');
+    pa.style.outline = '2px dashed var(--gold)';
+    pa.style.outlineOffset = '4px';
+    btn.innerHTML = '<i class="ti ti-check"></i>편집 완료';
+    toast('문서를 클릭해 자유롭게 수정하세요 (이번 출력에만 적용)','info','문서 편집');
+  }
 }
 
 /* ⑦.4 Orders list — 정장 주문 목록 ────────────────────── */
@@ -5098,22 +5214,41 @@ function closeProdModal(e){
   if (e && e.target && !e.target.classList.contains('signup-overlay')) return;
   $('#prod-modal').classList.remove('open');
 }
-// 사진 선택 → 240px 리사이즈 → dataURL
+// Supabase Storage 업로드 — 성공 시 공개 URL 반환, 실패 시 null(base64 폴백)
+async function uploadPhotoToStorage(dataURL, path){
+  if (!sb || !state._cloud) return null;
+  try{
+    const blob = await (await fetch(dataURL)).blob();
+    const { error } = await sb.storage.from('photos').upload(path, blob, { upsert:true, contentType: blob.type || 'image/jpeg' });
+    if (error) return null;
+    const { data } = sb.storage.from('photos').getPublicUrl(path);
+    return (data && data.publicUrl) ? data.publicUrl + '?v=' + Date.now() : null;
+  }catch(e){ return null; }
+}
+// 사진 선택 → 480px 리사이즈 → Storage 업로드 (오프라인이면 base64 폴백)
 function prodPhotoPick(inp){
   const file = inp.files && inp.files[0];
   if (!file) return;
   const img = new Image();
-  img.onload = ()=>{
-    const MAX = 240;
+  img.onload = async ()=>{
+    const MAX = 480;
     const sc = Math.min(1, MAX/Math.max(img.width, img.height));
     const cv = document.createElement('canvas');
     cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
     cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    state.prodPhotoTmp = cv.toDataURL('image/jpeg', .82);
+    const dataURL = cv.toDataURL('image/jpeg', .85);
+    state.prodPhotoTmp = dataURL;
     const prev = $('#pd-photo-prev');
-    prev.style.backgroundImage = `url(${state.prodPhotoTmp})`;
+    prev.style.backgroundImage = `url(${dataURL})`;
     prev.innerHTML='';
     URL.revokeObjectURL(img.src);
+    const path = 'prod/' + (state.prodTarget || ('new-' + Date.now())) + '.jpg';
+    const url = await uploadPhotoToStorage(dataURL, path);
+    if (url){
+      state.prodPhotoTmp = url;
+      prev.style.backgroundImage = `url(${url})`;
+      toast('사진이 클라우드 저장소에 업로드되었습니다','ok','Storage');
+    }
   };
   img.src = URL.createObjectURL(file);
 }
@@ -5284,12 +5419,30 @@ function buildNoti(){
   state.buttons.forEach(f=>{ if (f.stock<=20) out.push({cls:'warn', ic:'ti-circle-dot', txt:`단추 재고 부족 — ${f.no} (${f.stock}개)`, sub:f.vendor, no:''}); });
   return out;
 }
+const NOTI_READ_KEY = 'nuri_noti_read';
+function notiKey(n){ return n.cls + '|' + n.txt + '|' + (n.sub||''); }
+function loadNotiRead(){
+  try{ return new Set(JSON.parse(localStorage.getItem(NOTI_READ_KEY)||'[]')); }catch(e){ return new Set(); }
+}
+function saveNotiRead(set){
+  try{ localStorage.setItem(NOTI_READ_KEY, JSON.stringify([...set].slice(-300))); }catch(e){}
+}
 function updateNotiBadge(){
   const b = document.getElementById('noti-badge');
   if (!b) return;
-  const n = buildNoti().length;
+  const read = loadNotiRead();
+  const n = buildNoti().filter(x=>!read.has(notiKey(x))).length;
   b.style.display = n ? 'flex' : 'none';
   b.textContent = n > 9 ? '9+' : n;
+}
+function markAllNotiRead(e){
+  if (e) e.stopPropagation();
+  const read = loadNotiRead();
+  (state._noti || buildNoti()).forEach(x=>read.add(notiKey(x)));
+  saveNotiRead(read);
+  document.querySelectorAll('#noti-list .noti-item').forEach(el=>el.classList.add('read'));
+  updateNotiBadge();
+  toast('모든 알림을 읽음 처리했습니다','ok');
 }
 function toggleNoti(e){
   if (e) e.stopPropagation();
@@ -5298,8 +5451,9 @@ function toggleNoti(e){
   if (p.classList.contains('open')){ p.classList.remove('open'); return; }
   const items = buildNoti();
   state._noti = items;
+  const readSet = loadNotiRead();
   document.getElementById('noti-list').innerHTML = items.length ? items.map((n,i)=>`
-    <div class="noti-item" onclick="notiGo(${i})">
+    <div class="noti-item ${readSet.has(notiKey(n))?'read':''}" onclick="notiGo(${i})">
       <div class="noti-ico ${n.cls}"><i class="ti ${n.ic}"></i></div>
       <div style="flex:1;min-width:0"><div class="noti-txt">${n.txt}</div><div class="noti-sub">${n.sub||''}</div></div>
       ${n.msg?`<button class="mini-act" onclick="event.stopPropagation();copyMsg(${i})" title="고객 안내 문자 복사"><i class="ti ti-message"></i></button>`:''}
@@ -5849,17 +6003,24 @@ function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
   if (!file) return;
   const img = new Image();
-  img.onload = ()=>{
-    const MAX = 200;
+  img.onload = async ()=>{
+    const MAX = 240;
     const sc = Math.min(1, MAX/Math.max(img.width, img.height));
     const cv = document.createElement('canvas');
     cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
     cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    state.shopLogoTmp = cv.toDataURL('image/png');
+    const dataURL = cv.toDataURL('image/png');
+    state.shopLogoTmp = dataURL;
     const pv = $('#set-logo-prev');
-    pv.style.backgroundImage = `url(${state.shopLogoTmp})`;
+    pv.style.backgroundImage = `url(${dataURL})`;
     pv.innerHTML='';
     URL.revokeObjectURL(img.src);
+    const url = await uploadPhotoToStorage(dataURL, 'logo/shop-logo.png');
+    if (url){
+      state.shopLogoTmp = url;
+      pv.style.backgroundImage = `url(${url})`;
+      toast('로고가 클라우드 저장소에 업로드되었습니다','ok','Storage');
+    }
   };
   img.src = URL.createObjectURL(file);
 }
@@ -5989,7 +6150,7 @@ function applySig(){
 // ESC 키 — 열려있는 모달/패널 닫기
 window.addEventListener('keydown', e=>{
   if (e.key !== 'Escape') return;
-  ['prv-modal','signup-modal','rent-modal','fab-modal','prod-modal','fit-modal','settle-modal','sig-modal','hist-modal'].forEach(id=>{
+  ['prv-modal','signup-modal','rent-modal','fab-modal','prod-modal','fit-modal','settle-modal','sig-modal','hist-modal','evt-modal'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
   });
@@ -6348,7 +6509,8 @@ async function enterApp(){
   if (state._cloud && !loaded){
     pushCloud();                         // 서버가 비어있으면 현재 데이터 업로드
   }
-  go('dash');
+  try{ history.replaceState({ view:'dash' }, '', '#dash'); }catch(e){}
+  go('dash', true);
 }
 
 function logout(){
