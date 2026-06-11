@@ -1335,6 +1335,16 @@ body.dk .cm-item{background:var(--sf2)}
 .todo-by{font-size:11px}
 .ent-link{display:inline-block;padding:4px 2px;margin:-4px 0}
 
+/* 17차 — 빈 상태(Empty State) 정비 */
+.empty-state .ti{font-size:28px;color:var(--t3);width:64px;height:64px;border-radius:50%;background:var(--sf3);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.empty-state-title{font-size:15px}
+.empty-state-sub{font-size:13px;max-width:380px;line-height:1.6}
+.es-btn{margin-top:16px;border-color:#1ab394!important;color:#1ab394!important;font-weight:700!important}
+.es-btn:hover{background:var(--acc-soft)!important}
+.ev-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 10px}
+.ev-empty .ti{font-size:30px}
+body.dk .empty-state .ti{background:var(--sf2)}
+
 </style>
 </head>
 <body>
@@ -3679,7 +3689,7 @@ function renderEvents(){
   state._dayEvs = evs;
   const list = $('#ev-list');
   if (!evs.length){
-    list.innerHTML = `<div class="ev-empty"><i class="ti ti-calendar-off"></i>등록된 일정이 없습니다</div>`;
+    list.innerHTML = `<div class="ev-empty"><i class="ti ti-calendar-off"></i><span>이 날짜에 등록된 일정이 없습니다</span><button class="action-btn es-btn" style="margin-top:2px" onclick="openEvtModal()"><i class="ti ti-plus"></i>일정 추가</button></div>`;
     return;
   }
   const TAG = { consult:'상담', fit:'가봉', deliver:'출고' };
@@ -3942,7 +3952,12 @@ function renderCustList(){
   const tb = $('#cust-tbody');
   const rows = state.customers.filter(c=>custMatch(c, q));
   if (!rows.length){
-    tb.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-user-off"></i><div class="empty-state-title">고객이 없습니다</div><div class="empty-state-sub">상단의 신규 등록 버튼을 눌러 첫 고객을 추가하세요</div></div></td></tr>`;
+    tb.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-user-off"></i>
+      <div class="empty-state-title">${q ? `'${q}' 검색 결과가 없습니다` : '아직 등록된 고객이 없습니다'}</div>
+      <div class="empty-state-sub">${q ? '이름 초성(예: ㄱㄷㅎ)이나 연락처 뒷자리로도 검색할 수 있습니다' : '첫 고객을 등록하면 주문·대여 이력이 자동으로 연결됩니다'}</div>
+      ${q ? `<button class="action-btn es-btn" onclick="$('#q-cust').value='';renderCustList()"><i class="ti ti-x"></i>검색 초기화</button>`
+          : `<button class="action-btn es-btn" onclick="go('reg')"><i class="ti ti-user-plus"></i>고객 등록하기</button>`}
+    </div></td></tr>`;
     return;
   }
   tb.innerHTML = rows.map(c=>`
@@ -4269,6 +4284,13 @@ function pickSize(selId, boxId, el){
   autoSizeAll();
 }
 
+// 주문서 자재 선택 빈 안내 (그리드 전체 폭)
+function pickEmpty(title, sub){
+  return `<div class="empty-state" style="grid-column:1/-1;padding:24px 10px"><i class="ti ti-package-off"></i>
+    <div class="empty-state-title">${title}</div>
+    <div class="empty-state-sub">${sub}</div>
+    <button class="action-btn es-btn" onclick="go('inv')"><i class="ti ti-box"></i>재고 현황으로</button></div>`;
+}
 function renderFabCards(){
   const box = $('#pick-fab');
   if (!box) return;
@@ -4277,7 +4299,7 @@ function renderFabCards(){
       <div class="pc-title">${f.no}</div>
       <div class="pc-sub">${f.vendor} · ${f.color}</div>
       <span class="pc-tag">${f.yard} Y</span>
-    </div>`).join('');
+    </div>`).join('') || pickEmpty('등록된 원단이 없습니다','재고 현황에서 원단을 등록하면 여기 선택지로 나타납니다');
 }
 function pickFab(no, el){
   $$('#pick-fab .pick-card').forEach(c=>c.classList.remove('active'));
@@ -4297,7 +4319,7 @@ function renderLinCards(){
     <div class="pick-card" data-v="${f.no}" onclick="pickLin('${f.no}', this)">
       <div class="pc-title">${f.no}</div>
       <div class="pc-sub">${f.vendor} · ${f.color}</div>
-    </div>`).join('');
+    </div>`).join('') || pickEmpty('등록된 안감이 없습니다','재고 현황에서 안감을 등록하면 여기 선택지로 나타납니다');
 }
 function pickLin(no, el){
   const active = el.classList.contains('active');
@@ -4312,7 +4334,7 @@ function renderBtnCards(){
     <div class="pick-card" data-v="${f.no}" onclick="pickBtn('${f.no}', this)">
       <div class="pc-title">${f.no}</div>
       <div class="pc-sub">${f.color} · ${f.mat}</div>
-    </div>`).join('');
+    </div>`).join('') || pickEmpty('등록된 단추가 없습니다','재고 현황에서 단추를 등록하면 여기 선택지로 나타납니다');
 }
 function pickBtn(no, el){
   const active = el.classList.contains('active');
@@ -5072,7 +5094,7 @@ function renderOrders(){
         <button class="mini-act" onclick="event.stopPropagation();deleteOrder('${o.no}')" title="휴지통으로 이동"><i class="ti ti-trash"></i></button>
       </div></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="10"><div class="empty-state"><i class="ti ti-clipboard-off"></i><div class="empty-state-title">주문이 없습니다</div><div class="empty-state-sub">정장 주문서에서 첫 주문을 등록하세요</div></div></td></tr>`;
+  }).join('') || `<tr><td colspan="10"><div class="empty-state"><i class="ti ti-clipboard-off"></i><div class="empty-state-title">아직 주문이 없습니다</div><div class="empty-state-sub">주문서를 작성하면 작지서 인쇄·가봉 일정·매출까지 자동으로 연결됩니다</div><button class="action-btn es-btn" onclick="go('mtm-suit')"><i class="ti ti-pencil"></i>정장 주문서 작성</button></div></td></tr>`;
 }
 
 /* ⑦.5 Fabric ──────────────────────────────────────────── */
@@ -5089,7 +5111,7 @@ function renderFabList(){
       <td>${fmt(f.price)}</td>
       <td><span class="badge ${f.stock<5?'b-err':f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td>
       <td>${f.lastOrd}</td>
-    </tr>`).join('') || `<tr><td colspan="8"><div class="empty-state"><i class="ti ti-package-off"></i><div class="empty-state-title">원단이 없습니다</div></div></td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="8"><div class="empty-state"><i class="ti ti-package-off"></i><div class="empty-state-title">발주할 원단이 없습니다</div><div class="empty-state-sub">재고 현황에 원단을 등록하면 요척표 기반 발주 수량이 자동 계산됩니다</div><button class="action-btn es-btn" onclick="go('inv')"><i class="ti ti-box"></i>재고 현황으로</button></div></td></tr>`;
 }
 function openFabForm(){
   $('#fm-fab').innerHTML = state.fabrics.map(f=>
@@ -5132,7 +5154,7 @@ function renderSalesDay(){
   $('#sd-tot').textContent = fmt(tot);
   $('#sd-tbody').innerHTML = rows.map(o=>`
     <tr><td><b>#${o.no}</b></td><td>${o.nm}</td><td>${o.type}</td><td>${fmt(o.sup)}</td><td>${fmt(o.vat)}</td><td><b>${fmt(o.total)}</b></td></tr>
-  `).join('') || `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-receipt-off"></i><div class="empty-state-title">해당일 매출이 없습니다</div></div></td></tr>`;
+  `).join('') || `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-receipt-off"></i><div class="empty-state-title">이 날짜의 매출이 없습니다</div><div class="empty-state-sub">위 날짜 선택에서 다른 날을 확인하거나, 새 주문을 등록해 보세요</div><button class="action-btn es-btn" onclick="go('mtm-suit')"><i class="ti ti-pencil"></i>정장 주문서 작성</button></div></td></tr>`;
 }
 function renderSalesPeriod(){
   const f = $('#sp-from').value, t = $('#sp-to').value;
@@ -5151,7 +5173,7 @@ function renderSalesPeriod(){
   const keys = Object.keys(byDay).sort().reverse();
   $('#sp-tbody').innerHTML = keys.map(d=>`
     <tr><td>${d}</td><td>${byDay[d].cnt}</td><td>${fmt(byDay[d].sup)}</td><td>${fmt(byDay[d].vat)}</td><td><b>${fmt(byDay[d].tot)}</b></td></tr>
-  `).join('') || `<tr><td colspan="5"><div class="empty-state"><i class="ti ti-chart-bar"></i><div class="empty-state-title">기간 내 매출이 없습니다</div></div></td></tr>`;
+  `).join('') || `<tr><td colspan="5"><div class="empty-state"><i class="ti ti-chart-bar"></i><div class="empty-state-title">선택한 기간에 매출이 없습니다</div><div class="empty-state-sub">조회 기간을 넓히거나 다른 월을 선택해 확인해 보세요</div></div></td></tr>`;
 }
 
 /* ⑧.4 매출 리포트 인쇄 (MTM/렌탈 분리 집계, A4) ─────── */
@@ -5291,7 +5313,12 @@ function renderRental(){
       <td>${who}</td>
       <td>${act}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="9"><div class="empty-state"><i class="ti ti-hanger"></i><div class="empty-state-title">해당 조건의 상품이 없습니다</div></div></td></tr>`;
+  }).join('') || `<tr><td colspan="9"><div class="empty-state"><i class="ti ti-hanger"></i>
+      <div class="empty-state-title">${state.rentals.length ? '해당 조건의 상품이 없습니다' : '등록된 렌탈 상품이 없습니다'}</div>
+      <div class="empty-state-sub">${state.rentals.length ? '검색어나 상태 필터를 바꿔 다시 확인해 보세요' : '상품을 등록하면 예약·출고·반납·정산과 월간 가용성까지 한 화면에서 관리됩니다'}</div>
+      ${state.rentals.length ? `<button class="action-btn es-btn" onclick="$('#q-rental').value='';renderRental()"><i class="ti ti-x"></i>필터 초기화</button>`
+                             : `<button class="action-btn es-btn" onclick="openProdModal()"><i class="ti ti-plus"></i>렌탈 상품 등록</button>`}
+    </div></td></tr>`;
   if (state.rentalView==='gantt' && typeof renderRentalGantt==='function') renderRentalGantt();
   if (state.rentalView==='stats' && typeof renderRentalStats==='function') renderRentalStats();
 }
@@ -6175,6 +6202,13 @@ function renderRentalGantt(){
   if (!state.ganttDate) state.ganttDate = new Date(today());
   const g = state.ganttDate, y = g.getFullYear(), m = g.getMonth();
   $('#g-title').textContent = `${y}년 ${m+1}월`;
+  if (!state.rentals.length){
+    $('#rental-gantt').innerHTML = `<div class="empty-state"><i class="ti ti-calendar-stats"></i>
+      <div class="empty-state-title">표시할 렌탈 상품이 없습니다</div>
+      <div class="empty-state-sub">상품을 등록하면 한 달 치 예약·출고·연체 현황이 막대로 표시됩니다</div>
+      <button class="action-btn es-btn" onclick="openProdModal()"><i class="ti ti-plus"></i>렌탈 상품 등록</button></div>`;
+    return;
+  }
   const last = new Date(y, m+1, 0).getDate();
   const tStr = dStr(today());
   const inR = (d,a,b)=>a&&b&&d>=a&&d<=b;
