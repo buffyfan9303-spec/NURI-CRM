@@ -1437,6 +1437,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
 #draft-banner{display:flex;align-items:center;gap:11px;padding:11px 14px;background:var(--wb);border:1px solid rgba(232,149,12,.45);border-radius:3px;margin-bottom:12px;font-size:13.5px;color:var(--t);flex-wrap:wrap}
 #draft-banner > .ti{color:var(--wt);font-size:19px;flex-shrink:0}
 #draft-banner span{color:var(--t3);font-size:12.5px}
+.dp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:13px;border-bottom:1px solid var(--bd)}
 
 </style>
 </head>
@@ -8108,6 +8109,124 @@ function facBack(no){
   if (state.view==='orders') renderOrders();
 }
 
+/* ─── 과거 주문 → 폼 불러오기 (재인쇄·재주문) ─── */
+function loadOrderToForm(no, mode){
+  const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
+  if (!o){ toast('주문을 찾을 수 없습니다','err'); return false; }
+  go('mtm-suit');
+  const set = (id, v)=>{
+    const el = document.getElementById(id);
+    if (el && v!==undefined && v!==null && 'value' in el) el.value = v;
+  };
+  // 고객
+  set('o-cust', o.custId||'');
+  set('o-nm', o.nm||'');
+  set('o-ph', o.ph||'');
+  // 옵션 상태 통째 복원
+  state.opt = Object.assign(state.opt||{}, JSON.parse(JSON.stringify(o.opt||{})));
+  // 수량
+  const q = o.qty||{};
+  set('qty-s', q.s!==undefined?q.s:1);
+  set('qty-p', q.p!==undefined?q.p:1);
+  set('qty-v', q.v||0);
+  set('qty-c', q.c||0);
+  set('qty-j', q.j||0);
+  state.opt.qty = { s:q.s||0, p:q.p||0, v:q.v||0, c:q.c||0, j:q.j||0 };
+  if (typeof onQtyChange==='function') onQtyChange();
+  // 패턴 → 사이즈 목록 → 사이즈
+  set('o-pTop', o.pattern?.top||'');
+  set('o-pBot', o.pattern?.bot||'');
+  set('o-pVest', o.pattern?.vest||'');
+  set('o-pCoat', o.pattern?.coat||'');
+  if (typeof refreshSizeOptions==='function') refreshSizeOptions();
+  // 사이즈 복원 — 목록에 없는 과거 값은 '기타'로 폴백 (치수는 spec으로 보존)
+  const setSize = (id, want)=>{
+    if (want===undefined || want===null || want==='') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = String(want);
+    if (el.value !== String(want)){
+      el.value = '기타';
+      if (el.value !== '기타') el.value = '';
+    }
+  };
+  setSize('o-sTop', o.size?.top);
+  setSize('o-sBot', o.size?.bot);
+  setSize('o-sVest', o.size?.vest);
+  setSize('o-sCoat', o.size?.coat);
+  if (typeof refreshSizeOptions==='function') refreshSizeOptions();
+  // 자재·세부
+  set('o-fabNo', o.fabNo||'');
+  set('o-fabFeat', o.fabFeat||'');
+  set('o-swatch', o.swatch||'');
+  set('o-lin', o.lin||'');
+  set('o-btn', o.btn||'');
+  set('o-padL', (o.pad&&o.pad.L!==undefined)?o.pad.L:2);
+  set('o-padR', (o.pad&&o.pad.R!==undefined)?o.pad.R:2);
+  set('o-lapelSize', o.lapelSize||8.5);
+  set('o-memo', o.memo||'');
+  set('o-patMemo', o.patMemo||'');
+  // 일정·투입번호 — 재인쇄는 원본 유지, 재주문은 새로
+  if (mode==='reprint'){
+    set('o-fitDt', o.fitDt||'');
+    set('o-doneDt', o.doneDt||'');
+    const f = document.getElementById('o-fac');
+    if (f) f.textContent = '#'+o.no;
+    const dt = document.getElementById('o-date');
+    if (dt && o.date) dt.textContent = o.date;
+  } else {
+    set('o-fitDt', '');
+    set('o-doneDt', '');
+  }
+  // 픽카드 active 동기화
+  const SYNC = { 'pick-pTop':'o-pTop','pick-pBot':'o-pBot','pick-pVest':'o-pVest','pick-pCoat':'o-pCoat','pick-fab':'o-fabNo','pick-lin':'o-lin','pick-btn':'o-btn' };
+  Object.keys(SYNC).forEach(box=>{
+    const v = document.getElementById(SYNC[box])?.value;
+    document.querySelectorAll('#'+box+' .pick-card').forEach(c=>c.classList.toggle('active', !!v && c.dataset.v===v));
+  });
+  // 옵션 버튼 active
+  document.querySelectorAll('#view-mtm-suit [data-opt]').forEach(grp=>{
+    const key = grp.dataset.opt;
+    const val = state.opt ? state.opt[key] : undefined;
+    if (val===undefined || val===null) return;
+    grp.querySelectorAll('.opt-btn').forEach(b=>b.classList.toggle('active', String(b.dataset.v)===String(val)));
+  });
+  // 수정치수(±)·완성치수 복원 (기타 사이즈 호환)
+  try{
+    if (o.spec){
+      [['top', TOP_PARTS], ['bot', BOT_PARTS]].forEach(([part, PARTS])=>{
+        (PARTS||[]).forEach(p=>{
+          const s = o.spec[part] && o.spec[part][p.id];
+          if (!s || typeof setCmToInput!=='function') return;
+          if (s.fix) setCmToInput(`sz-${part}-${p.id}-fix`, s.fix);
+          if (s.fin) setCmToInput(`sz-${part}-${p.id}-fin`, s.fin);
+        });
+      });
+    }
+  }catch(e){}
+  if (typeof autoSizeAll==='function') autoSizeAll();
+  if (typeof computePrice==='function') computePrice();
+  if (typeof renderStepBar==='function') renderStepBar();
+  const b = document.getElementById('draft-banner');
+  if (b) b.remove();
+  return true;
+}
+function reprintOrder(no){
+  if (typeof closeDet==='function') closeDet({ target: document.getElementById('det-ov') });
+  if (!loadOrderToForm(no, 'reprint')) return;
+  toast(`#${no} 주문을 불러왔습니다 — 작업지시서 미리보기`,'ok','재인쇄');
+  setTimeout(()=>{
+    if (typeof printSuit==='function') printSuit();
+    else { buildWorkOrder(); $('#prv-modal').classList.add('open'); }
+  }, 300);
+}
+function reorderToForm(no){
+  if (typeof closeDet==='function') closeDet({ target: document.getElementById('det-ov') });
+  if (!loadOrderToForm(no, 'reorder')) return;
+  if (typeof goStep==='function') goStep(1);
+  toast('재주문으로 불러왔습니다 — 가봉·완성 출고일정만 새로 입력 후 저장하세요','ok','재주문');
+}
+
 /* ─── 주문 상세 컨텍스트 패널 (재무 롤업·가봉·코멘트) ── */
 function openOrderDet(no){
   const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
@@ -8124,6 +8243,10 @@ function openOrderDet(no){
   const profit = (o.total||0) - cost;
 
   $('#dp-bd').innerHTML = `
+    <div class="dp-actions">
+      <button class="action-btn" onclick="reprintOrder('${o.no}')"><i class="ti ti-printer"></i>작지서 재인쇄</button>
+      <button class="action-btn es-btn" style="margin-top:0" onclick="reorderToForm('${o.no}')"><i class="ti ti-copy"></i>재주문 — 폼으로 불러오기</button>
+    </div>
     <div class="dp-sec">
       <div class="dp-sec-title"><i class="ti ti-clipboard-list"></i>주문 정보</div>
       <div class="dp-g2">
