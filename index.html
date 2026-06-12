@@ -1389,6 +1389,27 @@ body.dk .empty-state .ti{background:var(--sf2)}
 #act-panel .noti-head{display:flex;align-items:center;gap:6px}
 #act-panel .noti-readall{margin-left:auto}
 
+/* 23차 — 주문서 개편 */
+.sub-merged{margin-top:22px;border-top:2px dashed var(--bd2);padding-top:18px}
+.sub-merged .section-card-title{font-size:14.5px}
+.size-acc{max-height:0;overflow:hidden;transition:max-height .25s ease}
+.size-acc.open{max-height:150px;margin:8px 0 4px}
+.size-acc-in{display:flex;flex-wrap:wrap;gap:7px 16px;align-items:center;padding:11px 14px;background:var(--acc-soft);border:1px solid rgba(26,179,148,.35);border-radius:3px;font-size:13.5px;color:var(--t)}
+.sa-head{color:var(--okt);font-size:13px;margin-right:4px}
+.sa-item b{color:var(--okt);margin-right:5px;font-size:12px;font-weight:800}
+.sa-item small{color:var(--t3);margin-left:2px}
+.opt-btn{cursor:pointer}
+.opt-btn.active{box-shadow:0 0 0 1.5px rgba(26,179,148,.35)}
+
+/* 24차 — 카탈로그 사이즈 재고 */
+.cat-sizes{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.cs-chip{border:1px solid var(--bd2);border-radius:3px;padding:3px 7px;font-size:11px;font-weight:700;color:var(--t2);background:var(--sf)}
+.cs-chip b{color:var(--okt);margin-left:4px}
+.cs-chip.off{opacity:.45}
+.cs-chip.off b{color:var(--et)}
+.cl-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--bd);font-size:13px;color:var(--t)}
+.cl-item:last-child{border-bottom:0}
+
 </style>
 </head>
 <body>
@@ -1867,7 +1888,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
           </div>
           <div class="stat-card c1 sc-link" onclick="go('rental')">
             <i class="ti ti-hanger stat-card-ico"></i>
-            <div class="stat-lbl">렌탈 출고중</div>
+            <div class="stat-lbl">렌탈 대여중</div>
             <div class="stat-val" id="stat-rent">0</div>
             <div class="stat-note" id="stat-rent-note">연체 0건</div>
           </div>
@@ -1944,7 +1965,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
           <div class="ms-block">
             <div class="ms-lbl">보유 보증금</div>
             <div class="ms-val" id="ms-dep">₩0</div>
-            <div class="ms-sub" id="ms-dep-sub">출고중 0건</div>
+            <div class="ms-sub" id="ms-dep-sub">대여중 0건</div>
           </div>
         </div>
 
@@ -2072,9 +2093,9 @@ body.dk .empty-state .ti{background:var(--sf2)}
               </div>
             </div>
           </div>
-          <label class="f-label" style="margin-top:10px">상의 호칭</label>
+          <label class="f-label" style="margin-top:10px">상의 사이즈</label>
           <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-r-top"></div></div>
-          <label class="f-label" style="margin-top:10px">하의 호칭</label>
+          <label class="f-label" style="margin-top:10px">하의 사이즈</label>
           <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-r-bot"></div></div>
           <select id="r-top" style="display:none"></select>
           <select id="r-bot" style="display:none"></select>
@@ -2115,7 +2136,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
         <div class="stat-grid">
           <div class="stat-card c1"><i class="ti ti-hanger stat-card-ico"></i><div class="stat-lbl">보유 상품</div><div class="stat-val" id="rt-total">0</div><div class="stat-note">예복·턱시도·드레스·한복</div></div>
           <div class="stat-card c2"><i class="ti ti-circle-check stat-card-ico"></i><div class="stat-lbl">출고 가능</div><div class="stat-val" id="rt-avail">0</div><div class="stat-note" id="rt-resv">예약 0건 대기</div></div>
-          <div class="stat-card c3"><i class="ti ti-user-check stat-card-ico"></i><div class="stat-lbl">출고 중</div><div class="stat-val" id="rt-rented">0</div></div>
+          <div class="stat-card c3"><i class="ti ti-user-check stat-card-ico"></i><div class="stat-lbl">대여 중</div><div class="stat-val" id="rt-rented">0</div></div>
           <div class="stat-card c4"><i class="ti ti-alarm stat-card-ico"></i><div class="stat-lbl">회수 임박 (3일 내)</div><div class="stat-val" id="rt-due">0</div></div>
         </div>
 
@@ -2154,7 +2175,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
           <div class="table-scroll">
             <table class="data-table">
               <thead><tr>
-                <th style="width:8%">코드</th><th style="width:8%">구분</th><th style="width:20%">품명</th><th style="width:8%">사이즈</th><th style="width:10%">컬러</th><th style="width:10%">대여료</th><th style="width:12%">상태</th><th style="width:14%">대여자 / 반납예정</th><th style="width:10%">처리</th>
+                <th style="width:8%">구분</th><th style="width:28%">상품 (코드 · 품명)</th><th style="width:8%">사이즈</th><th style="width:10%">컬러</th><th style="width:10%">대여료</th><th style="width:12%">상태</th><th style="width:14%">대여자 / 반납예정</th><th style="width:10%">처리</th>
               </tr></thead>
               <tbody id="rental-tbody"></tbody>
             </table>
@@ -2187,11 +2208,10 @@ body.dk .empty-state .ti{background:var(--sf2)}
         <!-- 6 탭 -->
         <div class="suit-tabs" id="suit-tabs">
           <button type="button" class="suit-tab active" data-tab="1" onclick="switchTab(1)"><span class="num">①</span><span class="lbl">고객정보·출고일정</span></button>
-          <button type="button" class="suit-tab"        data-tab="2" onclick="switchTab(2)"><span class="num">②</span><span class="lbl">수량·패턴</span></button>
+          <button type="button" class="suit-tab"        data-tab="2" onclick="switchTab(2)"><span class="num">②</span><span class="lbl">주문서 작성</span></button>
           <button type="button" class="suit-tab"        data-tab="3" onclick="switchTab(3)"><span class="num">③</span><span class="lbl">사이즈</span></button>
-          <button type="button" class="suit-tab"        data-tab="4" onclick="switchTab(4)"><span class="num">④</span><span class="lbl">상의 옵션</span></button>
-          <button type="button" class="suit-tab"        data-tab="5" onclick="switchTab(5)"><span class="num">⑤</span><span class="lbl">하의·조끼</span></button>
-          <button type="button" class="suit-tab"        data-tab="6" onclick="switchTab(6)"><span class="num">⑥</span><span class="lbl">원단·저장</span></button>
+          <button type="button" class="suit-tab"        data-tab="5" onclick="switchTab(5)"><span class="num">④</span><span class="lbl">하의·조끼</span></button>
+          <button type="button" class="suit-tab"        data-tab="6" onclick="switchTab(6)"><span class="num">⑤</span><span class="lbl">원단·저장</span></button>
         </div>
 
         <!-- ① 고객 · 일정 -->
@@ -2220,18 +2240,21 @@ body.dk .empty-state .ti{background:var(--sf2)}
             <div><label class="f-label">가봉 출고일</label><input id="o-fitDt" class="f-input" type="date"></div>
             <div><label class="f-label">완성 출고일<span class="f-req">*</span></label><input id="o-doneDt" class="f-input" type="date"></div>
           </div>
+        
+        <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
+          <button type="button" class="action-btn" style="border-color:#1ab394;color:#1ab394;font-weight:800;padding:11px 24px;font-size:14.5px" onclick="goNextFromCust()">다음 — 주문서 작성 <i class="ti ti-arrow-right"></i></button>
         </div>
+      </div>
 
         <!-- ② 수량 · 패턴 -->
         <div class="section-card suit-panel" id="suit-sec-2" data-tab="2">
           <div class="section-card-title">
-            <span class="step-badge">2</span><i class="ti ti-numbers"></i>주문 수량 · 패턴 선택
-            <span class="section-sub">※ 수량(S/P/V/C/J) + 패턴+호칭 선택 시 사이즈 자동 채움</span>
+            <span class="step-badge">2</span><i class="ti ti-numbers"></i>주문서 작성 <span class="section-sub">※ 수량 + 패턴 + 사이즈 선택 → 상세 치수 자동 · 아래에서 상의 옵션까지 한 번에</span>
           </div>
 
-          <label class="f-label" style="margin-bottom:9px">주문 수량 (S 상의 · P 하의 · V 조끼 · C 코트 · J 자켓 추가)</label>
+          <label class="f-label" style="margin-bottom:9px">주문 수량 (S 수트 · P 하의 · V 조끼 · C 코트 · J 자켓 추가)</label>
           <div class="qty-grid">
-            <div class="qty-cell"><div class="qty-cell-label">S · 상의</div><div class="qty-cell-sub">SUIT</div><input id="qty-s" type="number" min="0" max="9" value="1" oninput="onQtyChange()"></div>
+            <div class="qty-cell"><div class="qty-cell-label">S · 수트</div><div class="qty-cell-sub">SUIT</div><input id="qty-s" type="number" min="0" max="9" value="1" oninput="onQtyChange()"></div>
             <div class="qty-cell"><div class="qty-cell-label">P · 하의</div><div class="qty-cell-sub">PANTS</div><input id="qty-p" type="number" min="0" max="9" value="1" oninput="onQtyChange()"></div>
             <div class="qty-cell"><div class="qty-cell-label">V · 조끼</div><div class="qty-cell-sub">VEST</div><input id="qty-v" type="number" min="0" max="9" value="0" oninput="onQtyChange()"></div>
             <div class="qty-cell"><div class="qty-cell-label">C · 코트</div><div class="qty-cell-sub">COAT</div><input id="qty-c" type="number" min="0" max="9" value="0" oninput="onQtyChange()"></div>
@@ -2245,25 +2268,25 @@ body.dk .empty-state .ti{background:var(--sf2)}
           <!-- 상의 패턴 + 호칭 -->
           <label class="f-label">상의 패턴</label>
           <div class="pick-box"><div class="pick-grid" id="pick-pTop"></div></div>
-          <label class="f-label" style="margin-top:14px">상의 호칭<span class="f-req">*</span></label>
+          <label class="f-label" style="margin-top:14px">상의 사이즈<span class="f-req">*</span></label>
           <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-sTop"><div class="pick-empty">먼저 상의 패턴을 선택하세요</div></div></div>
 
           <!-- 하의 패턴 + 호칭 -->
           <label class="f-label" style="margin-top:14px">하의 패턴</label>
           <div class="pick-box"><div class="pick-grid" id="pick-pBot"></div></div>
-          <label class="f-label" style="margin-top:14px">하의 호칭</label>
+          <label class="f-label" style="margin-top:14px">하의 사이즈</label>
           <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-sBot"><div class="pick-empty">먼저 하의 패턴을 선택하세요</div></div></div>
 
           <!-- 조끼/코트 (수량 입력 시 활성화) -->
           <div id="o-vest-row" style="display:none">
             <label class="f-label" style="margin-top:14px">조끼 패턴</label>
             <div class="pick-box"><div class="pick-grid" id="pick-pVest"></div></div>
-            <label class="f-label" style="margin-top:14px">조끼 호칭</label>
+            <label class="f-label" style="margin-top:14px">조끼 사이즈</label>
             <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-sVest"><div class="pick-empty">먼저 조끼 패턴을 선택하세요</div></div></div>
 
             <label class="f-label" style="margin-top:14px">코트 패턴</label>
             <div class="pick-box"><div class="pick-grid" id="pick-pCoat"></div></div>
-            <label class="f-label" style="margin-top:14px">코트 호칭</label>
+            <label class="f-label" style="margin-top:14px">코트 사이즈</label>
             <div class="pick-box"><div class="pick-grid pick-grid-sm" id="pick-sCoat"><div class="pick-empty">먼저 코트 패턴을 선택하세요</div></div></div>
           </div>
 
@@ -2276,74 +2299,11 @@ body.dk .empty-state .ti{background:var(--sf2)}
           <select id="o-sVest" style="display:none"></select>
           <select id="o-pCoat" style="display:none"></select>
           <select id="o-sCoat" style="display:none"></select>
-        </div>
-
-        <!-- ③ 사이즈 (상의 + 하의) -->
-        <div class="section-card suit-panel" id="suit-sec-3" data-tab="3">
-          <div class="section-card-title">
-            <span class="step-badge">3</span><i class="ti ti-ruler-measure"></i>상의 사이즈 측정
-            <span class="section-sub">※ 패턴 기본 자동 → 수정치수(±) 입력 → 완성사이즈 자동 계산 · 인치(in)는 즉시 cm 변환</span>
-          </div>
-
-          <div class="info-box">
-            <i class="ti ti-info-circle"></i>
-            <div><b>신체사이즈</b>는 호칭 선택 시 자동 입력 · <b>− / + 버튼</b> 한 번 = 0.5cm 보정 · <b>완성사이즈</b>를 직접 고치면 수정치수가 자동 계산 · 우측 상단 <b>cm/in</b>으로 전체 단위 전환</div>
-          </div>
-
-          <div class="spec-table-head">
-            <div class="ttl"><i class="ti ti-ruler-2"></i>상의 부위별 측정
-              <span class="unit-toggle unit-toggle-sm" data-target="top">
-                <button type="button" class="u-opt active" data-u="cm" onclick="setAllUnit('top','cm')">cm</button>
-                <button type="button" class="u-opt" data-u="in" onclick="setAllUnit('top','in')">in</button>
-              </span>
-              <span class="unit-hint">표 전체 단위 전환</span>
-            </div>
-          </div>
-
-          <table class="spec-table">
-            <thead><tr>
-              <th style="width:21%">부 위</th>
-              <th class="col-pat" style="width:23%">신체사이즈 (패턴)</th>
-              <th class="col-fix" style="width:32%">수정치수 ± <span class="th-hint">(버튼 1회 = 0.5)</span></th>
-              <th class="col-fin" style="width:24%">완성사이즈</th>
-            </tr></thead>
-            <tbody id="spec-top-body">
-              <!-- JS로 렌더링 -->
-            </tbody>
-          </table>
-
-          <div class="form-section-hd" style="margin-top:22px"><i class="ti ti-adjustments"></i>패턴 수정 (어깨/자세)</div>
-
-          <div class="modi-block">
-            <div class="modi-block-lbl"><i class="ti ti-arrows-up-down"></i>어깨 (강상/중상/약상 · 강하/중하/약하)</div>
-            <div class="modi-grid" data-opt="shldFix">
-              <button type="button" class="modi-btn active" data-v="없음">없음<span class="val">0</span></button>
-              <button type="button" class="modi-btn" data-v="강상">강상<span class="val">+1.5</span></button>
-              <button type="button" class="modi-btn" data-v="중상">중상<span class="val">+1</span></button>
-              <button type="button" class="modi-btn" data-v="약상">약상<span class="val">+0.5</span></button>
-              <button type="button" class="modi-btn" data-v="약하">약하<span class="val">-0.5</span></button>
-              <button type="button" class="modi-btn" data-v="중하">중하<span class="val">-1</span></button>
-              <button type="button" class="modi-btn" data-v="강하">강하<span class="val">-1.5</span></button>
-            </div>
-          </div>
-          <div class="modi-block">
-            <div class="modi-block-lbl"><i class="ti ti-body-scan"></i>자세 (강반/중반/약반 · 강굴/중굴/약굴)</div>
-            <div class="modi-grid" data-opt="postFix">
-              <button type="button" class="modi-btn active" data-v="없음">없음<span class="val">0</span></button>
-              <button type="button" class="modi-btn" data-v="강반">강반<span class="val">+1.5</span></button>
-              <button type="button" class="modi-btn" data-v="중반">중반<span class="val">+1</span></button>
-              <button type="button" class="modi-btn" data-v="약반">약반<span class="val">+0.5</span></button>
-              <button type="button" class="modi-btn" data-v="약굴">약굴<span class="val">-0.5</span></button>
-              <button type="button" class="modi-btn" data-v="중굴">중굴<span class="val">-1</span></button>
-              <button type="button" class="modi-btn" data-v="강굴">강굴<span class="val">-1.5</span></button>
-            </div>
-          </div>
-        </div>
-
+        
         <!-- ④ 상의 옵션 (16종) -->
-        <div class="section-card suit-panel" id="suit-sec-4" data-tab="4">
+        <div class="sub-merged" id="suit-sec-4">
           <div class="section-card-title">
-            <span class="step-badge">4</span><i class="ti ti-tool"></i>상의 작업지시 옵션 (16종)
+            <i class="ti ti-tool"></i>상의 작업지시 옵션 (16종)
             <span class="section-sub">※ 엑셀 작업지시서 그대로 이식</span>
           </div>
 
@@ -2521,9 +2481,74 @@ body.dk .empty-state .ti{background:var(--sf2)}
         </div>
 
         <!-- ⑤ 하의 (10종) + 조끼 -->
+      </div>
+
+        <!-- ③ 사이즈 (상의 + 하의) -->
+        <div class="section-card suit-panel" id="suit-sec-3" data-tab="3">
+          <div class="section-card-title">
+            <span class="step-badge">3</span><i class="ti ti-ruler-measure"></i>상의 사이즈 측정
+            <span class="section-sub">※ 패턴 기본 자동 → 수정치수(±) 입력 → 완성사이즈 자동 계산 · 인치(in)는 즉시 cm 변환</span>
+          </div>
+
+          <div class="info-box">
+            <i class="ti ti-info-circle"></i>
+            <div><b>신체사이즈</b>는 사이즈 선택 시 자동 입력 · <b>− / + 버튼</b> 한 번 = 0.5cm 보정 · <b>완성사이즈</b>를 직접 고치면 수정치수가 자동 계산 · 우측 상단 <b>cm/in</b>으로 전체 단위 전환</div>
+          </div>
+
+          <div class="spec-table-head">
+            <div class="form-section-hd" style="margin-top:22px"><i class="ti ti-adjustments"></i>패턴 수정 (어깨/자세)</div>
+
+          <div class="modi-block">
+            <div class="modi-block-lbl"><i class="ti ti-arrows-up-down"></i>어깨 (강상/중상/약상 · 강하/중하/약하)</div>
+            <div class="modi-grid" data-opt="shldFix">
+              <button type="button" class="modi-btn active" data-v="없음">없음<span class="val">0</span></button>
+              <button type="button" class="modi-btn" data-v="강상">강상<span class="val">+1.5</span></button>
+              <button type="button" class="modi-btn" data-v="중상">중상<span class="val">+1</span></button>
+              <button type="button" class="modi-btn" data-v="약상">약상<span class="val">+0.5</span></button>
+              <button type="button" class="modi-btn" data-v="약하">약하<span class="val">-0.5</span></button>
+              <button type="button" class="modi-btn" data-v="중하">중하<span class="val">-1</span></button>
+              <button type="button" class="modi-btn" data-v="강하">강하<span class="val">-1.5</span></button>
+            </div>
+          </div>
+          <div class="modi-block">
+            <div class="modi-block-lbl"><i class="ti ti-body-scan"></i>자세 (강반/중반/약반 · 강굴/중굴/약굴)</div>
+            <div class="modi-grid" data-opt="postFix">
+              <button type="button" class="modi-btn active" data-v="없음">없음<span class="val">0</span></button>
+              <button type="button" class="modi-btn" data-v="강반">강반<span class="val">+1.5</span></button>
+              <button type="button" class="modi-btn" data-v="중반">중반<span class="val">+1</span></button>
+              <button type="button" class="modi-btn" data-v="약반">약반<span class="val">+0.5</span></button>
+              <button type="button" class="modi-btn" data-v="약굴">약굴<span class="val">-0.5</span></button>
+              <button type="button" class="modi-btn" data-v="중굴">중굴<span class="val">-1</span></button>
+              <button type="button" class="modi-btn" data-v="강굴">강굴<span class="val">-1.5</span></button>
+            </div>
+          </div>
+        
+        <div class="ttl"><i class="ti ti-ruler-2"></i>상의 부위별 측정
+              <span class="unit-toggle unit-toggle-sm" data-target="top">
+                <button type="button" class="u-opt active" data-u="cm" onclick="setAllUnit('top','cm')">cm</button>
+                <button type="button" class="u-opt" data-u="in" onclick="setAllUnit('top','in')">in</button>
+              </span>
+              <span class="unit-hint">표 전체 단위 전환</span>
+            </div>
+          </div>
+
+          <table class="spec-table">
+            <thead><tr>
+              <th style="width:21%">부 위</th>
+              <th class="col-pat" style="width:23%">신체사이즈 (패턴)</th>
+              <th class="col-fix" style="width:32%">수정치수 ± <span class="th-hint">(버튼 1회 = 0.5)</span></th>
+              <th class="col-fin" style="width:24%">완성사이즈</th>
+            </tr></thead>
+            <tbody id="spec-top-body">
+              <!-- JS로 렌더링 -->
+            </tbody>
+          </table>
+
+          </div>
+
         <div class="section-card suit-panel" id="suit-sec-5" data-tab="5">
           <div class="section-card-title">
-            <span class="step-badge">5</span><i class="ti ti-ruler-measure"></i>하의 사이즈 · 작업지시
+            <span class="step-badge">4</span><i class="ti ti-ruler-measure"></i>하의 사이즈 · 작업지시
             <span class="section-sub">※ 엑셀 [하의주문서] 10개 항목</span>
           </div>
 
@@ -2638,7 +2663,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
         <!-- ⑤b 조끼 · 코트 (탭 5에 함께 표시) -->
         <div class="section-card suit-panel" id="suit-sec-6" data-tab="5">
           <div class="section-card-title">
-            <span class="step-badge">6</span><i class="ti ti-layers-subtract"></i>조끼 · 코트 (선택)
+            <span class="step-badge">5</span><i class="ti ti-layers-subtract"></i>조끼 · 코트 (선택)
             <span class="section-sub">※ 수량(V/C) 입력 시 자동 활성화</span>
           </div>
 
@@ -4168,7 +4193,7 @@ function renderDash(){
   const _evN = state.events.filter(e=>e.date===tStr).length;
   const _ing = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료').length;
   const _wt = $('#dw-title'); if (_wt) _wt.innerHTML = `안녕하세요, <b>${(state.user&&state.user.name)||'관리자'}</b>님`;
-  const _ws = $('#dw-sub'); if (_ws) _ws.textContent = `오늘 일정 ${_evN}건 · 진행중 주문 ${_ing}건 · 출고중 렌탈 ${_rentOut.length}건${_over?` · 연체 ${_over}건`:''}`;
+  const _ws = $('#dw-sub'); if (_ws) _ws.textContent = `오늘 일정 ${_evN}건 · 진행중 주문 ${_ing}건 · 대여중 렌탈 ${_rentOut.length}건${_over?` · 연체 ${_over}건`:''}`;
   const _wd = $('#dw-date');
   if (_wd){ const _t=today(); const _W=['일','월','화','수','목','금','토']; _wd.textContent = `${_t.getFullYear()}.${pad(_t.getMonth()+1)}.${pad(_t.getDate())} (${_W[_t.getDay()]})`; }
   if (typeof renderTodos==='function') renderTodos();
@@ -4611,20 +4636,67 @@ function pickPattern(selId, boxId, el){
 function renderSizeCards(boxId, list, selId, kind, emptyMsg){
   const box = $('#'+boxId);
   if (!box) return;
+  box.dataset.kind = kind || '';
+  const acc = $('#acc-'+boxId);
+  if (acc){ acc.classList.remove('open'); acc.innerHTML=''; }
   if (!list.length){ box.innerHTML=`<div class="pick-empty">${emptyMsg}</div>`; return; }
   const cur = ($('#'+selId)?.value || '');
-  box.innerHTML = list.map(k=>{
+  let html = list.map(k=>{
     const isActive = String(k)===String(cur);
+    const disp = (kind==='top') ? ('S'+k) : k;
     return `<div class="pick-card${isActive?' active':''}" data-v="${k}" onclick="pickSize('${selId}','${boxId}',this)">
-      <div class="pc-title">${k}</div>
+      <div class="pc-title">${disp}</div>
     </div>`;
   }).join('');
+  if (kind==='top'){
+    html += `<div class="pick-card${cur==='기타'?' active':''}" data-v="기타" onclick="pickSize('${selId}','${boxId}',this)">
+      <div class="pc-title">기타</div>
+    </div>`;
+  }
+  box.innerHTML = html;
 }
 function pickSize(selId, boxId, el){
+  const wasActive = el.classList.contains('active');
   document.querySelectorAll('#'+boxId+' .pick-card').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
   $('#'+selId).value = el.dataset.v;
   autoSizeAll();
+  showSizeAcc(selId, boxId, el.dataset.v, wasActive);
+}
+// 사이즈 클릭 → 해당 상세 치수 아코디언
+function showSizeAcc(selId, boxId, k, toggleOff){
+  const box = $('#'+boxId);
+  if (!box) return;
+  let acc = $('#acc-'+boxId);
+  if (!acc){
+    acc = document.createElement('div');
+    acc.id = 'acc-'+boxId;
+    acc.className = 'size-acc';
+    box.parentElement.insertBefore(acc, box.nextSibling);
+  }
+  if (toggleOff){
+    acc.classList.remove('open'); acc.innerHTML = '';
+    return;
+  }
+  const MAP = {
+    'o-sTop':  ['#o-pTop',  typeof PATTERN_SPEC_TOP !== 'undefined' ? PATTERN_SPEC_TOP : {}],
+    'o-sBot':  ['#o-pBot',  typeof PATTERN_SPEC_BOT !== 'undefined' ? PATTERN_SPEC_BOT : {}],
+    'o-sVest': ['#o-pVest', typeof PATTERN_SPEC_VEST !== 'undefined' ? PATTERN_SPEC_VEST : {}],
+    'o-sCoat': ['#o-pCoat', typeof PATTERN_SPEC_COAT !== 'undefined' ? PATTERN_SPEC_COAT : {}]
+  };
+  const m = MAP[selId];
+  if (!m){ acc.classList.remove('open'); acc.innerHTML=''; return; }
+  const pat = document.querySelector(m[0])?.value;
+  const spec = pat && m[1][pat] && m[1][pat][k];
+  const LBL = { chest:'가슴둘레', waist:'허리둘레', shoul:'어깨너비', slv:'소매길이', len:'총기장',
+    hip:'엉덩이둘레', thigh:'허벅지', hem:'밑단(부리)', rise:'밑위', inseam:'인심', knee:'무릎',
+    lapelS:'라펠(S)', lapelD:'라펠(D)', bot:'부리', cuff:'커프스', neck:'목둘레', front:'앞품', back:'뒤품' };
+  if (!spec){
+    acc.innerHTML = `<div class="size-acc-in"><i class="ti ti-info-circle"></i> ${k==='기타' ? "기타 — ③ 사이즈 탭에서 치수를 직접 입력하세요" : "이 사이즈의 상세 치수 정보가 없습니다"}</div>`;
+  } else {
+    acc.innerHTML = `<div class="size-acc-in"><b class="sa-head">${(selId==='o-sTop'?'S':'')}${k} 상세 치수</b>${Object.entries(spec).map(([key,v])=>`<span class="sa-item"><b>${LBL[key]||key}</b>${v}<small>cm</small></span>`).join('')}</div>`;
+  }
+  acc.classList.add('open');
 }
 
 // 주문서 자재 선택 빈 안내 (그리드 전체 폭)
@@ -4685,6 +4757,16 @@ function pickBtn(no, el){
   $$('#pick-btn .pick-card').forEach(c=>c.classList.remove('active'));
   if (!active){ el.classList.add('active'); $('#o-btn').value = no; }
   else $('#o-btn').value = '';
+}
+// ① 고객정보 → ② 주문서 작성 이동 (필수값 확인)
+function goNextFromCust(){
+  const nmEl = $('#o-nm'), phEl = $('#o-ph');
+  const nm = nmEl ? nmEl.value.trim() : 'x';
+  const ph = phEl ? phEl.value.trim() : 'x';
+  if (!nm){ toast('고객명을 입력하세요','warn','고객 정보'); if (nmEl) nmEl.focus(); return; }
+  if (!ph){ toast('연락처를 입력하세요','warn','고객 정보'); if (phEl) phEl.focus(); return; }
+  switchTab(2);
+  toast('고객 정보 확인 — 주문서를 작성하세요','ok','다음 단계');
 }
 function onFitYnPick(v){
   const grp = document.querySelector('[data-opt="fitYn"]');
@@ -5660,6 +5742,7 @@ function invTab(t){
 
 /* ⑧.7 Rental — 예식·이벤트 의류 대여 관리 ───────────────
    상태 흐름: 대여가능 → [출고] → 출고중 → [회수] → 세탁중 → [완료] → 대여가능 */
+function stDisp(s){ return s==='출고중' ? '대여중' : s; }
 function rentalStatusBadge(s){
   return s==='대여가능' ? 'b-ok' : s==='예약중' ? 'b-resv' : s==='출고중' ? 'b-info' : s==='세탁중' ? 'b-warn' : 'b-err';
 }
@@ -5721,17 +5804,16 @@ function renderRental(){
     if (r.status==='출고중' && r.renter) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.renter}')">${r.renter}</span><div style="font-size:10.5px;color:var(--t3)">~ ${r.dueDt||''}</div>`;
     else if (r.status==='예약중' && r.resv) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.resv.nm}')">${r.resv.nm}</span><div style="font-size:10.5px;color:var(--pt);font-weight:700">사용 ${r.resv.useDt}</div>`;
     return `<tr>
-      <td><b>${r.code}</b></td>
       <td>${r.cat}</td>
-      <td><div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="openHistModal('${r.code}')" title="클릭 — 상품 이력 타임라인">${r.photo?`<img src="${r.photo}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--bd2);flex-shrink:0">`:''}<div>${r.name}${r.brand?`<div style="font-size:10.5px;color:var(--t3)">${r.brand}${r.mat?' · '+r.mat:''}</div>`:''}</div></div></td>
+      <td><div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="openHistModal('${r.code}')" title="클릭 — 상품 이력 타임라인">${r.photo?`<img src="${r.photo}" style="width:36px;height:36px;border-radius:3px;object-fit:cover;border:1px solid var(--bd2);flex-shrink:0">`:''}<div><b>${r.name}</b><div style="font-size:10.5px;color:var(--t3)"><span style="font-weight:800;color:var(--it)">${r.code}</span>${r.brand?' · '+r.brand:''}${r.mat?' · '+r.mat:''}</div></div></div></td>
       <td>${r.size}</td>
       <td>${r.color}</td>
       <td>${fmt(r.fee)}</td>
-      <td><span class="badge ${rentalStatusBadge(r.status)}">${r.status}</span>${overdue?' <span class="badge b-err">연체</span>':''}${(r.qrFail||0)>=2?' <span class="badge b-warn" title="실사에서 QR 인식 실패 누적 — 태그 재발급 권장"><i class="ti ti-qrcode"></i></span>':''}</td>
+      <td><span class="badge ${rentalStatusBadge(r.status)}">${stDisp(r.status)}</span>${overdue?' <span class="badge b-err">연체</span>':''}${(r.qrFail||0)>=2?' <span class="badge b-warn" title="실사에서 QR 인식 실패 누적 — 태그 재발급 권장"><i class="ti ti-qrcode"></i></span>':''}</td>
       <td>${who}</td>
       <td>${act}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="9"><div class="empty-state"><i class="ti ti-hanger"></i>
+  }).join('') || `<tr><td colspan="8"><div class="empty-state"><i class="ti ti-hanger"></i>
       <div class="empty-state-title">${state.rentals.length ? '해당 조건의 상품이 없습니다' : '등록된 렌탈 상품이 없습니다'}</div>
       <div class="empty-state-sub">${state.rentals.length ? '검색어나 상태 필터를 바꿔 다시 확인해 보세요' : '상품을 등록하면 예약·출고·반납·정산과 월간 가용성까지 한 화면에서 관리됩니다'}</div>
       ${state.rentals.length ? `<button class="action-btn es-btn" onclick="$('#q-rental').value='';renderRental()"><i class="ti ti-x"></i>필터 초기화</button>`
@@ -6078,7 +6160,7 @@ function renderAuditList(){
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px dashed var(--bd);font-size:13px;${hit?'opacity:.5':''}">
       <i class="ti ${hit?'ti-circle-check-filled':'ti-circle'}" style="color:${hit?'var(--okt)':'var(--t3)'};font-size:16px"></i>
       <b>${r.code}</b><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t2)">${r.name}</span>
-      <span class="badge ${rentalStatusBadge(r.status)}" style="font-size:10px">${r.status}</span>
+      <span class="badge ${rentalStatusBadge(r.status)}" style="font-size:10px">${stDisp(r.status)}</span>
     </div>`;
   }).join('');
 }
@@ -6100,15 +6182,15 @@ function finishAudit(){
     <div style="display:flex;gap:8px;margin-bottom:14px">
       <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">전체 상품</div><div style="font-size:22px;font-weight:800">${state.rentals.length}</div></div>
       <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">스캔 확인</div><div style="font-size:22px;font-weight:800;color:#16a085">${state.auditSet?state.auditSet.size:0}</div></div>
-      <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">출고중 (정상 부재)</div><div style="font-size:22px;font-weight:800;color:#2980b9">${out.length}</div></div>
+      <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">대여중 (정상 부재)</div><div style="font-size:22px;font-weight:800;color:#2980b9">${out.length}</div></div>
       <div style="flex:1;border:1px solid #ccc;border-radius:4px;padding:10px;text-align:center"><div style="font-size:11px;color:#777">미확인 (분실 의심)</div><div style="font-size:22px;font-weight:800;color:${lost.length?'#c0392b':'#16a085'}">${lost.length}</div></div>
     </div>
     ${lost.length? `<div style="font-weight:800;margin-bottom:6px;font-size:14px">⚠ 미확인 상품 — 보관 위치를 확인하세요</div>
       <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:12px">
         <tr style="background:#f4f5f6"><th style="border:1px solid #ccc;padding:6px">코드</th><th style="border:1px solid #ccc;padding:6px">품명</th><th style="border:1px solid #ccc;padding:6px">상태</th><th style="border:1px solid #ccc;padding:6px">보관 위치</th></tr>
-        ${lost.map(r=>`<tr><td style="border:1px solid #ccc;padding:6px;text-align:center"><b>${r.code}</b></td><td style="border:1px solid #ccc;padding:6px">${r.name}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${r.status}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${r.loc||'-'}</td></tr>`).join('')}
+        ${lost.map(r=>`<tr><td style="border:1px solid #ccc;padding:6px;text-align:center"><b>${r.code}</b></td><td style="border:1px solid #ccc;padding:6px">${r.name}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${stDisp(r.status)}</td><td style="border:1px solid #ccc;padding:6px;text-align:center">${r.loc||'-'}</td></tr>`).join('')}
       </table>` : `<div style="color:#16a085;font-weight:700;margin-bottom:12px">✓ 매장 보유 상품 전수 확인 — 분실 의심 없음</div>`}
-    ${out.length? `<div style="font-size:12px;color:#555">출고중 ${out.length}건은 대여 중으로 매장에 없는 것이 정상입니다: ${out.map(r=>r.code).join(', ')}</div>`:''}
+    ${out.length? `<div style="font-size:12px;color:#555">대여중 ${out.length}건은 고객이 사용 중으로 매장에 없는 것이 정상입니다: ${out.map(r=>r.code).join(', ')}</div>`:''}
     ${(()=>{
       const flagged = state.rentals.filter(r=> (state.auditManual && state.auditManual.has(r.code)) || (r.qrFail||0)>=2);
       if (!flagged.length) return '';
@@ -6299,47 +6381,70 @@ function drawLines(id, series, colors){
 function renderCatalog(){
   const grid = $('#catalog-grid');
   if (!grid) return;
-  const cats = [...new Set(state.rentals.map(r=>r.cat).filter(Boolean))];
+  const all = state.rentals.filter(brMatch);
+  const cats = [...new Set(all.map(r=>r.cat).filter(Boolean))];
   if (!state.catFilter) state.catFilter = 'all';
   const fc = $('#cat-f-cat');
   if (fc) fc.innerHTML = [`<div class="cat-chip ${state.catFilter==='all'?'active':''}" onclick="state.catFilter='all';renderCatalog()">전체</div>`]
     .concat(cats.map(c=>`<div class="cat-chip ${state.catFilter===c?'active':''}" onclick="state.catFilter='${c}';renderCatalog()">${c}</div>`)).join('');
   const q = ($('#cat-f-q')?.value||'').trim().toLowerCase();
   const availOnly = $('#cat-f-avail')?.checked;
-  let rows = state.rentals.filter(brMatch).filter(r=> state.catFilter==='all' || r.cat===state.catFilter);
-  if (availOnly) rows = rows.filter(r=>r.status==='대여가능');
-  if (q) rows = rows.filter(r=> (r.name+r.code+(r.color||'')+(r.size||'')+(r.brand||'')).toLowerCase().includes(q));
-  grid.innerHTML = rows.map(r=>`
-    <div class="cat-card" onclick="openCatLightbox('${r.code}')">
-      ${r.photo? `<img class="cat-ph" src="${r.photo}" loading="lazy">` : `<div class="cat-ph-empty"><i class="ti ti-hanger"></i></div>`}
+  let items = all.filter(r=> state.catFilter==='all' || r.cat===state.catFilter);
+  if (q) items = items.filter(r=> (r.name+r.code+(r.color||'')+(r.size||'')+(r.brand||'')).toLowerCase().includes(q));
+  // 품명 기준 그룹 — 사이즈별 재고 집계
+  const groups = {};
+  items.forEach(r=>{ const k = r.name; (groups[k] = groups[k]||[]).push(r); });
+  let keys = Object.keys(groups);
+  if (availOnly) keys = keys.filter(k=>groups[k].some(r=>r.status==='대여가능'));
+  grid.innerHTML = keys.map(k=>{
+    const g = groups[k];
+    const ph = (g.find(r=>r.photo)||{}).photo;
+    const fees = g.map(r=>r.fee||0);
+    const feeMin = Math.min(...fees), feeMax = Math.max(...fees);
+    const sizes = {};
+    g.forEach(r=>{ const s = r.size||'F'; sizes[s] = sizes[s]||{a:0,t:0}; sizes[s].t++; if (r.status==='대여가능') sizes[s].a++; });
+    const sizeChips = Object.keys(sizes).sort((a,b)=>String(a).localeCompare(String(b),'ko',{numeric:true})).map(s=>
+      `<span class="cs-chip ${sizes[s].a?'':'off'}" title="${s} — 대여가능 ${sizes[s].a} / 보유 ${sizes[s].t}">${s}<b>${sizes[s].a}/${sizes[s].t}</b></span>`).join('');
+    const availN = g.filter(r=>r.status==='대여가능').length;
+    return `<div class="cat-card" onclick="openCatLightbox('${g[0].code}')">
+      ${ph?`<img class="cat-ph" src="${ph}" loading="lazy">`:`<div class="cat-ph-empty"><i class="ti ti-hanger"></i></div>`}
       <div class="cat-info">
-        <div class="cat-name">${r.name}</div>
-        <div class="cat-sub">${r.code} · ${r.size||'F'} · ${r.color||'-'}</div>
-        <div class="cat-fee">${fmt(r.fee)}<span class="badge ${rentalStatusBadge(r.status)}" style="font-size:10.5px">${r.status}</span></div>
+        <div class="cat-name">${k}</div>
+        <div class="cat-sub">${g[0].cat||''} · 보유 ${g.length}벌 · 대여가능 ${availN}벌</div>
+        <div class="cat-sizes">${sizeChips}</div>
+        <div class="cat-fee">${fmt(feeMin)}${feeMax>feeMin?'~':''}<span class="badge ${availN?'b-ok':'b-err'}" style="font-size:10.5px">${availN?'대여가능':'전량 사용중'}</span></div>
       </div>
-    </div>`).join('') || `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-hanger"></i><div class="empty-state-title">조건에 맞는 상품이 없습니다</div><div class="empty-state-sub">카테고리·검색어를 바꾸거나 상품을 등록해 보세요</div><button class="action-btn es-btn" onclick="openProdModal()"><i class="ti ti-plus"></i>렌탈 상품 등록</button></div>`;
+    </div>`;
+  }).join('') || `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-hanger"></i><div class="empty-state-title">조건에 맞는 상품이 없습니다</div><div class="empty-state-sub">카테고리·검색어를 바꾸거나 상품을 등록해 보세요</div><button class="action-btn es-btn" onclick="openProdModal()"><i class="ti ti-plus"></i>렌탈 상품 등록</button></div>`;
 }
 function openCatLightbox(code){
-  const r = state.rentals.find(x=>x.code===code);
-  if (!r) return;
+  const base = state.rentals.find(x=>x.code===code);
+  if (!base) return;
+  const g = state.rentals.filter(brMatch).filter(r=>r.name===base.name)
+    .sort((a,b)=>String(a.size||'').localeCompare(String(b.size||''),'ko',{numeric:true}));
+  const ph = (g.find(r=>r.photo)||{}).photo;
+  const availN = g.filter(r=>r.status==='대여가능').length;
   $('#cat-light-card').innerHTML = `
-    ${r.photo? `<img class="cl-ph" src="${r.photo}">` : `<div class="cl-ph" style="display:flex;align-items:center;justify-content:center;font-size:64px;color:var(--bd2)"><i class="ti ti-hanger"></i></div>`}
+    ${ph?`<img class="cl-ph" src="${ph}">`:`<div class="cl-ph" style="display:flex;align-items:center;justify-content:center;font-size:64px;color:var(--bd2)"><i class="ti ti-hanger"></i></div>`}
     <div class="cl-body">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div class="cl-name">${r.name}</div>
+        <div class="cl-name">${base.name}</div>
         <button class="mini-act" onclick="$('#cat-light').classList.remove('open')"><i class="ti ti-x"></i></button>
       </div>
-      <div style="font-size:12px;color:var(--t3);margin-top:3px">${r.code}${r.brand?' · '+r.brand:''}</div>
-      <div class="cl-fee">${fmt(r.fee)} <span style="font-size:12px;color:var(--t3);font-weight:600">/ 1회 대여${r.deposit?` · 보증금 ${fmt(r.deposit)}`:''}</span></div>
-      <div class="cl-row"><span>카테고리</span><b>${r.cat||'-'}</b></div>
-      <div class="cl-row"><span>사이즈</span><b>${r.size||'F'}</b></div>
-      <div class="cl-row"><span>색상</span><b>${r.color||'-'}</b></div>
-      <div class="cl-row"><span>소재</span><b>${r.mat||'-'}</b></div>
-      <div class="cl-row"><span>상태</span><b><span class="badge ${rentalStatusBadge(r.status)}">${r.status}</span></b></div>
-      ${r.status==='대여가능'? `<div style="display:flex;gap:8px;margin-top:16px">
-        <button class="action-btn" style="flex:1" onclick="$('#cat-light').classList.remove('open');go('rental');openRentModal('${r.code}','resv')"><i class="ti ti-calendar-plus"></i>예약</button>
-        <button class="btn-primary" style="flex:1;border:0;color:#fff;padding:10px;border-radius:3px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700" onclick="$('#cat-light').classList.remove('open');go('rental');openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i> 바로 출고</button>
-      </div>`:''}
+      <div style="font-size:12px;color:var(--t3);margin-top:3px">${base.cat||''}${base.brand?' · '+base.brand:''}${base.mat?' · '+base.mat:''}</div>
+      <div class="cl-fee">${fmt(Math.min(...g.map(r=>r.fee||0)))} <span style="font-size:12px;color:var(--t3);font-weight:600">/ 1회 대여${base.deposit?` · 보증금 ${fmt(base.deposit)}`:''}</span></div>
+      <div style="font-size:12.5px;font-weight:800;color:var(--t2);margin-bottom:6px">사이즈별 재고 — 보유 ${g.length}벌 · 대여가능 ${availN}벌</div>
+      ${g.map(r=>`
+        <div class="cl-item">
+          <b style="min-width:42px">${r.size||'F'}</b>
+          <span style="color:var(--t3);font-size:11.5px;min-width:54px">${r.code}</span>
+          <span style="flex:1;color:var(--t3);font-size:11.5px">${r.color||''}</span>
+          <span class="badge ${rentalStatusBadge(r.status)}" style="font-size:10.5px">${stDisp(r.status)}</span>
+          ${r.status==='대여가능'
+            ? `<button class="mini-act" title="예약" onclick="$('#cat-light').classList.remove('open');go('rental');openRentModal('${r.code}','resv')"><i class="ti ti-calendar-plus"></i></button>
+               <button class="mini-act" title="바로 출고" style="color:var(--okt);border-color:var(--okt)" onclick="$('#cat-light').classList.remove('open');go('rental');openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i></button>`
+            : (r.status==='출고중' && r.dueDt ? `<span style="font-size:10.5px;color:var(--t3)">~${r.dueDt.slice(5)}</span>` : '')}
+        </div>`).join('')}
     </div>`;
   $('#cat-light').classList.add('open');
 }
@@ -6783,7 +6888,7 @@ function renderMonthlySettle(){
   // 보증금 보유
   const deps = state.rentals.filter(r=>(r.depositHeld||0) > 0);
   $('#ms-dep').textContent = fmt(deps.reduce((s,r)=>s+r.depositHeld, 0));
-  $('#ms-dep-sub').textContent = `출고중 ${deps.length}건 보유 — 회수 시 정산`;
+  $('#ms-dep-sub').textContent = `대여중 ${deps.length}건 보유 — 회수 시 정산`;
 }
 
 /* ─── QR 태그 시트 인쇄 ─────────────────── */
@@ -7098,7 +7203,7 @@ function renderRentalGantt(){
       const ds = `${y}-${pad(m+1)}-${pad(i)}`;
       let cls = '', tip = '', lbl = '';
       if (r.status==='출고중' && inR(ds, r.rentDt, r.dueDt)){
-        cls='rent'; tip=`${r.renter} · 출고 ${r.rentDt} ~ ${r.dueDt}`;
+        cls='rent'; tip=`${r.renter} · 대여 ${r.rentDt} ~ ${r.dueDt}`;
         if (prevCls!=='rent') lbl = r.renter;
       }
       else if (r.status==='출고중' && r.dueDt && ds>r.dueDt && ds<=tStr){
