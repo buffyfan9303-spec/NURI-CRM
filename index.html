@@ -1410,6 +1410,10 @@ body.dk .empty-state .ti{background:var(--sf2)}
 .cl-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--bd);font-size:13px;color:var(--t)}
 .cl-item:last-child{border-bottom:0}
 
+/* 25차 — 주문서 단계 내비 */
+.step-nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:14px;border-top:1px solid var(--bd)}
+.sn-next{border-color:#1ab394!important;color:#1ab394!important;font-weight:800!important;padding:11px 24px!important;font-size:14.5px!important}
+
 </style>
 </head>
 <body>
@@ -3969,7 +3973,7 @@ function go(view, fromPop){
   if (view==='dash')      renderDash();
   if (view==='list')      renderCustList();
   if (view==='reg')       { initRegForm(); resetReg(); }
-  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); }
+  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); }
   if (view==='fab')       renderFabList();
   if (view==='sales-day') { $('#sd-date').value = dStr(today()); renderSalesDay(); }
   if (view==='sales-period'){
@@ -4690,7 +4694,8 @@ function showSizeAcc(selId, boxId, k, toggleOff){
   const spec = pat && m[1][pat] && m[1][pat][k];
   const LBL = { chest:'가슴둘레', waist:'허리둘레', shoul:'어깨너비', slv:'소매길이', len:'총기장',
     hip:'엉덩이둘레', thigh:'허벅지', hem:'밑단(부리)', rise:'밑위', inseam:'인심', knee:'무릎',
-    lapelS:'라펠(S)', lapelD:'라펠(D)', bot:'부리', cuff:'커프스', neck:'목둘레', front:'앞품', back:'뒤품' };
+    lapelS:'라펠(S)', lapelD:'라펠(D)', bot:'부리', cuff:'커프스', neck:'목둘레', front:'앞품', back:'뒤품',
+    w:'허리둘레', h:'엉덩이둘레', fl:'앞밑위', bl:'뒤밑위', th:'허벅지', kn:'무릎', bt:'부리(밑단)', vent:'트임(벤트)' };
   if (!spec){
     acc.innerHTML = `<div class="size-acc-in"><i class="ti ti-info-circle"></i> ${k==='기타' ? "기타 — ③ 사이즈 탭에서 치수를 직접 입력하세요" : "이 사이즈의 상세 치수 정보가 없습니다"}</div>`;
   } else {
@@ -4758,6 +4763,30 @@ function pickBtn(no, el){
   if (!active){ el.classList.add('active'); $('#o-btn').value = no; }
   else $('#o-btn').value = '';
 }
+// 주문서 탭 이전/다음 내비게이션 (②~⑤ 자동 주입)
+function goStep(n){
+  switchTab(n);
+  try{ document.querySelector('.main-area')?.scrollTo({top:0, behavior:'smooth'}); }catch(e){}
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function injectStepNav(){
+  const FLOW = [1, 2, 3, 5, 6];
+  const NEXT_LABEL = { 2:'사이즈', 3:'하의·조끼', 5:'원단·저장' };
+  document.querySelectorAll('.step-nav').forEach(e=>e.remove());
+  [2, 3, 5, 6].forEach(tab=>{
+    const panels = [...document.querySelectorAll('.suit-panel')].filter(p=>p.dataset.tab===String(tab));
+    if (!panels.length) return;
+    const sec = panels[panels.length-1];
+    const idx = FLOW.indexOf(tab);
+    const prev = FLOW[idx-1], next = FLOW[idx+1];
+    const div = document.createElement('div');
+    div.className = 'step-nav';
+    div.innerHTML = `<button type="button" class="action-btn" onclick="goStep(${prev})"><i class="ti ti-arrow-left"></i> 이전</button>` +
+      (next ? `<button type="button" class="action-btn sn-next" onclick="goStep(${next})">다음 — ${NEXT_LABEL[tab]} <i class="ti ti-arrow-right"></i></button>` : '<span></span>');
+    sec.appendChild(div);
+  });
+}
+
 // ① 고객정보 → ② 주문서 작성 이동 (필수값 확인)
 function goNextFromCust(){
   const nmEl = $('#o-nm'), phEl = $('#o-ph');
@@ -4765,7 +4794,7 @@ function goNextFromCust(){
   const ph = phEl ? phEl.value.trim() : 'x';
   if (!nm){ toast('고객명을 입력하세요','warn','고객 정보'); if (nmEl) nmEl.focus(); return; }
   if (!ph){ toast('연락처를 입력하세요','warn','고객 정보'); if (phEl) phEl.focus(); return; }
-  switchTab(2);
+  goStep(2);
   toast('고객 정보 확인 — 주문서를 작성하세요','ok','다음 단계');
 }
 function onFitYnPick(v){
