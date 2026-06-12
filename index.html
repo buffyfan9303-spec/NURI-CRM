@@ -1414,6 +1414,25 @@ body.dk .empty-state .ti{background:var(--sf2)}
 .step-nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px;padding-top:14px;border-top:1px solid var(--bd)}
 .sn-next{border-color:#1ab394!important;color:#1ab394!important;font-weight:800!important;padding:11px 24px!important;font-size:14.5px!important}
 
+/* 26차 — 단계 진행 표시줄 + 저장 확인 */
+#suit-stepbar{display:flex;align-items:flex-start;padding:16px 18px 4px;background:var(--sf);border:1px solid var(--bd);border-bottom:0;border-radius:3px 3px 0 0}
+.sp-step{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-width:62px}
+.sp-dot{width:30px;height:30px;border-radius:50%;background:var(--sf3);color:var(--t3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;border:2px solid var(--bd2);transition:all .15s}
+.sp-step:hover .sp-dot{border-color:var(--t3)}
+.sp-step.done .sp-dot{background:#1ab394;border-color:#1ab394;color:#fff}
+.sp-step.cur .sp-dot{border-color:#1ab394;color:#1ab394;box-shadow:0 0 0 3px var(--acc-soft)}
+.sp-step.cur.done .sp-dot{color:#fff}
+.sp-lbl{font-size:11px;font-weight:700;color:var(--t3);white-space:nowrap}
+.sp-step.cur .sp-lbl{color:var(--okt)}
+.sp-step.done .sp-lbl{color:var(--t2)}
+.sp-line{flex:1;height:2px;background:var(--bd2);margin-top:15px;min-width:12px}
+.sp-line.on{background:#1ab394}
+@media (max-width:700px){ .sp-lbl{display:none} .sp-step{min-width:40px} }
+.oc-row{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px dashed var(--bd);font-size:13.5px;color:var(--t2)}
+.oc-row b{color:var(--t);text-align:right}
+.oc-row.warn span{color:var(--et);font-weight:700}
+.oc-row.warn b{color:var(--et)}
+
 </style>
 </head>
 <body>
@@ -2776,7 +2795,7 @@ body.dk .empty-state .ti{background:var(--sf2)}
           <div class="form-actions">
             <button class="btn-ghost btn-big" onclick="resetSuit()"><i class="ti ti-refresh"></i>초기화</button>
             <button class="btn-ghost btn-big" onclick="printSuit()"><i class="ti ti-file-search"></i>작업지시서 미리보기 · 인쇄</button>
-            <button class="btn-primary btn-big" onclick="saveSuit()"><i class="ti ti-check"></i>주문 저장 + 캘린더 등록</button>
+            <button class="btn-primary btn-big" onclick="openOrderConfirm()"><i class="ti ti-clipboard-check"></i>주문 내용 확인 후 저장</button>
           </div>
         </div>
 
@@ -3973,7 +3992,7 @@ function go(view, fromPop){
   if (view==='dash')      renderDash();
   if (view==='list')      renderCustList();
   if (view==='reg')       { initRegForm(); resetReg(); }
-  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); }
+  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); }
   if (view==='fab')       renderFabList();
   if (view==='sales-day') { $('#sd-date').value = dStr(today()); renderSalesDay(); }
   if (view==='sales-period'){
@@ -4584,11 +4603,22 @@ function refreshSizeOptions(){
   const pbot = $('#o-pBot').value;
   const pvst = $('#o-pVest').value;
   const pcoat= $('#o-pCoat').value;
-  $('#o-sTop').innerHTML  = '<option value="">선택</option>' + (ptop ?Object.keys(PATTERN_SPEC_TOP[ptop]).map(s=>`<option>${s}</option>`).join(''):'');
+  // 선택값 보존 — select 재구축이 기존 선택을 지우는 버그 수정
+  const keep = { t:$('#o-sTop').value, b:$('#o-sBot').value, v:$('#o-sVest').value, c:$('#o-sCoat').value };
+  $('#o-sTop').innerHTML  = '<option value="">선택</option>' + (ptop ?Object.keys(PATTERN_SPEC_TOP[ptop]).map(s=>`<option>${s}</option>`).join('') + '<option>기타</option>':'');
   $('#o-sBot').innerHTML  = '<option value="">선택</option>' + (pbot ?Object.keys(PATTERN_SPEC_BOT[pbot]).map(s=>`<option>${s}</option>`).join(''):'');
   $('#o-sVest').innerHTML = '<option value="">선택</option>' + (pvst ?Object.keys(PATTERN_SPEC_VEST[pvst]).map(s=>`<option>${s}</option>`).join(''):'');
   $('#o-sCoat').innerHTML = '<option value="">선택</option>' + (pcoat?Object.keys(PATTERN_SPEC_COAT[pcoat]).map(s=>`<option>${s}</option>`).join(''):'');
-  // 호칭 카드도 다시 렌더
+  const restore = (id, val)=>{
+    if (!val) return;
+    const sel = $('#'+id);
+    if ([...sel.options].some(o=>o.value===val)) sel.value = val;
+  };
+  restore('o-sTop', keep.t);
+  restore('o-sBot', keep.b);
+  restore('o-sVest', keep.v);
+  restore('o-sCoat', keep.c);
+  // 호칭 카드도 다시 렌더 (복원된 선택값 기준 active 표시)
   renderSizeCards('pick-sTop',  ptop ?Object.keys(PATTERN_SPEC_TOP[ptop]):[],   'o-sTop', 'top',  '먼저 상의 패턴을 선택하세요');
   renderSizeCards('pick-sBot',  pbot ?Object.keys(PATTERN_SPEC_BOT[pbot]):[],   'o-sBot', 'bot',  '먼저 하의 패턴을 선택하세요');
   renderSizeCards('pick-sVest', pvst ?Object.keys(PATTERN_SPEC_VEST[pvst]):[],  'o-sVest','vest', '먼저 조끼 패턴을 선택하세요');
@@ -4763,6 +4793,54 @@ function pickBtn(no, el){
   if (!active){ el.classList.add('active'); $('#o-btn').value = no; }
   else $('#o-btn').value = '';
 }
+/* ─── 단계 진행 표시줄 (1→2→3→4→5 + 완료 체크) ─── */
+const SUIT_STEPS = [
+  { tab:1, label:'고객정보' },
+  { tab:2, label:'주문서 작성' },
+  { tab:3, label:'사이즈' },
+  { tab:5, label:'하의·조끼' },
+  { tab:6, label:'원단·저장' }
+];
+function suitStepDone(tab){
+  try{
+    if (tab===1) return !!(($('#o-nm')?.value||'').trim()) && !!(($('#o-ph')?.value||'').trim());
+    if (tab===2) return !!($('#o-pTop')?.value) && !!($('#o-sTop')?.value);
+    if (tab===3) return (state._suitVisited||new Set()).has(3) && !!($('#o-sTop')?.value);
+    if (tab===5){
+      const p = parseInt($('#qty-p')?.value)||0, v = parseInt($('#qty-v')?.value)||0;
+      const vis = (state._suitVisited||new Set()).has(5);
+      if (!p && !v) return vis;
+      const okP = !p || (!!($('#o-pBot')?.value) && !!($('#o-sBot')?.value));
+      const okV = !v || (!!($('#o-pVest')?.value) && !!($('#o-sVest')?.value));
+      return vis && okP && okV;
+    }
+    if (tab===6) return !!($('#o-fabNo')?.value);
+  }catch(e){}
+  return false;
+}
+function renderStepBar(){
+  const bar = $('#suit-stepbar');
+  if (!bar) return;
+  const curTab = document.querySelector('.suit-tab.active')?.dataset.tab || '1';
+  bar.innerHTML = SUIT_STEPS.map((s,i)=>{
+    const done = suitStepDone(s.tab);
+    const cur = String(s.tab)===String(curTab);
+    return `${i?`<div class="sp-line${done||cur?' on':''}"></div>`:''}<div class="sp-step ${cur?'cur':''} ${done?'done':''}" onclick="goStep(${s.tab})" title="${s.label}${done?' — 완료':''}">
+        <div class="sp-dot">${done?'<i class="ti ti-check"></i>':(i+1)}</div>
+        <div class="sp-lbl">${s.label}</div>
+      </div>`;
+  }).join('');
+}
+function injectStepBar(){
+  if ($('#suit-stepbar')){ renderStepBar(); return; }
+  const tabs = $('#suit-tabs');
+  if (!tabs) return;
+  const bar = document.createElement('div');
+  bar.id = 'suit-stepbar';
+  tabs.parentElement.insertBefore(bar, tabs);
+  renderStepBar();
+}
+
 // 주문서 탭 이전/다음 내비게이션 (②~⑤ 자동 주입)
 function goStep(n){
   switchTab(n);
@@ -4943,6 +5021,10 @@ function switchTab(n){
   // 본문 영역 맨 위로
   const main = document.querySelector('.main-area');
   if (main) main.scrollTop = 0;
+  // 단계 진행 표시줄 갱신
+  state._suitVisited = state._suitVisited || new Set();
+  state._suitVisited.add(parseInt(n));
+  if (typeof renderStepBar==='function') renderStepBar();
 }
 // 호환: 옛 scrollToSec / setActiveStep / trackActiveStep 호출이 있어도 무해
 function scrollToSec(n){ switchTab(n>6?6:n); }
@@ -5021,6 +5103,54 @@ function resetSuit(){
   toast('주문서가 초기화되었습니다','info');
 }
 
+/* ─── 저장 전 요약 확인 (실수 방지) ─── */
+function openOrderConfirm(){
+  const g = id => ($('#'+id)?.value||'').trim();
+  const nm = g('o-nm'), ph = g('o-ph');
+  const q = { s:parseInt(g('qty-s'))||0, p:parseInt(g('qty-p'))||0, v:parseInt(g('qty-v'))||0, c:parseInt(g('qty-c'))||0, j:parseInt(g('qty-j'))||0 };
+  const qStr = [q.s?`수트 ${q.s}`:'', q.j?`자켓 ${q.j}`:'', q.p?`하의 ${q.p}`:'', q.v?`조끼 ${q.v}`:'', q.c?`코트 ${q.c}`:''].filter(Boolean).join(' · ') || '—';
+  const fab = state.fabrics.find(f=>f.no===g('o-fabNo'));
+  const lin = state.linings.find(f=>f.no===g('o-lin'));
+  const btn = state.buttons.find(f=>f.no===g('o-btn'));
+  const totEl = $('#p-total') || [...document.querySelectorAll('.price-summary .price-val')].pop();
+  const total = totEl ? totEl.textContent : '—';
+  const fitYn = (state.opt && state.opt.fitYn==='Y') ? '중가봉' : '직봉';
+  const row = (k, v, warn) => `<div class="oc-row${warn?' warn':''}"><span>${k}</span><b>${v}</b></div>`;
+  const PARTS = [
+    ['상의', g('o-pTop'), g('o-sTop') ? (g('o-sTop')==='기타'?'기타':'S'+g('o-sTop')) : ''],
+    ['하의', g('o-pBot'), g('o-sBot')],
+    ['조끼', g('o-pVest'), g('o-sVest')],
+    ['코트', g('o-pCoat'), g('o-sCoat')]
+  ].filter(p=>p[1]||p[2]);
+  let modal = $('#ordconf-modal');
+  if (!modal){
+    modal = document.createElement('div');
+    modal.id = 'ordconf-modal';
+    modal.className = 'signup-overlay';
+    modal.onclick = e => { if (e.target===modal) modal.classList.remove('open'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="signup-card" style="max-width:520px" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:17px;font-weight:800;color:var(--t)"><i class="ti ti-clipboard-check" style="color:var(--okt)"></i> 주문 내용 확인</div>
+        <button class="mini-act" onclick="$('#ordconf-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      </div>
+      <div style="font-size:12.5px;color:var(--t3);margin-bottom:13px">저장 전에 아래 내용을 확인하세요 — 빨간 항목은 비어 있습니다</div>
+      ${row('고객', nm ? `${nm} · ${ph}` : '미입력', !nm)}
+      ${row('수량', qStr, qStr==='—')}
+      ${PARTS.length ? PARTS.map(p=>row(p[0]+' 패턴/사이즈', `${p[1]||'<span style=color:var(--et)>패턴 미선택</span>'} / ${p[2]||'<span style=color:var(--et)>사이즈 미선택</span>'}`, !p[1]||!p[2])).join('') : row('패턴/사이즈','미선택',true)}
+      ${row('가봉', fitYn + (g('o-fitDt')?` · 가봉 ${g('o-fitDt')}`:'') + (g('o-doneDt')?` · 완성 ${g('o-doneDt')}`:''))}
+      ${row('원단', fab ? `${fab.no} · ${fab.vendor||''} ${fab.color||''}` : '미선택', !fab)}
+      ${row('안감 / 단추', `${lin?lin.no:'-'} / ${btn?btn.no:'-'}`)}
+      ${row('합계 (VAT 포함)', `<span style="font-size:16px;color:var(--okt)">${total}</span>`)}
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="action-btn" style="flex:1;justify-content:center;min-height:44px" onclick="$('#ordconf-modal').classList.remove('open')"><i class="ti ti-pencil"></i> 돌아가서 수정</button>
+        <button class="login-btn" style="flex:1.4;border:0;color:#fff;border-radius:3px;cursor:pointer;font-family:inherit;font-size:14.5px;font-weight:800;min-height:44px" onclick="$('#ordconf-modal').classList.remove('open');saveSuit()"><i class="ti ti-check"></i> 이대로 저장</button>
+      </div>
+    </div>`;
+  modal.classList.add('open');
+}
 function saveSuit(){
   const nm = $('#o-nm').value.trim();
   if (!nm){ toast('고객명을 입력하세요','warn','입력 오류'); scrollToSec(1); return; }
