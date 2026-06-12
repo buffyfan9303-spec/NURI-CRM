@@ -4606,9 +4606,9 @@ function refreshSizeOptions(){
   // 선택값 보존 — select 재구축이 기존 선택을 지우는 버그 수정
   const keep = { t:$('#o-sTop').value, b:$('#o-sBot').value, v:$('#o-sVest').value, c:$('#o-sCoat').value };
   $('#o-sTop').innerHTML  = '<option value="">선택</option>' + (ptop ?Object.keys(PATTERN_SPEC_TOP[ptop]).map(s=>`<option>${s}</option>`).join('') + '<option>기타</option>':'');
-  $('#o-sBot').innerHTML  = '<option value="">선택</option>' + (pbot ?Object.keys(PATTERN_SPEC_BOT[pbot]).map(s=>`<option>${s}</option>`).join(''):'');
-  $('#o-sVest').innerHTML = '<option value="">선택</option>' + (pvst ?Object.keys(PATTERN_SPEC_VEST[pvst]).map(s=>`<option>${s}</option>`).join(''):'');
-  $('#o-sCoat').innerHTML = '<option value="">선택</option>' + (pcoat?Object.keys(PATTERN_SPEC_COAT[pcoat]).map(s=>`<option>${s}</option>`).join(''):'');
+  $('#o-sBot').innerHTML  = '<option value="">선택</option>' + (pbot ?Object.keys(PATTERN_SPEC_BOT[pbot]).map(s=>`<option>${s}</option>`).join('') + '<option>기타</option>':'');
+  $('#o-sVest').innerHTML = '<option value="">선택</option>' + (pvst ?Object.keys(PATTERN_SPEC_VEST[pvst]).map(s=>`<option>${s}</option>`).join('') + '<option>기타</option>':'');
+  $('#o-sCoat').innerHTML = '<option value="">선택</option>' + (pcoat?Object.keys(PATTERN_SPEC_COAT[pcoat]).map(s=>`<option>${s}</option>`).join('') + '<option>기타</option>':'');
   const restore = (id, val)=>{
     if (!val) return;
     const sel = $('#'+id);
@@ -4682,11 +4682,9 @@ function renderSizeCards(boxId, list, selId, kind, emptyMsg){
       <div class="pc-title">${disp}</div>
     </div>`;
   }).join('');
-  if (kind==='top'){
-    html += `<div class="pick-card${cur==='기타'?' active':''}" data-v="기타" onclick="pickSize('${selId}','${boxId}',this)">
-      <div class="pc-title">기타</div>
-    </div>`;
-  }
+  html += `<div class="pick-card${cur==='기타'?' active':''}" data-v="기타" onclick="pickSize('${selId}','${boxId}',this)">
+    <div class="pc-title">기타</div>
+  </div>`;
   box.innerHTML = html;
 }
 function pickSize(selId, boxId, el){
@@ -4727,7 +4725,8 @@ function showSizeAcc(selId, boxId, k, toggleOff){
     lapelS:'라펠(S)', lapelD:'라펠(D)', bot:'부리', cuff:'커프스', neck:'목둘레', front:'앞품', back:'뒤품',
     w:'허리둘레', h:'엉덩이둘레', fl:'앞밑위', bl:'뒤밑위', th:'허벅지', kn:'무릎', bt:'부리(밑단)', vent:'트임(벤트)' };
   if (!spec){
-    acc.innerHTML = `<div class="size-acc-in"><i class="ti ti-info-circle"></i> ${k==='기타' ? "기타 — ③ 사이즈 탭에서 치수를 직접 입력하세요" : "이 사이즈의 상세 치수 정보가 없습니다"}</div>`;
+    const hint = selId==='o-sTop' ? '③ 사이즈 탭의 측정표' : '측정표(수정치수란)';
+    acc.innerHTML = `<div class="size-acc-in"><i class="ti ti-info-circle"></i> ${k==='기타' ? `기타 — ${hint}에서 치수를 직접 입력하세요` : "이 사이즈의 상세 치수 정보가 없습니다"}</div>`;
   } else {
     acc.innerHTML = `<div class="size-acc-in"><b class="sa-head">${(selId==='o-sTop'?'S':'')}${k} 상세 치수</b>${Object.entries(spec).map(([key,v])=>`<span class="sa-item"><b>${LBL[key]||key}</b>${v}<small>cm</small></span>`).join('')}</div>`;
   }
