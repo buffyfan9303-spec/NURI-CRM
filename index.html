@@ -1433,6 +1433,11 @@ body.dk .empty-state .ti{background:var(--sf2)}
 .oc-row.warn span{color:var(--et);font-weight:700}
 .oc-row.warn b{color:var(--et)}
 
+/* 28차 — 드래프트 배너 */
+#draft-banner{display:flex;align-items:center;gap:11px;padding:11px 14px;background:var(--wb);border:1px solid rgba(232,149,12,.45);border-radius:3px;margin-bottom:12px;font-size:13.5px;color:var(--t);flex-wrap:wrap}
+#draft-banner > .ti{color:var(--wt);font-size:19px;flex-shrink:0}
+#draft-banner span{color:var(--t3);font-size:12.5px}
+
 </style>
 </head>
 <body>
@@ -3992,7 +3997,7 @@ function go(view, fromPop){
   if (view==='dash')      renderDash();
   if (view==='list')      renderCustList();
   if (view==='reg')       { initRegForm(); resetReg(); }
-  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); }
+  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); if (typeof suitDraftCheck==='function') suitDraftCheck(); }
   if (view==='fab')       renderFabList();
   if (view==='sales-day') { $('#sd-date').value = dStr(today()); renderSalesDay(); }
   if (view==='sales-period'){
@@ -4792,6 +4797,98 @@ function pickBtn(no, el){
   if (!active){ el.classList.add('active'); $('#o-btn').value = no; }
   else $('#o-btn').value = '';
 }
+/* ─── 주문서 임시저장 (드래프트) ─── */
+const DRAFT_KEY = 'nuri_draft_v1';
+function suitDraftSave(){
+  clearTimeout(window._draftT);
+  window._draftT = setTimeout(()=>{
+    try{
+      const view = document.getElementById('view-mtm-suit');
+      if (!view || state.view!=='mtm-suit') return;
+      const nm = ($('#o-nm')?.value||'').trim();
+      const hasAny = nm || ($('#o-pTop')?.value) || (($('#o-ph')?.value||'').trim());
+      if (!hasAny) return;
+      const fields = {};
+      view.querySelectorAll('input[id], select[id], textarea[id]').forEach(el=>{
+        if (el.type==='file') return;
+        fields[el.id] = el.type==='checkbox' ? el.checked : el.value;
+      });
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        t: Date.now(), nm,
+        fields,
+        opt: JSON.parse(JSON.stringify(state.opt||{}))
+      }));
+      const bn = $('#draft-banner');
+      if (bn) bn.remove();
+    }catch(e){}
+  }, 800);
+}
+function suitDraftClear(){
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+  const b = $('#draft-banner');
+  if (b) b.remove();
+}
+function suitDraftCheck(){
+  try{
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (!d || !d.fields) return;
+    if (Date.now() - d.t > 3*86400000){ suitDraftClear(); return; }
+    let banner = $('#draft-banner');
+    if (banner) banner.remove();
+    banner = document.createElement('div');
+    banner.id = 'draft-banner';
+    banner.innerHTML = `
+      <i class="ti ti-file-pencil"></i>
+      <div style="flex:1;min-width:0"><b>작성 중인 주문서가 있습니다</b><span> — ${d.nm||'고객 미입력'} · ${new Date(d.t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} 저장</span></div>
+      <button class="action-btn es-btn" style="margin-top:0" onclick="suitDraftApply()"><i class="ti ti-player-play"></i>이어서 작성</button>
+      <button class="mini-act" onclick="suitDraftClear()" title="임시저장 삭제"><i class="ti ti-x"></i></button>`;
+    const bar = $('#suit-stepbar') || $('#suit-tabs');
+    if (bar) bar.parentElement.insertBefore(banner, bar);
+  }catch(e){}
+}
+function suitDraftApply(){
+  try{
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');
+    if (!d) return;
+    state.opt = Object.assign(state.opt||{}, d.opt||{});
+    // 패턴 먼저 → 사이즈 목록 구축 → 전 필드 복원
+    ['o-pTop','o-pBot','o-pVest','o-pCoat'].forEach(id=>{
+      const el = document.getElementById(id);
+      if (el && d.fields[id]!==undefined) el.value = d.fields[id];
+    });
+    if (typeof refreshSizeOptions==='function') refreshSizeOptions();
+    Object.keys(d.fields).forEach(id=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.type==='checkbox') el.checked = !!d.fields[id];
+      else el.value = d.fields[id];
+    });
+    if (typeof onQtyChange==='function') onQtyChange();
+    if (typeof refreshSizeOptions==='function') refreshSizeOptions();
+    const SYNC = { 'pick-pTop':'o-pTop','pick-pBot':'o-pBot','pick-pVest':'o-pVest','pick-pCoat':'o-pCoat','pick-fab':'o-fabNo','pick-lin':'o-lin','pick-btn':'o-btn' };
+    Object.keys(SYNC).forEach(box=>{
+      const v = document.getElementById(SYNC[box])?.value;
+      document.querySelectorAll('#'+box+' .pick-card').forEach(c=>c.classList.toggle('active', !!v && c.dataset.v===v));
+    });
+    document.querySelectorAll('#view-mtm-suit [data-opt]').forEach(grp=>{
+      const key = grp.dataset.opt;
+      const val = state.opt ? state.opt[key] : undefined;
+      if (val===undefined || val===null) return;
+      grp.querySelectorAll('.opt-btn').forEach(b=>b.classList.toggle('active', String(b.dataset.v)===String(val)));
+    });
+    if (typeof autoSizeAll==='function') autoSizeAll();
+    if (typeof computePrice==='function') computePrice();
+    if (typeof renderStepBar==='function') renderStepBar();
+    const b = $('#draft-banner');
+    if (b) b.remove();
+    toast('마지막 저장 시점으로 복원했습니다 — 이어서 작성하세요','ok','임시저장');
+  }catch(e){
+    toast('복원 중 문제가 발생했습니다 — 새로 작성해주세요','err','임시저장');
+  }
+}
+
 /* ─── 단계 진행 표시줄 (1→2→3→4→5 + 완료 체크) ─── */
 const SUIT_STEPS = [
   { tab:1, label:'고객정보' },
@@ -5230,6 +5327,7 @@ function saveSuit(){
   if (c){ c.orders++; c.total += tot; c.lastOrd = order.date; c.status = c.total>=900000?'VIP':'활성'; }
 
   saveDB();
+  if (typeof suitDraftClear==='function') suitDraftClear();
   toast(`#${facNo} 주문이 저장되었습니다`, 'ok', '주문 등록 완료');
   go('dash');
 }
@@ -5432,6 +5530,7 @@ function woDate(d){
   const p = d.split('-');
   return p.length===3 ? `${p[0]}년 ${+p[1]}월 ${+p[2]}일` : d;
 }
+function woSz(v){ return v==='기타' ? '기타(직접측정)' : (v||''); }
 function woV(v){ return (v && !isNaN(v)) ? (+v).toFixed(1).replace(/\.0$/,'') : ''; }
 
 function buildWorkOrder(){
@@ -5480,12 +5579,12 @@ function buildWorkOrder(){
   <table class="wo-t wo-opt">
     <colgroup><col style="width:12%"><col style="width:14%"><col style="width:10%"><col style="width:26%"><col style="width:10%"><col style="width:28%"></colgroup>
     <tr>
-      <th>패 턴 번 호</th><td><b>${$('#o-pTop').value||''} ${$('#o-sTop').value||''}</b> · ${o.bond}</td>
+      <th>패 턴 번 호</th><td><b>${$('#o-pTop').value||''} ${woSz($('#o-sTop').value)}</b> · ${o.bond}</td>
       <th>안 감 사 양</th><td>${woCirc(['전체','반안감','언컨(제원단)','언컨(안감)'], o.lining)}</td>
       <th rowspan="2">패턴수정</th><td>${woCirc(['강상(1.5)','중상(1)','약상(0.5)','강하(1.5)','중하(1)','약하(0.5)'], o.shldFix)}</td>
     </tr>
     <tr>
-      <th>상의 사이즈</th><td><b>${$('#o-sTop').value||''}</b></td>
+      <th>상의 사이즈</th><td><b>${woSz($('#o-sTop').value)}</b></td>
       <th>뒷 트 임</th><td>${woCirc(['센터벤트','사이드벤트','통막음'], o.vent)}</td>
       <td>${woCirc(['강반(1.5)','중반(1)','약반(0.5)','강굴(1.5)','중굴(1)','약굴(0.5)'], o.postFix)}</td>
     </tr>
@@ -5560,7 +5659,7 @@ function buildWorkOrder(){
     <table class="wo-t wo-opt">
       <colgroup><col style="width:12%"><col style="width:22%"><col style="width:8%"><col style="width:22%"><col style="width:10%"><col style="width:26%"></colgroup>
       <tr>
-        <th>패턴번호</th><td><b>${$('#o-pBot').value||''} ${$('#o-sBot').value||''}</b></td>
+        <th>패턴번호</th><td><b>${$('#o-pBot').value||''} ${woSz($('#o-sBot').value)}</b></td>
         <th>주 름</th><td>${woCirc([['없음','0'],['1주름','1'],['2주름','2']], o.botTuck)}</td>
         <th>봉제방식</th><td>${woCirc(['일반','프리미엄'], o.botSew)}</td>
       </tr>
@@ -8517,6 +8616,13 @@ window.addEventListener('DOMContentLoaded', async ()=>{
     const p = $('#act-panel');
     if (p && p.classList.contains('open') && !e.target.closest('.noti-wrap')) p.classList.remove('open');
   });
+  // 주문서 드래프트 자동 저장 (입력·선택·클릭 디바운스)
+  const _sv = document.getElementById('view-mtm-suit');
+  if (_sv && typeof suitDraftSave==='function'){
+    _sv.addEventListener('input',  suitDraftSave);
+    _sv.addEventListener('change', suitDraftSave);
+    _sv.addEventListener('click',  suitDraftSave);
+  }
   if (localStorage.getItem('nuri_dark')==='1'){
     document.body.classList.add('dk');
     const ic = $('#theme-ic'); if (ic) ic.className='ti ti-sun';
