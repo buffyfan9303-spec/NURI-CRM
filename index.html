@@ -1651,6 +1651,10 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 60차 — 매장정보 백업 노트 ════ */
+.shop-bak-note{background:var(--wb);color:var(--wt);border:1px solid rgba(232,149,12,.42);border-radius:8px;padding:10px 13px;font-size:12.5px;margin:14px 0 0;display:flex;align-items:center;gap:8px}
+.shop-bak-note .ti{font-size:17px;flex-shrink:0}
+.shop-bak-note b{color:var(--t)} .shop-bak-note span{color:var(--t3)}
 /* ════ 59차 — 알림 심각단계 + 주간 미니캘린더 + 모바일 ════ */
 .da-severe{background:var(--et)!important;color:#fff!important;border-color:var(--et)!important;box-shadow:0 0 0 2px rgba(237,85,101,.22)}
 .da-severe .ti{color:#fff}
@@ -3344,8 +3348,10 @@ body.dk{ --t3:#9b9994; }
             <div></div>
           </div>
 
+          <div id="shop-bak-note" class="shop-bak-note" style="display:none"></div>
           <div class="form-actions">
             <button class="btn-primary btn-big" onclick="saveShop()"><i class="ti ti-check"></i>설정 저장</button>
+            <button class="action-btn btn-big" id="shop-restore-btn" style="display:none" onclick="restoreShopBak()"><i class="ti ti-arrow-back-up"></i>직전 정보로 되돌리기</button>
           </div>
         </div>
       </div>
@@ -4790,13 +4796,14 @@ function renderDash(){
       const overR=outR.filter(r=>r.dueDt&&r.dueDt<tStr);
       const dueT=outR.filter(r=>r.dueDt===tStr);
       const items=[];
-      if(overR.length) items.push(['err','','ti-alarm',`렌탈 연체 ${overR.length}건`+_np(overR,r=>r.renter),"go('rental');state.rentalFilter='출고중';if(typeof renderRental==='function')renderRental()"]);
-      if(overO.length) items.push(['err',maxOver>=sev?' da-severe':'','ti-clock-exclamation',`완성 지연 ${overO.length}건·최대 ${maxOver}일`+_np(overO,o=>o.nm),"go('orders');state.ordFilter='over';if(typeof renderOrders==='function')renderOrders()"]);
-      if(doneT.length) items.push(['warn','','ti-package-export',`오늘 완성 ${doneT.length}건`+_np(doneT,o=>o.nm),"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
-      if(immO.length) items.push(['info','','ti-clock-hour-4',`완성 임박·내일 ${immO.length}건`+_np(immO,o=>o.nm),"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
-      if(fitsT.length) items.push(['warn','','ti-ruler-2',`오늘 가봉 ${fitsT.length}건`+_np(fitsT,o=>o.nm),"go('orders');state.ordFilter='wfit';if(typeof renderOrders==='function')renderOrders()"]);
-      if(dueT.length) items.push(['info','','ti-arrow-back-up',`오늘 반납 ${dueT.length}건`+_np(dueT,r=>r.renter),"go('rental')"]);
-      al.innerHTML = items.length ? `<div class="dash-alert-bar">${items.map(([t,extra,ic,tx,act])=>`<button class="da-item da-${t}${extra}" onclick="${act}"><i class="ti ${ic}"></i>${tx}</button>`).join('')}</div>` : '';
+      if(overO.length) items.push([maxOver>=sev?0:3,'err',maxOver>=sev?' da-severe':'','ti-clock-exclamation',`완성 지연 ${overO.length}건·최대 ${maxOver}일`+_np(overO,o=>o.nm),"go('orders');state.ordFilter='over';if(typeof renderOrders==='function')renderOrders()"]);
+      if(overR.length) items.push([1,'err','','ti-alarm',`렌탈 연체 ${overR.length}건`+_np(overR,r=>r.renter),"go('rental');state.rentalFilter='출고중';if(typeof renderRental==='function')renderRental()"]);
+      if(doneT.length) items.push([2,'warn','','ti-package-export',`오늘 완성 ${doneT.length}건`+_np(doneT,o=>o.nm),"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
+      if(fitsT.length) items.push([4,'warn','','ti-ruler-2',`오늘 가봉 ${fitsT.length}건`+_np(fitsT,o=>o.nm),"go('orders');state.ordFilter='wfit';if(typeof renderOrders==='function')renderOrders()"]);
+      if(immO.length) items.push([5,'info','','ti-clock-hour-4',`완성 임박·내일 ${immO.length}건`+_np(immO,o=>o.nm),"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
+      if(dueT.length) items.push([6,'info','','ti-arrow-back-up',`오늘 반납 ${dueT.length}건`+_np(dueT,r=>r.renter),"go('rental')"]);
+      items.sort((a,b)=>a[0]-b[0]);
+      al.innerHTML = items.length ? `<div class="dash-alert-bar">${items.map(([pri,t,extra,ic,tx,act])=>`<button class="da-item da-${t}${extra}" onclick="${act}"><i class="ti ${ic}"></i>${tx}</button>`).join('')}</div>` : '';
     }
   }catch(e){}
   // 이번 주 미니 캘린더 (가봉·완성·반납 7일 한눈) — 59차
@@ -9602,6 +9609,7 @@ function renderSalesChart(){
 
 /* ─── 매장 설정 (별도 저장소 — DB 초기화와 무관) ─── */
 const SHOP_KEY = 'nuri_shop_v1';
+const SHOP_BAK_KEY = 'nuri_shop_bak';
 function loadShop(){
   try{
     state.shop = JSON.parse(localStorage.getItem(SHOP_KEY)||'null') ||
@@ -9742,6 +9750,7 @@ function renderSettings(){
   renderPermCard();
   renderBufferCard();
   renderAlertCard();
+  renderShopBakNote();
 }
 function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
@@ -9774,23 +9783,67 @@ function clearShopLogo(){
   pv.style.backgroundImage='';
   pv.innerHTML = '<i class="ti ti-photo" style="font-size:22px"></i>로고 추가';
 }
+function _pushShopCloud(){
+  if (sb && state._cloud){
+    try{ sb.from('app_state').upsert({ id:'shop', data: state.shop, updated_at: new Date().toISOString() }).then(()=>{}); }catch(e){}
+  }
+}
 function saveShop(){
-  state.shop = Object.assign({}, state.shop, {
-    name:  $('#set-name').value.trim() || 'NURI CRM',
+  const prev = state.shop || {};
+  const nameEl = $('#set-name');
+  // 빈 폼 저장 가드 — 설정 화면이 활성 상태이고 매장명 입력칸이 있을 때만 폼값으로 매장정보 갱신.
+  // (버퍼/알림 등 다른 경로에서 호출되면 매장정보는 절대 건드리지 않고 영속만 수행)
+  const formLive = (state.view==='settings') && nameEl;
+  if (!formLive){
+    localStorage.setItem(SHOP_KEY, JSON.stringify(state.shop));
+    _pushShopCloud();
+    return;
+  }
+  // 1세대 백업 (되돌리기용) — 덮기 전의 직전값 보관
+  try{ localStorage.setItem(SHOP_BAK_KEY, JSON.stringify({ data: prev, at: new Date().toISOString() })); }catch(e){}
+  state.shop = Object.assign({}, prev, {
+    name:  nameEl.value.trim() || prev.name || 'NURI CRM',
     tag:   $('#set-tag').value.trim() || 'MTM 통합 관리 시스템',
     ph:    $('#set-ph').value.trim(),
     addr:  $('#set-addr').value.trim(),
     bizno: $('#set-bizno').value.trim(),
     owner: $('#set-owner').value.trim(),
     target: parseInt($('#set-target').value)||0,
-    logo:  state.shopLogoTmp !== undefined ? state.shopLogoTmp : ((state.shop&&state.shop.logo)||'')
+    logo:  state.shopLogoTmp !== undefined ? state.shopLogoTmp : (prev.logo||'')
   });
   localStorage.setItem(SHOP_KEY, JSON.stringify(state.shop));
   applyShop();
-  if (sb && state._cloud){
-    try{ sb.from('app_state').upsert({ id:'shop', data: state.shop, updated_at: new Date().toISOString() }).then(()=>{}); }catch(e){}
+  _pushShopCloud();
+  if (typeof renderShopBakNote==='function') renderShopBakNote();
+  toast('매장 설정 저장 — 모든 인쇄물 헤더에 반영됩니다 (직전값은 되돌리기 가능)','ok','매장 설정');
+}
+// 매장정보 직전 백업으로 되돌리기 (현재값과 swap → 다시 되돌리기로 취소 가능)
+function restoreShopBak(){
+  let bak; try{ bak = JSON.parse(localStorage.getItem(SHOP_BAK_KEY)||'null'); }catch(e){}
+  if (!bak || !bak.data){ toast('되돌릴 직전 백업이 없습니다','warn','매장 설정'); return; }
+  const cur = state.shop || {};
+  state.shop = Object.assign({}, bak.data);
+  try{ localStorage.setItem(SHOP_BAK_KEY, JSON.stringify({ data: cur, at: new Date().toISOString() })); }catch(e){}
+  localStorage.setItem(SHOP_KEY, JSON.stringify(state.shop));
+  applyShop();
+  _pushShopCloud();
+  // 설정 폼 입력칸 동기화
+  const S = state.shop;
+  if ($('#set-name')){ $('#set-name').value=S.name||''; $('#set-tag').value=S.tag||''; $('#set-ph').value=S.ph||''; $('#set-addr').value=S.addr||''; $('#set-bizno').value=S.bizno||''; $('#set-owner').value=S.owner||''; if ($('#set-target')) $('#set-target').value=S.target||''; }
+  renderShopBakNote();
+  toast('직전 매장정보로 되돌렸습니다 — 한 번 더 누르면 취소','ok','매장 설정');
+}
+function renderShopBakNote(){
+  const btn=$('#shop-restore-btn'), note=$('#shop-bak-note');
+  let bak; try{ bak = JSON.parse(localStorage.getItem(SHOP_BAK_KEY)||'null'); }catch(e){}
+  if (bak && bak.data){
+    if (btn) btn.style.display='inline-flex';
+    if (note){ const b=bak.data; note.style.display='flex';
+      note.innerHTML=`<i class="ti ti-history"></i><div>직전 저장본: <b>${b.name||'(상호없음)'}</b>${b.ph?' · '+b.ph:''} <span>(${(bak.at||'').replace('T',' ').slice(0,16)})</span> — 잘못 저장했다면 되돌릴 수 있습니다</div>`; }
+  } else {
+    if (btn) btn.style.display='none';
+    if (note) note.style.display='none';
   }
-  toast('매장 설정 저장 — 모든 인쇄물 헤더에 반영됩니다','ok','매장 설정');
 }
 
 /* ─── 렌탈 계약서 (출고 시 서명용 A4) ─────────── */
