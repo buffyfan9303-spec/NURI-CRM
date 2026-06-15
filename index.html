@@ -6558,7 +6558,7 @@ function buildWorkOrder(){
   </div>`;
 
   // ── PAGE 1: 상의 작지서 (상의/자켓/코트 주문 시에만) ──
-  let page1 = `<div class="wo-sheet">
+  let page1 = `<div class="wo-sheet">${printLogoBar()}
     <div class="wo-sec">MTM 정장 작업지시서 — 상의 (싱글 작지서 양식)</div>
     ${head}${optTop}${sizeTop}${memoTop}
     ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); const _m3={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')}; return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _fabPatt(_f3))}</div><div class="d wo-d-spec"><div class="jk3v jk3spec">${composeJacketSpec(o, '#e8ebee', _m3)}</div><span>치수도</span></div></div>`; })():''}
@@ -6766,7 +6766,7 @@ function batchPrintWO(){
   const list = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료' && ((o.fac&&o.fac.stage)||0)===0);
   if (!list.length){ toast('대기 중(미발주) 정장 주문이 없습니다','warn','일괄 인쇄'); return; }
   // 1) 발주 명세 표지
-  let cover = `<div class="wo-sheet" style="page-break-after:always">
+  let cover = `<div class="wo-sheet" style="page-break-after:always">${printLogoBar()}
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
       <div style="font-size:20px;font-weight:800">공장 발주 명세</div>
       <div style="font-size:12px;color:#666">${dStr(today())} · ${shopName()} · ${list.length}건</div>
@@ -8652,6 +8652,29 @@ function studioPrint(){
 
 /* ─── 결혼 패키지 그룹 주문 (혼주·들러리) ─── */
 const WED_ROLES = ['신랑','신부','들러리','혼주(부)','혼주(모)','사회자','기타'];
+function printLogoBar(){
+  const s=state.shop||{};
+  if(!s.logo) return '';
+  const SZ={sm:30,md:48,lg:66}; const h=SZ[s.logoPrintSize||'md']||48;
+  const center=(s.logoPrintPos||'center')==='center';
+  return `<div style="text-align:${center?'center':'left'};margin-bottom:9px"><img src="${s.logo}" style="max-height:${h}px;max-width:240px;object-fit:contain"></div>`;
+}
+function setLogoCfg(key,val){ if(!state.shop)loadShop(); state.shop[key]=val; saveShop(); renderPrintLogoCard(); toast('인쇄물 로고 설정 저장','ok','설정'); }
+function renderPrintLogoCard(){
+  let card=$('#set-printlogo-card');
+  if(!card){ card=document.createElement('div'); card.id='set-printlogo-card'; const pc=document.querySelector('#view-settings .page-content'); if(pc)pc.appendChild(card); }
+  if(!card) return;
+  const s=state.shop||{}; const pos=s.logoPrintPos||'center', size=s.logoPrintSize||'md';
+  const on='background:#1ab394;color:#fff;border-color:transparent';
+  const pB=(v,l)=>`<button class="action-btn" onclick="setLogoCfg('logoPrintPos','${v}')" style="${pos===v?on:''}">${l}</button>`;
+  const sB=(v,l)=>`<button class="action-btn" onclick="setLogoCfg('logoPrintSize','${v}')" style="${size===v?on:''}">${l}</button>`;
+  card.innerHTML=`<div class="form-card" style="margin-top:18px;padding:16px 18px">
+    <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-photo"></i> 인쇄물 로고 (작지서·계약서·예식 표지 공통)</div>
+    ${s.logo?'':'<div style="font-size:12px;color:var(--wt);background:var(--wb);padding:8px 11px;border-radius:7px;margin-bottom:12px"><i class="ti ti-info-circle"></i> 위 매장정보에 로고를 먼저 등록하면 모든 인쇄물에 반영됩니다</div>'}
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:11px"><span style="font-size:13px;color:var(--t2);min-width:42px">위치</span>${pB('left','좌측')}${pB('center','중앙')}</div>
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span style="font-size:13px;color:var(--t2);min-width:42px">크기</span>${sB('sm','작게')}${sB('md','보통')}${sB('lg','크게')}</div>
+  </div>`;
+}
 function printWedPackage(gid){
   const g=gFind(gid); if(!g) return;
   const mems=(g.members||[]);
@@ -8664,7 +8687,7 @@ function printWedPackage(gid){
     const cells=Object.keys(LBL).map(k=>`<td style="border:1px solid #ccc;padding:6px 4px;text-align:center;font-size:11px">${LBL[k]}<br><b style="font-size:15px">${M[k]||'-'}</b></td>`).join('');
     return `<div class="wo-sheet">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0c1f35;padding-bottom:8px;margin-bottom:9px">
-        <div>${(state.shop&&state.shop.logo)?`<img src="${state.shop.logo}" style="max-height:30px;max-width:130px;object-fit:contain;margin-bottom:3px"><br>`:''}<div style="font-size:13px;color:#666">${shopName()}</div><div style="font-size:19px;font-weight:900">예식 의상 작업지시서</div>
+        <div>${printLogoBar()}<div style="font-size:13px;color:#666">${shopName()}</div><div style="font-size:19px;font-weight:900">예식 의상 작업지시서</div>
           <div style="font-size:12px;color:#444;margin-top:3px">${g.eventNm||'예식'} · 예식일 ${g.eventDate||'-'} · 대여 ${g.useDate||'-'} ~ ${g.dueDate||'-'}</div></div>
         <div style="text-align:center">${qrFor(m.id)}<div style="font-size:8.5px;color:#888;margin-top:2px">스캔 → 원격 치수 제출</div></div>
       </div>
@@ -8682,10 +8705,11 @@ function printWedPackage(gid){
   const _roster=mems.map((m,i)=>`<tr><td style="border:1px solid #ddd;padding:6px;text-align:center">${i+1}</td><td style="border:1px solid #ddd;padding:6px"><b>${m.role||'-'}</b></td><td style="border:1px solid #ddd;padding:6px">${m.nm||'-'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.measure&&Object.keys(m.measure).length?'O':'—'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.rentalCode||'—'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.deadline||'-'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.status||'-'}</td></tr>`).join('');
   const cover=`<div class="wo-sheet">
     <div style="text-align:center;border-bottom:3px solid #0c1f35;padding-bottom:12px;margin-bottom:15px">
-      ${(state.shop&&state.shop.logo)?`<img src="${state.shop.logo}" style="max-height:58px;max-width:210px;object-fit:contain;margin-bottom:8px"><br>`:''}
+      ${printLogoBar()}
       <div style="font-size:13px;color:#666">${shopName()}</div>
       <div style="font-size:24px;font-weight:900;margin-top:3px">${g.eventNm||'예식'} 패키지</div>
       <div style="font-size:13px;color:#444;margin-top:6px">예식일 ${g.eventDate||'-'} · 대여 ${g.useDate||'-'} ~ ${g.dueDate||'-'} · 총 ${mems.length}명</div>
+      <div style="margin-top:11px">${(function(){ try{ if(typeof qrcode==='undefined')return''; const q=qrcode(0,'M'); q.addData((location.origin||'https://www.nuricrm.co.kr')+'/?wm='+gid); q.make(); return '<img src="'+q.createDataURL(4,4)+'" style="width:108px;height:108px">'; }catch(e){return'';} })()}<div style="font-size:10px;color:#888;margin-top:3px">스캔 → 멤버별 치수 입력 (단톡방 공유용)</div></div>
     </div>
     <div style="display:flex;gap:14px;margin-bottom:15px">
       <div style="flex:1;border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:#888">진행률</div><div style="font-size:24px;font-weight:900;color:#1ab394">${_pct}%</div><div style="font-size:11px;color:#666">${_done}/${mems.length} 완료</div></div>
@@ -8859,8 +8883,16 @@ function handleRemoteMeasure(){
     const wm=new URLSearchParams(location.search).get('wm');
     if(!wm) return false;
     const [gid,mid]=wm.split('.');
-    // 저장된 데이터가 로컬에 있으면 멤버 정보 표시, 없으면 일반 입력 폼
     const g=gFind(gid), m=mFind(gid,mid);
+    if(!mid){
+    const mems=(g&&g.members)||[];
+    document.body.innerHTML=`<div style="max-width:460px;margin:40px auto;padding:22px;font-family:inherit">
+      <div style="font-size:20px;font-weight:800;color:#2f4050;margin-bottom:4px">${g?g.eventNm:'예식'} 의상 치수</div>
+      <div style="font-size:13px;color:#888;margin-bottom:18px">본인을 선택해 치수를 입력해 주세요.</div>
+      ${mems.length? mems.map(mm=>`<button onclick="location.search='?wm=${gid}.'+'${mm.id}'" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid #ddd;border-radius:9px;padding:14px;margin-bottom:9px;font-size:15px;font-weight:700;cursor:pointer">${mm.role||''} ${mm.nm||''} ${mm.measure&&Object.keys(mm.measure).length?'<span style=\"color:#1ab394;font-size:12px;font-weight:600\">· 입력 완료</span>':'<span style=\"color:#e8950c;font-size:12px;font-weight:600\">· 미입력</span>'}</button>`).join('') : '<div style="color:#888;padding:14px;border:1px dashed #ddd;border-radius:9px">멤버 정보를 불러올 수 없습니다. 매장에서 받은 개인별 링크를 이용해 주세요.</div>'}
+    </div>`;
+    return true;
+  }
     document.body.innerHTML=`<div style="max-width:460px;margin:40px auto;padding:22px;font-family:inherit">
       <div style="font-size:20px;font-weight:800;color:#2f4050;margin-bottom:4px">${g?g.eventNm:'예식'} 의상 치수 입력</div>
       <div style="font-size:13px;color:#888;margin-bottom:18px">${m?m.role:''}님의 치수를 입력해 주세요. 매장에서 의상을 준비합니다.</div>
@@ -10054,6 +10086,7 @@ function renderSettings(){
   renderPermCard();
   renderBufferCard();
   renderShopBakNote();
+  renderPrintLogoCard();
 }
 function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
@@ -10158,7 +10191,7 @@ function buildRentContract(code){
   const cLog = state.rentalLog.find(l=>l.code===code && l.status==='출고중');
   const sig = cLog && cLog.sign;
   $('#print-area').innerHTML = `
-  <div class="wo-sheet" style="font-size:11px">
+  <div class="wo-sheet" style="font-size:11px">${printLogoBar()}
     <div style="text-align:center;border-bottom:3px solid #0c1f35;padding-bottom:12px;margin-bottom:14px">
       <div>${shopBrandBig()}</div>
       <div style="font-size:17px;font-weight:900;letter-spacing:10px;margin-top:10px">의 류 대 여 계 약 서</div>
