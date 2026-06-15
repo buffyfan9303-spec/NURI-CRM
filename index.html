@@ -1490,6 +1490,10 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .mh-table tbody th{background:var(--sf2);color:var(--t2);text-align:left}
 .mh-delta{font-size:10px;font-weight:800;margin-left:3px}
 .mh-delta.up{color:var(--et)} .mh-delta.down{color:var(--it)}
+/* 38차 — 작지서 QR */
+.wo-qr{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-top:8px}
+.wo-qr-cap{font-size:9px;color:#555;text-align:left;line-height:1.4}
+@media print{ .wo-qr{margin-top:6px} }
 /* 35차 — 컨디션 사진 */
 .cond-grid{display:flex;flex-wrap:wrap;gap:6px}
 .cond-th{width:60px;height:60px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--bd2);position:relative;cursor:zoom-in}
@@ -2942,7 +2946,7 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
           <div class="table-scroll">
             <table class="data-table">
               <thead><tr>
-                <th style="width:14%">원단번호</th><th style="width:18%">거래처</th><th style="width:14%">조성</th><th style="width:10%">컬러</th><th style="width:8%">요척(Y)</th><th style="width:10%">단가</th><th style="width:10%">재고</th><th style="width:16%">최종발주일</th>
+                <th style="width:14%">원단번호</th><th style="width:18%">거래처</th><th style="width:14%">조성</th><th style="width:10%">컬러</th><th style="width:8%">요척(Y)</th><th style="width:10%">단가</th><th style="width:10%">재고</th><th style="width:12%">소진 예측</th><th style="width:14%">최종발주일</th>
               </tr></thead>
               <tbody id="fab-tbody"></tbody>
             </table>
@@ -4391,6 +4395,19 @@ function renderDash(){
   const _wd = $('#dw-date');
   if (_wd){ const _t=today(); const _W=['일','월','화','수','목','금','토']; _wd.textContent = `${_t.getFullYear()}.${pad(_t.getMonth()+1)}.${pad(_t.getDate())} (${_W[_t.getDay()]})`; }
   if (typeof renderTodos==='function') renderTodos();
+  // 원단 발주 경고 (소진 임박)
+  try{
+    const lowFabs = state.fabrics.map(f=>({f, fc:fabForecast(f)})).filter(x=>x.fc.flag && (x.fc.flag.kind==='order'||x.fc.flag.kind==='out'));
+    const sr = $('#stat-fab-note');
+    const fabCard = $('#stat-fab')?.closest('.stat-card');
+    if (fabCard){
+      let warn = fabCard.querySelector('.fab-warn');
+      if (lowFabs.length){
+        if (!warn){ warn = document.createElement('div'); warn.className='stat-note fab-warn'; fabCard.appendChild(warn); }
+        warn.style.color = 'var(--et)'; warn.innerHTML = `<i class="ti ti-alert-triangle"></i> 발주 필요 ${lowFabs.length}종`;
+      } else if (warn){ warn.remove(); }
+    }
+  }catch(e){}
   // 월요일 첫 접속 시 주간 브리핑 자동 표시 (주 1회)
   try{
     const _wk = `${today().getFullYear()}-${Math.ceil((((today()-new Date(today().getFullYear(),0,1))/86400000)+new Date(today().getFullYear(),0,1).getDay()+1)/7)}`;
@@ -5756,6 +5773,15 @@ function woDate(d){
 function woSz(v){ return v==='기타' ? '기타(직접측정)' : (v||''); }
 function woV(v){ return (v && !isNaN(v)) ? (+v).toFixed(1).replace(/\.0$/,'') : ''; }
 
+// 작지서 QR — 공정 딥링크 (스캔 시 해당 주문 공정 패널)
+function woQrTag(no){
+  try{
+    if (typeof qrcode==='undefined') return '';
+    const url = (location.origin||'https://www.nuricrm.co.kr') + '/?fac=' + encodeURIComponent(no);
+    const q = qrcode(0,'M'); q.addData(url); q.make();
+    return `<img src="${q.createDataURL(4,4)}" style="width:84px;height:84px">`;
+  }catch(e){ return ''; }
+}
 function buildWorkOrder(){
   const o = state.opt, q = o.qty||{s:1,p:1,v:0,c:0,j:0};
   const fac = $('#o-fac').textContent.replace('#','');
@@ -5928,6 +5954,7 @@ function buildWorkOrder(){
       </div>
       ${vest}${diag}
       <div class="wo-foot"><span>NURI CRM 작업지시서 · 투입번호 #${fac}</span><span class="sign">공장 수령 __________</span><b>${nm} 님</b></div>
+    <div class="wo-qr">${woQrTag(fac)}<div class="wo-qr-cap">스캔 → 공정 단계 업데이트<br>(재단·봉제·마무리·입고)</div></div>
     </div>`;
   }
 
@@ -6120,6 +6147,25 @@ function renderOrders(){
 }
 
 /* ⑦.5 Fabric ──────────────────────────────────────────── */
+// 원단 소진 예측 — 최근 소비율 기반 (주당 사용량 → 소진 주수)
+function fabForecast(f){
+  const today0 = today();
+  const since = new Date(today0); since.setDate(since.getDate()-90);
+  const sinceS = dStr(since);
+  // 이 원단을 쓴 정장 주문 (최근 90일)
+  const used = state.orders.filter(o=>o.type==='정장' && o.fabNo===f.no && o.date>=sinceS).length;
+  const weeks = used>0 ? (used / (90/7)) : 0;  // 주당 소비
+  const stock = f.stock||0;
+  const weeksLeft = weeks>0 ? Math.round(stock/weeks) : null;
+  // 발주점: 리드타임 2주 + 안전재고 → 2주 내 소진이면 발주 권장
+  const LEAD = 2;
+  let flag = null;
+  if (stock<=0) flag = { kind:'out', msg:'재고 소진' };
+  else if (weeksLeft!=null && weeksLeft<=LEAD) flag = { kind:'order', msg:`약 ${weeksLeft}주 후 소진 — 발주 필요` };
+  else if (stock<5) flag = { kind:'low', msg:'저수위' };
+  else if (weeksLeft!=null && weeksLeft<=LEAD+2) flag = { kind:'watch', msg:`약 ${weeksLeft}주분` };
+  return { used, weeks, weeksLeft, flag };
+}
 function renderFabList(){
   const q = ($('#q-fab')?.value||'').trim().toLowerCase();
   const rows = state.fabrics.filter(f=>!q || f.no.toLowerCase().includes(q) || f.vendor.toLowerCase().includes(q));
@@ -6132,12 +6178,14 @@ function renderFabList(){
       <td>${f.yard} Y</td>
       <td>${fmt(f.price)}</td>
       <td><span class="badge ${f.stock<5?'b-err':f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td>
+      <td>${(()=>{ const fc=fabForecast(f); if(!fc.flag) return fc.weeksLeft!=null?`<span style="color:var(--t3)">~${fc.weeksLeft}주분</span>`:'<span style="color:var(--t3)">-</span>'; const cls=fc.flag.kind==='out'||fc.flag.kind==='order'?'b-err':fc.flag.kind==='low'?'b-warn':'b-info'; return `<span class="badge ${cls}" title="최근 90일 ${fc.used}벌 사용">${fc.flag.msg}</span>${(fc.flag.kind==='order'||fc.flag.kind==='out')?` <button class="mini-act" onclick="openFabForm('${f.no}')" title="발주"><i class="ti ti-shopping-cart-plus"></i></button>`:''}`; })()}</td>
       <td>${f.lastOrd}</td>
-    </tr>`).join('') || `<tr><td colspan="8"><div class="empty-state"><i class="ti ti-package-off"></i><div class="empty-state-title">발주할 원단이 없습니다</div><div class="empty-state-sub">재고 현황에 원단을 등록하면 요척표 기반 발주 수량이 자동 계산됩니다</div><button class="action-btn es-btn" onclick="go('inv')"><i class="ti ti-box"></i>재고 현황으로</button></div></td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="9"><div class="empty-state"><i class="ti ti-package-off"></i><div class="empty-state-title">발주할 원단이 없습니다</div><div class="empty-state-sub">재고 현황에 원단을 등록하면 요척표 기반 발주 수량이 자동 계산됩니다</div><button class="action-btn es-btn" onclick="go('inv')"><i class="ti ti-box"></i>재고 현황으로</button></div></td></tr>`;
 }
-function openFabForm(){
+function openFabForm(pre){
   $('#fm-fab').innerHTML = state.fabrics.map(f=>
     `<option value="${f.no}">${f.no} · ${f.vendor} · ${f.color} (현재 ${f.stock}개)</option>`).join('');
+  if (pre){ const _s=$('#fm-fab'); if (_s) _s.value = pre; }
   $('#fm-qty').value = 5;
   const d = new Date(today()); d.setDate(d.getDate()+7);
   $('#fm-date').value = dStr(d);
@@ -7821,8 +7869,17 @@ function scanManual(){
 // 스캔 결과 → 상태별 자동 처리
 function handleScan(code){
   closeScanModal();
-  const r = state.rentals.find(x=>x.code.toUpperCase() === String(code).toUpperCase().trim());
-  if (!r){ toast(`'${code}' 상품을 찾을 수 없습니다`,'err','QR 스캔'); return; }
+  const raw = String(code).trim();
+  // 작지서 QR(URL ?fac=) 또는 주문번호 인식 → 공정 패널
+  let facNo = null;
+  const um = raw.match(/[?&]fac=([^&]+)/); if (um) facNo = decodeURIComponent(um[1]);
+  else if (/^#?\d{3,}$/.test(raw)) facNo = raw.replace('#','');
+  if (facNo){
+    const o = state.orders.find(x=>String(x.no)===String(facNo) && x.type==='정장');
+    if (o){ go('orders'); if (typeof openOrderDet==='function') openOrderDet(o.no); toast(`#${o.no} ${o.nm} — 공정 업데이트`,'info','작지서 QR'); return; }
+  }
+  const r = state.rentals.find(x=>x.code.toUpperCase() === raw.toUpperCase());
+  if (!r){ toast(`'${code}' 항목을 찾을 수 없습니다`,'err','QR 스캔'); return; }
   go('rental');
   if (r.status==='대여가능' || r.status==='예약중'){
     toast(`${r.code} ${r.name} — 출고 진행`,'info','QR 스캔');
@@ -9314,6 +9371,17 @@ async function enterApp(){
   }
   try{ history.replaceState({ view:'dash' }, '', '#dash'); }catch(e){}
   go('dash', true);
+  try{
+    const _fac = new URLSearchParams(location.search).get('fac');
+    if (_fac){
+      history.replaceState({}, '', location.pathname + '#dash');
+      setTimeout(()=>{
+        const o = state.orders.find(x=>String(x.no)===String(_fac) && x.type==='정장');
+        if (o){ go('orders'); if (typeof openOrderDet==='function') openOrderDet(o.no); toast(`#${o.no} ${o.nm} — 공정 단계를 업데이트하세요`,'info','작지서 QR'); }
+        else toast(`주문 #${_fac}을(를) 찾지 못했습니다`,'warn','작지서 QR');
+      }, 600);
+    }
+  }catch(e){}
 }
 
 function logout(){
