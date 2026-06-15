@@ -1480,6 +1480,16 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .hist-stat b{color:var(--t);font-size:13.5px}
 .swap-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--bd2);border-radius:3px;cursor:pointer}
 .swap-opt:hover{border-color:#1ab394;background:var(--sf2)}
+/* 37차 — 측정 프로필 */
+.measure-hint{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--acc-soft);border:1px solid rgba(26,179,148,.35);border-radius:3px;margin:10px 0;font-size:12.5px;color:var(--t);flex-wrap:wrap}
+.measure-hint > .ti{color:var(--okt);font-size:18px}
+.measure-hint span{font-size:12px;color:var(--t2)}
+.mh-table{width:100%;border-collapse:collapse;font-size:12px}
+.mh-table th,.mh-table td{border:1px solid var(--bd);padding:5px 8px;text-align:center;white-space:nowrap}
+.mh-table thead th{background:var(--sf2);color:var(--t3);font-weight:700;font-size:11px}
+.mh-table tbody th{background:var(--sf2);color:var(--t2);text-align:left}
+.mh-delta{font-size:10px;font-weight:800;margin-left:3px}
+.mh-delta.up{color:var(--et)} .mh-delta.down{color:var(--it)}
 /* 35차 — 컨디션 사진 */
 .cond-grid{display:flex;flex-wrap:wrap;gap:6px}
 .cond-th{width:60px;height:60px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--bd2);position:relative;cursor:zoom-in}
@@ -2317,7 +2327,7 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
             <div><label class="f-label">고객명<span class="f-req">*</span></label><input id="o-nm" class="f-input" placeholder="홍길동"></div>
             <div><label class="f-label">연락처</label><input id="o-ph" class="f-input" placeholder="010-0000-0000"></div>
           </div>
-          <select id="o-cust" style="display:none"></select>
+          <select id="o-cust" style="display:none" onchange="onSuitCustPick()"></select>
           <div class="form-row3">
             <div>
               <label class="f-label">가봉 / 직봉<span class="f-req">*</span></label>
@@ -4153,7 +4163,7 @@ function go(view, fromPop){
   if (view==='dash')      renderDash();
   if (view==='list')      renderCustList();
   if (view==='reg')       { initRegForm(); resetReg(); }
-  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); if (typeof suitDraftCheck==='function') suitDraftCheck(); }
+  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); if (typeof suitDraftCheck==='function') suitDraftCheck(); if (typeof showMeasureHint==='function') showMeasureHint(null); }
   if (view==='fab')       renderFabList();
   if (view==='sales-day') { $('#sd-date').value = dStr(today()); renderSalesDay(); }
   if (view==='sales-period'){
@@ -5117,6 +5127,47 @@ function injectStepNav(){
   });
 }
 
+// 고객 선택 → 저장된 측정 프로필 안내
+function onSuitCustPick(){
+  const id = $('#o-cust').value;
+  const c = state.customers.find(x=>x.id===id);
+  if (c){ if ($('#o-nm')) $('#o-nm').value = c.nm; if ($('#o-ph')) $('#o-ph').value = c.ph||''; }
+  showMeasureHint(c);
+}
+function showMeasureHint(c){
+  let hint = $('#measure-hint');
+  const sec1 = document.getElementById('suit-sec-1');
+  if (!sec1) return;
+  if (!hint){
+    hint = document.createElement('div');
+    hint.id = 'measure-hint';
+    const anchor = sec1.querySelector('.section-card-title');
+    if (anchor) anchor.parentElement.insertBefore(hint, anchor.nextSibling);
+    else sec1.insertBefore(hint, sec1.firstChild);
+  }
+  if (c && c.measure && Object.keys(c.measure).length){
+    const LBL = {chest:'가슴',waist:'허리',shoul:'어깨',len:'기장',slvL:'소매',botWaist:'바지허리',inseam:'인심'};
+    const items = Object.keys(c.measure).map(k=>`${LBL[k]||k} ${c.measure[k]}`).join(' · ');
+    const last = (c.measureHist&&c.measureHist[0]) ? c.measureHist[0].date : '';
+    hint.className = 'measure-hint';
+    hint.innerHTML = `<i class="ti ti-ruler-2"></i><div style="flex:1;min-width:0"><b>${c.nm}님 저장된 치수</b> <span>${items}</span><span style="color:var(--t3)"> (${last} 기준)</span></div><button class="action-btn es-btn" style="margin-top:0" onclick="applyMeasureProfile('${c.id}')"><i class="ti ti-arrow-down"></i>치수 불러오기</button>`;
+    hint.style.display = '';
+  } else { hint.style.display = 'none'; }
+}
+function applyMeasureProfile(id){
+  const c = state.customers.find(x=>x.id===id);
+  if (!c || !c.measure) return;
+  // 고객 기본 체형칸 채움 + 안내 (상세 치수는 ③탭 측정표 수정치수란에 참고)
+  const M = c.measure;
+  toast(`${c.nm}님 치수 프로필 적용 — ③ 사이즈 탭 측정표에 참고치수로 반영됩니다`,'ok','측정 프로필');
+  // 측정표가 비어있을 때 fin 칸에 직접 반영
+  const map = { chest:'sz-top-chest', waist:'sz-top-waist', shoul:'sz-top-shoul', len:'sz-top-len', slvL:'sz-top-slvL', botWaist:'sz-bot-w', inseam:'sz-bot-out' };
+  Object.keys(map).forEach(k=>{
+    if (M[k] && typeof setCmToInput==='function') setCmToInput(`${map[k]}-fin`, M[k]);
+  });
+  if (typeof computePrice==='function') computePrice();
+}
+
 // ① 고객정보 → ② 주문서 작성 이동 (필수값 확인)
 function goNextFromCust(){
   const nmEl = $('#o-nm'), phEl = $('#o-ph');
@@ -5453,6 +5504,22 @@ function saveSuit(){
     date: dStr(today()),
     sup, vat, total: tot, status:'진행중'
   };
+  // 측정 프로필 공유 — 완성치수를 고객 프로필에 누적 (MTM↔렌탈 재사용)
+  try{
+    let _c = state.customers.find(x=>x.id===order.custId) || state.customers.find(x=>x.nm===order.nm);
+    if (_c){
+      const KEYS = ['chest','waist','shoul','len','slvL'];
+      const m = {};
+      KEYS.forEach(k=>{ const v = spec.top[k] && spec.top[k].fin; if (v) m[k]=v; });
+      if (spec.bot.w && spec.bot.w.fin) m.botWaist = spec.bot.w.fin;
+      if (spec.bot.out && spec.bot.out.fin) m.inseam = spec.bot.out.fin;
+      if (Object.keys(m).length){
+        _c.measureHist = _c.measureHist || [];
+        _c.measureHist.unshift({ date: order.date, no: order.no, m });
+        _c.measure = m;  // 최신 프로필
+      }
+    }
+  }catch(e){}
   state.orders.unshift(order);
 
   // ── 재고 관리 연동: 주문에 사용된 원단·안감·단추 자동 차감 ──
@@ -8482,7 +8549,9 @@ function openCustDet(id){
   const _rev = _all.reduce((s,o)=>s+(o.total||0),0);
   const _avg = _all.length ? Math.round(_rev/_all.length) : 0;
   const _last = _all.map(o=>o.date).sort().pop() || '-';
+  const _measHTML = buildMeasureHistHTML(c);
   const _rollup = `
+    ${_measHTML}
     <div class="dp-sec">
       <div class="dp-sec-title"><i class="ti ti-coin"></i>재무 요약</div>
       <div class="dp-g3">
@@ -8587,6 +8656,35 @@ function delComment(id, kind, ref){
   state.comments = (state.comments||[]).filter(x=>x.id!==id);
   saveDB();
   if (kind==='cust') openCustDet(ref); else openOrderDet(ref);
+}
+
+/* ─── 측정 프로필 + 가봉 변화 이력 (MTM 단골 품질) ─── */
+function buildMeasureHistHTML(c){
+  const hist = (c.measureHist||[]).filter(h=>h.m && Object.keys(h.m).length);
+  if (!hist.length) return '';
+  const LBL = {chest:'가슴',waist:'허리',shoul:'어깨',len:'기장',slvL:'소매',botWaist:'바지허리',inseam:'인심'};
+  const keys = [...new Set(hist.flatMap(h=>Object.keys(h.m)))];
+  // 표: 행=부위, 열=주문(최신 좌측), 변화량 표시
+  const rows = keys.map(k=>{
+    const cells = hist.map((h,i)=>{
+      const v = h.m[k];
+      if (v==null) return '<td>-</td>';
+      let delta = '';
+      const prev = hist[i+1] && hist[i+1].m[k];
+      if (prev!=null && v!==prev){
+        const d = (v-prev).toFixed(1).replace(/\.0$/,'');
+        delta = `<span class="mh-delta ${v>prev?'up':'down'}">${v>prev?'+':''}${d}</span>`;
+      }
+      return `<td><b>${v}</b>${delta}</td>`;
+    }).join('');
+    return `<tr><th>${LBL[k]||k}</th>${cells}</tr>`;
+  }).join('');
+  const heads = hist.map(h=>`<th>${(h.date||'').slice(5)||'#'+h.no}</th>`).join('');
+  return `<div class="dp-sec">
+    <div class="dp-sec-title"><i class="ti ti-ruler-2"></i>가봉 치수 변화 (최근 ${hist.length}회)</div>
+    <div style="overflow-x:auto"><table class="mh-table"><thead><tr><th>부위</th>${heads}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:5px"><i class="ti ti-info-circle"></i> 재주문 시 변화량(±)을 패턴 보정에 반영하세요. 최신 주문이 왼쪽입니다.</div>
+  </div>`;
 }
 
 /* ─── 고객 사진 (체형·착장 기록) ─────────── */
