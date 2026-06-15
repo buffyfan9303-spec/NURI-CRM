@@ -1652,6 +1652,19 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 68차 — 공용 확인/입력 다이얼로그 ════ */
+#ui-dialog .uid-card{max-width:400px;padding:24px}
+.uid-msg{font-size:14.5px;color:var(--t);line-height:1.55;font-weight:600;margin-bottom:17px}
+.uid-input-wrap{margin-bottom:17px}
+.uid-input-wrap .f-input{width:100%}
+.uid-btns{display:flex;gap:9px;justify-content:flex-end}
+.uid-cancel,.uid-ok{height:44px;min-width:84px;border-radius:9px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;padding:0 18px}
+.uid-cancel{background:var(--sf);color:var(--t2);border:1px solid var(--bd2)}
+.uid-cancel:hover{background:var(--sf2);border-color:var(--t3)}
+.uid-ok{background:#1ab394;color:#fff;border:0}
+.uid-ok:hover{background:#16a085}
+.uid-ok.danger{background:var(--et)}
+.uid-ok.danger:hover{filter:brightness(.94)}
 /* ════ 67차 — 결혼패키지 멤버 카드 + 상품배정 모달 ════ */
 .wed-mems{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 .wed-mem{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid var(--bd);border-radius:10px;background:var(--sf2);flex-wrap:wrap}
@@ -3502,6 +3515,18 @@ body.dk{ --t3:#9b9994; }
   </div>
 
   <!-- 멤버 치수 모달 -->
+  <!-- 공용 확인/입력 다이얼로그 -->
+  <div id="ui-dialog" class="signup-overlay" onclick="if(event.target===this)uiDlgCancel()" style="z-index:11000">
+    <div class="signup-card uid-card" onclick="event.stopPropagation()">
+      <div id="uid-msg" class="uid-msg"></div>
+      <div id="uid-input-wrap" class="uid-input-wrap" style="display:none"><input id="uid-input" class="f-input" onkeydown="if(event.key==='Enter')uiDlgOk();if(event.key==='Escape')uiDlgCancel()"></div>
+      <div class="uid-btns">
+        <button id="uid-cancel" class="uid-cancel" onclick="uiDlgCancel()">취소</button>
+        <button id="uid-ok" class="uid-ok" onclick="uiDlgOk()">확인</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 결혼패키지 상품 배정 모달 -->
   <div id="mrent-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
     <div class="signup-card" onclick="event.stopPropagation()" style="max-width:460px">
@@ -4576,6 +4601,41 @@ function renderPushCard(){
       <div style="font-size:11.5px;color:var(--t3);margin-top:9px;line-height:1.6">사이트가 열려 있는 동안 <b>연체 발생 · 오늘 가봉 · 오늘 반납 · 공정 지연 위험 · 세탁/수선 복귀 지연</b>을 데스크톱 알림으로 보냅니다. 항목별 하루 1회, 30분마다 자동 점검.</div>
     </div>`;
 }
+// ── 공용 인앱 다이얼로그 (native confirm/prompt 대체 — 태블릿 안정) ──
+var _uiDlgResolve=null, _uiDlgMode='confirm';
+function uiConfirm(msg, opts){
+  opts=opts||{};
+  return new Promise(function(resolve){
+    _uiDlgResolve=resolve; _uiDlgMode='confirm';
+    const danger = (opts.danger!==undefined) ? opts.danger : /삭제|영구|되돌|취소|은퇴|지우|비움|초기화/.test(String(msg));
+    $('#uid-msg').innerHTML=String(msg).replace(/\n/g,'<br>');
+    $('#uid-input-wrap').style.display='none';
+    const ok=$('#uid-ok'); ok.textContent=opts.okLabel||'확인'; ok.className='uid-ok'+(danger?' danger':'');
+    $('#uid-cancel').style.display='';
+    $('#ui-dialog').classList.add('open');
+    setTimeout(function(){ try{ ok.focus(); }catch(e){} },40);
+  });
+}
+function uiPrompt(msg, opts){
+  opts=opts||{};
+  return new Promise(function(resolve){
+    _uiDlgResolve=resolve; _uiDlgMode='prompt';
+    $('#uid-msg').innerHTML=String(msg).replace(/\n/g,'<br>');
+    $('#uid-input-wrap').style.display='';
+    const inp=$('#uid-input'); inp.value=opts.value||''; inp.placeholder=opts.placeholder||'';
+    const ok=$('#uid-ok'); ok.textContent=opts.okLabel||'확인'; ok.className='uid-ok';
+    $('#uid-cancel').style.display='';
+    $('#ui-dialog').classList.add('open');
+    setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} },40);
+  });
+}
+function _uiDlgDone(val){
+  $('#ui-dialog').classList.remove('open');
+  const r=_uiDlgResolve; _uiDlgResolve=null;
+  if(r) r(val);
+}
+function uiDlgOk(){ _uiDlgDone(_uiDlgMode==='prompt' ? $('#uid-input').value : true); }
+function uiDlgCancel(){ _uiDlgDone(_uiDlgMode==='prompt' ? null : false); }
 function toast(msg, type='ok', title=''){
   if (type==='ok'){
     const _t = title||'', _m = String(msg);
@@ -4742,10 +4802,10 @@ function dayEvClick(i){
   if (e.orderNo) goEvent(e.orderNo);
 }
 // 수동 일정 삭제
-function delManualEvent(i){
+async function delManualEvent(i){
   const e = (state._dayEvs||[])[i];
   if (!e || !e.manual) return;
-  if (!confirm(`'${e.sub||e.name}' 일정을 삭제할까요?`)) return;
+  if (!await uiConfirm(`'${e.sub||e.name}' 일정을 삭제할까요?`)) return;
   const idx = state.events.indexOf(e);
   if (idx >= 0) state.events.splice(idx, 1);
   saveDB();
@@ -7175,11 +7235,11 @@ function doTransfer(toBr){
   renderRental();
   if ($('#hist-modal')?.classList.contains('open')) openHistModal(r.code);
 }
-function retireUnit(code){
+async function retireUnit(code){
   const r = state.rentals.find(x=>x.code===code);
   if (!r) return;
   if (r.status==='출고중'){ toast('대여 중인 상품은 회수 후 은퇴 처리하세요','warn'); return; }
-  if (!confirm(`${r.code} ${r.name}을(를) 은퇴 처리할까요?\n대여 목록에서 빠지고 '은퇴(세일)' 상태가 됩니다. (휴지통 30일 복구 가능)`)) return;
+  if (!await uiConfirm(`${r.code} ${r.name}을(를) 은퇴 처리할까요?\n대여 목록에서 빠지고 '은퇴(세일)' 상태가 됩니다. (휴지통 30일 복구 가능)`)) return;
   r.status = '은퇴'; r.resv = null;
   state.rentalLog.unshift({ code:r.code, name:r.name, status:'은퇴', rentDt:dStr(today()), nm:'', swapNote:'수명 종료 — 세일/기성복 전환 대상' });
   saveDB();
@@ -7300,10 +7360,10 @@ function condPhotoPick(inp, phase){
   };
   img.src = URL.createObjectURL(file);
 }
-function delCondPhoto(phase, i){
+async function delCondPhoto(phase, i){
   const log = curCycleLog(state.condTarget);
   if (!log || !log.cond || !log.cond[phase]) return;
-  if (!confirm('이 사진을 삭제할까요?')) return;
+  if (!await uiConfirm('이 사진을 삭제할까요?')) return;
   log.cond[phase].splice(i,1);
   saveDB(); renderCondModal();
 }
@@ -7549,10 +7609,10 @@ function doResv(){
 }
 
 // 예약 취소
-function cancelResv(code){
+async function cancelResv(code){
   const r = state.rentals.find(x=>x.code===code);
   if (!r || !r.resv) return;
-  if (!confirm(`${r.resv.nm} 님의 ${r.resv.useDt} 예약을 취소할까요?`)) return;
+  if (!await uiConfirm(`${r.resv.nm} 님의 ${r.resv.useDt} 예약을 취소할까요?`)) return;
   state.events = state.events.filter(e=>!(e.orderNo===r.code && String(e.sub||'').startsWith('렌탈 예약')));
   r.resv = null;
   r.status = '대여가능';
@@ -8465,7 +8525,7 @@ function studioPart(p){ state.studioPart=p; state.studioStep=0; renderStudio(); 
 function studioGoto(i){ state.studioStep=i; renderStudio(); }
 function studioBack(){ if(state.studioStep>0)state.studioStep--; renderStudio(); }
 function studioSkip(){ state.studioStep++; renderStudio(); }
-function studioReset(){ if(!confirm('선택을 모두 초기화할까요? (등록된 이미지는 유지됩니다)'))return; state.studioPick={}; state.studioStep=0; renderStudio(); }
+async function studioReset(){ if(!await uiConfirm('선택을 모두 초기화할까요? (등록된 이미지는 유지됩니다)'))return; state.studioPick={}; state.studioStep=0; renderStudio(); }
 function studioPick(key,val){
   state.studioPick=state.studioPick||{};
   state.studioPick[key]=val;
@@ -8553,6 +8613,38 @@ function studioPrint(){
 
 /* ─── 결혼 패키지 그룹 주문 (혼주·들러리) ─── */
 const WED_ROLES = ['신랑','신부','들러리','혼주(부)','혼주(모)','사회자','기타'];
+function printWedPackage(gid){
+  const g=gFind(gid); if(!g) return;
+  const mems=(g.members||[]);
+  if(!mems.length){ toast('등록된 멤버가 없습니다','warn','일괄 출력'); return; }
+  const tStr=dStr(today());
+  const LBL={chest:'가슴',waist:'허리',shoul:'어깨',slv:'소매',len:'기장',botWaist:'바지허리',inseam:'인심'};
+  const qrFor=(mid)=>{ try{ if(typeof qrcode==='undefined')return''; const url=(location.origin||'https://www.nuricrm.co.kr')+'/?wm='+gid+'.'+mid; const q=qrcode(0,'M'); q.addData(url); q.make(); return `<img src="${q.createDataURL(4,4)}" style="width:88px;height:88px">`; }catch(e){return'';} };
+  const sheets=mems.map(m=>{
+    const M=m.measure||{};
+    const cells=Object.keys(LBL).map(k=>`<td style="border:1px solid #ccc;padding:6px 4px;text-align:center;font-size:11px">${LBL[k]}<br><b style="font-size:15px">${M[k]||'-'}</b></td>`).join('');
+    return `<div class="wo-sheet">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0c1f35;padding-bottom:8px;margin-bottom:9px">
+        <div><div style="font-size:13px;color:#666">${shopName()}</div><div style="font-size:19px;font-weight:900">예식 의상 작업지시서</div>
+          <div style="font-size:12px;color:#444;margin-top:3px">${g.eventNm||'예식'} · 예식일 ${g.eventDate||'-'} · 대여 ${g.useDate||'-'} ~ ${g.dueDate||'-'}</div></div>
+        <div style="text-align:center">${qrFor(m.id)}<div style="font-size:8.5px;color:#888;margin-top:2px">스캔 → 원격 치수 제출</div></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:7px">
+        <tr><td style="padding:6px 9px;background:#f4f4f4;width:16%;border:1px solid #e3e3e3"><b>역할</b></td><td style="padding:6px 9px;border:1px solid #e3e3e3">${m.role||'-'}</td><td style="padding:6px 9px;background:#f4f4f4;width:16%;border:1px solid #e3e3e3"><b>이름</b></td><td style="padding:6px 9px;border:1px solid #e3e3e3">${m.nm||'-'}</td></tr>
+        <tr><td style="padding:6px 9px;background:#f4f4f4;border:1px solid #e3e3e3"><b>연락처</b></td><td style="padding:6px 9px;border:1px solid #e3e3e3">${m.ph||'-'}</td><td style="padding:6px 9px;background:#f4f4f4;border:1px solid #e3e3e3"><b>마감</b></td><td style="padding:6px 9px;border:1px solid #e3e3e3">${m.deadline||'-'}</td></tr>
+        <tr><td style="padding:6px 9px;background:#f4f4f4;border:1px solid #e3e3e3"><b>배정 상품</b></td><td style="padding:6px 9px;border:1px solid #e3e3e3">${m.rentalCode||'미배정'}</td><td style="padding:6px 9px;background:#f4f4f4;border:1px solid #e3e3e3"><b>상태</b></td><td style="padding:6px 9px;border:1px solid #e3e3e3">${m.status||'-'}</td></tr>
+      </table>
+      <div class="wo-sec">신체 치수 (cm)</div>
+      <table style="width:100%;border-collapse:collapse"><tr>${cells}</tr></table>
+      <div class="wo-foot"><span>NURI CRM 예식 작업지시서</span><span class="sign">담당 ____________</span><b>${m.role||''} ${m.nm||''} 님</b></div>
+    </div>`;
+  }).join('');
+  $('#print-area').innerHTML=sheets;
+  const tt=$('#prv-title-text'); if(tt) tt.textContent=(g.eventNm||'예식')+' 일괄 작업지시서';
+  const ts=$('#prv-sub-text'); if(ts) ts.textContent=`${g.eventDate||''} · ${mems.length}명 (멤버별 작지서·치수·원격 QR)`;
+  $('#prv-modal').classList.add('open');
+  toast(`${mems.length}명 작업지시서를 묶었습니다`,'ok','일괄 출력');
+}
 function openRentPicker(gid, mid){
   state.rentPickG=gid; state.rentPickM=mid;
   const m=mFind(gid,mid);
@@ -8622,6 +8714,7 @@ function renderWedding(){
           <button class="action-btn" onclick="addMember('${g.id}')"><i class="ti ti-user-plus"></i>멤버 추가</button>
           <button class="action-btn" onclick="editGroup('${g.id}')"><i class="ti ti-pencil"></i>예식 정보 수정</button>
           <button class="action-btn" onclick="copyPartyStatus('${g.id}')"><i class="ti ti-clipboard-text"></i>진행현황 복사</button>
+            <button class="action-btn" onclick="printWedPackage('${g.id}')"><i class="ti ti-printer"></i>전원 작지서·QR</button>
           <div style="flex:1"></div>
           <button class="action-btn" style="border-color:var(--et);color:var(--et)" onclick="delGroup('${g.id}')"><i class="ti ti-trash"></i>패키지 삭제</button>
         </div>
@@ -8656,7 +8749,7 @@ function saveGroup(){
   saveDB(); $('#group-modal').classList.remove('open'); renderWedding();
   toast('예식 패키지 저장','ok','결혼 패키지');
 }
-function delGroup(id){ if(!confirm('이 예식 패키지를 삭제할까요?'))return; const g=gFind(id); if(g)g.del=true; saveDB(); renderWedding(); }
+async function delGroup(id){ if(!await uiConfirm('이 예식 패키지를 삭제할까요?'))return; const g=gFind(id); if(g)g.del=true; saveDB(); renderWedding(); }
 function addMember(gid){
   const g=gFind(gid); if(!g)return;
   g.members=g.members||[];
@@ -8664,7 +8757,7 @@ function addMember(gid){
   saveDB(); renderWedding();
   const b=$('#wedbody-'+gid); if(b)b.style.display='block';
 }
-function delMember(gid, mid){ const g=gFind(gid); if(!g)return; if(!confirm('이 멤버를 삭제할까요?'))return; g.members=g.members.filter(m=>m.id!==mid); saveDB(); renderWedding(); }
+async function delMember(gid, mid){ const g=gFind(gid); if(!g)return; if(!await uiConfirm('이 멤버를 삭제할까요?'))return; g.members=g.members.filter(m=>m.id!==mid); saveDB(); renderWedding(); }
 function setMemberStatus(gid, mid, st){ const m=mFind(gid,mid); if(m){ m.status=st; saveDB(); renderWedding(); } }
 function openMemberMeasure(gid, mid){
   const g=gFind(gid), m=mFind(gid,mid); if(!m)return;
@@ -9009,12 +9102,12 @@ function doSaveProd(){
   $('#prod-modal').classList.remove('open');
   renderRental();
 }
-function doDeleteProd(){
+async function doDeleteProd(){
   if (!permCan('delete')){ toast('삭제 권한이 없습니다 — 관리자에게 문의','warn','권한 제한'); return; }
   const r = state.rentals.find(x=>x.code===state.prodTarget);
   if (!r) return;
   if (r.status!=='대여가능'){ toast('출고/예약 중인 상품은 삭제할 수 없습니다','err'); return; }
-  if (!confirm(`${r.code} · ${r.name} 상품을 휴지통으로 이동할까요?\n(30일 내 복구 가능 · 대여 이력은 보존)`)) return;
+  if (!await uiConfirm(`${r.code} · ${r.name} 상품을 휴지통으로 이동할까요?\n(30일 내 복구 가능 · 대여 이력은 보존)`)) return;
   state.trash.unshift({ kind:'rental', data:r, deletedAt:dStr(today()) });
   state.rentals = state.rentals.filter(x=>x.code!==r.code);
   saveDB();
@@ -9343,7 +9436,7 @@ function scanManual(){
   if (v) handleScan(v);
 }
 // 스캔 결과 → 상태별 자동 처리
-function handleScan(code){
+async function handleScan(code){
   closeScanModal();
   const raw = String(code).trim();
   // 작지서 QR(URL ?fac=) 또는 주문번호 인식 → 공정 패널
@@ -9364,7 +9457,7 @@ function handleScan(code){
     toast(`${r.code} — 회수·정산 진행`,'info','QR 스캔');
     returnRental(r.code);
   } else {
-    if (confirm(`${r.code} · ${r.name}\n세탁/수선 완료 처리할까요?`)) finishCare(r.code);
+    if (await uiConfirm(`${r.code} · ${r.name}\n세탁/수선 완료 처리할까요?`)) finishCare(r.code);
   }
 }
 
@@ -9409,26 +9502,26 @@ function restoreTrash(i){
   toast('복구되었습니다','ok','휴지통');
   renderTrash();
 }
-function purgeTrash(i){
+async function purgeTrash(i){
   const it = state.trash[i];
   if (!it) return;
-  if (!confirm('영구 삭제합니다. 복구할 수 없습니다.')) return;
+  if (!await uiConfirm('영구 삭제합니다. 복구할 수 없습니다.')) return;
   state.trash.splice(i,1);
   saveDB(); renderTrash();
   toast('영구 삭제되었습니다','info');
 }
-function emptyTrash(){
+async function emptyTrash(){
   if (!state.trash.length){ toast('휴지통이 이미 비어 있습니다','info'); return; }
-  if (!confirm(`휴지통의 ${state.trash.length}개 항목을 모두 영구 삭제할까요?`)) return;
+  if (!await uiConfirm(`휴지통의 ${state.trash.length}개 항목을 모두 영구 삭제할까요?`)) return;
   state.trash = [];
   saveDB(); renderTrash();
   toast('휴지통을 비웠습니다','ok');
 }
-function deleteOrder(no){
+async function deleteOrder(no){
   if (!permCan('delete')){ toast('삭제 권한이 없습니다 — 관리자에게 문의','warn','권한 제한'); return; }
   const o = state.orders.find(x=>String(x.no)===String(no));
   if (!o) return;
-  if (!confirm(`주문 #${o.no} (${o.nm} · ${fmt(o.total)})을 휴지통으로 이동할까요?\n해당 매출도 집계에서 제외됩니다. (30일 내 복구 가능)`)) return;
+  if (!await uiConfirm(`주문 #${o.no} (${o.nm} · ${fmt(o.total)})을 휴지통으로 이동할까요?\n해당 매출도 집계에서 제외됩니다. (30일 내 복구 가능)`)) return;
   state.trash.unshift({ kind:'order', data:o, deletedAt:dStr(today()) });
   state.orders = state.orders.filter(x=>x!==o);
   saveDB();
@@ -9822,11 +9915,11 @@ function delBranch(id){
   if (state.curBranch===id) setBranch('all');
   saveShop(); populateBranchSel(); renderBranchCard();
 }
-function renameBranch(id){
+async function renameBranch(id){
   ensureBranches();
   const b = state.shop.branches.find(x=>x.id===id);
   if (!b) return;
-  const nm = prompt('지점 이름 변경', b.name);
+  const nm = await uiPrompt('지점 이름 변경', {value:b.name});
   if (nm && nm.trim()){ b.name = nm.trim(); saveShop(); populateBranchSel(); renderBranchCard(); }
 }
 function renderBranchCard(){
@@ -10293,10 +10386,10 @@ function custPhotoPick(inp){
   };
   img.src = URL.createObjectURL(file);
 }
-function delCustPhoto(i){
+async function delCustPhoto(i){
   const c = state.detCust;
   if (!c || !c.photos) return;
-  if (!confirm('이 사진을 삭제할까요?')) return;
+  if (!await uiConfirm('이 사진을 삭제할까요?')) return;
   c.photos.splice(i, 1);
   saveDB();
   openCustDet(c.id);
@@ -10844,8 +10937,8 @@ function loadDB(){
     return true;
   }catch(e){ return false; }
 }
-function resetDB(){
-  if (!confirm('저장된 모든 데이터(고객·주문·렌탈·재고)를 지우고 데모 데이터로 되돌립니다. 계속할까요?')) return;
+async function resetDB(){
+  if (!await uiConfirm('저장된 모든 데이터(고객·주문·렌탈·재고)를 지우고 데모 데이터로 되돌립니다. 계속할까요?')) return;
   localStorage.removeItem(DB_KEY);
   location.reload();
 }
