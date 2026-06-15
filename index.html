@@ -1653,16 +1653,31 @@ select.f-input,select{min-height:44px}
 /* 6. 모바일에선 더 크게 */
 /* ════ 61차 — 렌탈 액션버튼 통일 + 히트맵 범례 우측 + 고객카드 축소 ════ */
 .r-acts{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-.ract{height:33px;display:inline-flex;align-items:center;gap:5px;padding:0 11px;font-size:12.5px;font-weight:700;font-family:inherit;border:1px solid var(--bd2);border-radius:7px;background:var(--sf);color:var(--t);cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+#rental-tbody td:last-child{padding-left:8px!important;padding-right:8px!important}
+.ract{height:38px;min-width:52px;justify-content:center;display:inline-flex;align-items:center;gap:5px;padding:0 11px;font-size:13px;font-weight:700;font-family:inherit;border:1px solid var(--bd2);border-radius:8px;background:var(--sf);color:var(--t);cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
 .ract:hover{border-color:#1ab394;background:var(--sf2)}
-.ract .ti{font-size:15px}
-.ract-pri{background:#1ab394;color:#fff;border-color:transparent}
+.ract:active{transform:scale(.97)}
+.ract .ti{font-size:16px}
+.ract-pri{background:#1ab394;color:#fff;border-color:transparent;box-shadow:0 1px 3px rgba(26,179,148,.3)}
 .ract-pri:hover{background:#16a085;color:#fff;border-color:transparent}
 .ract-ok{background:var(--okb);color:var(--okt);border-color:transparent}
 .ract-danger{background:var(--eb);color:var(--et);border-color:transparent}
-.ract-ic{width:33px;height:33px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--bd2);border-radius:7px;background:var(--sf);color:var(--t2);cursor:pointer;transition:background .12s,border-color .12s}
+.ract-ic{width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--bd2);border-radius:8px;background:var(--sf);color:var(--t2);cursor:pointer;transition:background .12s,border-color .12s}
 .ract-ic:hover{border-color:#1ab394;color:#1ab394;background:var(--sf2)}
-.ract-ic .ti{font-size:16px}
+.ract-ic:active{transform:scale(.97)}
+.ract-ic .ti{font-size:19px}
+.ract-ic-danger{background:var(--eb);color:var(--et);border-color:transparent}
+.ract-ic-danger:hover{background:var(--eb);color:var(--et);border-color:var(--et)}
+.ract-pulse{animation:ractPulse 1.6s ease-in-out infinite}
+@keyframes ractPulse{0%,100%{box-shadow:0 0 0 0 rgba(237,85,101,.0)}50%{box-shadow:0 0 0 4px rgba(237,85,101,.22)}}
+.rmore{position:relative;display:inline-flex}
+.rmenu{position:fixed;display:none;flex-direction:column;min-width:194px;background:var(--sf);border:1px solid var(--bd2);border-radius:11px;box-shadow:0 10px 32px rgba(0,0,0,.2);padding:6px;z-index:9000}
+.rmenu.open{display:flex}
+.rmenu button{display:flex;align-items:center;gap:10px;width:100%;height:44px;padding:0 13px;border:0;background:transparent;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--t);cursor:pointer;text-align:left;white-space:nowrap}
+.rmenu button:hover{background:var(--sf2)}
+.rmenu button:active{background:var(--bd)}
+.rmenu button .ti{font-size:19px;color:var(--t2);flex-shrink:0}
+.rmenu button.danger{color:var(--et)} .rmenu button.danger .ti{color:var(--et)}
 .dh-body{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
 .dh-legend-side{flex-direction:column;gap:9px;margin-top:0;align-items:flex-start;flex:1;min-width:140px}
 #pick-cust{grid-template-columns:repeat(auto-fill,minmax(126px,1fr))!important;gap:8px;max-height:188px}
@@ -1670,7 +1685,7 @@ select.f-input,select{min-height:44px}
 #pick-cust .pick-card .pc-title{font-size:13px!important;text-align:left!important;width:auto!important}
 #pick-cust .pick-card .pc-sub{font-size:11px}
 #pick-cust .pick-card .pc-tag{font-size:9.5px;margin-top:3px;padding:1px 6px}
-@media (max-width:760px){ .r-acts{gap:4px} .ract{height:32px;padding:0 9px;font-size:12px} .ract-ic{width:32px;height:32px} }
+@media (max-width:760px){ .r-acts{gap:5px} .ract{height:38px;padding:0 12px} .ract-ic{width:38px;height:38px} }
 /* ════ 60차 — 매장정보 백업 노트 ════ */
 .shop-bak-note{background:var(--wb);color:var(--wt);border:1px solid rgba(232,149,12,.42);border-radius:8px;padding:10px 13px;font-size:12.5px;margin:14px 0 0;display:flex;align-items:center;gap:8px}
 .shop-bak-note .ti{font-size:17px;flex-shrink:0}
@@ -2592,7 +2607,7 @@ body.dk{ --t3:#9b9994; }
           <div class="table-scroll">
             <table class="data-table">
               <thead><tr>
-                <th style="width:7%">구분</th><th style="width:24%">상품 (코드 · 품명)</th><th style="width:7%">사이즈</th><th style="width:8%">컬러</th><th style="width:9%">대여료</th><th style="width:11%">상태</th><th style="width:13%">대여자 / 반납예정</th><th style="width:21%">처리</th>
+                <th style="width:7%">구분</th><th style="width:20%">상품 (코드 · 품명)</th><th style="width:7%">사이즈</th><th style="width:8%">컬러</th><th style="width:9%">대여료</th><th style="width:11%">상태</th><th style="width:13%">대여자 / 반납예정</th><th style="width:25%">처리</th>
               </tr></thead>
               <tbody id="rental-tbody"></tbody>
             </table>
@@ -6931,6 +6946,24 @@ function stDisp(s){ return s==='출고중' ? '대여중' : s; }
 function rentalStatusBadge(s){
   return s==='대여가능' ? 'b-ok' : s==='예약중' ? 'b-resv' : s==='출고중' ? 'b-info' : s==='세탁중' ? 'b-warn' : s==='은퇴' ? 'b-mut' : 'b-err';
 }
+function closeRowMenus(){ document.querySelectorAll('.rmenu.open').forEach(function(m){ m.classList.remove('open'); m.style.left=''; m.style.top=''; }); }
+function toggleRowMenu(btn){
+  const menu = btn.nextElementSibling; if(!menu) return;
+  const isOpen = menu.classList.contains('open');
+  closeRowMenus();
+  if (isOpen) return;
+  menu.classList.add('open');
+  const r = btn.getBoundingClientRect();
+  const mw = menu.offsetWidth||200, mh = menu.offsetHeight||120;
+  const left = Math.min(Math.max(8, r.right-mw), window.innerWidth-mw-8);
+  const top  = (r.bottom+5+mh > window.innerHeight-8) ? Math.max(8, r.top-mh-5) : r.bottom+5;
+  menu.style.left = left+'px'; menu.style.top = top+'px';
+}
+if (!window._rmenuInit){ window._rmenuInit = true;
+  document.addEventListener('click', function(e){ if(!e.target.closest('.rmore')) closeRowMenus(); });
+  window.addEventListener('scroll', function(){ closeRowMenus(); }, true);
+  window.addEventListener('resize', function(){ closeRowMenus(); });
+}
 function renderRental(){
   const list = state.rentals.filter(brMatch);
   const todayS = dStr(today());
@@ -6963,19 +6996,27 @@ function renderRental(){
 
   $('#rental-tbody').innerHTML = rows.map(r=>{
     const overdue = r.status==='출고중' && r.dueDt && r.dueDt < todayS;
+    // 더보기(⋯) 메뉴 — 보조 동작을 접어 주요 동작(회수/출고/복귀)을 한 줄 큰 버튼으로
+    const _more = (its)=>`<div class="rmore"><button class="ract-ic ract-more" onclick="toggleRowMenu(this)" title="더보기"><i class="ti ti-dots"></i></button><div class="rmenu">${its.map(it=>`<button class="${it.danger?'danger':''}" onclick="${it.act};closeRowMenus()"><i class="ti ti-${it.ic}"></i>${it.lb}</button>`).join('')}</div></div>`;
     let act='';
     if (r.status==='대여가능'){
-      act = `<button class="ract ract-pri" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button><button class="ract" onclick="openRentModal('${r.code}','resv')" style="background:var(--pb);color:var(--pt);border-color:transparent"><i class="ti ti-calendar-plus"></i>예약</button><button class="ract-ic" onclick="openCareModal('${r.code}')" title="세탁·수선 보내기"><i class="ti ti-wash"></i></button>`;
+      act = `<button class="ract ract-pri" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button>`
+        + `<button class="ract-ic" onclick="openRentModal('${r.code}','resv')" title="예약 잡기" style="background:var(--pb);color:var(--pt);border-color:transparent"><i class="ti ti-calendar-plus"></i></button>`
+        + _more([{ic:'wash',lb:'세탁·수선 보내기',act:`openCareModal('${r.code}')`},{ic:'pencil',lb:'상품 정보 수정',act:`openProdModal('${r.code}')`}]);
     } else if (r.status==='예약중'){
-      act = `<button class="ract ract-pri" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button><button class="ract ract-danger" onclick="cancelResv('${r.code}')"><i class="ti ti-x"></i>예약취소</button>`;
+      act = `<button class="ract ract-pri" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button>`
+        + `<button class="ract-ic ract-ic-danger" onclick="cancelResv('${r.code}')" title="예약 취소"><i class="ti ti-x"></i></button>`
+        + _more([{ic:'pencil',lb:'상품 정보 수정',act:`openProdModal('${r.code}')`}]);
     } else if (r.status==='출고중'){
       const _od = overdueInfo(r);
-      act = `<button class="ract ract-pri" onclick="returnRental('${r.code}')"><i class="ti ti-arrow-back-up"></i>회수</button>${_od ? `<button class="ract ract-danger" onclick="overdueMsg('${r.code}')" title="${_od.days}일 연체 · ${_od.label} · ${fmt(_od.fee)}"><i class="ti ti-message-exclamation"></i>독촉</button>` : `<button class="ract" onclick="buildRentContract('${r.code}')"><i class="ti ti-file-text"></i>계약서</button>`}<button class="ract-ic" onclick="openCondModal('${r.code}')" title="컨디션 사진·점검 기록"><i class="ti ti-camera"></i></button><button class="ract-ic" onclick="openSwapModal('${r.code}')" title="핏 실패 → 같은 디자인 다른 사이즈로 교환"><i class="ti ti-arrows-exchange"></i></button>`;
+      act = `<button class="ract ract-pri" onclick="returnRental('${r.code}')"><i class="ti ti-arrow-back-up"></i>회수</button>`
+        + (_od ? `<button class="ract-ic ract-ic-danger ract-pulse" onclick="overdueMsg('${r.code}')" title="${_od.days}일 연체 · ${_od.label} · ${fmt(_od.fee)} — 탭하면 독촉 메시지"><i class="ti ti-bell-ringing"></i></button>` : '')
+        + _more([{ic:'camera',lb:'컨디션 사진·점검',act:`openCondModal('${r.code}')`},{ic:'arrows-exchange',lb:'사이즈 교환',act:`openSwapModal('${r.code}')`},{ic:'file-text',lb:'계약서 출력',act:`buildRentContract('${r.code}')`},{ic:'pencil',lb:'상품 정보 수정',act:`openProdModal('${r.code}')`}]);
     } else {
       const lateCare = r.care && r.care.dueDt && r.care.dueDt < todayS;
-      act = `<button class="ract ract-ok" onclick="finishCare('${r.code}')"><i class="ti ti-check"></i>복귀 완료</button><button class="ract" onclick="openCareModal('${r.code}')"><i class="ti ti-wash"></i>케어 기록${lateCare?' <span class="badge b-err" style="font-size:10px;padding:1px 5px">지연</span>':''}</button>`;
+      act = `<button class="ract ract-ok" onclick="finishCare('${r.code}')"><i class="ti ti-check"></i>복귀 완료</button>`
+        + _more([{ic:'wash',lb:'케어 기록'+(lateCare?' (지연)':''),act:`openCareModal('${r.code}')`},{ic:'pencil',lb:'상품 정보 수정',act:`openProdModal('${r.code}')`}]);
     }
-    act += `<button class="ract-ic" onclick="openProdModal('${r.code}')" title="상품 정보 수정"><i class="ti ti-pencil"></i></button>`;
     let who = '-';
     if ((r.status==='세탁중'||r.status==='수선중') && r.care){
       const late = r.care.dueDt && r.care.dueDt < todayS;
