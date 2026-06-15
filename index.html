@@ -6088,7 +6088,7 @@ function buildWorkOrder(){
   let page1 = `<div class="wo-sheet">
     <div class="wo-sec">MTM 정장 작업지시서 — 상의 (싱글 작지서 양식)</div>
     ${head}${optTop}${sizeTop}${memoTop}
-    ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); const _m3={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')}; return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _f3?(_f3.color+' '+(_f3.comp||'')):'')}</div><div class="d wo-d-spec"><div class="jk3v jk3spec">${composeJacketSpec(o, '#e8ebee', _m3)}</div><span>치수도</span></div></div>`; })():''}
+    ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); const _m3={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')}; return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _fabPatt(_f3))}</div><div class="d wo-d-spec"><div class="jk3v jk3spec">${composeJacketSpec(o, '#e8ebee', _m3)}</div><span>치수도</span></div></div>`; })():''}
     ${(()=>{ if(typeof studioSvg!=='function')return ''; const dd=[['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak],['amf','AMF',o.amf],['ticketP','티켓P',o.ticketP]]; const ds=dd.map(([k,lb,v])=>{ if(!v||v==='없음'&&k==='amf')return ''; const s=studioSvg(k,v); return s?`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`:''; }).filter(Boolean); return ds.length?`<div class="wo-diag">${ds.join('')}</div>`:''; })()}
     <div class="wo-foot"><span>인쇄 <span id="wo-pd"></span> · 담당 ${ (state.user||{}).name||'관리자' }</span><span class="sign">매장 확인 __________ &nbsp; 공장 수령 __________</span><b>${shopName()}</b></div>
   </div>`;
@@ -6147,8 +6147,8 @@ function buildWorkOrder(){
         if ((q.s||0)+(q.j||0) > 0) woDia.forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`); } });
         if ((q.p||0) > 0){ [['botTuck','주름',o.botTuck],['botFrontP','앞주머니',o.botFrontP],['botHem','밑단',o.botHem]].forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${k==='botTuck'?(v==='2'?'2주름':v==='1'?'1주름':'노턱'):v}</div></div>`); } }); }
       }
-      if ((q.p||0) > 0 && typeof composePants2View==='function'){ const _fp2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composePants2View(o, fabHex(_fp2?_fp2.color:''), _fp2?(_fp2.color+' '+(_fp2.comp||'')):'')}</div>`); } else if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
-      if ((q.v||0) > 0 && typeof composeVest2View==='function'){ const _fv2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composeVest2View(o, fabHex(_fv2?_fv2.color:''), _fv2?(_fv2.color+' '+(_fv2.comp||'')):'')}</div>`); } else if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
+      if ((q.p||0) > 0 && typeof composePants2View==='function'){ const _fp2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composePants2View(o, fabHex(_fp2?_fp2.color:''), _fabPatt(_fp2))}</div>`); } else if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
+      if ((q.v||0) > 0 && typeof composeVest2View==='function'){ const _fv2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composeVest2View(o, fabHex(_fv2?_fv2.color:''), _fabPatt(_fv2))}</div>`); } else if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
       if (ds.length) diag = `<div class="wo-diag">${ds.join('')}</div>`;
     }
     page2 = `<div class="wo-sheet">
@@ -6314,7 +6314,16 @@ function batchPrintWO(){
       sheets += `<div style="page-break-before:always">${html}</div>`;
     }catch(e){}
   });
-  $('#print-area').innerHTML = cover + sheets;
+  // 발주 QR 라벨 묶음 (절취 부착용)
+  let qrPage='';
+  try{
+    if (typeof qrcode!=='undefined'){
+      const tags=list.map(o=>{ const q=qrcode(0,'M'); q.addData((location.origin||'https://www.nuricrm.co.kr')+'/?fac='+o.no); q.make();
+        return `<div class="qr-tag"><img src="${q.createDataURL(4,3)}"><div class="qt-code">#${o.no}</div><div class="qt-name">${o.nm}</div><div class="qt-sub">${o.pattern?.top||''} ${o.size?.top==='기타'?'기타':o.size?.top||''}</div></div>`; }).join('');
+      qrPage=`<div class="wo-sheet" style="page-break-before:always"><div class="wo-sec">발주 QR 라벨 — ${list.length}건 (절취선 따라 재단 → 작지서·원단에 부착, 스캔 시 공정 단계 업데이트)</div><div class="qr-grid">${tags}</div></div>`;
+    }
+  }catch(e){}
+  $('#print-area').innerHTML = cover + sheets + qrPage;
   const tt = $('#prv-title-text'); if (tt) tt.textContent = '발주 일괄 인쇄';
   const ts = $('#prv-sub-text');   if (ts) ts.textContent = `${dStr(today())} · ${list.length}건 (명세 + 작지서)`;
   $('#prv-modal').classList.add('open');
@@ -7638,8 +7647,10 @@ function _detailStroke(hex){ return _lum(hex)<0.5 ? 'rgba(255,255,255,.82)' : '#
 function _darken(hex, amt){ const c=hex.replace('#',''); let r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16); r=Math.max(0,r-amt);g=Math.max(0,g-amt);b=Math.max(0,b-amt); return `rgb(${r},${g},${b})`; }
 function _lighten(hex, amt){ const c=hex.replace('#',''); let r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16); r=Math.min(255,r+amt);g=Math.min(255,g+amt);b=Math.min(255,b+amt); return `rgb(${r},${g},${b})`; }
 // 합성 자켓 (앞 + 뒤 트임 인셋) — 원단색 + 선택 옵션 전부 한 장에
+function _fabPatt(fab){ return fab ? (fab.photo?('IMG::'+fab.photo):(fab.color+' '+(fab.comp||''))) : ''; }
 function _fabDefs(hex, patt){
-  const n=String(patt||''); const id='fp'+Math.abs(hex.split('').reduce((s,c)=>s+c.charCodeAt(0),0))%9999;
+  const n=String(patt||'');
+  if (n.indexOf('IMG::')===0){ const url=n.slice(5); const id='fi'+Math.abs(url.length*7+url.charCodeAt(url.length-1))%9999; return {id, def:`<pattern id="${id}" width="46" height="46" patternUnits="userSpaceOnUse"><image href="${url}" x="0" y="0" width="46" height="46" preserveAspectRatio="xMidYMid slice"/></pattern>`}; } const id='fp'+Math.abs(hex.split('').reduce((s,c)=>s+c.charCodeAt(0),0))%9999;
   const line=_lum(hex)<0.5?'rgba(255,255,255,.22)':'rgba(0,0,0,.16)';
   if (n.indexOf('스트라이프')>=0||n.indexOf('스트')>=0) return {id, def:`<pattern id="${id}" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" fill="${hex}"/><line x1="3" y1="0" x2="3" y2="9" stroke="${line}" stroke-width="1.6"/></pattern>`};
   if (n.indexOf('체크')>=0) return {id, def:`<pattern id="${id}" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${hex}"/><line x1="0" y1="3" x2="12" y2="3" stroke="${line}" stroke-width="1.2"/><line x1="3" y1="0" x2="3" y2="12" stroke="${line}" stroke-width="1.2"/></pattern>`};
@@ -7758,6 +7769,19 @@ function _dimL(x1,y1,x2,y2,label,d){
 // 측정값 읽기 (작지서)
 function _woM(part, key){ try{ const v=(typeof getCmVal==='function')?getCmVal(`sz-${part}-${key}-fin`):0; return v? Math.round(v*10)/10 : 0; }catch(e){ return 0; } }
 // 자켓 스펙 도식 (정면 + POM 치수선)
+function _bodyFix(o){
+  o=o||{}; const C='#8e6bc8'; let s='';
+  const sh=o.shldFix||''; const po=o.postFix||'';
+  if (sh && sh!=='없음'){
+    const up = sh.indexOf('상')>=0;  // 상견(올라간 어깨) ↑ / 하견(처진 어깨) ↓
+    s += `<g><path d="M52 ${up?52:64} l-4 ${up?'8':'-8'} h8 z" fill="${C}"/><line x1="52" y1="${up?60:56}" x2="52" y2="${up?44:72}" stroke="${C}" stroke-width="1.6"/><text x="30" y="40" font-size="10" fill="${C}" font-weight="700" font-family="sans-serif">어깨 ${sh}</text></g>`;
+  }
+  if (po && po!=='없음'){
+    const back = po.indexOf('반')>=0;  // 반신(젖힘) / 굴신(숙임)
+    s += `<g><path d="M150 96 q ${back?'14':'-14'} 40 0 80" fill="none" stroke="${C}" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M150 176 l${back?'4':'-4'} -8 l${back?'-8':'8'} 2 z" fill="${C}"/><text x="120" y="92" font-size="10" fill="${C}" font-weight="700" font-family="sans-serif">자세 ${po}</text></g>`;
+  }
+  return s;
+}
 function composeJacketSpec(o, hex, m, prev){
   m=m||{}; prev=prev||{};
   const base=composeJacket(o, hex||'#d7dde3', '');
@@ -7767,7 +7791,7 @@ function composeJacketSpec(o, hex, m, prev){
     + _dimH(62,138,128, lab('chest','가슴'), D('chest'))
     + _dimL(66,64,40,210, lab('slvL','소매'), D('slvL'))
     + _dimV(58,276,190, lab('len','기장'), D('len'));
-  return base.replace('</svg>', dims+'</svg>');
+  return base.replace('</svg>', dims + _bodyFix(o) + '</svg>');
 }
 // 하의 후면 (뒷주머니·다트·크리스)
 function composePantsBack(o, hex, patt){
@@ -7829,7 +7853,7 @@ function buildDiagramSheet(){
   const q=o.qty||{s:1,p:1,v:0,c:0,j:0};
   const fab=(state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
   const hex=fabHex(fab?fab.color:'');
-  const patt=fab?(fab.color+' '+(fab.comp||'')):'';
+  const patt=_fabPatt(fab);
   const sections=[];
   if((q.s||0)+(q.j||0)>0){
     const mj={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')};
@@ -7919,7 +7943,7 @@ function renderLivePreview(){
   const hex = fabHex(fab?fab.color:'');
   const q = state.opt.qty||{s:1,p:1,v:0,c:0,j:0};
   const parts=[];
-  const _fp = fab?(fab.color+' '+(fab.comp||'')):''; if ((q.s||0)+(q.j||0)>0) parts.push(['top','상의',composeJacket(o,hex,_fp)]);
+  const _fp = _fabPatt(fab); if ((q.s||0)+(q.j||0)>0) parts.push(['top','상의',composeJacket(o,hex,_fp)]);
   if ((q.p||0)>0) parts.push(['bot','하의',composePants(o,hex,_fp)]);
   if ((q.v||0)>0) parts.push(['vest','조끼',composeVest(o,hex,_fp)]);
   if (!parts.length) parts.push(['top','상의',composeJacket(o,hex,_fp)]);
