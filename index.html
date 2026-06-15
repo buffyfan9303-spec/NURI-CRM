@@ -1438,6 +1438,13 @@ body.dk .empty-state .ti{background:var(--sf2)}
 #draft-banner > .ti{color:var(--wt);font-size:19px;flex-shrink:0}
 #draft-banner span{color:var(--t3);font-size:12.5px}
 .dp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:13px;border-bottom:1px solid var(--bd)}
+.dp-order-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dp-order-info{flex:1;min-width:0;cursor:pointer;padding:7px 9px;border:1px solid var(--bd);border-radius:3px;transition:background .12s}
+.dp-order-info:hover{background:var(--sf2);border-color:var(--bd2)}
+.dp-order-info .dp-fl{font-size:11.5px;color:var(--t3)}
+.dp-order-info .dp-fv{font-size:13px;color:var(--t);margin-top:2px}
+.dp-reorder-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;border:1px solid #1ab394;color:#1ab394;background:var(--sf);font-weight:700;font-size:12.5px;padding:7px 11px;border-radius:3px;cursor:pointer;font-family:inherit}
+.dp-reorder-btn:hover{background:var(--acc-soft)}
 
 </style>
 </head>
@@ -7956,9 +7963,12 @@ function openCustDet(id){
     <div class="dp-sec">
       <div class="dp-sec-title"><i class="ti ti-receipt-2"></i>주문 이력 (${orders.length})</div>
       ${orders.length ? orders.map(o=>`
-        <div class="dp-f full" style="margin-bottom:6px">
-          <div class="dp-fl">#${o.no} · ${o.date}</div>
-          <div class="dp-fv">${o.type} · ${o.pattern?.top||''} ${o.size?.top||''} · <b>${fmt(o.total)}</b></div>
+        <div class="dp-order-row">
+          <div class="dp-order-info" onclick="openOrderDet('${o.no}')" title="주문 상세 보기">
+            <div class="dp-fl">#${o.no} · ${o.date}</div>
+            <div class="dp-fv">${o.type} · ${o.pattern?.top||''} ${o.size?.top==='기타'?'기타':o.size?.top||''} · <b>${fmt(o.total)}</b></div>
+          </div>
+          ${o.type==='정장' ? `<button class="dp-reorder-btn" onclick="event.stopPropagation();reorderToForm('${o.no}')" title="이 주문 그대로 재주문 (리피트 오더)"><i class="ti ti-copy"></i>재주문</button>` : ''}
         </div>
       `).join('') : '<div style="color:var(--t3);font-size:12px;padding:8px 4px">아직 주문 이력이 없습니다</div>'}
     </div>
