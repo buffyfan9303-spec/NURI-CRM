@@ -5978,13 +5978,14 @@ function buildWorkOrder(){
     <div class="bx"><h5>스  와  치</h5><p>${$('#o-swatch').value||''}</p></div>
   </div>`;
 
-  // ── PAGE 1: 상의 작지서 ──
-  const page1 = `<div class="wo-sheet">
+  // ── PAGE 1: 상의 작지서 (상의/자켓/코트 주문 시에만) ──
+  let page1 = `<div class="wo-sheet">
     <div class="wo-sec">MTM 정장 작업지시서 — 상의 (싱글 작지서 양식)</div>
     ${head}${optTop}${sizeTop}${memoTop}
     <div class="wo-foot"><span>인쇄 <span id="wo-pd"></span> · 담당 ${ (state.user||{}).name||'관리자' }</span><span class="sign">매장 확인 __________ &nbsp; 공장 수령 __________</span><b>${shopName()}</b></div>
   </div>`;
 
+  if (!((q.s||0)>0 || (q.j||0)>0 || (q.c||0)>0)) page1 = '';
   // ── PAGE 2: 하의 + 조끼 ──
   let page2 = '';
   if ((q.p||0) > 0 || (q.v||0) > 0){
@@ -6037,10 +6038,10 @@ function buildWorkOrder(){
       if (ds.length) diag = `<div class="wo-diag">${ds.join('')}</div>`;
     }
     page2 = `<div class="wo-sheet">
-      <div class="wo-sec">MTM 정장 작업지시서 — 하의 ${ (q.v||0)>0 ? '· 조끼' : '' }</div>
-      ${head}${optBot}${sizeBot}
+      <div class="wo-sec">MTM 정장 작업지시서 — ${[(q.p||0)>0?'하의':'',(q.v||0)>0?'조끼':''].filter(Boolean).join(' · ')}</div>
+      ${head}${(q.p||0)>0 ? optBot+sizeBot : ''}
       <div class="wo-memo">
-        <div class="bx"><h5>특  이  사  항</h5><p>${botExtra}</p></div>
+        <div class="bx"><h5>특  이  사  항</h5><p>${(q.p||0)>0 ? botExtra : '조끼 단독 주문'}</p></div>
         <div class="bx"><h5>스  와  치</h5><p>${$('#o-swatch').value||''}</p></div>
       </div>
       ${vest}${diag}
@@ -6049,7 +6050,7 @@ function buildWorkOrder(){
     </div>`;
   }
 
-  $('#print-area').innerHTML = page1 + page2;
+  $('#print-area').innerHTML = (page1 + page2) || `<div class="wo-sheet"><div class="wo-sec">주문 수량이 없습니다 — ② 주문서 작성 탭에서 수량을 입력하세요</div></div>`;
   const t = new Date();
   const pd = $('#wo-pd'); if (pd) pd.textContent = `${t.getFullYear()}.${pad(t.getMonth()+1)}.${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`;
 }
