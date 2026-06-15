@@ -1651,6 +1651,24 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 53차 — 대비 보강 + 여백·구분선 일관화 ════ */
+/* 흐린 글씨(--t3) 대비 상향: 라이트 2.2→3.9 / 다크 2.8→4.0 */
+:root{ --t3:#767e8a; }
+body.dk{ --t3:#9b9994; }
+/* 여백·구분선 일관화 (밀집감 해소) */
+.page-content{padding:22px}
+.stat-grid{margin-bottom:20px}
+.form-card,.section-card{padding:18px 20px;margin-bottom:16px}
+.cal-card,.ev-panel,.shortcut-card,.settle-card,.todo-card,.dh-card,.gantt-wrap{margin-bottom:16px}
+.table-wrap{margin-bottom:16px}
+.form-card:last-child,.section-card:last-child{margin-bottom:0}
+/* 상세 패널 섹션 구분선 통일 */
+.dp-sec{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--bd)}
+.dp-sec:last-child{border-bottom:0;margin-bottom:0}
+.dp-sec-title{margin-bottom:10px}
+/* 카드 제목 하단 구분선 간격 통일 */
+.form-card-title,.section-card-title{padding-bottom:13px;margin-bottom:15px}
+
 @media (max-width:760px){
   body{font-size:15.5px}
   .data-table td{font-size:15px!important}
