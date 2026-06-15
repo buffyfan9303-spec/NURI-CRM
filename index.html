@@ -2146,6 +2146,7 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
             <div id="cat-f-cat" style="display:flex;gap:6px;flex-wrap:wrap"></div>
             <div style="flex:1"></div>
             <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--t2);font-weight:600;cursor:pointer"><input type="checkbox" id="cat-f-avail" onchange="renderCatalog()" style="width:17px;height:17px;accent-color:#1ab394">대여가능만</label>
+            <label id="cat-allbr-wrap" style="display:none;align-items:center;gap:6px;font-size:13.5px;color:var(--t2);font-weight:600;cursor:pointer"><input type="checkbox" id="cat-f-allbr" onchange="renderCatalog()" style="width:17px;height:17px;accent-color:#1c84c6">전 지점</label>
             <input class="f-input" id="cat-f-q" placeholder="품명·코드·색상 검색" style="max-width:230px;min-height:40px;padding:8px 12px" oninput="renderCatalog()">
           </div>
         </div>
@@ -3119,7 +3120,20 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
     </div>
   </div>
   <div class="prv-scroll">
-<!-- 사이즈 교환 모달 -->
+<!-- 지점 이동 모달 -->
+  <div id="transfer-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="signup-card" onclick="event.stopPropagation()" style="max-width:440px">
+      <button class="signup-x" onclick="$('#transfer-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      <div class="signup-head" style="margin-bottom:8px">
+        <h2 class="signup-title" id="tr-title">지점 이동</h2>
+        <p class="signup-sub" id="tr-sub">—</p>
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-bottom:12px"><i class="ti ti-transfer"></i> 다른 지점으로 보관 위치를 이동합니다. 이동 기록이 상품 이력에 남습니다.</div>
+      <div id="tr-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+
+  <!-- 사이즈 교환 모달 -->
   <div id="swap-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
     <div class="signup-card" onclick="event.stopPropagation()" style="max-width:460px">
       <button class="signup-x" onclick="$('#swap-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
@@ -6494,6 +6508,42 @@ function unitLifecycle(r){
   const costPerWear = rentN ? Math.round(cost/rentN) : null;
   return { rentN, rev, cost, payback, flag, costPerWear };
 }
+function brName(id){
+  if (!state.shop || !state.shop.branches) return id||'본점';
+  const b = state.shop.branches.find(x=>x.id===(id||'main'));
+  return b ? b.name : (id||'본점');
+}
+function openTransferModal(code){
+  const r = state.rentals.find(x=>x.code===code);
+  if (!r) return;
+  if (typeof ensureBranches==='function') ensureBranches();
+  const branches = (state.shop&&state.shop.branches)||[];
+  if (branches.length<2){ toast('지점이 1곳뿐입니다 — 설정에서 지점을 추가하세요','warn','지점 이동'); return; }
+  if (r.status==='출고중'){ toast('대여 중인 상품은 회수 후 이동하세요','warn'); return; }
+  const cur = r.br||'main';
+  state.transferTarget = code;
+  $('#tr-title').textContent = `${r.code} · ${r.name}`;
+  $('#tr-sub').textContent = `현재 보관: ${brName(cur)} — 이동할 지점을 선택하세요`;
+  $('#tr-list').innerHTML = branches.filter(b=>b.id!==cur).map(b=>`
+    <div class="swap-opt" onclick="doTransfer('${b.id}')">
+      <div style="flex:1"><b>${b.name}</b></div>
+      <button class="btn-primary" style="border:0;color:#fff;padding:7px 12px;border-radius:3px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer">이 지점으로 이동</button>
+    </div>`).join('');
+  $('#transfer-modal').classList.add('open');
+}
+function doTransfer(toBr){
+  const r = state.rentals.find(x=>x.code===state.transferTarget);
+  if (!r) return;
+  const from = r.br||'main';
+  r.br = toBr;
+  state.rentalLog.unshift({ code:r.code, name:r.name, status:'지점이동', rentDt:dStr(today()),
+    nm:'', swapNote:`${brName(from)} → ${brName(toBr)} 이동`, by:(state.user&&state.user.name)||'' });
+  saveDB();
+  $('#transfer-modal').classList.remove('open');
+  toast(`${r.code} — ${brName(from)} → ${brName(toBr)} 이동 완료`,'ok','지점 이동');
+  renderRental();
+  if ($('#hist-modal')?.classList.contains('open')) openHistModal(r.code);
+}
 function retireUnit(code){
   const r = state.rentals.find(x=>x.code===code);
   if (!r) return;
@@ -7268,7 +7318,9 @@ function drawLines(id, series, colors){
 function renderCatalog(){
   const grid = $('#catalog-grid');
   if (!grid) return;
-  const all = state.rentals.filter(brMatch);
+  const allBr = $('#cat-f-allbr')?.checked;
+  const aw = $('#cat-allbr-wrap'); if (aw) aw.style.display = ((state.shop&&state.shop.branches)||[]).length>1 ? 'flex' : 'none';
+  const all = allBr ? state.rentals.slice() : state.rentals.filter(brMatch);
   const cats = [...new Set(all.map(r=>r.cat).filter(Boolean))];
   if (!state.catFilter) state.catFilter = 'all';
   const fc = $('#cat-f-cat');
@@ -7297,7 +7349,7 @@ function renderCatalog(){
       ${ph?`<img class="cat-ph" src="${ph}" loading="lazy">`:`<div class="cat-ph-empty"><i class="ti ti-hanger"></i></div>`}
       <div class="cat-info">
         <div class="cat-name">${k}</div>
-        <div class="cat-sub">${g[0].cat||''} · 보유 ${g.length}벌 · 대여가능 ${availN}벌</div>
+        <div class="cat-sub">${g[0].cat||''} · 보유 ${g.length}벌 · 대여가능 ${availN}벌${allBr&&((state.shop&&state.shop.branches)||[]).length>1?` · <span style="color:var(--it)">${[...new Set(g.map(x=>brName(x.br)))].join('/')}</span>`:''}</div>
         <div class="cat-sizes">${sizeChips}</div>
         <div class="cat-fee">${fmt(feeMin)}${feeMax>feeMin?'~':''}<span class="badge ${availN?'b-ok':'b-err'}" style="font-size:10.5px">${availN?'대여가능':'전량 사용중'}</span></div>
       </div>
@@ -7407,6 +7459,8 @@ function openProdModal(code){
   $('#pd-pdate').value = r ? (r.purchaseDt||'') : '';
   $('#pd-loc').value   = r ? (r.loc||'') : '';
   $('#pd-memo').value  = r ? (r.memo||'') : '';
+  const _trBtn = $('#pd-transfer');
+  if (_trBtn) _trBtn.style.display = (r && ((state.shop&&state.shop.branches)||[]).length>1) ? 'inline-flex' : 'none';
   const prev = $('#pd-photo-prev');
   if (r && r.photo){ prev.style.backgroundImage = `url(${r.photo})`; prev.innerHTML=''; }
   else { prev.style.backgroundImage=''; prev.innerHTML='<i class="ti ti-camera" style="font-size:22px"></i>사진 추가'; }
@@ -8006,6 +8060,7 @@ function openHistModal(code){
       <div class="hist-stat"><span>구입가</span><b>${lc.cost?fmt(lc.cost):'-'}</b></div>
       <div class="hist-stat"><span>원가 회수율</span><b style="color:${lc.payback>=300?'var(--okt)':lc.payback>=200?'var(--wt)':'var(--t)'}">${lc.payback!=null?lc.payback+'%':'-'}</b></div>
       <div class="hist-stat"><span>회당 원가</span><b>${lc.costPerWear!=null?fmt(lc.costPerWear):'-'}</b></div>
+      <div class="hist-stat"><span>보관 지점</span><b>${brName(r.br)}</b>${((state.shop&&state.shop.branches)||[]).length>1?`<button class="mini-act" onclick="openTransferModal('${r.code}')" title="다른 지점으로 이동" style="margin-left:4px"><i class="ti ti-transfer"></i></button>`:''}</div>
       <div class="hist-stat" style="flex:1.4;justify-content:flex-end">${flagBadge}${lc.flag&&lc.flag.kind==='retire'?`<button class="action-btn" style="margin-left:8px;border-color:var(--et);color:var(--et)" onclick="retireUnit('${r.code}')"><i class="ti ti-archive"></i>은퇴·세일 처리</button>`:''}</div>`;
   }
 
