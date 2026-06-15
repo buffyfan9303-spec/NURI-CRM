@@ -1445,6 +1445,32 @@ body.dk .empty-state .ti{background:var(--sf2)}
 .dp-order-info .dp-fv{font-size:13px;color:var(--t);margin-top:2px}
 .dp-reorder-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;border:1px solid #1ab394;color:#1ab394;background:var(--sf);font-weight:700;font-size:12.5px;padding:7px 11px;border-radius:3px;cursor:pointer;font-family:inherit}
 .dp-reorder-btn:hover{background:var(--acc-soft)}
+/* 31차 — 권한·고객사진 */
+body.no-cost .cost-only{display:none!important}
+/* 32차 — 납기 히트맵 */
+.dh-card{background:var(--sf);border:1px solid var(--bd);border-radius:3px;padding:14px 16px;margin-bottom:16px}
+.dh-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.dh-title{font-size:14px;font-weight:700;color:var(--t)}
+.dh-nav{display:flex;align-items:center;gap:6px}
+.dh-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dh-dow{text-align:center;font-size:11px;font-weight:700;color:var(--t3);padding:2px 0}
+.dh-dow.sun{color:var(--et)} .dh-dow.sat{color:var(--it)}
+.dh-cell{position:relative;min-height:46px;border:1px solid var(--bd);border-radius:3px;padding:3px 5px;cursor:pointer;transition:outline .1s}
+.dh-cell.dh-empty{border:0;background:transparent;cursor:default}
+.dh-cell.has:hover{outline:2px solid #1ab394}
+.dh-cell.today{outline:2px solid var(--gold)}
+.dh-d{font-size:11px;color:var(--t2);font-weight:600}
+.dh-n{position:absolute;right:4px;bottom:3px;font-size:15px;font-weight:800;color:var(--okt)}
+.dh-n.over{color:var(--et)}
+.dh-fit{position:absolute;left:4px;bottom:3px;font-size:9px;font-weight:700;color:var(--it)}
+.dh-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--t2);align-items:center}
+.dh-sw{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+body.dk .dh-cell{border-color:var(--bd)}
+.cust-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.cphoto{width:72px;height:90px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--bd2);position:relative;cursor:zoom-in}
+.cphoto-del{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--et);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;border:2px solid var(--sf)}
+.cphoto-add{width:72px;height:90px;border:1px dashed var(--bd2);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:22px;cursor:pointer}
+.cphoto-add:hover{color:#1ab394;border-color:#1ab394}
 
 </style>
 </head>
@@ -2850,9 +2876,11 @@ body.dk .empty-state .ti{background:var(--sf2)}
         </div>
         <div class="toolbar">
           <div class="search-wrap"><i class="ti ti-search"></i><input id="q-orders" class="search-inp" placeholder="투입번호 / 고객명 / 패턴" oninput="renderOrders()"></div>
+          <button class="action-btn" onclick="batchPrintWO()" title="대기(미발주) 정장 주문의 작업지시서를 한 번에 인쇄"><i class="ti ti-printer"></i>발주 일괄인쇄</button>
           <button class="action-btn" onclick="exportOrders()"><i class="ti ti-download"></i>CSV</button>
           <button class="action-btn" onclick="go('mtm-suit')"><i class="ti ti-plus"></i>새 주문서</button>
         </div>
+        <div id="due-heatmap"></div>
         <div class="table-wrap">
           <div class="table-scroll">
             <table class="data-table">
@@ -3926,6 +3954,42 @@ function checkDesktopNoti(){
   const lateCare = state.rentals.filter(r=>(r.status==='세탁중'||r.status==='수선중') && r.care && r.care.dueDt && r.care.dueDt<tStr);
   if (lateCare.length) _pushOnce('care', `🧺 세탁·수선 복귀 지연 ${lateCare.length}건`, lateCare.slice(0,3).map(r=>`${r.code} (${r.care.vendor||r.status})`).join('\n'));
 }
+function renderPermCard(){
+  if (!isAdmin()) return;
+  let card = $('#set-perm-card');
+  if (!card){
+    card = document.createElement('div');
+    card.id = 'set-perm-card';
+    const pc = document.querySelector('#view-settings .page-content');
+    if (pc) pc.appendChild(card);
+  }
+  if (!card) return;
+  if (!state.shop.perms) state.shop.perms = {};
+  const p = state.shop.perms;
+  const row = (key, title, sub)=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px dashed var(--bd)">
+      <div style="flex:1"><b style="color:var(--t);font-size:13.5px">${title}</b><div style="font-size:11.5px;color:var(--t3);margin-top:2px">${sub}</div></div>
+      <button class="action-btn ${p[key]?'es-btn':''}" style="margin-top:0;min-width:88px;justify-content:center" onclick="togglePerm('${key}')">${p[key]?'<i class=\'ti ti-check\'></i>허용':'차단'}</button>
+    </div>`;
+  card.innerHTML = `
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:6px"><i class="ti ti-shield-lock"></i> 직원 권한 (staff 계정)</div>
+      <div style="font-size:11.5px;color:var(--t3);margin-bottom:6px">관리자(admin)는 항상 전체 권한입니다. 아래는 일반 직원에게 부여할 권한입니다.</div>
+      ${row('sales','매출 열람','일/기간 매출·연간 분석 메뉴 접근')}
+      ${row('cost','원가·마진 열람','주문 상세의 자재원가·예상 순이익 표시')}
+      ${row('delete','삭제 권한','주문·렌탈 상품 삭제(휴지통 이동)')}
+      <div style="font-size:11px;color:var(--t3);margin-top:8px"><i class="ti ti-info-circle"></i> 설정·휴지통은 관리자 전용으로 고정됩니다.</div>
+    </div>`;
+}
+function togglePerm(key){
+  if (!isAdmin()) return;
+  if (!state.shop.perms) state.shop.perms = {};
+  state.shop.perms[key] = !state.shop.perms[key];
+  saveShop();
+  renderPermCard();
+  if (typeof applyRole==='function') applyRole();
+  toast(`'${key==='sales'?'매출 열람':key==='cost'?'원가 열람':'삭제'}' 권한 ${state.shop.perms[key]?'허용':'차단'}`,'ok','직원 권한');
+}
 function renderPushCard(){
   let pcD = $('#set-push-card');
   if (!pcD){
@@ -3983,7 +4047,8 @@ const VIEW_TITLE = {
 };
 function go(view, fromPop){
   // 직원 권한 — 매출/설정/휴지통은 관리자 전용
-  if (!isAdmin() && ['sales-day','sales-period','analytics','settings','trash'].includes(view)){
+  if (!permCan('sales') && ['sales-day','sales-period','analytics'].includes(view)){ toast('매출 열람 권한이 없습니다 — 관리자에게 문의','warn','권한 제한'); return; }
+  if (!isAdmin() && ['settings','trash'].includes(view)){
     toast('관리자 전용 메뉴입니다','warn','권한 제한');
     return;
   }
@@ -5759,6 +5824,120 @@ function togglePrvEdit(){
 }
 
 /* ⑦.4 Orders list — 정장 주문 목록 ────────────────────── */
+// 납기 캘린더 히트맵 — 완성출고(완성) 집중일 색농도
+function dueMove(d){
+  if (!state.dueDate) state.dueDate = new Date(today());
+  state.dueDate.setMonth(state.dueDate.getMonth()+d);
+  renderDueHeatmap();
+}
+function renderDueHeatmap(){
+  const box = $('#due-heatmap');
+  if (!box) return;
+  if (!state.dueDate) state.dueDate = new Date(today());
+  const g = state.dueDate, y = g.getFullYear(), m = g.getMonth();
+  const last = new Date(y, m+1, 0).getDate();
+  const first = new Date(y, m, 1).getDay();
+  const tStr = dStr(today());
+  const orders = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료');
+  // 일자별 집계 (완성출고 done / 가봉 fit)
+  const cnt = {};
+  orders.forEach(o=>{
+    if (o.doneDt){ (cnt[o.doneDt]=cnt[o.doneDt]||{done:0,fit:0}).done++; }
+    if (o.fitDt && o.fitYn==='Y'){ (cnt[o.fitDt]=cnt[o.fitDt]||{done:0,fit:0}).fit++; }
+  });
+  const dayLoad = ds => (cnt[ds]?cnt[ds].done:0);
+  const maxLoad = Math.max(1, ...Object.keys(cnt).map(k=>cnt[k].done||0));
+  const OVER = 3; // 과부하 임계 (하루 완성 3건↑)
+  const heads = ['일','월','화','수','목','금','토'];
+  let cells = heads.map((h,i)=>`<div class="dh-dow ${i===0?'sun':''} ${i===6?'sat':''}">${h}</div>`).join('');
+  for (let i=0;i<first;i++) cells += '<div class="dh-cell dh-empty"></div>';
+  for (let d=1;d<=last;d++){
+    const ds = `${y}-${pad(m+1)}-${pad(d)}`;
+    const c = cnt[ds]||{done:0,fit:0};
+    const load = c.done;
+    const ratio = load/maxLoad;
+    const over = load>=OVER;
+    let bg = 'transparent';
+    if (load>0){
+      const a = 0.16 + ratio*0.64;
+      bg = over ? `rgba(237,85,101,${0.25+ratio*0.55})` : `rgba(26,179,148,${a})`;
+    }
+    const tip = (load? `완성 ${load}건` : '') + (c.fit? `${load?' · ':''}가봉 ${c.fit}건` : '') || '일정 없음';
+    cells += `<div class="dh-cell ${ds===tStr?'today':''} ${load?'has':''}" style="background:${bg}" title="${ds} — ${tip}${over?' · 과부하':''}" onclick="dueFilter('${ds}')">
+      <span class="dh-d">${d}</span>
+      ${load?`<span class="dh-n ${over?'over':''}">${load}</span>`:''}
+      ${c.fit?`<span class="dh-fit">가${c.fit}</span>`:''}
+    </div>`;
+  }
+  const overDays = Object.keys(cnt).filter(k=>k.startsWith(`${y}-${pad(m+1)}`) && cnt[k].done>=OVER).length;
+  box.innerHTML = `
+    <div class="dh-card">
+      <div class="dh-head">
+        <div class="dh-title"><i class="ti ti-calendar-stats"></i> 납기 히트맵 <span style="font-weight:600;color:var(--t3);font-size:12px">— 완성출고 집중일</span></div>
+        <div class="dh-nav">
+          ${overDays?`<span class="badge b-err" style="margin-right:6px">과부하 ${overDays}일</span>`:'<span class="badge b-ok" style="margin-right:6px">여유</span>'}
+          <button class="cal-nav-btn" onclick="dueMove(-1)"><i class="ti ti-chevron-left"></i></button>
+          <b style="min-width:96px;text-align:center">${y}년 ${m+1}월</b>
+          <button class="cal-nav-btn" onclick="dueMove(1)"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+      <div class="dh-grid">${cells}</div>
+      <div class="dh-legend"><span><span class="dh-sw" style="background:rgba(26,179,148,.3)"></span>완성출고</span><span><span class="dh-sw" style="background:rgba(237,85,101,.6)"></span>과부하(${OVER}건↑)</span><span style="color:var(--t3)">날짜 클릭 → 그날 주문만 보기</span></div>
+    </div>`;
+}
+function dueFilter(ds){
+  const q = $('#q-orders');
+  if (q){ q.value = q.value===ds ? '' : ds; renderOrders(); }
+}
+
+// 주문 일괄 인쇄 — 대기(미발주) 정장 작지서 묶음 + 발주 명세 표지
+function batchPrintWO(){
+  const list = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료' && ((o.fac&&o.fac.stage)||0)===0);
+  if (!list.length){ toast('대기 중(미발주) 정장 주문이 없습니다','warn','일괄 인쇄'); return; }
+  // 1) 발주 명세 표지
+  let cover = `<div class="wo-sheet" style="page-break-after:always">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <div style="font-size:20px;font-weight:800">공장 발주 명세</div>
+      <div style="font-size:12px;color:#666">${dStr(today())} · ${shopName()} · ${list.length}건</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <tr style="background:#f4f5f6">
+        <th style="border:1px solid #ccc;padding:6px">투입</th><th style="border:1px solid #ccc;padding:6px">고객</th>
+        <th style="border:1px solid #ccc;padding:6px">패턴/사이즈</th><th style="border:1px solid #ccc;padding:6px">수량</th>
+        <th style="border:1px solid #ccc;padding:6px">원단</th><th style="border:1px solid #ccc;padding:6px">가봉</th><th style="border:1px solid #ccc;padding:6px">완성</th>
+      </tr>
+      ${list.map(o=>{
+        const q = o.qty||{}; const qs = [q.s?`수트${q.s}`:'',q.p?`하의${q.p}`:'',q.v?`조끼${q.v}`:'',q.c?`코트${q.c}`:''].filter(Boolean).join(' ');
+        return `<tr>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center"><b>#${o.no}</b></td>
+          <td style="border:1px solid #ccc;padding:6px">${o.nm}</td>
+          <td style="border:1px solid #ccc;padding:6px">${o.pattern?.top||''} ${o.size?.top==='기타'?'기타':o.size?.top||''}</td>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center">${qs||'-'}</td>
+          <td style="border:1px solid #ccc;padding:6px">${o.fabNo||'-'}</td>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center">${o.fitYn==='Y'?(o.fitDt||'중가봉'):'직봉'}</td>
+          <td style="border:1px solid #ccc;padding:6px;text-align:center">${o.doneDt||'-'}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+    <div style="font-size:11px;color:#999;margin-top:8px">다음 장부터 각 주문의 작업지시서가 이어집니다 · 발주 담당 ${(state.user&&state.user.name)||''}</div>
+  </div>`;
+  // 2) 각 주문 작지서 (폼 로드 → 빌드 → 스냅샷)
+  let sheets = '';
+  list.forEach((o, idx)=>{
+    try{
+      loadOrderToForm(o.no, 'reprint');
+      buildWorkOrder();
+      const html = $('#print-area').innerHTML;
+      sheets += `<div style="page-break-before:always">${html}</div>`;
+    }catch(e){}
+  });
+  $('#print-area').innerHTML = cover + sheets;
+  const tt = $('#prv-title-text'); if (tt) tt.textContent = '발주 일괄 인쇄';
+  const ts = $('#prv-sub-text');   if (ts) ts.textContent = `${dStr(today())} · ${list.length}건 (명세 + 작지서)`;
+  $('#prv-modal').classList.add('open');
+  toast(`대기 주문 ${list.length}건 작업지시서를 묶었습니다`,'ok','일괄 인쇄');
+}
+
 function renderOrders(){
   const all = state.orders.filter(brMatch).filter(o=>o.type==='정장');
   $('#od-total').textContent = all.length;
@@ -5767,7 +5946,8 @@ function renderOrders(){
   $('#od-sum').textContent   = isAdmin() ? fmt(all.reduce((s,o)=>s+o.total,0)) : '관리자 전용';
   const q = ($('#q-orders')?.value||'').trim().toLowerCase();
   let rows = all;
-  if (q) rows = rows.filter(o=> String(o.no).includes(q) || o.nm.toLowerCase().includes(q) || ((o.pattern?.top||'')+'').toLowerCase().includes(q));
+  if (q) if (/^\d{4}-\d{2}-\d{2}$/.test(q)) rows = rows.filter(o=> o.doneDt===q || o.fitDt===q || o.date===q);
+    else rows = rows.filter(o=> String(o.no).includes(q) || o.nm.toLowerCase().includes(q) || ((o.pattern?.top||'')+'').toLowerCase().includes(q));
   $('#orders-tbody').innerHTML = rows.map(o=>{
     const qy = o.qty ? `S${o.qty.s||0}·P${o.qty.p||0}${o.qty.v?'·V'+o.qty.v:''}${o.qty.c?'·C'+o.qty.c:''}` : '-';
     return `<tr onclick="openOrderDet('${o.no}')" style="cursor:pointer">
@@ -5786,6 +5966,7 @@ function renderOrders(){
       </div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="10"><div class="empty-state"><i class="ti ti-clipboard-off"></i><div class="empty-state-title">아직 주문이 없습니다</div><div class="empty-state-sub">주문서를 작성하면 작지서 인쇄·가봉 일정·매출까지 자동으로 연결됩니다</div><button class="action-btn es-btn" onclick="go('mtm-suit')"><i class="ti ti-pencil"></i>정장 주문서 작성</button></div></td></tr>`;
+  if (typeof renderDueHeatmap==='function') renderDueHeatmap();
 }
 
 /* ⑦.5 Fabric ──────────────────────────────────────────── */
@@ -6912,6 +7093,7 @@ function doSaveProd(){
   renderRental();
 }
 function doDeleteProd(){
+  if (!permCan('delete')){ toast('삭제 권한이 없습니다 — 관리자에게 문의','warn','권한 제한'); return; }
   const r = state.rentals.find(x=>x.code===state.prodTarget);
   if (!r) return;
   if (r.status!=='대여가능'){ toast('출고/예약 중인 상품은 삭제할 수 없습니다','err'); return; }
@@ -7317,6 +7499,7 @@ function emptyTrash(){
   toast('휴지통을 비웠습니다','ok');
 }
 function deleteOrder(no){
+  if (!permCan('delete')){ toast('삭제 권한이 없습니다 — 관리자에게 문의','warn','권한 제한'); return; }
   const o = state.orders.find(x=>String(x.no)===String(no));
   if (!o) return;
   if (!confirm(`주문 #${o.no} (${o.nm} · ${fmt(o.total)})을 휴지통으로 이동할까요?\n해당 매출도 집계에서 제외됩니다. (30일 내 복구 가능)`)) return;
@@ -7329,12 +7512,25 @@ function deleteOrder(no){
 
 /* ─── 직원 권한 (관리자/직원) ─────────────── */
 function isAdmin(){ return !state.user || state.user.role==='admin'; } // crm_staff: admin/staff
+// 세분 권한 — 관리자가 설정에서 직원(staff)에게 부여. 기본은 전부 차단(현행 유지)
+function permCan(act){
+  if (isAdmin()) return true;
+  const p = (state.shop && state.shop.perms) || {};
+  return !!p[act];  // 'sales'(매출보기) · 'cost'(원가/마진보기) · 'delete'(삭제)
+}
 function applyRole(){
   const admin = isAdmin();
-  ['sec-sales','gnb-sales-day','gnb-sales-period','sec-settings','gnb-settings','gnb-trash'].forEach(id=>{
+  const seeSales = permCan('sales');
+  ['sec-settings','gnb-settings','gnb-trash'].forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.style.display = admin ? '' : 'none';
   });
+  ['sec-sales','gnb-sales-day','gnb-sales-period','gnb-analytics'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.style.display = seeSales ? '' : 'none';
+  });
+  // 원가/마진 숨김 토글 (CSS 클래스)
+  document.body.classList.toggle('no-cost', !permCan('cost'));
 }
 
 /* ─── 상품 이력 타임라인 ─────────────────── */
@@ -7754,6 +7950,7 @@ function renderSettings(){
   state.shopLogoTmp = undefined;
   renderBranchCard();
   renderPushCard();
+  renderPermCard();
 }
 function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
@@ -7983,6 +8180,13 @@ function openCustDet(id){
     </div>
     ${_rollup}
     <div class="dp-sec">
+      <div class="dp-sec-title"><i class="ti ti-camera"></i>사진 (체형·착장 기록)</div>
+      <div class="cust-photos" id="cust-photos">
+        ${(c.photos||[]).map((ph,i)=>`<div class="cphoto" style="background-image:url(${ph})" onclick="openCustPhoto(${i})"><span class="cphoto-del" onclick="event.stopPropagation();delCustPhoto(${i})"><i class="ti ti-x"></i></span></div>`).join('')}
+        <label class="cphoto-add" title="사진 추가"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="custPhotoPick(this)"></label>
+      </div>
+    </div>
+    <div class="dp-sec">
       <div class="dp-sec-title"><i class="ti ti-note"></i>특이사항</div>
       <div class="dp-f full"><div class="dp-fv">${c.memo||'-'}</div></div>
     </div>
@@ -8029,6 +8233,59 @@ function delComment(id, kind, ref){
   state.comments = (state.comments||[]).filter(x=>x.id!==id);
   saveDB();
   if (kind==='cust') openCustDet(ref); else openOrderDet(ref);
+}
+
+/* ─── 고객 사진 (체형·착장 기록) ─────────── */
+function custPhotoPick(inp){
+  const c = state.detCust;
+  const file = inp.files && inp.files[0];
+  if (!c || !file) return;
+  const img = new Image();
+  img.onload = async ()=>{
+    const MAX = 720;
+    const sc = Math.min(1, MAX/Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    const dataURL = cv.toDataURL('image/jpeg', .82);
+    c.photos = c.photos || [];
+    c.photos.push(dataURL);
+    saveDB();
+    openCustDet(c.id);
+    URL.revokeObjectURL(img.src);
+    const url = await uploadPhotoToStorage(dataURL, 'cust/' + c.id + '-' + Date.now() + '.jpg');
+    if (url){
+      const idx = c.photos.indexOf(dataURL);
+      if (idx>-1){ c.photos[idx] = url; saveDB(); if (state.detCust===c) openCustDet(c.id); }
+    }
+  };
+  img.src = URL.createObjectURL(file);
+}
+function delCustPhoto(i){
+  const c = state.detCust;
+  if (!c || !c.photos) return;
+  if (!confirm('이 사진을 삭제할까요?')) return;
+  c.photos.splice(i, 1);
+  saveDB();
+  openCustDet(c.id);
+}
+function openCustPhoto(i){
+  const c = state.detCust;
+  if (!c || !c.photos || !c.photos[i]) return;
+  $('#cat-light-card').innerHTML = `
+    <img class="cl-ph" src="${c.photos[i]}" style="min-height:340px;object-fit:contain;background:#111">
+    <div class="cl-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="cl-name">${c.nm} — 사진 ${i+1}/${c.photos.length}</div>
+        <button class="mini-act" onclick="$('#cat-light').classList.remove('open')"><i class="ti ti-x"></i></button>
+      </div>
+      <div style="font-size:12.5px;color:var(--t3);margin-top:6px">체형·착장 기록 — 다음 주문 참고용</div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        ${i>0?`<button class="action-btn" onclick="openCustPhoto(${i-1})"><i class="ti ti-chevron-left"></i> 이전</button>`:''}
+        ${i<c.photos.length-1?`<button class="action-btn" onclick="openCustPhoto(${i+1})">다음 <i class="ti ti-chevron-right"></i></button>`:''}
+      </div>
+    </div>`;
+  $('#cat-light').classList.add('open');
 }
 
 /* ─── 할 일 (To-Do) — 직원 공유 ─────────── */
@@ -8272,8 +8529,8 @@ function openOrderDet(no){
       <div class="dp-sec-title"><i class="ti ti-coin"></i>재무 롤업</div>
       <div class="dp-g3">
         <div class="dp-f"><div class="dp-fl">매출 (VAT포함)</div><div class="dp-fv" style="font-weight:800">${fmt(o.total)}</div></div>
-        <div class="dp-f"><div class="dp-fl">자재 원가</div><div class="dp-fv">${cost?fmt(cost):'-'}</div></div>
-        <div class="dp-f"><div class="dp-fl">예상 순이익</div><div class="dp-fv" style="font-weight:800;color:${profit>=0?'var(--okt)':'var(--et)'}">${cost?fmt(profit):'-'}</div></div>
+        <div class="dp-f cost-only"><div class="dp-fl">자재 원가</div><div class="dp-fv">${cost?fmt(cost):'-'}</div></div>
+        <div class="dp-f cost-only"><div class="dp-fl">예상 순이익</div><div class="dp-fv" style="font-weight:800;color:${profit>=0?'var(--okt)':'var(--et)'}">${cost?fmt(profit):'-'}</div></div>
       </div>
       <div style="font-size:11px;color:var(--t3);margin-top:7px">공급가 ${fmt(o.sup)} · VAT ${fmt(o.vat)}${fab?' · 원단 '+fab.no:''}${lin?' · 안감 '+lin.no:''}${btn?' · 단추 '+btn.no:''}</div>
     </div>
