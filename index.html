@@ -1651,6 +1651,17 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 58차 — 대시보드 우선순위 알림 + 여백 톤 ════ */
+.dash-alert-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.da-item{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:700;padding:11px 16px;border-radius:8px;cursor:pointer;border:1px solid;font-family:inherit;line-height:1}
+.da-item .ti{font-size:17px}
+.da-err{background:var(--eb);color:var(--et);border-color:rgba(237,85,101,.4)}
+.da-warn{background:var(--wb);color:var(--wt);border-color:rgba(232,149,12,.42)}
+.da-info{background:var(--ib);color:var(--it);border-color:rgba(28,132,198,.4)}
+.da-item:hover{filter:brightness(.97);transform:translateY(-1px)}
+#view-dash .stat-grid{gap:14px;margin-bottom:18px}
+#view-dash .dash-grid{gap:18px}
+@media (max-width:600px){ .da-item{font-size:13px;padding:10px 13px} .dash-alert-bar{gap:8px} }
 /* ════ 57차 — 렌탈 목록 칩·연체·모바일 ════ */
 #view-rental .tabs .tab{display:inline-flex;align-items:center;gap:6px}
 #view-rental .tabs .tab .ord-chip-n{background:rgba(0,0,0,.08)}
@@ -2185,6 +2196,7 @@ body.dk{ --t3:#9b9994; }
     <!-- ───── 대시보드 ───── -->
     <div id="view-dash" class="active">
       <div class="page-content">
+        <div id="dash-alert"></div>
         <div class="dash-welcome">
           <div>
             <div class="dw-title" id="dw-title">안녕하세요</div>
@@ -4699,6 +4711,22 @@ function renderDash(){
   const _ws = $('#dw-sub'); if (_ws) _ws.textContent = `오늘 일정 ${_evN}건 · 진행중 주문 ${_ing}건 · 대여중 렌탈 ${_rentOut.length}건${_over?` · 연체 ${_over}건`:''}`;
   const _wd = $('#dw-date');
   if (_wd){ const _t=today(); const _W=['일','월','화','수','목','금','토']; _wd.textContent = `${_t.getFullYear()}.${pad(_t.getMonth()+1)}.${pad(_t.getDate())} (${_W[_t.getDay()]})`; }
+  // 오늘 우선순위 알림 스트립 (연체·완성지연·오늘 가봉/완성/반납)
+  try{
+    const al=$('#dash-alert'); if(al){
+      const fitsToday=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.fitDt===tStr&&o.status!=='완료').length;
+      const doneToday=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.doneDt===tStr&&o.status!=='완료').length;
+      const dueToday=state.rentals.filter(brMatch).filter(r=>r.status==='출고중'&&r.dueDt===tStr).length;
+      const ordOver=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.status!=='완료'&&o.doneDt&&o.doneDt<tStr).length;
+      const items=[];
+      if(_over>0) items.push(['err','ti-alarm',`렌탈 연체 ${_over}건`,"go('rental');state.rentalFilter='출고중';if(typeof renderRental==='function')renderRental()"]);
+      if(ordOver>0) items.push(['err','ti-clock-exclamation',`완성 지연 ${ordOver}건`,"go('orders');state.ordFilter='over';if(typeof renderOrders==='function')renderOrders()"]);
+      if(fitsToday>0) items.push(['warn','ti-ruler-2',`오늘 가봉 ${fitsToday}건`,"go('orders');state.ordFilter='wfit';if(typeof renderOrders==='function')renderOrders()"]);
+      if(doneToday>0) items.push(['info','ti-package-export',`오늘 완성출고 ${doneToday}건`,"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
+      if(dueToday>0) items.push(['info','ti-arrow-back-up',`오늘 반납 ${dueToday}건`,"go('rental')"]);
+      al.innerHTML = items.length ? `<div class="dash-alert-bar">${items.map(([t,ic,tx,act])=>`<button class="da-item da-${t}" onclick="${act}"><i class="ti ${ic}"></i>${tx}</button>`).join('')}</div>` : '';
+    }
+  }catch(e){}
   if (typeof renderTodos==='function') renderTodos();
   // 원단 발주 경고 (소진 임박)
   try{
