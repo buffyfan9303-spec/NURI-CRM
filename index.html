@@ -1651,6 +1651,17 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 57차 — 렌탈 목록 칩·연체·모바일 ════ */
+#view-rental .tabs .tab{display:inline-flex;align-items:center;gap:6px}
+#view-rental .tabs .tab .ord-chip-n{background:rgba(0,0,0,.08)}
+#view-rental .tabs .tab.active .ord-chip-n{background:rgba(255,255,255,.25)}
+@media (max-width:760px){
+  #view-rental .data-table thead{display:none}
+  #view-rental .data-table,#view-rental .data-table tbody,#view-rental .data-table tr,#view-rental .data-table td{display:block;width:auto}
+  #view-rental .data-table tr{border:1px solid var(--bd);border-radius:8px;margin-bottom:10px;padding:10px 12px;background:var(--sf)}
+  #view-rental .data-table td{border:0!important;padding:5px 0!important;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  #view-rental .data-table td:empty{display:none}
+}
 /* ════ 56차 — 고객 카드 그리드 ════ */
 .cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px}
 .cust-card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:14px 16px;cursor:pointer;transition:box-shadow .12s,border-color .12s}
@@ -6765,6 +6776,13 @@ function rentalStatusBadge(s){
 function renderRental(){
   const list = state.rentals.filter(brMatch);
   const todayS = dStr(today());
+  // 탭 건수 배지
+  try{
+    const cnts={ all:list.length, '대여가능':list.filter(r=>r.status==='대여가능').length, '예약중':list.filter(r=>r.status==='예약중').length, '출고중':list.filter(r=>r.status==='출고중').length, '케어':list.filter(r=>r.status==='세탁중'||r.status==='수선중').length };
+    const lbls={ all:'전체','대여가능':'출고 가능','예약중':'예약 중','출고중':'대여 중','케어':'세탁·수선' };
+    const icons={ all:'list','대여가능':'circle-check','예약중':'calendar-plus','출고중':'user-check','케어':'wash' };
+    Object.keys(cnts).forEach(k=>{ const b=document.getElementById('rtab-'+k); if(b){ const over=k==='출고중' && list.some(r=>r.status==='출고중'&&r.dueDt&&r.dueDt<todayS); b.innerHTML=`<i class="ti ti-${icons[k]}"></i>${lbls[k]} <span class="ord-chip-n">${cnts[k]}</span>`; } });
+  }catch(e){}
 
   $('#rt-total').textContent  = list.length;
   $('#rt-avail').textContent  = list.filter(r=>r.status==='대여가능').length;
@@ -6822,7 +6840,7 @@ function renderRental(){
     }
     if (r.status==='출고중' && r.renter) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.renter}')">${r.renter}</span><div style="font-size:10.5px;color:var(--t3)">~ ${r.dueDt||''}</div>`;
     else if (r.status==='예약중' && r.resv) who = `<span class="ent-link" onclick="event.stopPropagation();openCustByName('${r.resv.nm}')">${r.resv.nm}</span><div style="font-size:10.5px;color:var(--pt);font-weight:700">사용 ${r.resv.useDt}</div>`;
-    return `<tr>
+    return `<tr class="${overdue?'od-over':''}">
       <td>${r.cat}</td>
       <td><div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="openHistModal('${r.code}')" title="클릭 — 상품 이력 타임라인">${r.photo?`<img src="${r.photo}" style="width:36px;height:36px;border-radius:3px;object-fit:cover;border:1px solid var(--bd2);flex-shrink:0">`:''}<div><b>${r.name}</b><div style="font-size:10.5px;color:var(--t3)"><span style="font-weight:800;color:var(--it)">${r.code}</span>${r.brand?' · '+r.brand:''}${r.mat?' · '+r.mat:''}</div></div></div></td>
       <td>${r.size}</td>
