@@ -8664,7 +8664,7 @@ function printWedPackage(gid){
     const cells=Object.keys(LBL).map(k=>`<td style="border:1px solid #ccc;padding:6px 4px;text-align:center;font-size:11px">${LBL[k]}<br><b style="font-size:15px">${M[k]||'-'}</b></td>`).join('');
     return `<div class="wo-sheet">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0c1f35;padding-bottom:8px;margin-bottom:9px">
-        <div><div style="font-size:13px;color:#666">${shopName()}</div><div style="font-size:19px;font-weight:900">예식 의상 작업지시서</div>
+        <div>${(state.shop&&state.shop.logo)?`<img src="${state.shop.logo}" style="max-height:30px;max-width:130px;object-fit:contain;margin-bottom:3px"><br>`:''}<div style="font-size:13px;color:#666">${shopName()}</div><div style="font-size:19px;font-weight:900">예식 의상 작업지시서</div>
           <div style="font-size:12px;color:#444;margin-top:3px">${g.eventNm||'예식'} · 예식일 ${g.eventDate||'-'} · 대여 ${g.useDate||'-'} ~ ${g.dueDate||'-'}</div></div>
         <div style="text-align:center">${qrFor(m.id)}<div style="font-size:8.5px;color:#888;margin-top:2px">스캔 → 원격 치수 제출</div></div>
       </div>
@@ -8682,6 +8682,7 @@ function printWedPackage(gid){
   const _roster=mems.map((m,i)=>`<tr><td style="border:1px solid #ddd;padding:6px;text-align:center">${i+1}</td><td style="border:1px solid #ddd;padding:6px"><b>${m.role||'-'}</b></td><td style="border:1px solid #ddd;padding:6px">${m.nm||'-'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.measure&&Object.keys(m.measure).length?'O':'—'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.rentalCode||'—'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.deadline||'-'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.status||'-'}</td></tr>`).join('');
   const cover=`<div class="wo-sheet">
     <div style="text-align:center;border-bottom:3px solid #0c1f35;padding-bottom:12px;margin-bottom:15px">
+      ${(state.shop&&state.shop.logo)?`<img src="${state.shop.logo}" style="max-height:58px;max-width:210px;object-fit:contain;margin-bottom:8px"><br>`:''}
       <div style="font-size:13px;color:#666">${shopName()}</div>
       <div style="font-size:24px;font-weight:900;margin-top:3px">${g.eventNm||'예식'} 패키지</div>
       <div style="font-size:13px;color:#444;margin-top:6px">예식일 ${g.eventDate||'-'} · 대여 ${g.useDate||'-'} ~ ${g.dueDate||'-'} · 총 ${mems.length}명</div>
