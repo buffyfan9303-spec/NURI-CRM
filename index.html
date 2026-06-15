@@ -1651,6 +1651,15 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 65차 — 고객 즉시검색 + 히트맵 범례 필터 ════ */
+.pick-search{display:flex;align-items:center;gap:7px;background:var(--sf);border:1px solid var(--bd2);border-radius:8px;padding:0 11px;margin-bottom:9px;height:40px}
+.pick-search .ti{color:var(--t3);font-size:17px;flex-shrink:0}
+.pick-search-in{flex:1;border:0;background:transparent;font-family:inherit;font-size:13.5px;color:var(--t);outline:none;min-width:0}
+.pick-search-in::placeholder{color:var(--t3)}
+.dh-lg{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid transparent;border-radius:7px;padding:5px 9px;font-family:inherit;font-size:11.5px;font-weight:600;color:var(--t2);cursor:pointer;transition:background .12s,border-color .12s}
+.dh-lg:hover{background:var(--sf2)}
+.dh-lg.on{border-color:#1ab394;background:var(--acc-soft);color:var(--t);font-weight:800}
+.dh-cell.dh-dim{opacity:.18;filter:grayscale(.4)}
 /* ════ 61차 — 렌탈 액션버튼 통일 + 히트맵 범례 우측 + 고객카드 축소 ════ */
 .r-acts{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 #rental-tbody td:last-child{padding-left:8px!important;padding-right:8px!important}
@@ -2266,8 +2275,6 @@ body.dk{ --t3:#9b9994; }
     <!-- ───── 대시보드 ───── -->
     <div id="view-dash" class="active">
       <div class="page-content">
-        <div id="dash-alert"></div>
-        <div id="dash-week"></div>
         <div class="dash-welcome">
           <div>
             <div class="dw-title" id="dw-title">안녕하세요</div>
@@ -2654,6 +2661,7 @@ body.dk{ --t3:#9b9994; }
           </div>
           <label class="f-label">기존 고객 (카드를 누르면 자동 입력)</label>
           <div class="pick-box">
+            <div class="pick-search"><i class="ti ti-search"></i><input id="pick-cust-q" class="pick-search-in" placeholder="고객 검색 — 이름·초성(ㄱㄷㅎ)·연락처 뒷자리" oninput="renderCustCards()" autocomplete="off"></div>
             <div class="pick-grid" id="pick-cust" style="max-height:200px"></div>
           </div>
           <div class="form-row" style="margin-top:14px">
@@ -5315,7 +5323,10 @@ function renderCustCards(){
   const box = $('#pick-cust');
   if (!box) return;
   if (!state.customers.length){ box.innerHTML='<div class="pick-empty">등록된 고객이 없습니다</div>'; return; }
-  box.innerHTML = state.customers.map(c=>`
+  const q = ($('#pick-cust-q') && $('#pick-cust-q').value || '').trim();
+  const list = state.customers.filter(c=>custMatch(c,q));
+  if (!list.length){ box.innerHTML=`<div class="pick-empty">'${q}' 검색 결과가 없습니다 — 이름·초성·연락처로 검색</div>`; return; }
+  box.innerHTML = list.map(c=>`
     <div class="pick-card" data-id="${c.id}" onclick="pickCustomer('${c.id}', this)">
       <div class="pc-title">${c.nm}</div>
       <div class="pc-sub">${c.ph}</div>
@@ -6530,6 +6541,7 @@ function dueMove(d){
   state.dueDate.setMonth(state.dueDate.getMonth()+d);
   renderDueHeatmap();
 }
+function dueHeatFilter(t){ state.dueHeatF = (state.dueHeatF===t)?null:t; renderDueHeatmap(); }
 function renderDueHeatmap(){
   const box = $('#due-heatmap');
   if (!box) return;
@@ -6557,13 +6569,14 @@ function renderDueHeatmap(){
     const load = c.done;
     const ratio = load/maxLoad;
     const over = load>=OVER;
+    const _dim = ((state.dueHeatF==='done' && load===0) || (state.dueHeatF==='over' && !over)) ? ' dh-dim' : '';
     let bg = 'transparent';
     if (load>0){
       const a = 0.16 + ratio*0.64;
       bg = over ? `rgba(237,85,101,${0.25+ratio*0.55})` : `rgba(26,179,148,${a})`;
     }
     const tip = (load? `완성 ${load}건` : '') + (c.fit? `${load?' · ':''}가봉 ${c.fit}건` : '') || '일정 없음';
-    cells += `<div class="dh-cell ${ds===tStr?'today':''} ${load?'has':''}" style="background:${bg}" title="${ds} — ${tip}${over?' · 과부하':''}" onclick="dueFilter('${ds}')">
+    cells += `<div class="dh-cell ${ds===tStr?'today':''} ${load?'has':''}${_dim}" style="background:${bg}" title="${ds} — ${tip}${over?' · 과부하':''}" onclick="dueFilter('${ds}')">
       <span class="dh-d">${d}</span>
       ${load?`<span class="dh-n ${over?'over':''}">${load}</span>`:''}
       ${c.fit?`<span class="dh-fit">가${c.fit}</span>`:''}
@@ -6583,7 +6596,7 @@ function renderDueHeatmap(){
       </div>
       <div class="dh-body">
         <div class="dh-grid">${cells}</div>
-        <div class="dh-legend dh-legend-side"><span><span class="dh-sw" style="background:rgba(26,179,148,.3)"></span>완성출고</span><span><span class="dh-sw" style="background:rgba(237,85,101,.6)"></span>과부하(${OVER}건↑)</span><span style="color:var(--t3)">날짜 클릭 → 그날 주문만 보기</span></div>
+        <div class="dh-legend dh-legend-side"><button class="dh-lg ${state.dueHeatF==='done'?'on':''}" onclick="dueHeatFilter('done')"><span class="dh-sw" style="background:rgba(26,179,148,.3)"></span>완성출고일</button><button class="dh-lg ${state.dueHeatF==='over'?'on':''}" onclick="dueHeatFilter('over')"><span class="dh-sw" style="background:rgba(237,85,101,.6)"></span>과부하(${OVER}건↑)</button><span style="color:var(--t3);font-size:11px">${state.dueHeatF?'<i class="ti ti-filter-filled"></i> 표시 필터 켜짐 · 다시 클릭하면 해제':'범례 클릭 = 유형 강조 · 날짜 클릭 = 그날 주문'}</span></div>
       </div>
     </div>`;
 }
@@ -9805,7 +9818,6 @@ function renderSettings(){
   renderPushCard();
   renderPermCard();
   renderBufferCard();
-  renderAlertCard();
   renderShopBakNote();
 }
 function shopLogoPick(inp){
