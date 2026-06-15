@@ -248,7 +248,7 @@ textarea.f-input{min-height:80px;resize:vertical;font-family:inherit}
 .stat-note.up{color:var(--okt)}.stat-note.dn{color:var(--et)}
 
 /* ─── Dashboard layout (캘린더 + 오늘 일정) ────── */
-.dash-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;min-width:0;align-items:start}
+.dash-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;min-width:0;align-items:stretch}
 .cal-card,.ev-panel,.shortcut-card{background:var(--sf);border:.5px solid var(--bd);border-radius:14px;padding:22px;box-shadow:var(--shadow-sm);min-width:0}
 .cal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:8px}
 .cal-title{font-size:18px;font-weight:800;color:var(--t);letter-spacing:-.4px}
@@ -263,7 +263,8 @@ textarea.f-input{min-height:80px;resize:vertical;font-family:inherit}
 .cal-nav-btn:active{transform:scale(.92)}
 .cal-nav-btn.today-btn{font-size:12px;font-weight:800;color:var(--gold);border-color:rgba(200,145,74,.45);letter-spacing:.5px;padding:0 14px}
 .cal-nav-btn.today-btn:hover{background:rgba(200,145,74,.1);color:var(--gold)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:26px;grid-auto-rows:46px;text-align:center;gap:2px;align-content:start}
+.cal-card{display:flex;flex-direction:column;height:100%}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:26px;grid-auto-rows:minmax(44px,1fr);text-align:center;gap:2px;align-content:stretch;flex:1 1 auto}
 .shortcut-ico.r{background:rgba(200,145,74,.16);color:var(--gold)}
 .cal-dh{font-size:10.5px;color:var(--t3);font-weight:700;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;height:30px;align-self:start}
 .cal-dh.sun{color:#c8564a}.cal-dh.sat{color:#1840a0}
@@ -1651,6 +1652,26 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 67차 — 결혼패키지 멤버 카드 + 상품배정 모달 ════ */
+.wed-mems{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.wed-mem{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid var(--bd);border-radius:10px;background:var(--sf2);flex-wrap:wrap}
+.wed-mem.late{border-color:rgba(237,85,101,.45)}
+.wm-role{flex-shrink:0;font-size:12px}
+.wm-info{flex:1;min-width:130px}
+.wm-nm{font-weight:800;font-size:14px;color:var(--t)}
+.wm-dim{color:var(--t3);font-weight:500}
+.wm-meta{font-size:11.5px;color:var(--t3);margin-top:1px}
+.wm-chips{display:flex;gap:6px;flex-wrap:wrap}
+.wm-chip{display:inline-flex;align-items:center;gap:5px;height:36px;padding:0 12px;border:1px solid var(--bd2);border-radius:8px;background:var(--sf);color:var(--t2);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:border-color .12s,color .12s}
+.wm-chip:hover{border-color:#1ab394;color:#1ab394}
+.wm-chip .ti{font-size:15px}
+.wm-chip.ok{background:var(--okb);color:var(--okt);border-color:transparent}
+.wm-chip.info{background:var(--ib);color:var(--it);border-color:transparent}
+.wed-mem .wed-st{height:36px;border:1px solid var(--bd2);border-radius:8px;padding:0 9px;font-family:inherit;font-size:12.5px;font-weight:700;background:var(--sf);color:var(--t);cursor:pointer}
+.wm-acts{display:flex;gap:5px}
+.mrent-item{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--bd2);border-radius:9px;cursor:pointer;background:var(--sf);transition:border-color .12s,background .12s}
+.mrent-item:hover{border-color:#1ab394;background:var(--sf2)}
+@media (max-width:680px){ .wed-mem{gap:8px} .wm-info{flex-basis:100%;order:-1} .wm-chip{flex:1;justify-content:center} }
 /* ════ 65차 — 고객 즉시검색 + 히트맵 범례 필터 ════ */
 .pick-search{display:flex;align-items:center;gap:7px;background:var(--sf);border:1px solid var(--bd2);border-radius:8px;padding:0 11px;margin-bottom:9px;height:40px}
 .pick-search .ti{color:var(--t3);font-size:17px;flex-shrink:0}
@@ -3481,6 +3502,16 @@ body.dk{ --t3:#9b9994; }
   </div>
 
   <!-- 멤버 치수 모달 -->
+  <!-- 결혼패키지 상품 배정 모달 -->
+  <div id="mrent-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="signup-card" onclick="event.stopPropagation()" style="max-width:460px">
+      <button class="signup-x" onclick="$('#mrent-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      <div class="signup-head" style="margin-bottom:12px"><h2 class="signup-title" id="mrent-title">상품 배정</h2><p class="signup-sub">대여 가능한 상품을 눌러 배정하세요</p></div>
+      <div class="pick-search" style="margin-bottom:11px"><i class="ti ti-search"></i><input id="mrent-q" class="pick-search-in" placeholder="상품명·코드·카테고리 검색" oninput="filterRentPick()" autocomplete="off"></div>
+      <div id="mrent-list" style="display:flex;flex-direction:column;gap:7px;max-height:52vh;overflow-y:auto"></div>
+    </div>
+  </div>
+
   <div id="member-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
     <div class="signup-card" onclick="event.stopPropagation()" style="max-width:480px">
       <button class="signup-x" onclick="$('#member-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
@@ -8522,6 +8553,30 @@ function studioPrint(){
 
 /* ─── 결혼 패키지 그룹 주문 (혼주·들러리) ─── */
 const WED_ROLES = ['신랑','신부','들러리','혼주(부)','혼주(모)','사회자','기타'];
+function openRentPicker(gid, mid){
+  state.rentPickG=gid; state.rentPickM=mid;
+  const m=mFind(gid,mid);
+  $('#mrent-title').textContent = `${m?(m.role+' '+(m.nm||'')):''} — 상품 배정`.trim();
+  if($('#mrent-q')) $('#mrent-q').value='';
+  renderRentPickList();
+  $('#mrent-modal').classList.add('open');
+}
+function filterRentPick(){ renderRentPickList(); }
+function renderRentPickList(){
+  const box=$('#mrent-list'); if(!box) return;
+  const q=(($('#mrent-q')&&$('#mrent-q').value)||'').trim().toLowerCase();
+  let avail=state.rentals.filter(brMatch).filter(r=>r.status==='대여가능');
+  if(q) avail=avail.filter(r=>((r.name||'')+' '+(r.code||'')+' '+(r.cat||'')).toLowerCase().includes(q));
+  box.innerHTML = avail.length ? avail.map(r=>`<div class="mrent-item" onclick="pickRent('${r.code}')">
+    <div style="flex:1;min-width:0"><b>${r.name}</b><div style="font-size:11.5px;color:var(--t3)">${r.code}${r.cat?' · '+r.cat:''}${r.size?' · '+r.size:''}${r.color?' · '+r.color:''}</div></div>
+    <span class="badge b-ok">선택</span></div>`).join('') : `<div class="pick-empty">${q?'검색 결과가 없습니다':'대여 가능한 상품이 없습니다 (출고중·세탁중 제외)'}</div>`;
+}
+function pickRent(code){
+  const m=mFind(state.rentPickG, state.rentPickM); if(!m) return;
+  m.rentalCode=code; if(m.status==='치수입력'||m.status==='대기') m.status='배정';
+  saveDB(); $('#mrent-modal').classList.remove('open'); renderWedding();
+  toast(`${m.nm||m.role} → ${code} 배정 완료`,'ok','결혼 패키지');
+}
 function renderWedding(){
   const box = $('#wedding-list');
   if (!box) return;
@@ -8542,20 +8597,27 @@ function renderWedding(){
         <i class="ti ti-chevron-down wed-chev" id="wedchev-${g.id}"></i>
       </div>
       <div class="wed-body" id="wedbody-${g.id}" style="display:none">
-        <table class="wed-mtable"><thead><tr><th>역할</th><th>이름</th><th>치수</th><th>배정 상품</th><th>마감</th><th>상태</th><th></th></tr></thead>
-        <tbody>${(g.members||[]).map((m,i)=>{
+        <div class="wed-mems">${(g.members||[]).map((m,i)=>{
           const hasM = m.measure && Object.keys(m.measure).length;
           const late = m.deadline && m.deadline<tStr && m.status!=='완료';
-          return `<tr>
-            <td><b>${m.role||'-'}</b></td>
-            <td>${m.nm||'<span style=color:var(--t3)>미입력</span>'}${m.ph?`<div style="font-size:10.5px;color:var(--t3)">${m.ph}</div>`:''}</td>
-            <td>${hasM?`<span class="badge b-ok" style="cursor:pointer" onclick="openMemberMeasure('${g.id}','${m.id}')">입력됨</span>`:`<button class="mini-act" onclick="openMemberMeasure('${g.id}','${m.id}')" title="치수 입력"><i class="ti ti-ruler-2"></i></button>`}</td>
-            <td>${m.rentalCode?`<span class="ent-link" onclick="go('rental')">${m.rentalCode}</span>`:`<button class="mini-act" onclick="assignMemberRental('${g.id}','${m.id}')" title="상품 배정"><i class="ti ti-hanger"></i></button>`}</td>
-            <td style="${late?'color:var(--et);font-weight:700':''}">${m.deadline||'-'}${late?' ⚠':''}</td>
-            <td>${memberStatusSel(g.id, m.id, m.status)}</td>
-            <td style="white-space:nowrap"><button class="mini-act" onclick="copyMeasureLink('${g.id}','${m.id}')" title="원격 치수 제출 링크 복사"><i class="ti ti-link"></i></button><button class="mini-act" onclick="delMember('${g.id}','${m.id}')" title="멤버 삭제"><i class="ti ti-x"></i></button></td>
-          </tr>`;
-        }).join('')}</tbody></table>
+          const rb = ({'신랑':'b-info','신부':'b-resv','혼주(부)':'b-warn','혼주(모)':'b-warn'})[m.role]||'b-mut';
+          return `<div class="wed-mem${late?' late':''}">
+            <span class="wm-role badge ${rb}">${m.role||'-'}</span>
+            <div class="wm-info">
+              <div class="wm-nm">${m.nm||'<span class="wm-dim">이름 미입력</span>'}</div>
+              <div class="wm-meta">${m.ph||''}${m.deadline?`${m.ph?' · ':''}마감 ${m.deadline}${late?' <b style="color:var(--et)">지연</b>':''}`:''}</div>
+            </div>
+            <div class="wm-chips">
+              <button class="wm-chip ${hasM?'ok':''}" onclick="openMemberMeasure('${g.id}','${m.id}')"><i class="ti ti-ruler-2"></i>${hasM?'치수 입력됨':'치수 입력'}</button>
+              <button class="wm-chip ${m.rentalCode?'info':''}" onclick="${m.rentalCode?`go('rental')`:`openRentPicker('${g.id}','${m.id}')`}"><i class="ti ti-hanger"></i>${m.rentalCode||'상품 배정'}</button>
+            </div>
+            ${memberStatusSel(g.id, m.id, m.status)}
+            <div class="wm-acts">
+              <button class="mini-act" onclick="copyMeasureLink('${g.id}','${m.id}')" title="원격 치수 제출 링크 복사 (카톡 전송)"><i class="ti ti-link"></i></button>
+              <button class="mini-act" onclick="delMember('${g.id}','${m.id}')" title="멤버 삭제"><i class="ti ti-x"></i></button>
+            </div>
+          </div>`;
+        }).join('')}</div>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
           <button class="action-btn" onclick="addMember('${g.id}')"><i class="ti ti-user-plus"></i>멤버 추가</button>
           <button class="action-btn" onclick="editGroup('${g.id}')"><i class="ti ti-pencil"></i>예식 정보 수정</button>
