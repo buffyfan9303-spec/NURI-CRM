@@ -1651,6 +1651,21 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 56차 — 고객 카드 그리드 ════ */
+.cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px}
+.cust-card{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:14px 16px;cursor:pointer;transition:box-shadow .12s,border-color .12s}
+.cust-card:hover{border-color:#1ab394;box-shadow:var(--shadow-md)}
+.cc-top{display:flex;align-items:center;gap:11px}
+.cc-id{flex:1;min-width:0}
+.cc-nm{font-size:16px;font-weight:800;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-ph{font-size:12.5px;color:var(--t3);margin-top:1px}
+.cc-tags{display:flex;gap:5px;margin-top:10px;min-height:22px;align-items:center}
+.cc-mut{font-size:12px;color:var(--t3)}
+.cc-stats{display:flex;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid var(--bd)}
+.cc-stats > div{flex:1;text-align:center}
+.cc-stats span{display:block;font-size:11px;color:var(--t3)}
+.cc-stats b{font-size:13px;color:var(--t);font-variant-numeric:tabular-nums}
+@media (max-width:520px){ .cust-grid{grid-template-columns:1fr} }
 /* ════ 54차 — 주문목록 재디자인 + 날짜 잠금 ════ */
 input.locked{background:var(--sf3)!important;cursor:not-allowed;color:var(--t3)}
 .ord-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
@@ -2442,16 +2457,8 @@ body.dk{ --t3:#9b9994; }
           <button class="action-btn" onclick="exportCustomers()"><i class="ti ti-download"></i>CSV</button>
           <button class="action-btn" onclick="go('reg')"><i class="ti ti-plus"></i>신규 등록</button>
         </div>
-        <div class="table-wrap">
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead><tr>
-                <th style="width:30%">고객</th><th style="width:18%">연락처</th><th style="width:12%">상의/하의</th><th style="width:15%">최근 주문</th><th style="width:13%">누적 매출</th><th style="width:12%">VIP</th>
-              </tr></thead>
-              <tbody id="cust-tbody"></tbody>
-            </table>
-          </div>
-        </div>
+        <div id="cust-filters" class="ord-filters"></div>
+        <div id="cust-grid" class="cust-grid"></div>
       </div>
     </div>
 
@@ -4815,29 +4822,50 @@ function custMatch(c, q){
 function avatarCls(s){ const arr=['av-c0','av-c1','av-c2','av-c3','av-c4','av-c5']; let h=0; for (const ch of (s||'')) h+=ch.charCodeAt(0); return arr[h%arr.length]; }
 function renderCustList(){
   const q = ($('#q-cust')?.value||'').trim().toLowerCase();
-  const tb = $('#cust-tbody');
-  const rows = state.customers.filter(brMatch).filter(c=>custMatch(c, q));
-  if (!rows.length){
-    tb.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="ti ti-user-off"></i>
-      <div class="empty-state-title">${q ? `'${q}' 검색 결과가 없습니다` : '아직 등록된 고객이 없습니다'}</div>
-      <div class="empty-state-sub">${q ? '이름 초성(예: ㄱㄷㅎ)이나 연락처 뒷자리로도 검색할 수 있습니다' : '첫 고객을 등록하면 주문·대여 이력이 자동으로 연결됩니다'}</div>
-      ${q ? `<button class="action-btn es-btn" onclick="$('#q-cust').value='';renderCustList()"><i class="ti ti-x"></i>검색 초기화</button>`
-          : `<button class="action-btn es-btn" onclick="go('reg')"><i class="ti ti-user-plus"></i>고객 등록하기</button>`}
-    </div></td></tr>`;
+  const box = $('#cust-grid');
+  const all = state.customers.filter(brMatch);
+  const tStr = dStr(today());
+  const dsince=(ds)=>ds?Math.round((new Date(tStr)-new Date(ds))/86400000):null;
+  const isVIP=c=> c.status==='VIP' || (c.total||0)>=2000000;
+  const isNew=c=> c.status==='신규' || (c.created && dsince(c.created)<=30);
+  const isDorm=c=> c.lastOrd && dsince(c.lastOrd)>180;
+  if (!state.custFilter) state.custFilter='all';
+  const F=state.custFilter;
+  const cnt={ all:all.length, vip:all.filter(isVIP).length, new:all.filter(isNew).length, dorm:all.filter(isDorm).length };
+  const CHIPS=[['all','전체',cnt.all],['vip','VIP',cnt.vip],['new','신규',cnt.new],['dorm','휴면(6개월+)',cnt.dorm]];
+  const fc=$('#cust-filters');
+  if(fc) fc.innerHTML=CHIPS.map(([k,lb,n])=>`<button class="ord-chip ${F===k?'active':''} ${k==='dorm'&&n>0&&F!==k?'danger':''}" onclick="state.custFilter='${k}';renderCustList()">${lb} <span class="ord-chip-n">${n}</span></button>`).join('');
+  let rows = all.filter(c=>custMatch(c,q));
+  if(F==='vip') rows=rows.filter(isVIP); else if(F==='new') rows=rows.filter(isNew); else if(F==='dorm') rows=rows.filter(isDorm);
+  if(!rows.length){
+    box.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-user-off"></i>
+      <div class="empty-state-title">${q?`'${q}' 검색 결과가 없습니다`:F!=='all'?'해당 분류의 고객이 없습니다':'아직 등록된 고객이 없습니다'}</div>
+      <div class="empty-state-sub">${q?'이름 초성(예: ㄱㄷㅎ)·연락처 뒷자리로도 검색됩니다':F!=='all'?'다른 분류를 선택해 보세요':'첫 고객을 등록하면 주문·대여 이력이 자동 연결됩니다'}</div>
+      ${q||F!=='all'?`<button class="action-btn es-btn" onclick="state.custFilter='all';$('#q-cust').value='';renderCustList()"><i class="ti ti-x"></i>초기화</button>`:`<button class="action-btn es-btn" onclick="go('reg')"><i class="ti ti-user-plus"></i>고객 등록하기</button>`}
+    </div>`;
     return;
   }
-  tb.innerHTML = rows.map(c=>`
-    <tr onclick="openCustDet('${c.id}')">
-      <td><div class="row-name"><div class="row-av ${avatarCls(c.nm)}">${(c.nm[0]||'?').toUpperCase()}</div><div><div style="font-weight:700">${c.nm}</div><div style="color:var(--t3);font-size:11.5px">${c.id}</div></div></div></td>
-      <td>${c.ph}</td>
-      <td>${c.top||'-'} / ${c.bot||'-'}</td>
-      <td>${c.lastOrd||'-'}</td>
-      <td>${fmt(c.total)}</td>
-      <td><div style="display:flex;gap:7px;align-items:center;justify-content:space-between">
-        ${c.status==='VIP'?'<span class="badge b-warn">VIP</span>':'<span style="color:var(--t3);font-size:12px">—</span>'}
-        <button class="mini-act" onclick="event.stopPropagation();quickOrder('${c.id}')" title="이 고객으로 정장 주문서 작성"><i class="ti ti-hanger"></i></button>
-      </div></td>
-    </tr>`).join('');
+  box.innerHTML = rows.map(c=>{
+    const vip=isVIP(c), nw=isNew(c), dorm=isDorm(c);
+    const tags=[vip?'<span class="badge b-warn">VIP</span>':'', nw?'<span class="badge b-info">신규</span>':'', dorm?'<span class="badge b-err">휴면</span>':''].filter(Boolean).join('');
+    const ordN=state.orders.filter(o=>o.nm===c.nm && o.type==='정장').length;
+    return `<div class="cust-card" onclick="openCustDet('${c.id}')">
+      <div class="cc-top">
+        <div class="row-av ${avatarCls(c.nm)}">${(c.nm[0]||'?').toUpperCase()}</div>
+        <div class="cc-id">
+          <div class="cc-nm">${c.nm}</div>
+          <div class="cc-ph">${c.ph||'-'}</div>
+        </div>
+        <button class="mini-act" onclick="event.stopPropagation();quickOrder('${c.id}')" title="이 고객으로 주문서"><i class="ti ti-hanger"></i></button>
+      </div>
+      <div class="cc-tags">${tags||'<span class="cc-mut">일반</span>'}</div>
+      <div class="cc-stats">
+        <div><span>누적매출</span><b>${fmt(c.total||0)}</b></div>
+        <div><span>주문</span><b>${ordN}건</b></div>
+        <div><span>최근</span><b>${c.lastOrd||'-'}</b></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // 이름으로 고객 상세 열기 (엔티티 링크)
