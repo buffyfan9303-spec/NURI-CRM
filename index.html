@@ -1480,6 +1480,22 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .hist-stat b{color:var(--t);font-size:13.5px}
 .swap-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--bd2);border-radius:3px;cursor:pointer}
 .swap-opt:hover{border-color:#1ab394;background:var(--sf2)}
+/* 40차 — 결혼 패키지 */
+.wed-card{background:var(--sf);border:1px solid var(--bd);border-radius:3px;margin-bottom:12px;overflow:hidden}
+.wed-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer}
+.wed-head:hover{background:var(--sf2)}
+.wed-title{font-size:14.5px;font-weight:700;color:var(--t);display:flex;align-items:center;gap:6px}
+.wed-title .ti{color:#c8914a}
+.wed-sub{font-size:12px;color:var(--t3);margin-top:3px}
+.wed-prog{position:relative;width:120px;height:22px;background:var(--sf3);border-radius:11px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.wed-prog-bar{position:absolute;left:0;top:0;bottom:0;background:rgba(26,179,148,.3)}
+.wed-prog span{position:relative;font-size:11px;font-weight:800;color:var(--t2)}
+.wed-chev{transition:transform .2s;color:var(--t3)}
+.wed-body{padding:0 16px 16px;border-top:1px solid var(--bd)}
+.wed-mtable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px}
+.wed-mtable th{text-align:left;padding:7px 9px;font-size:11px;color:var(--t3);border-bottom:1px solid var(--bd2)}
+.wed-mtable td{padding:8px 9px;border-bottom:1px solid var(--bd)}
+.wed-st{padding:4px 6px;border:1px solid var(--bd2);border-radius:3px;font-size:11.5px;font-family:inherit;background:var(--sf);color:var(--t)}
 /* 37차 — 측정 프로필 */
 .measure-hint{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--acc-soft);border:1px solid rgba(26,179,148,.35);border-radius:3px;margin:10px 0;font-size:12.5px;color:var(--t);flex-wrap:wrap}
 .measure-hint > .ti{color:var(--okt);font-size:18px}
@@ -1865,6 +1881,9 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
       <div class="sb-item" id="gnb-catalog" onclick="go('catalog')">
         <i class="ti ti-layout-grid"></i><span class="sb-item-label">쇼룸 카탈로그</span>
       </div>
+      <div class="sb-item" id="gnb-wedding" onclick="go('wedding')">
+        <i class="ti ti-diamond"></i><span class="sb-item-label">결혼 패키지</span>
+      </div>
 
       <div class="sb-sec">MTM 주문</div>
       <div class="sb-item" id="gnb-mtm-suit" onclick="go('mtm-suit')">
@@ -2151,6 +2170,17 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
           </div>
         </div>
         <div class="cat-grid" id="catalog-grid"></div>
+      </div>
+    </div>
+
+    <!-- ───── 결혼 패키지 ───── -->
+    <div class="view" id="view-wedding">
+      <div class="page-content">
+        <div class="toolbar" style="margin-bottom:16px">
+          <div style="flex:1;font-size:13px;color:var(--t2)"><i class="ti ti-info-circle"></i> 한 예식의 신랑·들러리·혼주를 묶어 각자 치수·마감·배정을 관리합니다.</div>
+          <button class="btn-primary" style="border:0;color:#fff;padding:10px 16px;border-radius:3px;font-family:inherit;font-weight:700;cursor:pointer" onclick="openGroupModal()"><i class="ti ti-plus"></i> 새 예식 패키지</button>
+        </div>
+        <div id="wedding-list"></div>
       </div>
     </div>
 
@@ -3120,7 +3150,52 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
     </div>
   </div>
   <div class="prv-scroll">
-<!-- 지점 이동 모달 -->
+<!-- 예식 패키지 모달 -->
+  <div id="group-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="signup-card" onclick="event.stopPropagation()" style="max-width:460px">
+      <button class="signup-x" onclick="$('#group-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      <div class="signup-head" style="margin-bottom:14px"><h2 class="signup-title" id="gw-title">새 예식 패키지</h2></div>
+      <div class="signup-form">
+        <div class="form-group"><label>예식명 (신랑·신부) <span class="rq">*</span></label><input id="gw-nm" placeholder="예: 김철수♥이영희 결혼식"></div>
+        <div class="form-group"><label>예식일</label><input id="gw-date" type="date"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group"><label>대여(출고)일</label><input id="gw-use" type="date"></div>
+          <div class="form-group"><label>반납 예정일</label><input id="gw-due" type="date"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0"><label>통일 컨셉 (원단·색상)</label><input id="gw-theme" placeholder="예: 네이비 쓰리피스 통일"></div>
+        <button class="login-btn" style="width:100%;margin-top:16px;border:0;color:#fff;padding:13px;border-radius:3px;font-family:inherit;font-weight:700;cursor:pointer" onclick="saveGroup()"><i class="ti ti-check"></i> 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 멤버 치수 모달 -->
+  <div id="member-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="signup-card" onclick="event.stopPropagation()" style="max-width:480px">
+      <button class="signup-x" onclick="$('#member-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      <div class="signup-head" style="margin-bottom:14px"><h2 class="signup-title" id="mm-title">멤버 치수</h2></div>
+      <div class="signup-form">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group"><label>역할</label><select id="mm-role"><option>신랑</option><option>신부</option><option>들러리</option><option>혼주(부)</option><option>혼주(모)</option><option>사회자</option><option>기타</option></select></div>
+          <div class="form-group"><label>마감일</label><input id="mm-deadline" type="date"></div>
+          <div class="form-group"><label>이름</label><input id="mm-nm" placeholder="홍길동"></div>
+          <div class="form-group"><label>연락처</label><input id="mm-ph" placeholder="010-..."></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--t2);margin:6px 0">신체 치수 (cm)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="form-group"><label>가슴</label><input id="mm-chest" type="number"></div>
+          <div class="form-group"><label>허리</label><input id="mm-waist" type="number"></div>
+          <div class="form-group"><label>어깨</label><input id="mm-shoul" type="number"></div>
+          <div class="form-group"><label>소매</label><input id="mm-slv" type="number"></div>
+          <div class="form-group"><label>기장</label><input id="mm-len" type="number"></div>
+          <div class="form-group"><label>바지허리</label><input id="mm-botWaist" type="number"></div>
+          <div class="form-group" style="margin-bottom:0"><label>인심</label><input id="mm-inseam" type="number"></div>
+        </div>
+        <button class="login-btn" style="width:100%;margin-top:16px;border:0;color:#fff;padding:13px;border-radius:3px;font-family:inherit;font-weight:700;cursor:pointer" onclick="saveMember()"><i class="ti ti-check"></i> 치수 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 지점 이동 모달 -->
   <div id="transfer-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
     <div class="signup-card" onclick="event.stopPropagation()" style="max-width:440px">
       <button class="signup-x" onclick="$('#transfer-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
@@ -3866,6 +3941,7 @@ const state = {
   comments: [],         // 코멘트 타임라인 (고객/주문 인수인계)
   todos: [],            // 할 일 (대시보드 To-Do, 직원 공유)
   acts: [],             // 활동 로그 (오늘 한 일 타임라인)
+  groups: [],           // 결혼 패키지 그룹 주문 (혼주·들러리)
   facCounter: 1000,
   view: 'dash',
   calDate: (()=>{ const t=new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); })(), // 현재 달
@@ -4152,7 +4228,7 @@ function i2c(inp){
 /* ④ Navigation ────────────────────────────────────────── */
 const VIEW_TITLE = {
   'dash':'대시보드', 'reg':'고객 등록', 'list':'고객 조회',
-  'rental':'렌탈 상품 관리', 'catalog':'쇼룸 카탈로그', 'orders':'정장 주문 목록', 'settings':'매장 설정', 'trash':'휴지통',
+  'rental':'렌탈 상품 관리', 'catalog':'쇼룸 카탈로그', 'wedding':'결혼 패키지 (그룹 주문)', 'orders':'정장 주문 목록', 'settings':'매장 설정', 'trash':'휴지통',
   'mtm-suit':'정장 주문서', 'mtm-shirt':'셔츠 주문서', 'mtm-shoe':'구두 주문서',
   'fab':'원단 발주', 'sales-day':'일 매출', 'sales-period':'기간 매출', 'analytics':'연간 분석', 'inv':'재고 현황'
 };
@@ -4193,6 +4269,7 @@ function go(view, fromPop){
   if (view==='inv') invTab(state.invTab);
   if (view==='rental') renderRental();
   if (view==='catalog') renderCatalog();
+  if (view==='wedding') renderWedding();
   if (view==='orders') renderOrders();
   if (view==='settings') renderSettings();
   if (view==='trash') renderTrash();
@@ -7314,6 +7391,160 @@ function drawLines(id, series, colors){
   for (let m=0;m<12;m++) cx.fillText(String(m+1), padL+m*step, H-5);
 }
 
+/* ─── 결혼 패키지 그룹 주문 (혼주·들러리) ─── */
+const WED_ROLES = ['신랑','신부','들러리','혼주(부)','혼주(모)','사회자','기타'];
+function renderWedding(){
+  const box = $('#wedding-list');
+  if (!box) return;
+  const groups = (state.groups||[]).filter(g=>!g.del).sort((a,b)=>(b.eventDate||'').localeCompare(a.eventDate||''));
+  box.innerHTML = groups.length ? groups.map(g=>{
+    const done = (g.members||[]).filter(m=>m.status==='완료').length;
+    const tot = (g.members||[]).length;
+    const pct = tot? Math.round(done/tot*100):0;
+    const tStr = dStr(today());
+    const dday = g.eventDate ? Math.round((new Date(g.eventDate)-new Date(tStr))/86400000) : null;
+    return `<div class="wed-card">
+      <div class="wed-head" onclick="toggleWedCard('${g.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="wed-title"><i class="ti ti-diamond"></i> ${g.eventNm||'예식'}${dday!=null?` <span class="badge ${dday<0?'b-mut':dday<=7?'b-err':'b-info'}">${dday<0?'종료':'D-'+dday}</span>`:''}</div>
+          <div class="wed-sub">${g.eventDate||'날짜 미정'} · 대여 ${g.useDate||'-'}~${g.dueDate||'-'} · ${tot}명${g.theme?` · 컨셉 ${g.theme}`:''}</div>
+        </div>
+        <div class="wed-prog"><div class="wed-prog-bar" style="width:${pct}%"></div><span>${done}/${tot} 완료</span></div>
+        <i class="ti ti-chevron-down wed-chev" id="wedchev-${g.id}"></i>
+      </div>
+      <div class="wed-body" id="wedbody-${g.id}" style="display:none">
+        <table class="wed-mtable"><thead><tr><th>역할</th><th>이름</th><th>치수</th><th>배정 상품</th><th>마감</th><th>상태</th><th></th></tr></thead>
+        <tbody>${(g.members||[]).map((m,i)=>{
+          const hasM = m.measure && Object.keys(m.measure).length;
+          const late = m.deadline && m.deadline<tStr && m.status!=='완료';
+          return `<tr>
+            <td><b>${m.role||'-'}</b></td>
+            <td>${m.nm||'<span style=color:var(--t3)>미입력</span>'}${m.ph?`<div style="font-size:10.5px;color:var(--t3)">${m.ph}</div>`:''}</td>
+            <td>${hasM?`<span class="badge b-ok" style="cursor:pointer" onclick="openMemberMeasure('${g.id}','${m.id}')">입력됨</span>`:`<button class="mini-act" onclick="openMemberMeasure('${g.id}','${m.id}')" title="치수 입력"><i class="ti ti-ruler-2"></i></button>`}</td>
+            <td>${m.rentalCode?`<span class="ent-link" onclick="go('rental')">${m.rentalCode}</span>`:`<button class="mini-act" onclick="assignMemberRental('${g.id}','${m.id}')" title="상품 배정"><i class="ti ti-hanger"></i></button>`}</td>
+            <td style="${late?'color:var(--et);font-weight:700':''}">${m.deadline||'-'}${late?' ⚠':''}</td>
+            <td>${memberStatusSel(g.id, m.id, m.status)}</td>
+            <td style="white-space:nowrap"><button class="mini-act" onclick="copyMeasureLink('${g.id}','${m.id}')" title="원격 치수 제출 링크 복사"><i class="ti ti-link"></i></button><button class="mini-act" onclick="delMember('${g.id}','${m.id}')" title="멤버 삭제"><i class="ti ti-x"></i></button></td>
+          </tr>`;
+        }).join('')}</tbody></table>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="action-btn" onclick="addMember('${g.id}')"><i class="ti ti-user-plus"></i>멤버 추가</button>
+          <button class="action-btn" onclick="editGroup('${g.id}')"><i class="ti ti-pencil"></i>예식 정보 수정</button>
+          <button class="action-btn" onclick="copyPartyStatus('${g.id}')"><i class="ti ti-clipboard-text"></i>진행현황 복사</button>
+          <div style="flex:1"></div>
+          <button class="action-btn" style="border-color:var(--et);color:var(--et)" onclick="delGroup('${g.id}')"><i class="ti ti-trash"></i>패키지 삭제</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state"><i class="ti ti-diamond"></i><div class="empty-state-title">등록된 예식 패키지가 없습니다</div><div class="empty-state-sub">신랑·들러리·혼주를 하나로 묶어 각자 치수와 마감을 한 화면에서 관리하세요</div><button class="action-btn es-btn" onclick="openGroupModal()"><i class="ti ti-plus"></i>새 예식 패키지</button></div>`;
+}
+function toggleWedCard(id){
+  const b = $('#wedbody-'+id), c = $('#wedchev-'+id);
+  if (!b) return;
+  const open = b.style.display!=='none';
+  b.style.display = open?'none':'block';
+  if (c) c.style.transform = open?'':'rotate(180deg)';
+}
+function memberStatusSel(gid, mid, cur){
+  const ST = ['대기','치수입력','배정','완료'];
+  return `<select class="wed-st" onchange="setMemberStatus('${gid}','${mid}',this.value)">${ST.map(s=>`<option ${s===(cur||'대기')?'selected':''}>${s}</option>`).join('')}</select>`;
+}
+function gFind(id){ return (state.groups||[]).find(g=>g.id===id); }
+function mFind(gid, mid){ const g=gFind(gid); return g && (g.members||[]).find(m=>m.id===mid); }
+function openGroupModal(){ state.groupEdit=null; $('#gw-title').textContent='새 예식 패키지'; $('#gw-nm').value=''; $('#gw-date').value=''; $('#gw-use').value=''; $('#gw-due').value=''; $('#gw-theme').value=''; $('#group-modal').classList.add('open'); }
+function editGroup(id){ const g=gFind(id); if(!g)return; state.groupEdit=id; $('#gw-title').textContent='예식 정보 수정'; $('#gw-nm').value=g.eventNm||''; $('#gw-date').value=g.eventDate||''; $('#gw-use').value=g.useDate||''; $('#gw-due').value=g.dueDate||''; $('#gw-theme').value=g.theme||''; $('#group-modal').classList.add('open'); }
+function saveGroup(){
+  const nm = $('#gw-nm').value.trim();
+  if (!nm){ toast('예식명(신랑·신부)을 입력하세요','warn'); return; }
+  const data = { eventNm:nm, eventDate:$('#gw-date').value, useDate:$('#gw-use').value, dueDate:$('#gw-due').value, theme:$('#gw-theme').value.trim() };
+  if (state.groupEdit){ Object.assign(gFind(state.groupEdit), data); }
+  else {
+    state.groups = state.groups||[];
+    state.groups.unshift({ id:'W'+Date.now().toString(36), ...data, members:[{id:'m'+Date.now().toString(36),role:'신랑',nm:'',ph:'',measure:{},status:'대기',deadline:data.useDate||''}], createdAt:dStr(today()) });
+  }
+  saveDB(); $('#group-modal').classList.remove('open'); renderWedding();
+  toast('예식 패키지 저장','ok','결혼 패키지');
+}
+function delGroup(id){ if(!confirm('이 예식 패키지를 삭제할까요?'))return; const g=gFind(id); if(g)g.del=true; saveDB(); renderWedding(); }
+function addMember(gid){
+  const g=gFind(gid); if(!g)return;
+  g.members=g.members||[];
+  g.members.push({ id:'m'+Date.now().toString(36)+Math.floor(Math.random()*99), role:'들러리', nm:'', ph:'', measure:{}, status:'대기', deadline:g.useDate||'' });
+  saveDB(); renderWedding();
+  const b=$('#wedbody-'+gid); if(b)b.style.display='block';
+}
+function delMember(gid, mid){ const g=gFind(gid); if(!g)return; if(!confirm('이 멤버를 삭제할까요?'))return; g.members=g.members.filter(m=>m.id!==mid); saveDB(); renderWedding(); }
+function setMemberStatus(gid, mid, st){ const m=mFind(gid,mid); if(m){ m.status=st; saveDB(); renderWedding(); } }
+function openMemberMeasure(gid, mid){
+  const g=gFind(gid), m=mFind(gid,mid); if(!m)return;
+  state.measGroup=gid; state.measMember=mid;
+  $('#mm-title').textContent=`${m.role||''} ${m.nm||''} 치수`;
+  $('#mm-nm').value=m.nm||''; $('#mm-ph').value=m.ph||''; $('#mm-role').value=m.role||'들러리';
+  $('#mm-deadline').value=m.deadline||'';
+  const M=m.measure||{};
+  ['chest','waist','shoul','slv','len','botWaist','inseam'].forEach(k=>{ const el=$('#mm-'+k); if(el)el.value=M[k]||''; });
+  $('#member-modal').classList.add('open');
+}
+function saveMember(){
+  const m=mFind(state.measGroup,state.measMember); if(!m)return;
+  m.nm=$('#mm-nm').value.trim(); m.ph=$('#mm-ph').value.trim(); m.role=$('#mm-role').value; m.deadline=$('#mm-deadline').value;
+  const M={}; ['chest','waist','shoul','slv','len','botWaist','inseam'].forEach(k=>{ const v=parseFloat($('#mm-'+k).value); if(v)M[k]=v; });
+  m.measure=M;
+  if (Object.keys(M).length && m.status==='대기') m.status='치수입력';
+  saveDB(); $('#member-modal').classList.remove('open'); renderWedding();
+  toast(`${m.nm||m.role} 치수 저장`,'ok','결혼 패키지');
+}
+function assignMemberRental(gid, mid){
+  const code = prompt('배정할 렌탈 상품 코드를 입력하세요 (예: R-T01)');
+  if (!code) return;
+  const r = state.rentals.find(x=>x.code.toUpperCase()===code.trim().toUpperCase());
+  if (!r){ toast('해당 코드의 상품이 없습니다','err'); return; }
+  const m=mFind(gid,mid); if(m){ m.rentalCode=r.code; if(m.status==='치수입력'||m.status==='대기')m.status='배정'; saveDB(); renderWedding(); toast(`${m.nm||m.role} → ${r.code} 배정`,'ok'); }
+}
+function copyMeasureLink(gid, mid){
+  const m=mFind(gid,mid); const g=gFind(gid);
+  const url=(location.origin||'https://www.nuricrm.co.kr')+'/?wm='+gid+'.'+mid;
+  const txt=`[${shopName()}] ${g?g.eventNm:''} 예식 의상 치수 요청\n${m?m.role:''}님, 아래 링크에서 치수를 입력해 주세요 (마감 ${m&&m.deadline||'미정'}):\n${url}`;
+  const done=()=>toast('치수 요청 링크/문구 복사 — 카톡으로 전송하세요','ok','원격 치수');
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(()=>prompt('복사하세요',txt));
+  else prompt('복사하세요',txt);
+}
+function copyPartyStatus(gid){
+  const g=gFind(gid); if(!g)return;
+  const lines=(g.members||[]).map(m=>`· ${m.role} ${m.nm||'(미입력)'} — 치수 ${m.measure&&Object.keys(m.measure).length?'O':'X'} / 배정 ${m.rentalCode||'X'} / ${m.status}`).join('\n');
+  const txt=`[${g.eventNm}] 진행현황 (${g.eventDate||''})\n${lines}`;
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('진행현황 복사','ok')).catch(()=>prompt('복사',txt));
+  else prompt('복사',txt);
+}
+// 원격 치수 제출 처리 (?wm=gid.mid) — 비로그인 캡처
+function handleRemoteMeasure(){
+  try{
+    const wm=new URLSearchParams(location.search).get('wm');
+    if(!wm) return false;
+    const [gid,mid]=wm.split('.');
+    // 저장된 데이터가 로컬에 있으면 멤버 정보 표시, 없으면 일반 입력 폼
+    const g=gFind(gid), m=mFind(gid,mid);
+    document.body.innerHTML=`<div style="max-width:460px;margin:40px auto;padding:22px;font-family:inherit">
+      <div style="font-size:20px;font-weight:800;color:#2f4050;margin-bottom:4px">${g?g.eventNm:'예식'} 의상 치수 입력</div>
+      <div style="font-size:13px;color:#888;margin-bottom:18px">${m?m.role:''}님의 치수를 입력해 주세요. 매장에서 의상을 준비합니다.</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="rm-nm" placeholder="이름" value="${m&&m.nm||''}" style="padding:11px;border:1px solid #ddd;border-radius:6px;font-size:15px">
+        ${[['chest','가슴둘레'],['waist','허리둘레'],['shoul','어깨너비'],['slv','소매길이'],['len','상의기장'],['botWaist','바지 허리'],['inseam','인심(다리안쪽)']].map(([k,l])=>`<label style="font-size:13px;color:#555">${l} (cm)<input id="rm-${k}" type="number" inputmode="decimal" value="${m&&m.measure&&m.measure[k]||''}" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:6px;font-size:16px;margin-top:3px"></label>`).join('')}
+        <button onclick="submitRemoteMeasure('${gid}','${mid}')" style="background:#1ab394;color:#fff;border:0;padding:14px;border-radius:6px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px">제출하기</button>
+        <div id="rm-result" style="font-size:13px;color:#1ab394;text-align:center"></div>
+      </div></div>`;
+    return true;
+  }catch(e){ return false; }
+}
+function submitRemoteMeasure(gid, mid){
+  const M={}; ['chest','waist','shoul','slv','len','botWaist','inseam'].forEach(k=>{ const v=parseFloat(document.getElementById('rm-'+k)?.value); if(v)M[k]=v; });
+  const nm=document.getElementById('rm-nm')?.value||'';
+  const m=mFind(gid,mid);
+  if(m){ m.measure=M; if(nm)m.nm=nm; if(m.status==='대기')m.status='치수입력'; try{ saveDB(); if(typeof pushCloud==='function')pushCloud(); }catch(e){} }
+  const res=document.getElementById('rm-result');
+  if(res) res.innerHTML='<b>제출 완료!</b> 매장에서 확인합니다. 이 창은 닫으셔도 됩니다.';
+}
+
 /* ─── 쇼룸 카탈로그 ─────────────────── */
 function renderCatalog(){
   const grid = $('#catalog-grid');
@@ -9343,7 +9574,7 @@ function saveDB(){
       customers: state.customers, orders: state.orders, events: state.events,
       rentals: state.rentals, rentalLog: state.rentalLog,
       fabrics: state.fabrics, linings: state.linings, buttons: state.buttons,
-      facCounter: state.facCounter, rentCounter: state.rentCounter, prodCounter: state.prodCounter, trash: state.trash, comments: state.comments, todos: state.todos, acts: state.acts
+      facCounter: state.facCounter, rentCounter: state.rentCounter, prodCounter: state.prodCounter, trash: state.trash, comments: state.comments, todos: state.todos, acts: state.acts, groups: state.groups
     }));
   }catch(e){}
   pushCloud();
@@ -9371,6 +9602,7 @@ function loadDB(){
     state.comments = d.comments||[];
     state.todos = d.todos||[];
     state.acts = d.acts||[];
+    state.groups = d.groups||[];
     return true;
   }catch(e){ return false; }
 }
@@ -9573,6 +9805,7 @@ function injectTestData(){
 
 // Boot — 자동 로그인 시도, 실패 시 로그인 페이지
 window.addEventListener('DOMContentLoaded', async ()=>{
+  if (location.search.indexOf('wm=')>-1 && typeof handleRemoteMeasure==='function'){ if (handleRemoteMeasure()) return; }
   ensureDefaultAccount();
   loadShop();
   applyShop();
