@@ -7822,6 +7822,9 @@ function buildDiagramSheet(){
   const _cust=(state.customers||[]).find(c=>c.nm===nm); const _ph=(_cust&&_cust.measureHist&&_cust.measureHist[0])?_cust.measureHist[0].m:{};
   const _prevJ={shoul:_ph.shoul,chest:_ph.chest,slvL:_ph.slvL,len:_ph.len}; const _prevP={w:_ph.botWaist,in:_ph.inseam};
   const _hasPrev=Object.keys(_ph).length>0;
+  const _chg=[]; const _cmp=(cur,prev,lab)=>{ if(cur&&prev&&Math.abs(cur-prev)>=0.1){ const d=Math.round((cur-prev)*10)/10; _chg.push(`${lab} ${d>0?'+':''}${d}`); } };
+  _cmp(_woM('top','shoul'),_ph.shoul,'어깨'); _cmp(_woM('top','chest'),_ph.chest,'가슴'); _cmp(_woM('top','slvL'),_ph.slvL,'소매'); _cmp(_woM('top','len'),_ph.len,'기장');
+  _cmp(_woM('bot','w'),_ph.botWaist,'허리'); _cmp(_woM('bot','in'),_ph.inseam,'인심');
   const o=state.opt||{};
   const q=o.qty||{s:1,p:1,v:0,c:0,j:0};
   const fab=(state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
@@ -7846,7 +7849,7 @@ function buildDiagramSheet(){
   $('#print-area').innerHTML=`<div class="wo-sheet ds-sheet">
     <div class="ds-head"><div><b>디자인 도면</b> <span>${nm?nm+' 님':''}</span></div><div class="ds-meta">${fab?fab.no+' · '+fab.color:''} · ${dStr(today())} · ${shopName()}</div></div>
     ${sections.join('')}
-    ${_hasPrev?`<div class="ds-legend"><span style="color:#d64545;font-weight:700">● 빨강 치수</span> = 이 고객의 지난 주문 대비 변경 (증감 표기)</div>`:''}
+    ${_hasPrev?`<div class="ds-legend"><span style="color:#d64545;font-weight:700">● 빨강 치수</span> = 지난 주문 대비 변경${_chg.length?` &nbsp;|&nbsp; <b style=\"color:#d64545\">변경 내역: ${_chg.join(', ')}</b>`:' &nbsp;|&nbsp; <b>변경 없음 (동일 치수)</b>'}</div>`:''}
     <div class="ds-foot">NURI CRM 디자인 도면 · 작업지시서 별첨용 · ${(state.user&&state.user.name)||''}</div>
   </div>`;
   const tt=$('#prv-title-text'); if(tt)tt.textContent='디자인 도면';
