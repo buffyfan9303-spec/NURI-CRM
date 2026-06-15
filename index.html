@@ -1652,6 +1652,10 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 70차 — 토스트 실행취소 ════ */
+.toast-undo{display:flex;align-items:center}
+.toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
+.toast-undo-btn:hover{background:#16a085}
 /* ════ 68차 — 공용 확인/입력 다이얼로그 ════ */
 #ui-dialog .uid-card{max-width:400px;padding:24px}
 .uid-msg{font-size:14.5px;color:var(--t);line-height:1.55;font-weight:600;margin-bottom:17px}
@@ -3515,6 +3519,16 @@ body.dk{ --t3:#9b9994; }
   </div>
 
   <!-- 멤버 치수 모달 -->
+  <!-- 복사 전용 모달 -->
+  <div id="uic-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')" style="z-index:11000">
+    <div class="signup-card" onclick="event.stopPropagation()" style="max-width:440px">
+      <button class="signup-x" onclick="$('#uic-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      <div class="signup-head" style="margin-bottom:11px"><h2 class="signup-title" id="uic-title">복사</h2><p class="signup-sub">아래 내용을 복사해 카톡 등에 붙여넣으세요</p></div>
+      <textarea id="uic-text" class="f-input" readonly style="width:100%;min-height:120px;resize:vertical;font-size:13px;line-height:1.55"></textarea>
+      <button class="uid-ok" style="width:100%;margin-top:12px;height:46px;display:inline-flex;align-items:center;justify-content:center;gap:6px" onclick="uicCopyNow()"><i class="ti ti-copy"></i> 복사하기</button>
+    </div>
+  </div>
+
   <!-- 공용 확인/입력 다이얼로그 -->
   <div id="ui-dialog" class="signup-overlay" onclick="if(event.target===this)uiDlgCancel()" style="z-index:11000">
     <div class="signup-card uid-card" onclick="event.stopPropagation()">
@@ -4636,6 +4650,20 @@ function _uiDlgDone(val){
 }
 function uiDlgOk(){ _uiDlgDone(_uiDlgMode==='prompt' ? $('#uid-input').value : true); }
 function uiDlgCancel(){ _uiDlgDone(_uiDlgMode==='prompt' ? null : false); }
+function uiCopy(text, title){
+  $('#uic-title').textContent=title||'복사';
+  $('#uic-text').value=text||'';
+  $('#uic-modal').classList.add('open');
+  setTimeout(function(){ const t=$('#uic-text'); if(t){ t.focus(); t.select(); } },50);
+}
+function uicCopyNow(){
+  const t=$('#uic-text'); if(!t) return; t.select();
+  function ok(){ toast('복사되었습니다 — 붙여넣기 하세요','ok','복사'); $('#uic-modal').classList.remove('open'); }
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t.value).then(ok).catch(function(){ try{document.execCommand('copy');ok();}catch(e){ toast('위 텍스트를 길게 눌러 직접 복사하세요','warn'); } }); }
+    else { document.execCommand('copy'); ok(); }
+  }catch(e){ toast('위 텍스트를 길게 눌러 직접 복사하세요','warn'); }
+}
 function toast(msg, type='ok', title=''){
   if (type==='ok'){
     const _t = title||'', _m = String(msg);
@@ -4647,6 +4675,16 @@ function toast(msg, type='ok', title=''){
   div.innerHTML = `<i class="ti ti-${ICONS[type]||'info'} toast-ic"></i><div class="toast-body">${title?`<div class="toast-title">${title}</div>`:''}<div class="toast-msg">${msg}</div></div>`;
   $('#toast-container').appendChild(div);
   setTimeout(()=>div.remove(), 3000);
+}
+// 삭제 등 되돌릴 수 있는 동작용 — 실행취소 버튼 토스트(6초)
+function toastUndo(msg, undoFn, title){
+  const div=document.createElement('div');
+  div.className='toast t-info toast-undo';
+  div.innerHTML=`<i class="ti ti-trash toast-ic"></i><div class="toast-body">${title?`<div class="toast-title">${title}</div>`:''}<div class="toast-msg">${msg}</div></div><button class="toast-undo-btn"><i class="ti ti-arrow-back-up"></i>실행취소</button>`;
+  $('#toast-container').appendChild(div);
+  let used=false;
+  const t=setTimeout(()=>{ if(!used) div.remove(); }, 6000);
+  div.querySelector('.toast-undo-btn').onclick=function(){ used=true; clearTimeout(t); div.remove(); try{ undoFn(); }catch(e){} };
 }
 
 // 인치 → cm
@@ -4802,15 +4840,15 @@ function dayEvClick(i){
   if (e.orderNo) goEvent(e.orderNo);
 }
 // 수동 일정 삭제
-async function delManualEvent(i){
+function delManualEvent(i){
   const e = (state._dayEvs||[])[i];
   if (!e || !e.manual) return;
-  if (!await uiConfirm(`'${e.sub||e.name}' 일정을 삭제할까요?`)) return;
   const idx = state.events.indexOf(e);
-  if (idx >= 0) state.events.splice(idx, 1);
+  if (idx < 0) return;
+  state.events.splice(idx, 1);
   saveDB();
   renderCal(); renderEvents();
-  toast('일정이 삭제되었습니다','info');
+  toastUndo(`'${e.sub||e.name}' 일정 삭제됨`, function(){ state.events.splice(idx,0,e); saveDB(); renderCal(); renderEvents(); }, '일정');
 }
 // 수동 일정 등록 모달
 function openEvtModal(){
@@ -7360,12 +7398,13 @@ function condPhotoPick(inp, phase){
   };
   img.src = URL.createObjectURL(file);
 }
-async function delCondPhoto(phase, i){
+function delCondPhoto(phase, i){
   const log = curCycleLog(state.condTarget);
   if (!log || !log.cond || !log.cond[phase]) return;
-  if (!await uiConfirm('이 사진을 삭제할까요?')) return;
+  const removed = log.cond[phase][i];
   log.cond[phase].splice(i,1);
   saveDB(); renderCondModal();
+  toastUndo('사진 삭제됨', function(){ log.cond[phase].splice(i,0,removed); saveDB(); renderCondModal(); }, '컨디션 사진');
 }
 function toggleCondChk(it){
   const log = curCycleLog(state.condTarget);
@@ -7408,8 +7447,8 @@ function overdueMsg(code){
   // 클립보드 복사
   const done = ()=>{ toast('독촉 문구를 복사했습니다 — 카톡/문자에 붙여넣기','ok','반납 독촉'); };
   if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(msg).then(done).catch(()=>{ prompt('아래 문구를 복사하세요 (Ctrl+C)', msg); });
-  } else { prompt('아래 문구를 복사하세요 (Ctrl+C)', msg); }
+    navigator.clipboard.writeText(msg).then(done).catch(()=>{ uiCopy(msg,'연체 안내 문구'); });
+  } else { uiCopy(msg,'연체 안내 문구'); }
 }
 
 /* ─── 개체 가용성 엔진 (버퍼 + 더블부킹 하드차단) ─── */
@@ -8639,7 +8678,26 @@ function printWedPackage(gid){
       <div class="wo-foot"><span>NURI CRM 예식 작업지시서</span><span class="sign">담당 ____________</span><b>${m.role||''} ${m.nm||''} 님</b></div>
     </div>`;
   }).join('');
-  $('#print-area').innerHTML=sheets;
+  const _done=mems.filter(m=>m.status==='완료').length, _pct=mems.length?Math.round(_done/mems.length*100):0;
+  const _roster=mems.map((m,i)=>`<tr><td style="border:1px solid #ddd;padding:6px;text-align:center">${i+1}</td><td style="border:1px solid #ddd;padding:6px"><b>${m.role||'-'}</b></td><td style="border:1px solid #ddd;padding:6px">${m.nm||'-'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.measure&&Object.keys(m.measure).length?'O':'—'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.rentalCode||'—'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.deadline||'-'}</td><td style="border:1px solid #ddd;padding:6px;text-align:center">${m.status||'-'}</td></tr>`).join('');
+  const cover=`<div class="wo-sheet">
+    <div style="text-align:center;border-bottom:3px solid #0c1f35;padding-bottom:12px;margin-bottom:15px">
+      <div style="font-size:13px;color:#666">${shopName()}</div>
+      <div style="font-size:24px;font-weight:900;margin-top:3px">${g.eventNm||'예식'} 패키지</div>
+      <div style="font-size:13px;color:#444;margin-top:6px">예식일 ${g.eventDate||'-'} · 대여 ${g.useDate||'-'} ~ ${g.dueDate||'-'} · 총 ${mems.length}명</div>
+    </div>
+    <div style="display:flex;gap:14px;margin-bottom:15px">
+      <div style="flex:1;border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:#888">진행률</div><div style="font-size:24px;font-weight:900;color:#1ab394">${_pct}%</div><div style="font-size:11px;color:#666">${_done}/${mems.length} 완료</div></div>
+      <div style="flex:1;border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:#888">대여 기간</div><div style="font-size:15px;font-weight:800;margin-top:5px">${g.useDate||'-'}</div><div style="font-size:12px;color:#666">~ ${g.dueDate||'-'}</div></div>
+      <div style="flex:1;border:1px solid #ddd;border-radius:8px;padding:12px;text-align:center"><div style="font-size:11px;color:#888">인원</div><div style="font-size:24px;font-weight:900">${mems.length}<span style="font-size:13px">명</span></div></div>
+    </div>
+    <div class="wo-sec">전체 명단</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f4f4f4">
+      <th style="border:1px solid #ddd;padding:7px">#</th><th style="border:1px solid #ddd;padding:7px">역할</th><th style="border:1px solid #ddd;padding:7px">이름</th><th style="border:1px solid #ddd;padding:7px">치수</th><th style="border:1px solid #ddd;padding:7px">배정 상품</th><th style="border:1px solid #ddd;padding:7px">마감</th><th style="border:1px solid #ddd;padding:7px">상태</th>
+    </tr></thead><tbody>${_roster}</tbody></table>
+    <div class="wo-foot"><span>NURI CRM 예식 패키지 요약</span><span class="sign"></span><b>${dStr(today())}</b></div>
+  </div>`;
+  $('#print-area').innerHTML=cover+sheets;
   const tt=$('#prv-title-text'); if(tt) tt.textContent=(g.eventNm||'예식')+' 일괄 작업지시서';
   const ts=$('#prv-sub-text'); if(ts) ts.textContent=`${g.eventDate||''} · ${mems.length}명 (멤버별 작지서·치수·원격 QR)`;
   $('#prv-modal').classList.add('open');
@@ -8749,7 +8807,7 @@ function saveGroup(){
   saveDB(); $('#group-modal').classList.remove('open'); renderWedding();
   toast('예식 패키지 저장','ok','결혼 패키지');
 }
-async function delGroup(id){ if(!await uiConfirm('이 예식 패키지를 삭제할까요?'))return; const g=gFind(id); if(g)g.del=true; saveDB(); renderWedding(); }
+function delGroup(id){ const g=gFind(id); if(!g)return; g.del=true; saveDB(); renderWedding(); toastUndo(`'${g.eventNm||'예식'}' 패키지 삭제됨`, function(){ g.del=false; saveDB(); renderWedding(); }, '결혼 패키지'); }
 function addMember(gid){
   const g=gFind(gid); if(!g)return;
   g.members=g.members||[];
@@ -8757,7 +8815,7 @@ function addMember(gid){
   saveDB(); renderWedding();
   const b=$('#wedbody-'+gid); if(b)b.style.display='block';
 }
-async function delMember(gid, mid){ const g=gFind(gid); if(!g)return; if(!await uiConfirm('이 멤버를 삭제할까요?'))return; g.members=g.members.filter(m=>m.id!==mid); saveDB(); renderWedding(); }
+function delMember(gid, mid){ const g=gFind(gid); if(!g)return; const idx=g.members.findIndex(m=>m.id===mid); if(idx<0)return; const removed=g.members[idx]; g.members.splice(idx,1); saveDB(); renderWedding(); toastUndo(`${removed.role||'멤버'}${removed.nm?' '+removed.nm:''} 삭제됨`, function(){ g.members.splice(idx,0,removed); saveDB(); renderWedding(); }, '결혼 패키지'); }
 function setMemberStatus(gid, mid, st){ const m=mFind(gid,mid); if(m){ m.status=st; saveDB(); renderWedding(); } }
 function openMemberMeasure(gid, mid){
   const g=gFind(gid), m=mFind(gid,mid); if(!m)return;
@@ -8778,27 +8836,21 @@ function saveMember(){
   saveDB(); $('#member-modal').classList.remove('open'); renderWedding();
   toast(`${m.nm||m.role} 치수 저장`,'ok','결혼 패키지');
 }
-function assignMemberRental(gid, mid){
-  const code = prompt('배정할 렌탈 상품 코드를 입력하세요 (예: R-T01)');
-  if (!code) return;
-  const r = state.rentals.find(x=>x.code.toUpperCase()===code.trim().toUpperCase());
-  if (!r){ toast('해당 코드의 상품이 없습니다','err'); return; }
-  const m=mFind(gid,mid); if(m){ m.rentalCode=r.code; if(m.status==='치수입력'||m.status==='대기')m.status='배정'; saveDB(); renderWedding(); toast(`${m.nm||m.role} → ${r.code} 배정`,'ok'); }
-}
+function assignMemberRental(gid, mid){ openRentPicker(gid, mid); }
 function copyMeasureLink(gid, mid){
   const m=mFind(gid,mid); const g=gFind(gid);
   const url=(location.origin||'https://www.nuricrm.co.kr')+'/?wm='+gid+'.'+mid;
   const txt=`[${shopName()}] ${g?g.eventNm:''} 예식 의상 치수 요청\n${m?m.role:''}님, 아래 링크에서 치수를 입력해 주세요 (마감 ${m&&m.deadline||'미정'}):\n${url}`;
   const done=()=>toast('치수 요청 링크/문구 복사 — 카톡으로 전송하세요','ok','원격 치수');
-  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(()=>prompt('복사하세요',txt));
-  else prompt('복사하세요',txt);
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(()=>uiCopy(txt,'치수 요청 링크'));
+  else uiCopy(txt,'치수 요청 링크');
 }
 function copyPartyStatus(gid){
   const g=gFind(gid); if(!g)return;
   const lines=(g.members||[]).map(m=>`· ${m.role} ${m.nm||'(미입력)'} — 치수 ${m.measure&&Object.keys(m.measure).length?'O':'X'} / 배정 ${m.rentalCode||'X'} / ${m.status}`).join('\n');
   const txt=`[${g.eventNm}] 진행현황 (${g.eventDate||''})\n${lines}`;
-  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('진행현황 복사','ok')).catch(()=>prompt('복사',txt));
-  else prompt('복사',txt);
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('진행현황 복사','ok')).catch(()=>uiCopy(txt,'진행 현황'));
+  else uiCopy(txt,'진행 현황');
 }
 // 원격 치수 제출 처리 (?wm=gid.mid) — 비로그인 캡처
 function handleRemoteMeasure(){
@@ -10386,13 +10438,14 @@ function custPhotoPick(inp){
   };
   img.src = URL.createObjectURL(file);
 }
-async function delCustPhoto(i){
+function delCustPhoto(i){
   const c = state.detCust;
   if (!c || !c.photos) return;
-  if (!await uiConfirm('이 사진을 삭제할까요?')) return;
+  const removed = c.photos[i];
   c.photos.splice(i, 1);
   saveDB();
   openCustDet(c.id);
+  toastUndo('사진 삭제됨', function(){ c.photos.splice(i,0,removed); saveDB(); openCustDet(c.id); }, '고객 사진');
 }
 function openCustPhoto(i){
   const c = state.detCust;
