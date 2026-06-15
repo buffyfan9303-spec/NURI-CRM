@@ -1651,6 +1651,37 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 59차 — 알림 심각단계 + 주간 미니캘린더 + 모바일 ════ */
+.da-severe{background:var(--et)!important;color:#fff!important;border-color:var(--et)!important;box-shadow:0 0 0 2px rgba(237,85,101,.22)}
+.da-severe .ti{color:#fff}
+.da-severe::before{content:'▲ ';font-size:10px;margin-right:-2px}
+.dw-card{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;margin-bottom:18px}
+.dw-head{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;color:var(--t);margin-bottom:11px}
+.dw-head .ti{color:#1ab394;font-size:17px}
+.dw-head em{font-style:normal;font-size:12px;font-weight:800;color:#1ab394;background:var(--acc-soft);padding:2px 8px;border-radius:20px}
+.dw-leg{margin-left:auto;display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--t3)}
+.dw-leg b{width:9px;height:9px;border-radius:2px;display:inline-block;margin-left:7px}
+.lg-fit{background:#e8950c} .lg-done{background:#1ab394} .lg-due{background:#1c84c6}
+.dw-row{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.dw-day{background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:8px 4px 9px;text-align:center;cursor:pointer;transition:border-color .12s,transform .1s;min-width:0}
+.dw-day:hover{border-color:#1ab394;transform:translateY(-1px)}
+.dw-day.today{border-color:#1ab394;background:var(--acc-soft)}
+.dw-dn{font-size:11px;font-weight:700;color:var(--t3)}
+.dw-dn.sun{color:#ed5565} .dw-dn.sat{color:#1c84c6}
+.dw-dd{font-size:17px;font-weight:800;color:var(--t);margin:1px 0 6px;font-variant-numeric:tabular-nums}
+.dw-bars{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;min-height:20px}
+.dw-b{min-width:18px;height:18px;border-radius:5px;color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 3px}
+.dw-z{color:var(--bd);font-weight:800}
+@media (max-width:600px){
+  #view-dash .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  .da-item{font-size:12.5px;padding:9px 12px}
+  .da-item .ti{font-size:15px}
+  .dw-row{gap:4px}
+  .dw-day{padding:7px 2px 8px;border-radius:6px}
+  .dw-dd{font-size:15px}
+  .dw-b{min-width:16px;height:16px;font-size:10px}
+  .dw-head .dw-leg{display:none}
+}
 /* ════ 58차 — 대시보드 우선순위 알림 + 여백 톤 ════ */
 .dash-alert-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 .da-item{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:700;padding:11px 16px;border-radius:8px;cursor:pointer;border:1px solid;font-family:inherit;line-height:1}
@@ -2197,6 +2228,7 @@ body.dk{ --t3:#9b9994; }
     <div id="view-dash" class="active">
       <div class="page-content">
         <div id="dash-alert"></div>
+        <div id="dash-week"></div>
         <div class="dash-welcome">
           <div>
             <div class="dw-title" id="dw-title">안녕하세요</div>
@@ -4358,6 +4390,37 @@ function renderBufferCard(){
       <div style="font-size:11.5px;color:var(--t3);margin-top:9px;line-height:1.6">렌탈 개체는 "수량"이 아니라 "개체별 타임라인"입니다. 착용 기간 + 세탁 회전 버퍼가 점유로 잡혀 그 사이 재대여·재예약이 자동 차단됩니다. 간트에 회색 빗금(세탁)으로 표시됩니다.</div>
     </div>`;
 }
+function _alertSevDays(){ return (state.shop&&state.shop.alertCfg&&state.shop.alertCfg.overdueSevereDays)||7; }
+function setAlertSev(n){
+  n=Math.max(1,Math.min(30,n));
+  if(!state.shop) loadShop();
+  state.shop.alertCfg=state.shop.alertCfg||{};
+  state.shop.alertCfg.overdueSevereDays=n;
+  saveShop();
+  renderAlertCard();
+  if(typeof renderDash==='function' && document.querySelector('#view-dash')) renderDash();
+  toast(`완성 지연 '심각' 기준 ${n}일 — ${n}일 이상 지연 건만 진한 빨강(▲)으로 강조`,'ok','알림 설정');
+}
+function renderAlertCard(){
+  let card=$('#set-alert-card');
+  if(!card){ card=document.createElement('div'); card.id='set-alert-card';
+    const pc=document.querySelector('#view-settings .page-content'); if(pc) pc.appendChild(card); }
+  if(!card) return;
+  const cur=_alertSevDays();
+  card.innerHTML=`
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-bell-cog"></i> 대시보드 알림 — 완성 지연 '심각' 기준</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:13.5px;color:var(--t2)">완성출고일이 며칠 이상 지나면 진한 빨강(▲)으로 강조할지</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="action-btn" onclick="setAlertSev(${cur-1})" ${cur<=1?'disabled style=opacity:.4':''}><i class="ti ti-minus"></i></button>
+          <b style="min-width:54px;text-align:center;font-size:16px;color:var(--et)">${cur}일</b>
+          <button class="action-btn" onclick="setAlertSev(${cur+1})"><i class="ti ti-plus"></i></button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 지연 건수가 많아도 '심각'(${cur}일+)만 진하게 떠서 진짜 급한 건의 우선순위를 가립니다.</div>
+    </div>`;
+}
 function setBuffer(n){
   n = Math.max(0, Math.min(14, n));
   if (!state.shop) loadShop();
@@ -4711,20 +4774,50 @@ function renderDash(){
   const _ws = $('#dw-sub'); if (_ws) _ws.textContent = `오늘 일정 ${_evN}건 · 진행중 주문 ${_ing}건 · 대여중 렌탈 ${_rentOut.length}건${_over?` · 연체 ${_over}건`:''}`;
   const _wd = $('#dw-date');
   if (_wd){ const _t=today(); const _W=['일','월','화','수','목','금','토']; _wd.textContent = `${_t.getFullYear()}.${pad(_t.getMonth()+1)}.${pad(_t.getDate())} (${_W[_t.getDay()]})`; }
-  // 오늘 우선순위 알림 스트립 (연체·완성지연·오늘 가봉/완성/반납)
+  // 오늘 우선순위 알림 스트립 (연체·완성 지연 단계·오늘 가봉/완성/반납, 고객명 미리보기) — 58·59차
   try{
     const al=$('#dash-alert'); if(al){
-      const fitsToday=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.fitDt===tStr&&o.status!=='완료').length;
-      const doneToday=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.doneDt===tStr&&o.status!=='완료').length;
-      const dueToday=state.rentals.filter(brMatch).filter(r=>r.status==='출고중'&&r.dueDt===tStr).length;
-      const ordOver=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.status!=='완료'&&o.doneDt&&o.doneDt<tStr).length;
+      const sev=_alertSevDays();
+      const _dl=(ds)=>Math.round((new Date(ds)-new Date(tStr))/86400000);
+      const _np=(arr,f)=>{ const ns=[...new Set(arr.map(f).filter(Boolean))]; return ns.length?` · ${ns[0]}${ns.length>1?` 외 ${ns.length-1}`:''}`:''; };
+      const suits=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.status!=='완료');
+      const fitsT=suits.filter(o=>o.fitDt===tStr);
+      const doneT=suits.filter(o=>o.doneDt===tStr);
+      const immO=suits.filter(o=>o.doneDt&&_dl(o.doneDt)===1);
+      const overO=suits.filter(o=>o.doneDt&&o.doneDt<tStr);
+      const maxOver=overO.length?Math.max(...overO.map(o=>-_dl(o.doneDt))):0;
+      const outR=state.rentals.filter(brMatch).filter(r=>r.status==='출고중');
+      const overR=outR.filter(r=>r.dueDt&&r.dueDt<tStr);
+      const dueT=outR.filter(r=>r.dueDt===tStr);
       const items=[];
-      if(_over>0) items.push(['err','ti-alarm',`렌탈 연체 ${_over}건`,"go('rental');state.rentalFilter='출고중';if(typeof renderRental==='function')renderRental()"]);
-      if(ordOver>0) items.push(['err','ti-clock-exclamation',`완성 지연 ${ordOver}건`,"go('orders');state.ordFilter='over';if(typeof renderOrders==='function')renderOrders()"]);
-      if(fitsToday>0) items.push(['warn','ti-ruler-2',`오늘 가봉 ${fitsToday}건`,"go('orders');state.ordFilter='wfit';if(typeof renderOrders==='function')renderOrders()"]);
-      if(doneToday>0) items.push(['info','ti-package-export',`오늘 완성출고 ${doneToday}건`,"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
-      if(dueToday>0) items.push(['info','ti-arrow-back-up',`오늘 반납 ${dueToday}건`,"go('rental')"]);
-      al.innerHTML = items.length ? `<div class="dash-alert-bar">${items.map(([t,ic,tx,act])=>`<button class="da-item da-${t}" onclick="${act}"><i class="ti ${ic}"></i>${tx}</button>`).join('')}</div>` : '';
+      if(overR.length) items.push(['err','','ti-alarm',`렌탈 연체 ${overR.length}건`+_np(overR,r=>r.renter),"go('rental');state.rentalFilter='출고중';if(typeof renderRental==='function')renderRental()"]);
+      if(overO.length) items.push(['err',maxOver>=sev?' da-severe':'','ti-clock-exclamation',`완성 지연 ${overO.length}건·최대 ${maxOver}일`+_np(overO,o=>o.nm),"go('orders');state.ordFilter='over';if(typeof renderOrders==='function')renderOrders()"]);
+      if(doneT.length) items.push(['warn','','ti-package-export',`오늘 완성 ${doneT.length}건`+_np(doneT,o=>o.nm),"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
+      if(immO.length) items.push(['info','','ti-clock-hour-4',`완성 임박·내일 ${immO.length}건`+_np(immO,o=>o.nm),"go('orders');state.ordFilter='wdone';if(typeof renderOrders==='function')renderOrders()"]);
+      if(fitsT.length) items.push(['warn','','ti-ruler-2',`오늘 가봉 ${fitsT.length}건`+_np(fitsT,o=>o.nm),"go('orders');state.ordFilter='wfit';if(typeof renderOrders==='function')renderOrders()"]);
+      if(dueT.length) items.push(['info','','ti-arrow-back-up',`오늘 반납 ${dueT.length}건`+_np(dueT,r=>r.renter),"go('rental')"]);
+      al.innerHTML = items.length ? `<div class="dash-alert-bar">${items.map(([t,extra,ic,tx,act])=>`<button class="da-item da-${t}${extra}" onclick="${act}"><i class="ti ${ic}"></i>${tx}</button>`).join('')}</div>` : '';
+    }
+  }catch(e){}
+  // 이번 주 미니 캘린더 (가봉·완성·반납 7일 한눈) — 59차
+  try{
+    const wk=$('#dash-week'); if(wk){
+      const WD=['일','월','화','수','목','금','토'];
+      const suits2=state.orders.filter(brMatch).filter(o=>o.type==='정장'&&o.status!=='완료');
+      const outR2=state.rentals.filter(brMatch).filter(r=>r.status==='출고중');
+      const base=today(); const days=[];
+      for(let i=0;i<7;i++){ const d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i); const ds=dStr(d);
+        days.push({ds,wd:WD[d.getDay()],dd:d.getDate(),sun:d.getDay()===0,sat:d.getDay()===6,
+          fit:suits2.filter(o=>o.fitDt===ds).length, done:suits2.filter(o=>o.doneDt===ds).length, due:outR2.filter(r=>r.dueDt===ds).length}); }
+      const totW=days.reduce((s,x)=>s+x.fit+x.done+x.due,0);
+      wk.innerHTML = `<div class="dw-card">
+        <div class="dw-head"><i class="ti ti-calendar-week"></i>이번 주 일정 ${totW?`<em>${totW}건</em>`:''}<span class="dw-leg"><b class="lg-fit"></b>가봉<b class="lg-done"></b>완성<b class="lg-due"></b>반납</span></div>
+        <div class="dw-row">${days.map((x,i)=>`<div class="dw-day${i===0?' today':''}" onclick="selDate('${x.ds}');var c=document.querySelector('.cal-card');if(c)c.scrollIntoView({behavior:'smooth',block:'nearest'})" title="${x.ds} — 가봉 ${x.fit}·완성 ${x.done}·반납 ${x.due}">
+          <div class="dw-dn${x.sun?' sun':''}${x.sat?' sat':''}">${i===0?'오늘':x.wd}</div>
+          <div class="dw-dd">${x.dd}</div>
+          <div class="dw-bars">${x.fit?`<span class="dw-b lg-fit">${x.fit}</span>`:''}${x.done?`<span class="dw-b lg-done">${x.done}</span>`:''}${x.due?`<span class="dw-b lg-due">${x.due}</span>`:''}${!(x.fit||x.done||x.due)?'<span class="dw-z">·</span>':''}</div>
+        </div>`).join('')}</div>
+      </div>`;
     }
   }catch(e){}
   if (typeof renderTodos==='function') renderTodos();
@@ -9648,6 +9741,7 @@ function renderSettings(){
   renderPushCard();
   renderPermCard();
   renderBufferCard();
+  renderAlertCard();
 }
 function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
@@ -9681,7 +9775,7 @@ function clearShopLogo(){
   pv.innerHTML = '<i class="ti ti-photo" style="font-size:22px"></i>로고 추가';
 }
 function saveShop(){
-  state.shop = {
+  state.shop = Object.assign({}, state.shop, {
     name:  $('#set-name').value.trim() || 'NURI CRM',
     tag:   $('#set-tag').value.trim() || 'MTM 통합 관리 시스템',
     ph:    $('#set-ph').value.trim(),
@@ -9690,7 +9784,7 @@ function saveShop(){
     owner: $('#set-owner').value.trim(),
     target: parseInt($('#set-target').value)||0,
     logo:  state.shopLogoTmp !== undefined ? state.shopLogoTmp : ((state.shop&&state.shop.logo)||'')
-  };
+  });
   localStorage.setItem(SHOP_KEY, JSON.stringify(state.shop));
   applyShop();
   if (sb && state._cloud){
