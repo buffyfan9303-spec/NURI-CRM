@@ -1554,6 +1554,17 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .wo-d-spec{padding:6px}
 .jk3spec{width:120px!important;height:150px!important}
 .wo-d-spec span{display:block;text-align:center;font-size:9px;color:#666;margin-top:2px}
+.ds-sheet{font-size:12px}
+.ds-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #2f4050;padding-bottom:8px;margin-bottom:12px}
+.ds-head b{font-size:19px} .ds-head span{font-size:13px;color:#555;margin-left:6px}
+.ds-meta{font-size:11px;color:#777}
+.ds-sec{margin-bottom:16px;break-inside:avoid}
+.ds-t{font-size:12px;font-weight:800;color:#2f4050;background:#f1f3f5;padding:5px 10px;border-left:3px solid #1ab394;margin-bottom:8px}
+.ds-row{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;justify-content:center}
+.ds-row .jk3v{width:104px;height:140px}
+.ds-spec{width:160px;height:200px;border:.5px solid #ddd;background:#fff}
+.ds-spec .opt-svg{width:100%;height:100%}
+.ds-foot{font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:6px;margin-top:8px}
 /* 44차 — 라이브 합성 프리뷰 */
 .live-preview{background:var(--sf2);border:1px solid var(--bd);border-radius:3px;padding:12px 14px;margin-bottom:16px}
 .lp-head{font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -2987,6 +2998,7 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
           <div class="form-actions">
             <button class="btn-ghost btn-big" onclick="resetSuit()"><i class="ti ti-refresh"></i>초기화</button>
             <button class="btn-ghost btn-big" onclick="printSuit()"><i class="ti ti-file-search"></i>작업지시서 미리보기 · 인쇄</button>
+            <button class="btn-ghost btn-big" onclick="buildDiagramSheet()"><i class="ti ti-vector-triangle"></i>도식 단독 출력</button>
             <button class="btn-primary btn-big" onclick="openOrderConfirm()"><i class="ti ti-clipboard-check"></i>주문 내용 확인 후 저장</button>
           </div>
         </div>
@@ -7778,6 +7790,59 @@ function composePants2View(o, hex, patt){
 }
 function composeVest2View(o, hex, patt){
   return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composeVest(o,hex,patt)}</div><span>앞</span></div><div class="jk3c"><div class="jk3v">${composeVestBack(o,hex)}</div><span>뒤</span></div></div>`;
+}
+// 하의 스펙 (POM: 허리·인심·밑단폭)
+function composePantsSpec(o, hex, m){
+  m=m||{};
+  const base=composePants(o, hex||'#d7dde3', '');
+  const lab=(k,d)=> m[k]? `${d} ${m[k]}` : d;
+  const dims = _dimH(40,140,12, lab('w','허리'))           // 허리둘레(반)
+    + _dimV(96,208,150, lab('in','인심'))                  // 인심
+    + _dimH(48,82,214, lab('bt','밑단'));                  // 밑단폭
+  return base.replace('</svg>', dims+'</svg>');
+}
+// 조끼 스펙 (POM: 가슴·기장)
+function composeVestSpec(o, hex, m){
+  m=m||{};
+  const base=composeVest(o, hex||'#d7dde3', '');
+  const lab=(k,d)=> m[k]? `${d} ${m[k]}` : d;
+  const dims = _dimH(40,160,50, lab('chest','가슴'))
+    + _dimV(26,188,170, lab('len','기장'));
+  return base.replace('</svg>', dims+'</svg>');
+}
+// 도식 단독 출력 시트 (작지서와 별도 — 도면 1장)
+function buildDiagramSheet(){
+  const g=id=>(document.getElementById(id)?.value||'');
+  const nm=g('o-nm')||'';
+  const o=state.opt||{};
+  const q=o.qty||{s:1,p:1,v:0,c:0,j:0};
+  const fab=(state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
+  const hex=fabHex(fab?fab.color:'');
+  const patt=fab?(fab.color+' '+(fab.comp||'')):'';
+  const sections=[];
+  if((q.s||0)+(q.j||0)>0){
+    const mj={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')};
+    sections.push(`<div class="ds-sec"><div class="ds-t">상의 — 3면도</div><div class="ds-row">${composeJacket3View(o,hex,patt)}</div></div>`);
+    sections.push(`<div class="ds-sec"><div class="ds-t">상의 — 치수 도면 (POM)</div><div class="ds-row"><div class="ds-spec">${composeJacketSpec(o,'#eef1f3',mj)}</div></div></div>`);
+  }
+  if((q.p||0)>0){
+    const mp={w:_woM('bot','w'),in:_woM('bot','in'),bt:_woM('bot','bt')};
+    sections.push(`<div class="ds-sec"><div class="ds-t">하의 — 앞·뒤 + 치수</div><div class="ds-row">${composePants2View(o,hex,patt)}<div class="ds-spec">${composePantsSpec(o,'#eef1f3',mp)}</div></div></div>`);
+  }
+  if((q.v||0)>0){
+    const sp=(typeof PATTERN_SPEC_VEST!=='undefined'&&PATTERN_SPEC_VEST[g('o-pVest')]||{})[g('o-sVest')]||{};
+    const mv={chest:sp.chest||'',len:sp.len||''};
+    sections.push(`<div class="ds-sec"><div class="ds-t">조끼 — 앞·뒤 + 치수</div><div class="ds-row">${composeVest2View(o,hex,patt)}<div class="ds-spec">${composeVestSpec(o,'#eef1f3',mv)}</div></div></div>`);
+  }
+  if(!sections.length){ toast('수량을 입력하세요 — 도식을 만들 항목이 없습니다','warn'); return; }
+  $('#print-area').innerHTML=`<div class="wo-sheet ds-sheet">
+    <div class="ds-head"><div><b>디자인 도면</b> <span>${nm?nm+' 님':''}</span></div><div class="ds-meta">${fab?fab.no+' · '+fab.color:''} · ${dStr(today())} · ${shopName()}</div></div>
+    ${sections.join('')}
+    <div class="ds-foot">NURI CRM 디자인 도면 · 작업지시서 별첨용 · ${(state.user&&state.user.name)||''}</div>
+  </div>`;
+  const tt=$('#prv-title-text'); if(tt)tt.textContent='디자인 도면';
+  const ts=$('#prv-sub-text'); if(ts)ts.textContent=`${nm?nm+' · ':''}도면 단독 출력 · A4`;
+  $('#prv-modal').classList.add('open');
 }
 function composeGarment(part, o, hex){
   if (part==='bot') return composePants(o,hex);
