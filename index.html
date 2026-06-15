@@ -1660,6 +1660,7 @@ select.f-input,select{min-height:44px}
 .dh-lg:hover{background:var(--sf2)}
 .dh-lg.on{border-color:#1ab394;background:var(--acc-soft);color:var(--t);font-weight:800}
 .dh-cell.dh-dim{opacity:.18;filter:grayscale(.4)}
+.pick-card.kb{border-color:#1ab394!important;box-shadow:0 0 0 3px rgba(26,179,148,.28);background:var(--sf2)}
 /* ════ 61차 — 렌탈 액션버튼 통일 + 히트맵 범례 우측 + 고객카드 축소 ════ */
 .r-acts{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 #rental-tbody td:last-child{padding-left:8px!important;padding-right:8px!important}
@@ -2661,7 +2662,7 @@ body.dk{ --t3:#9b9994; }
           </div>
           <label class="f-label">기존 고객 (카드를 누르면 자동 입력)</label>
           <div class="pick-box">
-            <div class="pick-search"><i class="ti ti-search"></i><input id="pick-cust-q" class="pick-search-in" placeholder="고객 검색 — 이름·초성(ㄱㄷㅎ)·연락처 뒷자리" oninput="renderCustCards()" autocomplete="off"></div>
+            <div class="pick-search"><i class="ti ti-search"></i><input id="pick-cust-q" class="pick-search-in" placeholder="고객 검색 — 이름·초성(ㄱㄷㅎ)·연락처 (↑↓ 이동·Enter 선택)" oninput="renderCustCards()" onkeydown="custSearchKey(event)" autocomplete="off"></div>
             <div class="pick-grid" id="pick-cust" style="max-height:200px"></div>
           </div>
           <div class="form-row" style="margin-top:14px">
@@ -5332,6 +5333,21 @@ function renderCustCards(){
       <div class="pc-sub">${c.ph}</div>
       <span class="pc-tag">${c.status||'신규'}</span>
     </div>`).join('');
+  window._pickIdx = q ? 0 : -1;
+  if (window._pickIdx===0){ const _fc=box.querySelector('.pick-card'); if(_fc) _fc.classList.add('kb'); }
+}
+// 고객 검색 키보드 네비게이션 (↑↓ 이동, Enter 선택)
+function custSearchKey(e){
+  const cards = [].slice.call(document.querySelectorAll('#pick-cust .pick-card'));
+  if (!cards.length) return;
+  let idx = (window._pickIdx==null) ? -1 : window._pickIdx;
+  if (e.key==='ArrowDown'){ e.preventDefault(); idx = Math.min(cards.length-1, idx+1); }
+  else if (e.key==='ArrowUp'){ e.preventDefault(); idx = Math.max(0, idx-1); }
+  else if (e.key==='Enter'){ e.preventDefault(); (cards[idx]||cards[0]).click(); return; }
+  else return;
+  window._pickIdx = idx;
+  cards.forEach(function(c,i){ c.classList.toggle('kb', i===idx); });
+  if (cards[idx]) cards[idx].scrollIntoView({block:'nearest'});
 }
 function pickCustomer(id, el){
   $$('#pick-cust .pick-card').forEach(c=>c.classList.remove('active'));
@@ -6602,7 +6618,18 @@ function renderDueHeatmap(){
 }
 function dueFilter(ds){
   const q = $('#q-orders');
-  if (q){ q.value = q.value===ds ? '' : ds; renderOrders(); }
+  if (!q) return;
+  const on = q.value !== ds;
+  q.value = on ? ds : '';
+  // 과부하 필터가 켜진 상태에서 날짜 클릭 → 그날 '완성 예정(미완료)' 주문만 집중
+  if (on && state.dueHeatF==='over'){
+    state.ordFilter = 'prog';
+    const n = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료' && (o.doneDt===ds||o.fitDt===ds||o.date===ds)).length;
+    toast(`과부하일 ${ds} · 완성 예정 ${n}건만 표시 (지연 위험)`, 'info', '납기 히트맵');
+  } else if (!on){
+    state.ordFilter = 'all';
+  }
+  renderOrders();
 }
 
 // 주문 일괄 인쇄 — 대기(미발주) 정장 작지서 묶음 + 발주 명세 표지
