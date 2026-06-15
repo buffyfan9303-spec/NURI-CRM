@@ -1551,6 +1551,9 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 @media print{ .jk3v{width:72px;height:96px} }
 .live-preview .lp-svg{width:108px}
 .live-preview .lp-svg .opt-svg{height:160px;width:auto}
+.wo-d-spec{padding:6px}
+.jk3spec{width:120px!important;height:150px!important}
+.wo-d-spec span{display:block;text-align:center;font-size:9px;color:#666;margin-top:2px}
 /* 44차 — 라이브 합성 프리뷰 */
 .live-preview{background:var(--sf2);border:1px solid var(--bd);border-radius:3px;padding:12px 14px;margin-bottom:16px}
 .lp-head{font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -6072,7 +6075,7 @@ function buildWorkOrder(){
   let page1 = `<div class="wo-sheet">
     <div class="wo-sec">MTM 정장 작업지시서 — 상의 (싱글 작지서 양식)</div>
     ${head}${optTop}${sizeTop}${memoTop}
-    ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _f3?(_f3.color+' '+(_f3.comp||'')):'')}</div></div>`; })():''}
+    ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); const _m3={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')}; return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _f3?(_f3.color+' '+(_f3.comp||'')):'')}</div><div class="d wo-d-spec"><div class="jk3v jk3spec">${composeJacketSpec(o, '#e8ebee', _m3)}</div><span>치수도</span></div></div>`; })():''}
     ${(()=>{ if(typeof studioSvg!=='function')return ''; const dd=[['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak],['amf','AMF',o.amf],['ticketP','티켓P',o.ticketP]]; const ds=dd.map(([k,lb,v])=>{ if(!v||v==='없음'&&k==='amf')return ''; const s=studioSvg(k,v); return s?`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`:''; }).filter(Boolean); return ds.length?`<div class="wo-diag">${ds.join('')}</div>`:''; })()}
     <div class="wo-foot"><span>인쇄 <span id="wo-pd"></span> · 담당 ${ (state.user||{}).name||'관리자' }</span><span class="sign">매장 확인 __________ &nbsp; 공장 수령 __________</span><b>${shopName()}</b></div>
   </div>`;
@@ -6131,8 +6134,8 @@ function buildWorkOrder(){
         if ((q.s||0)+(q.j||0) > 0) woDia.forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`); } });
         if ((q.p||0) > 0){ [['botTuck','주름',o.botTuck],['botFrontP','앞주머니',o.botFrontP],['botHem','밑단',o.botHem]].forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${k==='botTuck'?(v==='2'?'2주름':v==='1'?'1주름':'노턱'):v}</div></div>`); } }); }
       }
-      if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
-      if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
+      if ((q.p||0) > 0 && typeof composePants2View==='function'){ const _fp2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composePants2View(o, fabHex(_fp2?_fp2.color:''), _fp2?(_fp2.color+' '+(_fp2.comp||'')):'')}</div>`); } else if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
+      if ((q.v||0) > 0 && typeof composeVest2View==='function'){ const _fv2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composeVest2View(o, fabHex(_fv2?_fv2.color:''), _fv2?(_fv2.color+' '+(_fv2.comp||'')):'')}</div>`); } else if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
       if (ds.length) diag = `<div class="wo-diag">${ds.join('')}</div>`;
     }
     page2 = `<div class="wo-sheet">
@@ -7666,7 +7669,8 @@ function composeJacket(o, hex, patt){
   const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,patt);
   const sleeveL=`<path d="M66 62 C52 70 44 94 42 120 L36 218 C35 228 60 232 66 222 L82 134 C84 108 80 86 86 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>`;
   const sleeveR=`<path d="M134 62 C148 70 156 94 158 120 L164 218 C165 228 140 232 134 222 L118 134 C116 108 120 86 114 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>`;
-  const cuffs=`<path d="M44 210 C50 218 58 219 66 213 M156 210 C150 218 142 219 134 213" fill="none" stroke="${dl}" stroke-width="1"/><line x1="52" y1="212" x2="52" y2="224" stroke="${dl}" stroke-width="0.8"/><line x1="148" y1="212" x2="148" y2="224" stroke="${dl}" stroke-width="0.8"/>`;
+  const cuffs=`<path d="M44 210 C50 218 58 219 66 213 M156 210 C150 218 142 219 134 213" fill="none" stroke="${dl}" stroke-width="1"/><circle cx="50" cy="214" r="1.3" fill="${dl}"/><circle cx="54" cy="216" r="1.3" fill="${dl}"/><circle cx="58" cy="218" r="1.3" fill="${dl}"/><circle cx="150" cy="214" r="1.3" fill="${dl}"/><circle cx="146" cy="216" r="1.3" fill="${dl}"/><circle cx="142" cy="218" r="1.3" fill="${dl}"/>`;
+  const dart=`<path d="M84 130 C82 160 82 200 86 234 M116 130 C118 160 118 200 114 234" fill="none" stroke="${dl}" stroke-width="0.6" stroke-dasharray="2 2"/>`;
   const body=`<path d="M100 40 C86 40 78 48 70 58 C62 64 60 74 62 96 L70 264 C70 272 78 276 100 276 C122 276 130 272 130 264 L138 96 C140 74 138 64 130 58 C122 48 114 40 100 40 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.8"/>`;
   const lapel=_jLapel(o, dl, st, hex);
   const stand=`<line x1="100" y1="186" x2="100" y2="268" stroke="${dl}" stroke-width="0.8"/>`;
@@ -7675,7 +7679,7 @@ function composeJacket(o, hex, patt){
   const pk=_jPockets(o, dl);
   const amf=(o.amf&&o.amf!=='없음')?`<path d="M84 80 C82 110 82 150 88 176" fill="none" stroke="#1ab394" stroke-width="1.2" stroke-dasharray="2 3"/>${(o.amf.indexOf('전체')>=0||o.amf==='본봉스티치')?'<path d="M116 80 C118 110 118 150 112 176" fill="none" stroke="#1ab394" stroke-width="1.2" stroke-dasharray="2 3"/>':''}`:'';
   const ticket=(o.ticketP==='유')?`<path d="M104 196 L132 196 L131 206 L104 206 Z" fill="none" stroke="#1ab394" stroke-width="1.4"/>`:'';
-  return `<svg class="opt-svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>${sleeveL}${sleeveR}${cuffs}${body}${lapel}${stand}${welt}${pk}${amf}${ticket}${btn}</svg>`;
+  return `<svg class="opt-svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>${sleeveL}${sleeveR}${cuffs}${body}${dart}${lapel}${stand}${welt}${pk}${amf}${ticket}${btn}</svg>`;
 }
 // 자켓 측면
 function _jSide(o, hex){
@@ -7723,6 +7727,57 @@ function composeVest(o, hex, patt){
   let pk = o.vestPocketN==='4개' ? `<rect x="62" y="78" width="22" height="7" fill="none" stroke="${dl}" stroke-width="1.6"/><rect x="116" y="78" width="22" height="7" fill="none" stroke="${dl}" stroke-width="1.6"/><rect x="58" y="120" width="26" height="9" fill="none" stroke="${dl}" stroke-width="1.8"/><rect x="116" y="120" width="26" height="9" fill="none" stroke="${dl}" stroke-width="1.8"/>` : `<rect x="58" y="120" width="26" height="9" fill="none" stroke="${dl}" stroke-width="1.8"/><rect x="116" y="120" width="26" height="9" fill="none" stroke="${dl}" stroke-width="1.8"/>`;
   const btn=`<circle cx="100" cy="104" r="2.4" fill="${dl}"/><circle cx="100" cy="124" r="2.4" fill="${dl}"/><circle cx="100" cy="144" r="2.4" fill="${dl}"/>`;
   return `<svg class="opt-svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>${body}${col}${pk}${btn}</svg>`;
+}
+/* ─── POM 치수선 + 다면도 + 스펙 (표준 테크니컬 플랫) ─── */
+const _DIMC = '#c8914a';
+function _dimH(x1, x2, y, label){
+  return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${_DIMC}" stroke-width="0.8"/><path d="M${x1} ${y} l6 -3 v6 z" fill="${_DIMC}"/><path d="M${x2} ${y} l-6 -3 v6 z" fill="${_DIMC}"/><text x="${(x1+x2)/2}" y="${y-4}" text-anchor="middle" font-size="10" fill="${_DIMC}" font-weight="700" font-family="sans-serif">${label}</text>`;
+}
+function _dimV(y1, y2, x, label){
+  return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${_DIMC}" stroke-width="0.8"/><path d="M${x} ${y1} l-3 6 h6 z" fill="${_DIMC}"/><path d="M${x} ${y2} l-3 -6 h6 z" fill="${_DIMC}"/><text x="${x+5}" y="${(y1+y2)/2+3}" font-size="10" fill="${_DIMC}" font-weight="700" font-family="sans-serif">${label}</text>`;
+}
+function _dimL(x1,y1,x2,y2,label){
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${_DIMC}" stroke-width="0.8"/><circle cx="${x1}" cy="${y1}" r="2" fill="${_DIMC}"/><circle cx="${x2}" cy="${y2}" r="2" fill="${_DIMC}"/><text x="${mx-16}" y="${my}" font-size="10" fill="${_DIMC}" font-weight="700" font-family="sans-serif">${label}</text>`;
+}
+// 측정값 읽기 (작지서)
+function _woM(part, key){ try{ const v=(typeof getCmVal==='function')?getCmVal(`sz-${part}-${key}-fin`):0; return v? Math.round(v*10)/10 : 0; }catch(e){ return 0; } }
+// 자켓 스펙 도식 (정면 + POM 치수선)
+function composeJacketSpec(o, hex, m){
+  m=m||{};
+  const base=composeJacket(o, hex||'#d7dde3', '');
+  const lab=(k,d)=> m[k]? `${d} ${m[k]}` : d;
+  const dims = _dimH(70,130,48, lab('shoul','어깨'))      // 어깨너비
+    + _dimH(62,138,128, lab('chest','가슴'))               // 가슴둘레(반)
+    + _dimL(66,64,40,210, lab('slvL','소매'))              // 소매장
+    + _dimV(58,276,190, lab('len','기장'));                // 상의길이
+  return base.replace('</svg>', dims+'</svg>');
+}
+// 하의 후면 (뒷주머니·다트·크리스)
+function composePantsBack(o, hex){
+  o=o||{}; hex=hex||fabHex();
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+  let bp=''; const welt=(x)=>`<path d="M${x} 60 H${x+30} V70 H${x} Z" fill="none" stroke="${dl}" stroke-width="1.4"/>`;
+  if(o.botBackP==='양쪽-입술') bp=welt(50)+welt(100); else if(o.botBackP==='양쪽-단추') bp=welt(50)+welt(100)+`<circle cx="65" cy="65" r="2" fill="${dl}"/><circle cx="115" cy="65" r="2" fill="${dl}"/>`; else if(o.botBackP==='한쪽') bp=welt(75);
+  const dart=`<path d="M64 42 L66 70 M116 42 L114 70" fill="none" stroke="${dl}" stroke-width="1"/>`;
+  return `<svg class="opt-svg" viewBox="0 0 180 216" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>
+    <path d="M40 22 H140 L132 208 H98 L90 96 L82 208 H48 Z" fill="${f.fill}" stroke="${st}" stroke-width="2"/>
+    <rect x="40" y="22" width="100" height="18" fill="${_lighten(hex,12)}" stroke="${st}" stroke-width="2"/>
+    <path d="M65 40 L65 208 M115 40 L115 208" fill="none" stroke="${dl}" stroke-width="0.6" stroke-dasharray="3 3"/>${dart}${bp}</svg>`;
+}
+function composeVestBack(o, hex){
+  o=o||{}; hex=hex||fabHex();
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+  const body=`<path d="M40 26 L66 16 L100 30 L134 16 L160 26 L150 150 L100 188 L50 150 Z" fill="${_lighten(hex,8)}" stroke="${st}" stroke-width="2"/>`;
+  const belt = o.vestBack==='벨트' ? `<line x1="50" y1="120" x2="150" y2="120" stroke="${dl}" stroke-width="2"/><rect x="92" y="115" width="16" height="10" fill="${_lighten(hex,8)}" stroke="${dl}" stroke-width="1.4"/><circle cx="100" cy="120" r="2" fill="${dl}"/>` : '';
+  const seam=`<path d="M100 30 L100 186" fill="none" stroke="${dl}" stroke-width="0.6" stroke-dasharray="3 3"/>`;
+  return `<svg class="opt-svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>${body}${seam}${belt}</svg>`;
+}
+function composePants2View(o, hex, patt){
+  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composePants(o,hex,patt)}</div><span>앞</span></div><div class="jk3c"><div class="jk3v">${composePantsBack(o,hex)}</div><span>뒤</span></div></div>`;
+}
+function composeVest2View(o, hex, patt){
+  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composeVest(o,hex,patt)}</div><span>앞</span></div><div class="jk3c"><div class="jk3v">${composeVestBack(o,hex)}</div><span>뒤</span></div></div>`;
 }
 function composeGarment(part, o, hex){
   if (part==='bot') return composePants(o,hex);
