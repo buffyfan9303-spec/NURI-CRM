@@ -1537,6 +1537,12 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .smp-tile-cat{font-size:11px;color:var(--t3);padding:6px 8px 0}
 .smp-tile-val{font-size:13px;font-weight:700;color:var(--t);padding:0 8px 8px}
 .smp-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;justify-content:flex-end}
+/* 43차 — 옵션 SVG 도식 */
+.opt-svg{width:100%;height:100%;display:block;background:var(--sf2)}
+.std-card-img .opt-svg{aspect-ratio:1/1}
+.smp-tile-img .opt-svg{aspect-ratio:1/1}
+.wo-d-svg .opt-svg{width:64px;height:74px;background:#fff}
+@media print{ .wo-d-svg .opt-svg{width:58px;height:68px} }
 /* 37차 — 측정 프로필 */
 .measure-hint{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--acc-soft);border:1px solid rgba(26,179,148,.35);border-radius:3px;margin:10px 0;font-size:12.5px;color:var(--t);flex-wrap:wrap}
 .measure-hint > .ti{color:var(--okt);font-size:18px}
@@ -6033,6 +6039,7 @@ function buildWorkOrder(){
   let page1 = `<div class="wo-sheet">
     <div class="wo-sec">MTM 정장 작업지시서 — 상의 (싱글 작지서 양식)</div>
     ${head}${optTop}${sizeTop}${memoTop}
+    ${(()=>{ if(typeof studioSvg!=='function')return ''; const dd=[['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak],['amf','AMF',o.amf],['ticketP','티켓P',o.ticketP]]; const ds=dd.map(([k,lb,v])=>{ if(!v||v==='없음'&&k==='amf')return ''; const s=studioSvg(k,v); return s?`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`:''; }).filter(Boolean); return ds.length?`<div class="wo-diag">${ds.join('')}</div>`:''; })()}
     <div class="wo-foot"><span>인쇄 <span id="wo-pd"></span> · 담당 ${ (state.user||{}).name||'관리자' }</span><span class="sign">매장 확인 __________ &nbsp; 공장 수령 __________</span><b>${shopName()}</b></div>
   </div>`;
 
@@ -6084,6 +6091,12 @@ function buildWorkOrder(){
     if (typeof IMGS !== 'undefined'){
       const ds = [];
       if ((q.s||0)+(q.j||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.jacket}"><div class="c">상의 (싱글 자켓)</div></div>`);
+      // 선택 옵션 도식 자동표시 (원본 명세서 10번)
+      if (typeof studioSvg==='function'){
+        const woDia = [['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak]];
+        if ((q.s||0)+(q.j||0) > 0) woDia.forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`); } });
+        if ((q.p||0) > 0){ [['botTuck','주름',o.botTuck],['botFrontP','앞주머니',o.botFrontP],['botHem','밑단',o.botHem]].forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${k==='botTuck'?(v==='2'?'2주름':v==='1'?'1주름':'노턱'):v}</div></div>`); } }); }
+      }
       if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
       if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
       if (ds.length) diag = `<div class="wo-diag">${ds.join('')}</div>`;
@@ -7443,6 +7456,132 @@ function drawLines(id, series, colors){
   for (let m=0;m<12;m++) cx.fillText(String(m+1), padL+m*step, H-5);
 }
 
+
+/* ─── 옵션 도식 SVG 라이브러리 (선·면 일러스트) ─── */
+function _svg(inner, vb){ return `<svg class="opt-svg" viewBox="${vb||'0 0 120 140'}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
+// 공통 자켓 몸판 (앞)
+const _JKT = `<path d="M60 14 L40 22 L28 30 L24 132 L96 132 L92 30 L80 22 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/>`;
+// 공통 하의 (앞)
+const _PNT = `<path d="M30 12 H90 L86 132 H64 L60 60 L56 132 H34 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/><line x1="30" y1="26" x2="90" y2="26" stroke="#2f4050" stroke-width="2"/>`;
+function _lapel(kind){
+  // 칼라/라펠 변형 (자켓 가슴 V)
+  let lap;
+  if (kind==='피크드') lap = `<path d="M60 30 L46 40 L52 30 L46 58 M60 30 L74 40 L68 30 L74 58" fill="none" stroke="#2f4050" stroke-width="2" stroke-linejoin="round"/><path d="M60 30 L47 86 M60 30 L73 86" stroke="#2f4050" stroke-width="2" fill="none"/>`;
+  else if (kind==='숄') lap = `<path d="M60 30 C44 34 44 64 50 88 M60 30 C76 34 76 64 70 88" fill="none" stroke="#2f4050" stroke-width="2"/>`;
+  else lap = `<path d="M60 30 L48 42 L54 46 L49 86 M60 30 L72 42 L66 46 L71 86" fill="none" stroke="#2f4050" stroke-width="2" stroke-linejoin="round"/>`; // 노치드
+  return _svg(_JKT + lap + `<circle cx="60" cy="96" r="2.4" fill="#2f4050"/><circle cx="60" cy="110" r="2.4" fill="#2f4050"/>`);
+}
+function _vent(kind){
+  // 자켓 뒤 + 트임
+  let v;
+  if (kind==='센터벤트') v = `<line x1="60" y1="104" x2="60" y2="132" stroke="#2f4050" stroke-width="2"/>`;
+  else if (kind==='사이드벤트') v = `<line x1="36" y1="104" x2="36" y2="132" stroke="#2f4050" stroke-width="2"/><line x1="84" y1="104" x2="84" y2="132" stroke="#2f4050" stroke-width="2"/>`;
+  else v = ``; // 통막음
+  return _svg(`<path d="M60 14 L40 22 L28 30 L24 132 L96 132 L92 30 L80 22 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/><line x1="60" y1="22" x2="60" y2="104" stroke="#2f4050" stroke-width="1.4" stroke-dasharray="3 3"/>` + v);
+}
+function _lining(kind){
+  let fill;
+  if (kind==='전체') fill = `<path d="M44 36 L76 36 L74 116 L46 116 Z" fill="#1ab394" opacity=".45"/>`;
+  else if (kind==='반안감') fill = `<path d="M44 36 L76 36 L75 78 L45 78 Z" fill="#1ab394" opacity=".45"/>`;
+  else fill = `<path d="M44 36 L76 36 L75 52 L45 52 Z" fill="#1ab394" opacity=".3"/>`; // 언컨류
+  return _svg(_JKT + fill + `<path d="M60 30 L48 42 L54 46 L49 86 M60 30 L72 42 L66 46 L71 86" fill="none" stroke="#2f4050" stroke-width="2"/>`);
+}
+function _pocket(kind){
+  // 자켓 옆주머니 변형
+  let pk;
+  if (kind==='아웃포켓') pk = `<rect x="30" y="92" width="26" height="22" fill="none" stroke="#2f4050" stroke-width="2"/><rect x="64" y="92" width="26" height="22" fill="none" stroke="#2f4050" stroke-width="2"/>`;
+  else if (kind==='라운드아웃') pk = `<path d="M30 92 H56 V108 Q43 118 30 108 Z" fill="none" stroke="#2f4050" stroke-width="2"/><path d="M64 92 H90 V108 Q77 118 64 108 Z" fill="none" stroke="#2f4050" stroke-width="2"/>`;
+  else if (kind==='바르카') pk = `<path d="M30 96 Q43 90 56 96 L54 102 Q43 97 32 102 Z" fill="none" stroke="#2f4050" stroke-width="2"/><path d="M64 96 Q77 90 90 96 L88 102 Q77 97 66 102 Z" fill="none" stroke="#2f4050" stroke-width="2"/>`;
+  else pk = `<rect x="30" y="96" width="26" height="9" fill="none" stroke="#2f4050" stroke-width="2"/><rect x="64" y="96" width="26" height="9" fill="none" stroke="#2f4050" stroke-width="2"/>`; // 기본(플랩)
+  return _svg(_JKT + `<path d="M60 30 L48 42 L54 46 L49 86 M60 30 L72 42 L66 46 L71 86" fill="none" stroke="#2f4050" stroke-width="2"/>` + pk);
+}
+function _btuck(kind){
+  let pl = '';
+  const n = kind==='2'?2 : kind==='1'?1 : 0;
+  if (n>=1) pl += `<line x1="44" y1="28" x2="44" y2="58" stroke="#2f4050" stroke-width="2"/><line x1="76" y1="28" x2="76" y2="58" stroke="#2f4050" stroke-width="2"/>`;
+  if (n>=2) pl += `<line x1="50" y1="28" x2="50" y2="52" stroke="#2f4050" stroke-width="1.6"/><line x1="70" y1="28" x2="70" y2="52" stroke="#2f4050" stroke-width="1.6"/>`;
+  return _svg(_PNT + pl);
+}
+function _bfront(kind){
+  let p='';
+  if (kind==='사이드') p = `<line x1="32" y1="30" x2="32" y2="48" stroke="#2f4050" stroke-width="2.4"/><line x1="88" y1="30" x2="88" y2="48" stroke="#2f4050" stroke-width="2.4"/>`;
+  else if (kind==='슬랜티드') p = `<line x1="32" y1="30" x2="44" y2="46" stroke="#2f4050" stroke-width="2.4"/><line x1="88" y1="30" x2="76" y2="46" stroke="#2f4050" stroke-width="2.4"/>`;
+  else if (kind==='크로스') p = `<line x1="32" y1="40" x2="46" y2="40" stroke="#2f4050" stroke-width="2.4"/><line x1="88" y1="40" x2="74" y2="40" stroke="#2f4050" stroke-width="2.4"/>`;
+  return _svg(_PNT + p);
+}
+function _bback(kind){
+  let p='';
+  const welt = (x)=>`<rect x="${x}" y="36" width="22" height="6" fill="none" stroke="#2f4050" stroke-width="2"/>`;
+  const btn = (x)=>`<circle cx="${x+11}" cy="39" r="2" fill="#2f4050"/>`;
+  if (kind==='양쪽-입술'){ p = welt(36)+welt(62); }
+  else if (kind==='양쪽-단추'){ p = welt(36)+btn(36)+welt(62)+btn(62); }
+  else if (kind==='한쪽'){ p = welt(49); }
+  return _svg(`<path d="M30 12 H90 L86 132 H64 L60 60 L56 132 H34 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/><line x1="30" y1="26" x2="90" y2="26" stroke="#2f4050" stroke-width="2"/>` + p);
+}
+function _bhem(kind){
+  let h='';
+  if (kind==='턴업'||kind==='카브라') h = `<line x1="34" y1="120" x2="56" y2="120" stroke="#2f4050" stroke-width="2"/><line x1="64" y1="120" x2="86" y2="120" stroke="#2f4050" stroke-width="2"/><line x1="34" y1="126" x2="56" y2="126" stroke="#2f4050" stroke-width="1.4"/><line x1="64" y1="126" x2="86" y2="126" stroke="#2f4050" stroke-width="1.4"/>`;
+  return _svg(_PNT + h);
+}
+function _obi(kind){
+  let o = `<rect x="28" y="14" width="64" height="12" fill="none" stroke="#2f4050" stroke-width="2"/>`;
+  if (kind==='마고리') o += `<rect x="50" y="12" width="20" height="8" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/><circle cx="66" cy="16" r="1.8" fill="#2f4050"/>`;
+  return _svg(`<path d="M28 26 H92 L88 132 H64 L60 64 L56 132 H32 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/>` + o);
+}
+function _stitch(kind){
+  // AMF 스티치 — 라펠 가장자리 점선
+  let st='';
+  if (kind!=='없음'){ st += `<path d="M52 40 L52 84" fill="none" stroke="#1ab394" stroke-width="1.6" stroke-dasharray="2 3"/>`; }
+  if (kind==='전체(앞·뒷판)'||kind==='본봉스티치'){ st += `<path d="M68 40 L68 84" fill="none" stroke="#1ab394" stroke-width="1.6" stroke-dasharray="2 3"/>`; }
+  return _svg(_JKT + `<path d="M60 30 L48 42 L54 46 L49 86 M60 30 L72 42 L66 46 L71 86" fill="none" stroke="#2f4050" stroke-width="2"/>` + st);
+}
+function _ticket(kind){
+  let t = kind==='유' ? `<rect x="64" y="80" width="20" height="7" fill="none" stroke="#1ab394" stroke-width="2"/>` : '';
+  return _svg(_JKT + `<path d="M60 30 L48 42 L54 46 L49 86 M60 30 L72 42 L66 46 L71 86" fill="none" stroke="#2f4050" stroke-width="2"/><rect x="64" y="92" width="24" height="9" fill="none" stroke="#2f4050" stroke-width="2"/>` + t);
+}
+function _vest(kind){
+  // 베스트 (V 또는 숄)
+  let body = `<path d="M30 14 L60 26 L90 14 L86 96 L60 116 L34 96 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/>`;
+  let det='';
+  if (kind==='vl-라펠') det = `<path d="M44 22 L52 50 M76 22 L68 50" stroke="#2f4050" stroke-width="2" fill="none"/>`;
+  else if (kind==='vl-노라펠') det = `<path d="M48 20 L60 52 L72 20" stroke="#2f4050" stroke-width="2" fill="none"/>`;
+  else if (kind==='vb-벨트') { body = `<path d="M30 14 L90 14 L86 96 L60 116 L34 96 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/>`; det = `<line x1="34" y1="80" x2="86" y2="80" stroke="#2f4050" stroke-width="2"/><rect x="56" y="76" width="10" height="8" fill="#eef1f3" stroke="#2f4050" stroke-width="1.6"/>`; }
+  else if (kind==='vb-무벨트') { body = `<path d="M30 14 L90 14 L86 96 L60 116 L34 96 Z" fill="#eef1f3" stroke="#2f4050" stroke-width="2"/>`; }
+  else if (kind==='vp-2') det = `<path d="M48 20 L60 52 L72 20" stroke="#2f4050" stroke-width="2" fill="none"/><rect x="40" y="70" width="16" height="6" fill="none" stroke="#2f4050" stroke-width="1.8"/><rect x="64" y="70" width="16" height="6" fill="none" stroke="#2f4050" stroke-width="1.8"/>`;
+  else if (kind==='vp-4') det = `<path d="M48 20 L60 52 L72 20" stroke="#2f4050" stroke-width="2" fill="none"/><rect x="42" y="46" width="13" height="5" fill="none" stroke="#2f4050" stroke-width="1.6"/><rect x="65" y="46" width="13" height="5" fill="none" stroke="#2f4050" stroke-width="1.6"/><rect x="40" y="74" width="16" height="6" fill="none" stroke="#2f4050" stroke-width="1.8"/><rect x="64" y="74" width="16" height="6" fill="none" stroke="#2f4050" stroke-width="1.8"/>`;
+  return _svg(body + det);
+}
+// 라벨형 폴백 (추상 옵션 — goji/hak/shldSew 등)
+function _label(part, txt){
+  const base = part==='bot' ? _PNT : _JKT;
+  return _svg(base + `<rect x="14" y="58" width="92" height="24" rx="4" fill="#fff" stroke="#1ab394" stroke-width="2"/><text x="60" y="74" text-anchor="middle" font-size="13" font-weight="700" fill="#2f4050" font-family="sans-serif">${txt}</text>`);
+}
+// 카테고리·값 → SVG
+function studioSvg(key, val){
+  try{
+    switch(key){
+      case 'lapel': return _lapel(val);
+      case 'vent': return _vent(val);
+      case 'lining': return _lining(val);
+      case 'hak': return _pocket(val);
+      case 'amf': return _stitch(val);
+      case 'ticketP': return _ticket(val);
+      case 'botTuck': return _btuck(val);
+      case 'botFrontP': return _bfront(val);
+      case 'botBackP': return _bback(val);
+      case 'botHem': return _bhem(val);
+      case 'obi': return _obi(val);
+      case 'vestLapel': return _vest(val==='라펠있음'?'vl-라펠':'vl-노라펠');
+      case 'vestBack': return _vest(val==='벨트'?'vb-벨트':'vb-무벨트');
+      case 'vestPocketN': return _vest(val==='4개'?'vp-4':'vp-2');
+      case 'goji': return _label('top', val);
+      case 'shldSew': return _label('top', val.replace(/\(.*\)/,''));
+      case 'lapelDet': return _label('top', val);
+      default: return _label((STUDIO_CATS.find(c=>c.key===key)||{}).part||'top', val);
+    }
+  }catch(e){ return ''; }
+}
+
 /* ─── 디자인 스튜디오 (옵션별 실사 이미지 스텝 셀렉터) ─── */
 const STUDIO_CATS = [
   { part:'top', key:'lapel',    label:'라펠 모양',   opts:[['노치드','노치드'],['피크드','피크드'],['숄','숄']] },
@@ -7458,7 +7597,10 @@ const STUDIO_CATS = [
   { part:'bot', key:'botFrontP',label:'앞 주머니',   opts:[['사이드','사이드'],['슬랜티드','슬랜티드'],['크로스','크로스'],['없음','없음']] },
   { part:'bot', key:'botBackP', label:'뒷 주머니',   opts:[['양쪽-입술','양쪽 입술'],['양쪽-단추','양쪽 단추'],['한쪽','한쪽'],['없음','없음']] },
   { part:'bot', key:'botHem',   label:'밑단 모양',   opts:[['기본','기본'],['턴업','턴업'],['카브라','카브라']] },
-  { part:'bot', key:'obi',      label:'오비 벨트',   opts:[['보통','보통'],['마고리','마고리']] }
+  { part:'bot', key:'obi',      label:'오비 벨트',   opts:[['보통','보통'],['마고리','마고리']] },
+  { part:'vest', key:'vestLapel',  label:'조끼 칼라',  opts:[['라펠없음','라펠 없음(V넥)'],['라펠있음','라펠 있음(숄)']] },
+  { part:'vest', key:'vestBack',   label:'조끼 뒷벨트',opts:[['벨트','벨트 있음'],['무벨트','벨트 없음']] },
+  { part:'vest', key:'vestPocketN',label:'조끼 주머니',opts:[['2개','2개'],['4개','4개']] }
 ];
 function studioCats(){ return STUDIO_CATS.filter(c=>c.part===(state.studioPart||'top')); }
 function studioImgKey(key,val){ return key+'__'+val; }
@@ -7479,6 +7621,7 @@ function renderStudio(){
       <div class="std-tabs">
         <button class="std-tab ${state.studioPart==='top'?'active':''}" onclick="studioPart('top')"><i class="ti ti-hanger"></i> 상의 디자인</button>
         <button class="std-tab ${state.studioPart==='bot'?'active':''}" onclick="studioPart('bot')"><i class="ti ti-walk"></i> 하의 디자인</button>
+        <button class="std-tab ${state.studioPart==='vest'?'active':''}" onclick="studioPart('vest')"><i class="ti ti-vest"></i> 조끼 디자인</button>
         <div style="flex:1"></div>
         <button class="action-btn" onclick="studioReset()"><i class="ti ti-refresh"></i>처음부터</button>
       </div>
@@ -7490,7 +7633,7 @@ function renderStudio(){
     const img = studioGetImg(c.key,val);
     const sel = state.studioPick[c.key]===val;
     return `<div class="std-card ${sel?'sel':''}" onclick="studioPick('${c.key}','${val}')">
-      <div class="std-card-img">${img?`<img src="${img}">`:`<div class="std-noimg"><i class="ti ti-photo"></i><span>이미지 없음</span></div>`}
+      <div class="std-card-img">${img?`<img src="${img}">`:(studioSvg(c.key,val)||`<div class="std-noimg"><i class="ti ti-photo"></i><span>이미지 없음</span></div>`)}
         <label class="std-up" onclick="event.stopPropagation()"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="studioUpload('${c.key}','${val}',this)"></label>
         ${sel?'<div class="std-check"><i class="ti ti-circle-check-filled"></i></div>':''}
       </div>
@@ -7541,19 +7684,19 @@ function studioUpload(key,val,inp){
 function studioSampleHTML(){
   const cats=studioCats();
   const picks=cats.filter(c=>state.studioPick[c.key]);
-  const baseImg = state.studioPart==='bot' ? (typeof IMGS!=='undefined'?IMGS.pants:'') : (typeof IMGS!=='undefined'?IMGS.jacket:'');
+  const baseImg = state.studioPart==='bot' ? (typeof IMGS!=='undefined'?IMGS.pants:'') : state.studioPart==='vest' ? (typeof IMGS!=='undefined'?IMGS.vest:'') : (typeof IMGS!=='undefined'?IMGS.jacket:'');
   const tiles=picks.map(c=>{
     const val=state.studioPick[c.key];
     const label=(c.opts.find(o=>o[0]===val)||[val,val])[1];
     const img=studioGetImg(c.key,val);
     return `<div class="smp-tile">
-      <div class="smp-tile-img">${img?`<img src="${img}">`:`<div class="std-noimg"><i class="ti ti-photo"></i></div>`}</div>
+      <div class="smp-tile-img">${img?`<img src="${img}">`:(studioSvg(c.key,val)||`<div class="std-noimg"><i class="ti ti-photo"></i></div>`)}</div>
       <div class="smp-tile-cat">${c.label}</div>
       <div class="smp-tile-val">${label}</div>
     </div>`;
   }).join('');
   return `<div class="std-sample">
-    <div class="smp-head"><i class="ti ti-sparkles" style="color:#c8914a"></i> <b>${state.studioPart==='bot'?'하의':'상의'} 디자인 샘플</b> <span style="color:var(--t3);font-size:12.5px">— 선택 ${picks.length}항목</span></div>
+    <div class="smp-head"><i class="ti ti-sparkles" style="color:#c8914a"></i> <b>${state.studioPart==='bot'?'하의':state.studioPart==='vest'?'조끼':'상의'} 디자인 샘플</b> <span style="color:var(--t3);font-size:12.5px">— 선택 ${picks.length}항목</span></div>
     <div class="smp-body">
       <div class="smp-base">${baseImg?`<img src="data:image/png;base64,${baseImg}">`:''}<div class="smp-base-cap">기준 도식 (2D)</div></div>
       <div class="smp-tiles">${tiles||'<div class="empty-state" style="padding:30px"><i class="ti ti-photo"></i><div class="empty-state-title">선택한 디자인이 없습니다</div></div>'}</div>
