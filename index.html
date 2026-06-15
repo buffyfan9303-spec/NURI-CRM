@@ -1542,6 +1542,15 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .std-card-img .opt-svg{aspect-ratio:1/1}
 .smp-tile-img .opt-svg{aspect-ratio:1/1}
 .wo-d-svg .opt-svg{width:64px;height:74px;background:#fff}
+.wo-d-3v{padding:6px}
+.jk3{display:flex;gap:10px;align-items:flex-end}
+.jk3c{text-align:center}
+.jk3c span{display:block;font-size:9px;color:#666;margin-top:2px}
+.jk3v{width:78px;height:104px;background:#fff;border:.5px solid #ddd}
+.jk3v .opt-svg{width:100%;height:100%}
+@media print{ .jk3v{width:72px;height:96px} }
+.live-preview .lp-svg{width:108px}
+.live-preview .lp-svg .opt-svg{height:160px;width:auto}
 /* 44차 — 라이브 합성 프리뷰 */
 .live-preview{background:var(--sf2);border:1px solid var(--bd);border-radius:3px;padding:12px 14px;margin-bottom:16px}
 .lp-head{font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -5430,6 +5439,12 @@ function autoSizeAll(){
       }
     }
   }
+  // 조끼·코트 사이즈 스펙 자동 (폼 측정칸 있으면 채움 — 작지서는 항상 스펙 자동)
+  try{
+    const fillSpec=(pid,sid,pre,tbl,keys)=>{ const p=$(pid)?.value,s=$(sid)?.value; if(p&&s&&typeof tbl!=='undefined'&&tbl[p]&&tbl[p][s]){ const sp=tbl[p][s]; keys.forEach(k=>{ if(sp[k]!=null && typeof setPatternVal==='function') setPatternVal(`sz-${pre}-${k}-pat`, sp[k]); }); } };
+    if(typeof PATTERN_SPEC_VEST!=='undefined') fillSpec('#o-pVest','#o-sVest','vest',PATTERN_SPEC_VEST,['chest','waist','shoul','len']);
+    if(typeof PATTERN_SPEC_COAT!=='undefined') fillSpec('#o-pCoat','#o-sCoat','coat',PATTERN_SPEC_COAT,['chest','waist','shoul','slv','len','vent']);
+  }catch(e){}
   applyLapelDefault();
   computePrice();
 }
@@ -6057,6 +6072,7 @@ function buildWorkOrder(){
   let page1 = `<div class="wo-sheet">
     <div class="wo-sec">MTM 정장 작업지시서 — 상의 (싱글 작지서 양식)</div>
     ${head}${optTop}${sizeTop}${memoTop}
+    ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _f3?(_f3.color+' '+(_f3.comp||'')):'')}</div></div>`; })():''}
     ${(()=>{ if(typeof studioSvg!=='function')return ''; const dd=[['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak],['amf','AMF',o.amf],['ticketP','티켓P',o.ticketP]]; const ds=dd.map(([k,lb,v])=>{ if(!v||v==='없음'&&k==='amf')return ''; const s=studioSvg(k,v); return s?`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`:''; }).filter(Boolean); return ds.length?`<div class="wo-diag">${ds.join('')}</div>`:''; })()}
     <div class="wo-foot"><span>인쇄 <span id="wo-pd"></span> · 담당 ${ (state.user||{}).name||'관리자' }</span><span class="sign">매장 확인 __________ &nbsp; 공장 수령 __________</span><b>${shopName()}</b></div>
   </div>`;
@@ -6108,7 +6124,7 @@ function buildWorkOrder(){
     let diag = '';
     if (typeof IMGS !== 'undefined'){
       const ds = [];
-      if ((q.s||0)+(q.j||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.jacket}"><div class="c">상의 (싱글 자켓)</div></div>`);
+      if ((q.s||0)+(q.j||0) > 0 && typeof composeJacket3View==='function'){ const _fab=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composeJacket3View(o, fabHex(_fab?_fab.color:''), _fab?(_fab.color+' '+(_fab.comp||'')):'')}</div>`); } else if ((q.s||0)+(q.j||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.jacket}"><div class="c">상의 (싱글 자켓)</div></div>`);
       // 선택 옵션 도식 자동표시 (원본 명세서 10번)
       if (typeof studioSvg==='function'){
         const woDia = [['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak]];
@@ -7616,33 +7632,77 @@ function _fabDefs(hex, patt){
 }
 function _fill(hex, patt){ const d=_fabDefs(hex,patt); return {fill:d.id?`url(#${d.id})`:hex, defs:d.def}; }
 
+function _jLapel(o, dl, st, hex){
+  // 라펠/칼라 (정면) — 노치드/피크드/숄
+  const facing = (o.lining==='전체') ? _lighten(hex,30) : _lighten(hex,18);
+  const collarFill = _lighten(hex,24);
+  if (o.lapel==='숄'){
+    return `<path d="M94 64 C80 80 80 132 90 170 L100 174 L110 170 C120 132 120 80 106 64 C103 62 97 62 94 64 Z" fill="${facing}" stroke="${st}" stroke-width="1.2"/>
+      <path d="M94 64 C82 80 82 132 91 168 M106 64 C118 80 118 132 109 168" fill="none" stroke="${dl}" stroke-width="1.6"/>`;
+  }
+  if (o.lapel==='피크드'){
+    return `<path d="M100 44 C90 44 82 50 78 58 L94 66 C97 64 103 64 106 66 L122 58 C118 50 110 44 100 44 Z" fill="${collarFill}" stroke="${st}" stroke-width="1.2"/>
+      <path d="M94 66 C86 74 84 86 86 100 L88 168 C92 178 97 184 100 186 C103 184 108 178 112 168 L114 100 C116 86 114 74 106 66" fill="${facing}" stroke="${st}" stroke-width="1"/>
+      <path d="M86 100 L72 88 L90 98 Z M114 100 L128 88 L110 98 Z" fill="${collarFill}" stroke="${dl}" stroke-width="1.4"/>
+      <path d="M88 100 L88 166 M112 100 L112 166" fill="none" stroke="${dl}" stroke-width="1.4"/>`;
+  }
+  // 노치드 (기본)
+  return `<path d="M100 44 C90 44 82 50 78 58 L94 66 C97 64 103 64 106 66 L122 58 C118 50 110 44 100 44 Z" fill="${collarFill}" stroke="${st}" stroke-width="1.2"/>
+    <path d="M94 66 C86 74 84 86 86 100 L88 168 C92 178 97 184 100 186 C103 184 108 178 112 168 L114 100 C116 86 114 74 106 66" fill="${facing}" stroke="${st}" stroke-width="1"/>
+    <path d="M86 100 L76 92 L84 86 Z M114 100 L124 92 L116 86 Z" fill="${collarFill}" stroke="${dl}" stroke-width="1.4"/>
+    <path d="M88 100 L88 166 M112 100 L112 166" fill="none" stroke="${dl}" stroke-width="1.4"/>`;
+}
+function _jPockets(o, dl){
+  let p='';
+  if (o.hak==='아웃포켓') p=`<path d="M64 210 H98 V234 H64 Z" fill="none" stroke="${dl}" stroke-width="1.6"/><path d="M102 210 H136 V234 H102 Z" fill="none" stroke="${dl}" stroke-width="1.6"/>`;
+  else if (o.hak==='라운드아웃') p=`<path d="M64 210 H98 V228 Q81 240 64 228 Z" fill="none" stroke="${dl}" stroke-width="1.6"/><path d="M102 210 H136 V228 Q119 240 102 228 Z" fill="none" stroke="${dl}" stroke-width="1.6"/>`;
+  else if (o.hak==='바르카') p=`<path d="M64 214 Q81 206 98 214 L96 222 Q81 215 66 222 Z" fill="none" stroke="${dl}" stroke-width="1.6"/><path d="M102 214 Q119 206 136 214 L134 222 Q119 215 104 222 Z" fill="none" stroke="${dl}" stroke-width="1.6"/>`;
+  else p=`<path d="M66 214 L98 214 L96 230 L68 230 Z" fill="none" stroke="${dl}" stroke-width="1.6"/><path d="M102 214 L134 214 L132 230 L104 230 Z" fill="none" stroke="${dl}" stroke-width="1.6"/>`;
+  return p;
+}
+// 정교한 자켓 — 정면 (곡선 소매·커프스·라펠·웰트·플랩 주머니)
 function composeJacket(o, hex, patt){
   o=o||{}; hex=hex||fabHex();
-  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55);
-  const dl=_detailStroke(hex);
-  const f=_fill(hex,patt);
-  let lapel, collar;
-  collar=`<path d="M100 30 L80 38 L92 46 L100 40 L108 46 L120 38 Z" fill="${_lighten(hex,24)}" stroke="${st}" stroke-width="1.4"/>`;
-  if (o.lapel==='피크드') lapel=`<path d="M84 44 L98 56 L86 52 L90 128 L100 134 L110 128 L114 52 L102 56 L116 44" fill="none" stroke="${dl}" stroke-width="2" stroke-linejoin="round"/>`;
-  else if (o.lapel==='숄') lapel=`<path d="M86 46 C78 62 80 102 90 130 L100 134 L110 130 C120 102 122 62 114 46" fill="none" stroke="${dl}" stroke-width="2"/>`;
-  else lapel=`<path d="M84 44 L92 54 L86 60 L90 128 L100 134 L110 128 L114 60 L108 54 L116 44" fill="none" stroke="${dl}" stroke-width="2" stroke-linejoin="round"/>`;
-  let lining=''; if(o.lining==='전체') lining=`<path d="M90 56 L110 56 L100 96 Z" fill="${_lighten(hex,40)}" opacity=".85"/>`; else if(o.lining) lining=`<path d="M93 56 L107 56 L100 78 Z" fill="${_lighten(hex,40)}" opacity=".7"/>`;
-  let pk;
-  if (o.hak==='아웃포켓') pk=`<rect x="60" y="156" width="32" height="22" fill="none" stroke="${dl}" stroke-width="2"/><rect x="108" y="156" width="32" height="22" fill="none" stroke="${dl}" stroke-width="2"/>`;
-  else if (o.hak==='라운드아웃') pk=`<path d="M60 156 H92 V174 Q76 184 60 174 Z" fill="none" stroke="${dl}" stroke-width="2"/><path d="M108 156 H140 V174 Q124 184 108 174 Z" fill="none" stroke="${dl}" stroke-width="2"/>`;
-  else if (o.hak==='바르카') pk=`<path d="M60 160 Q76 152 92 160 L90 168 Q76 161 62 168 Z" fill="none" stroke="${dl}" stroke-width="2"/><path d="M108 160 Q124 152 140 160 L138 168 Q124 161 110 168 Z" fill="none" stroke="${dl}" stroke-width="2"/>`;
-  else pk=`<path d="M60 158 H92 V170 H60 Z" fill="none" stroke="${dl}" stroke-width="2"/><path d="M108 158 H140 V170 H108 Z" fill="none" stroke="${dl}" stroke-width="2"/>`;
-  const chest=`<line x1="72" y1="94" x2="90" y2="88" stroke="${dl}" stroke-width="2"/>`;
-  const btn=`<circle cx="100" cy="140" r="3" fill="${dl}"/><circle cx="100" cy="166" r="3" fill="${dl}"/>`;
-  const amf = (o.amf&&o.amf!=='없음') ? `<path d="M88 60 L88 126" fill="none" stroke="#1ab394" stroke-width="1.4" stroke-dasharray="2 3"/>${(o.amf.indexOf('전체')>=0||o.amf==='본봉스티치')?'<path d="M112 60 L112 126" fill="none" stroke="#1ab394" stroke-width="1.4" stroke-dasharray="2 3"/>':''}` : '';
-  const ticket = (o.ticketP==='유') ? `<path d="M108 142 H132 V150 H108 Z" fill="none" stroke="#1ab394" stroke-width="1.8"/>` : '';
-  let vIn=''; if(o.vent==='센터벤트') vIn=`<line x1="178" y1="180" x2="178" y2="206" stroke="${dl}" stroke-width="2"/>`; else if(o.vent==='사이드벤트') vIn=`<line x1="166" y1="180" x2="166" y2="206" stroke="${dl}" stroke-width="2"/><line x1="190" y1="180" x2="190" y2="206" stroke="${dl}" stroke-width="2"/>`;
-  const back=`<path d="M178 96 L164 102 L160 110 L158 206 L198 206 L196 110 L192 102 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.4"/><text x="178" y="92" text-anchor="middle" font-size="9" fill="var(--t3)" font-family="sans-serif">뒤</text>${vIn}`;
-  return `<svg class="opt-svg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>
-    <path d="M58 50 L30 60 L24 196 L52 204 L60 78 Z" fill="${f.fill}" stroke="${st}" stroke-width="2"/>
-    <path d="M142 50 L170 60 L176 196 L148 204 L140 78 Z" fill="${f.fill}" stroke="${st}" stroke-width="2"/>
-    <path d="M100 30 L66 40 L58 50 L60 90 L54 210 L146 210 L140 90 L142 50 L134 40 Z" fill="${f.fill}" stroke="${st}" stroke-width="2"/>
-    ${collar}${lining}${lapel}<line x1="100" y1="134" x2="100" y2="208" stroke="${dl}" stroke-width="1"/>${chest}${pk}${amf}${ticket}${btn}${back}</svg>`;
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,patt);
+  const sleeveL=`<path d="M66 62 C52 70 44 94 42 120 L36 218 C35 228 60 232 66 222 L82 134 C84 108 80 86 86 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>`;
+  const sleeveR=`<path d="M134 62 C148 70 156 94 158 120 L164 218 C165 228 140 232 134 222 L118 134 C116 108 120 86 114 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>`;
+  const cuffs=`<path d="M44 210 C50 218 58 219 66 213 M156 210 C150 218 142 219 134 213" fill="none" stroke="${dl}" stroke-width="1"/><line x1="52" y1="212" x2="52" y2="224" stroke="${dl}" stroke-width="0.8"/><line x1="148" y1="212" x2="148" y2="224" stroke="${dl}" stroke-width="0.8"/>`;
+  const body=`<path d="M100 40 C86 40 78 48 70 58 C62 64 60 74 62 96 L70 264 C70 272 78 276 100 276 C122 276 130 272 130 264 L138 96 C140 74 138 64 130 58 C122 48 114 40 100 40 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.8"/>`;
+  const lapel=_jLapel(o, dl, st, hex);
+  const stand=`<line x1="100" y1="186" x2="100" y2="268" stroke="${dl}" stroke-width="0.8"/>`;
+  const btn=`<circle cx="100" cy="172" r="3.4" fill="${dl}"/><circle cx="100" cy="200" r="3.4" fill="${dl}"/>`;
+  const welt=`<path d="M78 122 L96 114" fill="none" stroke="${dl}" stroke-width="2"/>`;
+  const pk=_jPockets(o, dl);
+  const amf=(o.amf&&o.amf!=='없음')?`<path d="M84 80 C82 110 82 150 88 176" fill="none" stroke="#1ab394" stroke-width="1.2" stroke-dasharray="2 3"/>${(o.amf.indexOf('전체')>=0||o.amf==='본봉스티치')?'<path d="M116 80 C118 110 118 150 112 176" fill="none" stroke="#1ab394" stroke-width="1.2" stroke-dasharray="2 3"/>':''}`:'';
+  const ticket=(o.ticketP==='유')?`<path d="M104 196 L132 196 L131 206 L104 206 Z" fill="none" stroke="#1ab394" stroke-width="1.4"/>`:'';
+  return `<svg class="opt-svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>${sleeveL}${sleeveR}${cuffs}${body}${lapel}${stand}${welt}${pk}${amf}${ticket}${btn}</svg>`;
+}
+// 자켓 측면
+function _jSide(o, hex){
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+  let vent=''; if(o.vent==='사이드벤트') vent=`<line x1="92" y1="206" x2="92" y2="262" stroke="${dl}" stroke-width="1.2"/>`;
+  return `<svg class="opt-svg" viewBox="0 0 130 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <path d="M64 60 C50 66 44 88 44 112 L40 224 C40 234 58 236 66 226 L74 128 C76 102 72 80 78 66 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>
+    <path d="M70 44 C58 46 50 54 48 64 C44 76 44 92 46 102 L52 266 C52 274 60 278 76 276 C90 274 98 268 100 256 L98 94 C98 78 94 64 90 56 C86 48 78 44 70 44 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.8"/>
+    <path d="M70 46 C60 48 52 56 50 66 L54 70 C58 60 66 52 74 50 Z" fill="${_lighten(hex,22)}" stroke="${st}" stroke-width="1"/>
+    <path d="M54 70 C50 88 52 124 60 154" fill="none" stroke="${dl}" stroke-width="1"/>
+    <path d="M62 204 L92 200 L92 216 L64 220 Z" fill="none" stroke="${dl}" stroke-width="1.3"/>${vent}</svg>`;
+}
+// 자켓 후면
+function _jBack(o, hex){
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+  let vent=''; if(o.vent==='센터벤트') vent=`<line x1="100" y1="236" x2="100" y2="276" stroke="${dl}" stroke-width="1.4"/>`; else if(o.vent==='사이드벤트') vent=`<line x1="80" y1="240" x2="80" y2="276" stroke="${dl}" stroke-width="1.4"/><line x1="120" y1="240" x2="120" y2="276" stroke="${dl}" stroke-width="1.4"/>`;
+  return `<svg class="opt-svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <path d="M66 62 C52 70 44 94 42 120 L36 218 C35 228 60 232 66 222 L82 134 C84 108 80 86 86 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>
+    <path d="M134 62 C148 70 156 94 158 120 L164 218 C165 228 140 232 134 222 L118 134 C116 108 120 86 114 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>
+    <path d="M100 42 C86 42 78 50 70 58 C62 64 60 74 62 96 L70 266 C70 274 78 278 100 278 C122 278 130 274 130 266 L138 96 C140 74 138 64 130 58 C122 50 114 42 100 42 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.8"/>
+    <path d="M76 48 C84 44 116 44 124 48 L122 60 C112 56 88 56 78 60 Z" fill="${_lighten(hex,20)}" stroke="${st}" stroke-width="1.1"/>
+    <path d="M78 112 C80 162 80 220 76 264 M122 112 C120 162 120 220 124 264" fill="none" stroke="${dl}" stroke-width="0.8" stroke-dasharray="3 3"/>${vent}</svg>`;
+}
+// 3면도 (정면+측면+후면)
+function composeJacket3View(o, hex, patt){
+  o=o||{}; hex=hex||fabHex();
+  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composeJacket(o,hex,patt)}</div><span>정면</span></div><div class="jk3c"><div class="jk3v">${_jSide(o,hex)}</div><span>측면</span></div><div class="jk3c"><div class="jk3v">${_jBack(o,hex)}</div><span>후면</span></div></div>`;
 }
 function composePants(o, hex, patt){
   o=o||{}; hex=hex||fabHex();
