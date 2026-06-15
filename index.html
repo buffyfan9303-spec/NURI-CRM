@@ -1564,6 +1564,7 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .ds-row .jk3v{width:104px;height:140px}
 .ds-spec{width:160px;height:200px;border:.5px solid #ddd;background:#fff}
 .ds-spec .opt-svg{width:100%;height:100%}
+.ds-legend{font-size:11px;color:#555;background:#fdeaec;border:1px solid #f3c0c5;border-radius:3px;padding:5px 9px;margin-top:8px}
 .ds-foot{font-size:10px;color:#999;border-top:1px solid #ddd;padding-top:6px;margin-top:8px}
 /* 44차 — 라이브 합성 프리뷰 */
 .live-preview{background:var(--sf2);border:1px solid var(--bd);border-radius:3px;padding:12px 14px;margin-bottom:16px}
@@ -7694,10 +7695,10 @@ function composeJacket(o, hex, patt){
   return `<svg class="opt-svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>${sleeveL}${sleeveR}${cuffs}${body}${dart}${lapel}${stand}${welt}${pk}${amf}${ticket}${btn}</svg>`;
 }
 // 자켓 측면
-function _jSide(o, hex){
-  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+function _jSide(o, hex, patt){
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,patt||'');
   let vent=''; if(o.vent==='사이드벤트') vent=`<line x1="92" y1="206" x2="92" y2="262" stroke="${dl}" stroke-width="1.2"/>`;
-  return `<svg class="opt-svg" viewBox="0 0 130 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  return `<svg class="opt-svg" viewBox="0 0 130 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>
     <path d="M64 60 C50 66 44 88 44 112 L40 224 C40 234 58 236 66 226 L74 128 C76 102 72 80 78 66 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>
     <path d="M70 44 C58 46 50 54 48 64 C44 76 44 92 46 102 L52 266 C52 274 60 278 76 276 C90 274 98 268 100 256 L98 94 C98 78 94 64 90 56 C86 48 78 44 70 44 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.8"/>
     <path d="M70 46 C60 48 52 56 50 66 L54 70 C58 60 66 52 74 50 Z" fill="${_lighten(hex,22)}" stroke="${st}" stroke-width="1"/>
@@ -7705,10 +7706,10 @@ function _jSide(o, hex){
     <path d="M62 204 L92 200 L92 216 L64 220 Z" fill="none" stroke="${dl}" stroke-width="1.3"/>${vent}</svg>`;
 }
 // 자켓 후면
-function _jBack(o, hex){
-  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+function _jBack(o, hex, patt){
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,patt||'');
   let vent=''; if(o.vent==='센터벤트') vent=`<line x1="100" y1="236" x2="100" y2="276" stroke="${dl}" stroke-width="1.4"/>`; else if(o.vent==='사이드벤트') vent=`<line x1="80" y1="240" x2="80" y2="276" stroke="${dl}" stroke-width="1.4"/><line x1="120" y1="240" x2="120" y2="276" stroke="${dl}" stroke-width="1.4"/>`;
-  return `<svg class="opt-svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  return `<svg class="opt-svg" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>
     <path d="M66 62 C52 70 44 94 42 120 L36 218 C35 228 60 232 66 222 L82 134 C84 108 80 86 86 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>
     <path d="M134 62 C148 70 156 94 158 120 L164 218 C165 228 140 232 134 222 L118 134 C116 108 120 86 114 70 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.6"/>
     <path d="M100 42 C86 42 78 50 70 58 C62 64 60 74 62 96 L70 266 C70 274 78 278 100 278 C122 278 130 274 130 266 L138 96 C140 74 138 64 130 58 C122 50 114 42 100 42 Z" fill="${f.fill}" stroke="${st}" stroke-width="1.8"/>
@@ -7718,7 +7719,7 @@ function _jBack(o, hex){
 // 3면도 (정면+측면+후면)
 function composeJacket3View(o, hex, patt){
   o=o||{}; hex=hex||fabHex();
-  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composeJacket(o,hex,patt)}</div><span>정면</span></div><div class="jk3c"><div class="jk3v">${_jSide(o,hex)}</div><span>측면</span></div><div class="jk3c"><div class="jk3v">${_jBack(o,hex)}</div><span>후면</span></div></div>`;
+  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composeJacket(o,hex,patt)}</div><span>정면</span></div><div class="jk3c"><div class="jk3v">${_jSide(o,hex,patt)}</div><span>측면</span></div><div class="jk3c"><div class="jk3v">${_jBack(o,hex,patt)}</div><span>후면</span></div></div>`;
 }
 function composePants(o, hex, patt){
   o=o||{}; hex=hex||fabHex();
@@ -7742,33 +7743,36 @@ function composeVest(o, hex, patt){
 }
 /* ─── POM 치수선 + 다면도 + 스펙 (표준 테크니컬 플랫) ─── */
 const _DIMC = '#c8914a';
-function _dimH(x1, x2, y, label){
-  return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${_DIMC}" stroke-width="0.8"/><path d="M${x1} ${y} l6 -3 v6 z" fill="${_DIMC}"/><path d="M${x2} ${y} l-6 -3 v6 z" fill="${_DIMC}"/><text x="${(x1+x2)/2}" y="${y-4}" text-anchor="middle" font-size="10" fill="${_DIMC}" font-weight="700" font-family="sans-serif">${label}</text>`;
+function _dimH(x1, x2, y, label, d){
+  const ch=(typeof d==='number'&&Math.abs(d)>=0.1), c=ch?'#d64545':_DIMC, t=ch?`${label} (${d>0?'+':''}${Math.round(d*10)/10})`:label;
+  return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${c}" stroke-width="${ch?1.4:0.8}"/><path d="M${x1} ${y} l6 -3 v6 z" fill="${c}"/><path d="M${x2} ${y} l-6 -3 v6 z" fill="${c}"/><text x="${(x1+x2)/2}" y="${y-4}" text-anchor="middle" font-size="10" fill="${c}" font-weight="700" font-family="sans-serif">${t}</text>`;
 }
-function _dimV(y1, y2, x, label){
-  return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${_DIMC}" stroke-width="0.8"/><path d="M${x} ${y1} l-3 6 h6 z" fill="${_DIMC}"/><path d="M${x} ${y2} l-3 -6 h6 z" fill="${_DIMC}"/><text x="${x+5}" y="${(y1+y2)/2+3}" font-size="10" fill="${_DIMC}" font-weight="700" font-family="sans-serif">${label}</text>`;
+function _dimV(y1, y2, x, label, d){
+  const ch=(typeof d==='number'&&Math.abs(d)>=0.1), c=ch?'#d64545':_DIMC, t=ch?`${label} (${d>0?'+':''}${Math.round(d*10)/10})`:label;
+  return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${c}" stroke-width="${ch?1.4:0.8}"/><path d="M${x} ${y1} l-3 6 h6 z" fill="${c}"/><path d="M${x} ${y2} l-3 -6 h6 z" fill="${c}"/><text x="${x+5}" y="${(y1+y2)/2+3}" font-size="10" fill="${c}" font-weight="700" font-family="sans-serif">${t}</text>`;
 }
-function _dimL(x1,y1,x2,y2,label){
-  const mx=(x1+x2)/2, my=(y1+y2)/2;
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${_DIMC}" stroke-width="0.8"/><circle cx="${x1}" cy="${y1}" r="2" fill="${_DIMC}"/><circle cx="${x2}" cy="${y2}" r="2" fill="${_DIMC}"/><text x="${mx-16}" y="${my}" font-size="10" fill="${_DIMC}" font-weight="700" font-family="sans-serif">${label}</text>`;
+function _dimL(x1,y1,x2,y2,label,d){
+  const mx=(x1+x2)/2, my=(y1+y2)/2, ch=(typeof d==='number'&&Math.abs(d)>=0.1), c=ch?'#d64545':_DIMC, t=ch?`${label} (${d>0?'+':''}${Math.round(d*10)/10})`:label;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${ch?1.4:0.8}"/><circle cx="${x1}" cy="${y1}" r="2" fill="${c}"/><circle cx="${x2}" cy="${y2}" r="2" fill="${c}"/><text x="${mx-16}" y="${my}" font-size="10" fill="${c}" font-weight="700" font-family="sans-serif">${t}</text>`;
 }
 // 측정값 읽기 (작지서)
 function _woM(part, key){ try{ const v=(typeof getCmVal==='function')?getCmVal(`sz-${part}-${key}-fin`):0; return v? Math.round(v*10)/10 : 0; }catch(e){ return 0; } }
 // 자켓 스펙 도식 (정면 + POM 치수선)
-function composeJacketSpec(o, hex, m){
-  m=m||{};
+function composeJacketSpec(o, hex, m, prev){
+  m=m||{}; prev=prev||{};
   const base=composeJacket(o, hex||'#d7dde3', '');
   const lab=(k,d)=> m[k]? `${d} ${m[k]}` : d;
-  const dims = _dimH(70,130,48, lab('shoul','어깨'))      // 어깨너비
-    + _dimH(62,138,128, lab('chest','가슴'))               // 가슴둘레(반)
-    + _dimL(66,64,40,210, lab('slvL','소매'))              // 소매장
-    + _dimV(58,276,190, lab('len','기장'));                // 상의길이
+  const D=k=> (m[k]&&prev[k])?(m[k]-prev[k]):0;
+  const dims = _dimH(70,130,48, lab('shoul','어깨'), D('shoul'))
+    + _dimH(62,138,128, lab('chest','가슴'), D('chest'))
+    + _dimL(66,64,40,210, lab('slvL','소매'), D('slvL'))
+    + _dimV(58,276,190, lab('len','기장'), D('len'));
   return base.replace('</svg>', dims+'</svg>');
 }
 // 하의 후면 (뒷주머니·다트·크리스)
-function composePantsBack(o, hex){
+function composePantsBack(o, hex, patt){
   o=o||{}; hex=hex||fabHex();
-  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,patt||'');
   let bp=''; const welt=(x)=>`<path d="M${x} 60 H${x+30} V70 H${x} Z" fill="none" stroke="${dl}" stroke-width="1.4"/>`;
   if(o.botBackP==='양쪽-입술') bp=welt(50)+welt(100); else if(o.botBackP==='양쪽-단추') bp=welt(50)+welt(100)+`<circle cx="65" cy="65" r="2" fill="${dl}"/><circle cx="115" cy="65" r="2" fill="${dl}"/>`; else if(o.botBackP==='한쪽') bp=welt(75);
   const dart=`<path d="M64 42 L66 70 M116 42 L114 70" fill="none" stroke="${dl}" stroke-width="1"/>`;
@@ -7777,28 +7781,29 @@ function composePantsBack(o, hex){
     <rect x="40" y="22" width="100" height="18" fill="${_lighten(hex,12)}" stroke="${st}" stroke-width="2"/>
     <path d="M65 40 L65 208 M115 40 L115 208" fill="none" stroke="${dl}" stroke-width="0.6" stroke-dasharray="3 3"/>${dart}${bp}</svg>`;
 }
-function composeVestBack(o, hex){
+function composeVestBack(o, hex, patt){
   o=o||{}; hex=hex||fabHex();
-  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,'');
+  const st=_lum(hex)<0.5?'#0d1a2b':_darken(hex,55), dl=_detailStroke(hex), f=_fill(hex,patt||'');
   const body=`<path d="M40 26 L66 16 L100 30 L134 16 L160 26 L150 150 L100 188 L50 150 Z" fill="${_lighten(hex,8)}" stroke="${st}" stroke-width="2"/>`;
   const belt = o.vestBack==='벨트' ? `<line x1="50" y1="120" x2="150" y2="120" stroke="${dl}" stroke-width="2"/><rect x="92" y="115" width="16" height="10" fill="${_lighten(hex,8)}" stroke="${dl}" stroke-width="1.4"/><circle cx="100" cy="120" r="2" fill="${dl}"/>` : '';
   const seam=`<path d="M100 30 L100 186" fill="none" stroke="${dl}" stroke-width="0.6" stroke-dasharray="3 3"/>`;
   return `<svg class="opt-svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"><defs>${f.defs}</defs>${body}${seam}${belt}</svg>`;
 }
 function composePants2View(o, hex, patt){
-  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composePants(o,hex,patt)}</div><span>앞</span></div><div class="jk3c"><div class="jk3v">${composePantsBack(o,hex)}</div><span>뒤</span></div></div>`;
+  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composePants(o,hex,patt)}</div><span>앞</span></div><div class="jk3c"><div class="jk3v">${composePantsBack(o,hex,patt)}</div><span>뒤</span></div></div>`;
 }
 function composeVest2View(o, hex, patt){
-  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composeVest(o,hex,patt)}</div><span>앞</span></div><div class="jk3c"><div class="jk3v">${composeVestBack(o,hex)}</div><span>뒤</span></div></div>`;
+  return `<div class="jk3"><div class="jk3c"><div class="jk3v">${composeVest(o,hex,patt)}</div><span>앞</span></div><div class="jk3c"><div class="jk3v">${composeVestBack(o,hex,patt)}</div><span>뒤</span></div></div>`;
 }
 // 하의 스펙 (POM: 허리·인심·밑단폭)
-function composePantsSpec(o, hex, m){
-  m=m||{};
+function composePantsSpec(o, hex, m, prev){
+  m=m||{}; prev=prev||{};
   const base=composePants(o, hex||'#d7dde3', '');
   const lab=(k,d)=> m[k]? `${d} ${m[k]}` : d;
-  const dims = _dimH(40,140,12, lab('w','허리'))           // 허리둘레(반)
-    + _dimV(96,208,150, lab('in','인심'))                  // 인심
-    + _dimH(48,82,214, lab('bt','밑단'));                  // 밑단폭
+  const D=k=> (m[k]&&prev[k])?(m[k]-prev[k]):0;
+  const dims = _dimH(40,140,12, lab('w','허리'), D('w'))
+    + _dimV(96,208,150, lab('in','인심'), D('in'))
+    + _dimH(48,82,214, lab('bt','밑단'), D('bt'));
   return base.replace('</svg>', dims+'</svg>');
 }
 // 조끼 스펙 (POM: 가슴·기장)
@@ -7814,6 +7819,9 @@ function composeVestSpec(o, hex, m){
 function buildDiagramSheet(){
   const g=id=>(document.getElementById(id)?.value||'');
   const nm=g('o-nm')||'';
+  const _cust=(state.customers||[]).find(c=>c.nm===nm); const _ph=(_cust&&_cust.measureHist&&_cust.measureHist[0])?_cust.measureHist[0].m:{};
+  const _prevJ={shoul:_ph.shoul,chest:_ph.chest,slvL:_ph.slvL,len:_ph.len}; const _prevP={w:_ph.botWaist,in:_ph.inseam};
+  const _hasPrev=Object.keys(_ph).length>0;
   const o=state.opt||{};
   const q=o.qty||{s:1,p:1,v:0,c:0,j:0};
   const fab=(state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
@@ -7823,11 +7831,11 @@ function buildDiagramSheet(){
   if((q.s||0)+(q.j||0)>0){
     const mj={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')};
     sections.push(`<div class="ds-sec"><div class="ds-t">상의 — 3면도</div><div class="ds-row">${composeJacket3View(o,hex,patt)}</div></div>`);
-    sections.push(`<div class="ds-sec"><div class="ds-t">상의 — 치수 도면 (POM)</div><div class="ds-row"><div class="ds-spec">${composeJacketSpec(o,'#eef1f3',mj)}</div></div></div>`);
+    sections.push(`<div class="ds-sec"><div class="ds-t">상의 — 치수 도면 (POM)</div><div class="ds-row"><div class="ds-spec">${composeJacketSpec(o,'#eef1f3',mj,_prevJ)}</div></div></div>`);
   }
   if((q.p||0)>0){
     const mp={w:_woM('bot','w'),in:_woM('bot','in'),bt:_woM('bot','bt')};
-    sections.push(`<div class="ds-sec"><div class="ds-t">하의 — 앞·뒤 + 치수</div><div class="ds-row">${composePants2View(o,hex,patt)}<div class="ds-spec">${composePantsSpec(o,'#eef1f3',mp)}</div></div></div>`);
+    sections.push(`<div class="ds-sec"><div class="ds-t">하의 — 앞·뒤 + 치수</div><div class="ds-row">${composePants2View(o,hex,patt)}<div class="ds-spec">${composePantsSpec(o,'#eef1f3',mp,_prevP)}</div></div></div>`);
   }
   if((q.v||0)>0){
     const sp=(typeof PATTERN_SPEC_VEST!=='undefined'&&PATTERN_SPEC_VEST[g('o-pVest')]||{})[g('o-sVest')]||{};
@@ -7838,6 +7846,7 @@ function buildDiagramSheet(){
   $('#print-area').innerHTML=`<div class="wo-sheet ds-sheet">
     <div class="ds-head"><div><b>디자인 도면</b> <span>${nm?nm+' 님':''}</span></div><div class="ds-meta">${fab?fab.no+' · '+fab.color:''} · ${dStr(today())} · ${shopName()}</div></div>
     ${sections.join('')}
+    ${_hasPrev?`<div class="ds-legend"><span style="color:#d64545;font-weight:700">● 빨강 치수</span> = 이 고객의 지난 주문 대비 변경 (증감 표기)</div>`:''}
     <div class="ds-foot">NURI CRM 디자인 도면 · 작업지시서 별첨용 · ${(state.user&&state.user.name)||''}</div>
   </div>`;
   const tt=$('#prv-title-text'); if(tt)tt.textContent='디자인 도면';
