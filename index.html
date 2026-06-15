@@ -1542,6 +1542,19 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
 .std-card-img .opt-svg{aspect-ratio:1/1}
 .smp-tile-img .opt-svg{aspect-ratio:1/1}
 .wo-d-svg .opt-svg{width:64px;height:74px;background:#fff}
+/* 44차 — 라이브 합성 프리뷰 */
+.live-preview{background:var(--sf2);border:1px solid var(--bd);border-radius:3px;padding:12px 14px;margin-bottom:16px}
+.lp-head{font-size:12.5px;font-weight:700;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.lp-fab{font-size:11.5px;font-weight:600;color:var(--it);margin-left:auto}
+.lp-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.lp-cell{text-align:center}
+.lp-svg{width:130px;height:auto}
+.lp-svg .opt-svg{width:100%;background:transparent}
+.lp-cap{font-size:11.5px;color:var(--t3);margin-top:4px;font-weight:600}
+.lp-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.lp-tag{font-size:11px;background:var(--sf3);color:var(--t2);border-radius:3px;padding:3px 8px;font-weight:600}
+.studio-preview{margin:0 auto 16px;max-width:240px}
+.studio-preview .opt-svg{background:var(--sf2);border:1px solid var(--bd);border-radius:3px}
 @media print{ .wo-d-svg .opt-svg{width:58px;height:68px} }
 /* 37차 — 측정 프로필 */
 .measure-hint{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--acc-soft);border:1px solid rgba(26,179,148,.35);border-radius:3px;margin:10px 0;font-size:12.5px;color:var(--t);flex-wrap:wrap}
@@ -2491,6 +2504,7 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
         
         <!-- ④ 상의 옵션 (16종) -->
         <div class="sub-merged" id="suit-sec-4">
+          <div id="live-preview" class="live-preview"></div>
           <div class="section-card-title">
             <i class="ti ti-tool"></i>상의 작업지시 옵션 (16종)
             <span class="section-sub">※ 엑셀 작업지시서 그대로 이식</span>
@@ -5091,6 +5105,7 @@ function pickFab(no, el){
   $$('#pick-fab .pick-card').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
   $('#o-fabNo').value = no;
+  if (typeof renderLivePreview==='function') setTimeout(renderLivePreview,0);
   const f = state.fabrics.find(x=>x.no===no);
   if (f){
     $('#o-yard').value = f.yard + ' Y';
@@ -5443,6 +5458,7 @@ function bindOptButtons(){
           applyLapelDefault();
         }
         computePrice();
+        if (typeof renderLivePreview==='function') renderLivePreview();
       };
     });
   });
@@ -5555,6 +5571,7 @@ function computePrice(){
   $('#p-sup').textContent       = fmt(sup);
   $('#p-vat').textContent       = fmt(vat);
   $('#p-total').textContent     = fmt(tot);
+  if (typeof renderLivePreview==='function') renderLivePreview();
 }
 
 function resetSuit(){
@@ -7582,6 +7599,108 @@ function studioSvg(key, val){
   }catch(e){ return ''; }
 }
 
+
+/* ─── 원단 색 + 실시간 합성 도식 ─── */
+function fabHex(name){
+  const n = String(name||'');
+  const M = [['미드나잇','#16263f'],['다크 네이비','#16263f'],['네이비','#1f3a5f'],['블루','#2a5a8f'],
+    ['차콜','#36393f'],['미드 그레이','#7f858c'],['라이트 그레이','#aab0b8'],['그레이','#6b6f76'],['헤링본','#5a5f66'],
+    ['블랙','#1c1c1e'],['브라운','#6b4f34'],['카멜','#a9805a'],['베이지','#c9b48f'],['탄','#c9b48f'],
+    ['와인','#5e2433'],['버건디','#5e2433'],['그린','#2f4a35'],['아이보리','#ece8df'],['화이트','#eee']];
+  for (const [k,h] of M){ if (n.indexOf(k)>=0) return h; }
+  return '#45505e';
+}
+function _lum(hex){ const c=hex.replace('#',''); const r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16); return (0.299*r+0.587*g+0.114*b)/255; }
+function _detailStroke(hex){ return _lum(hex)<0.5 ? 'rgba(255,255,255,.82)' : '#2f4050'; }
+function _lighten(hex, amt){ const c=hex.replace('#',''); let r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16); r=Math.min(255,r+amt);g=Math.min(255,g+amt);b=Math.min(255,b+amt); return `rgb(${r},${g},${b})`; }
+// 합성 자켓 (앞 + 뒤 트임 인셋) — 원단색 + 선택 옵션 전부 한 장에
+function composeJacket(o, hex){
+  o=o||{}; hex=hex||fabHex();
+  const st=_detailStroke(hex), lin=_lighten(hex,70);
+  // 라펠
+  let lapel;
+  if (o.lapel==='피크드') lapel=`<path d="M60 30 L46 40 L52 30 L46 58 M60 30 L74 40 L68 30 L74 58" fill="none" stroke="${st}" stroke-width="2" stroke-linejoin="round"/><path d="M60 30 L47 84 M60 30 L73 84" stroke="${st}" stroke-width="2" fill="none"/>`;
+  else if (o.lapel==='숄') lapel=`<path d="M60 30 C44 34 44 64 50 86 M60 30 C76 34 76 64 70 86" fill="none" stroke="${st}" stroke-width="2"/>`;
+  else lapel=`<path d="M60 30 L48 42 L54 46 L49 84 M60 30 L72 42 L66 46 L71 84" fill="none" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>`;
+  // 안감 피크 (옷깃 안쪽)
+  let lining='';
+  if (o.lining==='전체') lining=`<path d="M54 38 L66 38 L60 70 Z" fill="${lin}" opacity=".8"/>`;
+  else if (o.lining) lining=`<path d="M56 38 L64 38 L60 54 Z" fill="${lin}" opacity=".7"/>`;
+  // 주머니
+  let pk;
+  if (o.hak==='아웃포켓') pk=`<rect x="30" y="90" width="24" height="20" fill="none" stroke="${st}" stroke-width="2"/><rect x="66" y="90" width="24" height="20" fill="none" stroke="${st}" stroke-width="2"/>`;
+  else if (o.hak==='라운드아웃') pk=`<path d="M30 90 H54 V104 Q42 113 30 104 Z" fill="none" stroke="${st}" stroke-width="2"/><path d="M66 90 H90 V104 Q78 113 66 104 Z" fill="none" stroke="${st}" stroke-width="2"/>`;
+  else if (o.hak==='바르카') pk=`<path d="M30 94 Q42 88 54 94 L52 100 Q42 95 32 100 Z" fill="none" stroke="${st}" stroke-width="2"/><path d="M66 94 Q78 88 90 94 L88 100 Q78 95 68 100 Z" fill="none" stroke="${st}" stroke-width="2"/>`;
+  else pk=`<rect x="30" y="94" width="24" height="8" fill="none" stroke="${st}" stroke-width="2"/><rect x="66" y="94" width="24" height="8" fill="none" stroke="${st}" stroke-width="2"/>`;
+  // 단추
+  const btn=`<circle cx="60" cy="94" r="2.4" fill="${st}"/><circle cx="60" cy="108" r="2.4" fill="${st}"/>`;
+  // 뒤 트임 인셋
+  let vIn='';
+  if (o.vent==='센터벤트') vIn=`<line x1="139" y1="118" x2="139" y2="134" stroke="${st}" stroke-width="2"/>`;
+  else if (o.vent==='사이드벤트') vIn=`<line x1="126" y1="118" x2="126" y2="134" stroke="${st}" stroke-width="2"/><line x1="152" y1="118" x2="152" y2="134" stroke="${st}" stroke-width="2"/>`;
+  const back=`<path d="M139 60 L128 65 L122 70 L120 134 L158 134 L156 70 L150 65 Z" fill="${hex}" stroke="${st}" stroke-width="1.6"/><text x="139" y="56" text-anchor="middle" font-size="8" fill="var(--t3)" font-family="sans-serif">뒤</text>${vIn}`;
+  return `<svg class="opt-svg" viewBox="0 0 168 144" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <path d="M60 14 L40 22 L28 30 L24 132 L96 132 L92 30 L80 22 Z" fill="${hex}" stroke="${st}" stroke-width="2"/>
+    ${lining}${lapel}${pk}${btn}${back}</svg>`;
+}
+function composePants(o, hex){
+  o=o||{}; hex=hex||fabHex();
+  const st=_detailStroke(hex);
+  let pl='';
+  if (o.botTuck==='1'||o.botTuck==='2'){ pl+=`<line x1="44" y1="28" x2="44" y2="56" stroke="${st}" stroke-width="2"/><line x1="76" y1="28" x2="76" y2="56" stroke="${st}" stroke-width="2"/>`; }
+  if (o.botTuck==='2'){ pl+=`<line x1="50" y1="28" x2="50" y2="50" stroke="${st}" stroke-width="1.5"/><line x1="70" y1="28" x2="70" y2="50" stroke="${st}" stroke-width="1.5"/>`; }
+  let fp='';
+  if (o.botFrontP==='사이드') fp=`<line x1="32" y1="30" x2="32" y2="48" stroke="${st}" stroke-width="2.4"/><line x1="88" y1="30" x2="88" y2="48" stroke="${st}" stroke-width="2.4"/>`;
+  else if (o.botFrontP==='슬랜티드') fp=`<line x1="32" y1="30" x2="44" y2="46" stroke="${st}" stroke-width="2.4"/><line x1="88" y1="30" x2="76" y2="46" stroke="${st}" stroke-width="2.4"/>`;
+  else if (o.botFrontP==='크로스') fp=`<line x1="32" y1="40" x2="46" y2="40" stroke="${st}" stroke-width="2.4"/><line x1="88" y1="40" x2="74" y2="40" stroke="${st}" stroke-width="2.4"/>`;
+  let hem='';
+  if (o.botHem==='턴업'||o.botHem==='카브라') hem=`<line x1="34" y1="120" x2="56" y2="120" stroke="${st}" stroke-width="2"/><line x1="64" y1="120" x2="86" y2="120" stroke="${st}" stroke-width="2"/>`;
+  return `<svg class="opt-svg" viewBox="0 0 120 140" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <path d="M30 12 H90 L86 132 H64 L60 60 L56 132 H34 Z" fill="${hex}" stroke="${st}" stroke-width="2"/>
+    <line x1="30" y1="26" x2="90" y2="26" stroke="${st}" stroke-width="2"/>${pl}${fp}${hem}</svg>`;
+}
+function composeVest(o, hex){
+  o=o||{}; hex=hex||fabHex();
+  const st=_detailStroke(hex);
+  const body=`<path d="M30 14 L60 26 L90 14 L86 96 L60 116 L34 96 Z" fill="${hex}" stroke="${st}" stroke-width="2"/>`;
+  let col = o.vestLapel==='라펠있음' ? `<path d="M44 22 L52 50 M76 22 L68 50" stroke="${st}" stroke-width="2" fill="none"/>` : `<path d="M48 20 L60 52 L72 20" stroke="${st}" stroke-width="2" fill="none"/>`;
+  let pk = o.vestPocketN==='4개' ? `<rect x="42" y="46" width="13" height="5" fill="none" stroke="${st}" stroke-width="1.6"/><rect x="65" y="46" width="13" height="5" fill="none" stroke="${st}" stroke-width="1.6"/><rect x="40" y="74" width="16" height="6" fill="none" stroke="${st}" stroke-width="1.8"/><rect x="64" y="74" width="16" height="6" fill="none" stroke="${st}" stroke-width="1.8"/>` : `<rect x="40" y="70" width="16" height="6" fill="none" stroke="${st}" stroke-width="1.8"/><rect x="64" y="70" width="16" height="6" fill="none" stroke="${st}" stroke-width="1.8"/>`;
+  const btn=`<circle cx="60" cy="62" r="1.8" fill="${st}"/><circle cx="60" cy="74" r="1.8" fill="${st}"/><circle cx="60" cy="86" r="1.8" fill="${st}"/>`;
+  return `<svg class="opt-svg" viewBox="0 0 120 130" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">${body}${col}${pk}${btn}</svg>`;
+}
+function composeGarment(part, o, hex){
+  if (part==='bot') return composePants(o,hex);
+  if (part==='vest') return composeVest(o,hex);
+  return composeJacket(o,hex);
+}
+// 주문서 라이브 프리뷰
+function renderLivePreview(){
+  const box = document.getElementById('live-preview');
+  if (!box) return;
+  const o = state.opt||{};
+  const g = id => (document.getElementById(id)?.value||'');
+  const fab = (state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
+  const hex = fabHex(fab?fab.color:'');
+  const q = state.opt.qty||{s:1,p:1,v:0,c:0,j:0};
+  const parts=[];
+  if ((q.s||0)+(q.j||0)>0) parts.push(['top','상의',composeJacket(o,hex)]);
+  if ((q.p||0)>0) parts.push(['bot','하의',composePants(o,hex)]);
+  if ((q.v||0)>0) parts.push(['vest','조끼',composeVest(o,hex)]);
+  if (!parts.length) parts.push(['top','상의',composeJacket(o,hex)]);
+  box.innerHTML = `<div class="lp-head"><i class="ti ti-eye"></i> 실시간 미리보기 ${fab?`<span class="lp-fab">${fab.no} · ${fab.color}</span>`:''}</div>
+    <div class="lp-row">${parts.map(([p,lb,svg])=>`<div class="lp-cell"><div class="lp-svg">${svg}</div><div class="lp-cap">${lb}</div></div>`).join('')}</div>
+    <div class="lp-tags">${[['라펠',o.lapel],['트임',o.vent],['안감',o.lining],['학고',o.hak]].filter(x=>x[1]).map(([k,v])=>`<span class="lp-tag">${k} ${v}</span>`).join('')}</div>`;
+}
+// 스튜디오 라이브 프리뷰
+function renderStudioPreview(){
+  const box=document.getElementById('studio-preview');
+  if(!box)return;
+  const part=state.studioPart||'top';
+  const o = {}; (state.studioPick||{}); Object.keys(state.studioPick||{}).forEach(k=>o[k]=state.studioPick[k]);
+  const hex=fabHex('');
+  box.innerHTML = `<div class="lp-svg" style="max-width:220px;margin:0 auto">${composeGarment(part==='vest'?'vest':part, o, hex)}</div>`;
+}
+
 /* ─── 디자인 스튜디오 (옵션별 실사 이미지 스텝 셀렉터) ─── */
 const STUDIO_CATS = [
   { part:'top', key:'lapel',    label:'라펠 모양',   opts:[['노치드','노치드'],['피크드','피크드'],['숄','숄']] },
@@ -7625,9 +7744,10 @@ function renderStudio(){
         <div style="flex:1"></div>
         <button class="action-btn" onclick="studioReset()"><i class="ti ti-refresh"></i>처음부터</button>
       </div>
+      <div id="studio-preview" class="studio-preview"></div>
       <div class="std-steps">${cats.map((c,i)=>`<div class="std-stepdot ${i<step?'done':i===step?'cur':''}" onclick="studioGoto(${i})" title="${c.label}">${state.studioPick[c.key]?'<i class=\'ti ti-check\'></i>':(i+1)}</div>${i<cats.length-1?'<div class="std-stepline '+(i<step?'on':'')+'"></div>':''}`).join('')}</div>
     </div>`;
-  if (step >= total){ box.innerHTML = head + studioSampleHTML(); return; }
+  if (step >= total){ box.innerHTML = head + studioSampleHTML(); if (typeof renderStudioPreview==='function') setTimeout(renderStudioPreview,0); return; }
   const c = cats[step];
   const cards = c.opts.map(([val,label])=>{
     const img = studioGetImg(c.key,val);
@@ -7649,6 +7769,7 @@ function renderStudio(){
         <button class="action-btn" onclick="studioSkip()">건너뛰기 <i class="ti ti-arrow-right"></i></button>
       </div>
     </div>`;
+  if (typeof renderStudioPreview==='function') setTimeout(renderStudioPreview,0);
 }
 function studioPart(p){ state.studioPart=p; state.studioStep=0; renderStudio(); }
 function studioGoto(i){ state.studioStep=i; renderStudio(); }
@@ -7661,6 +7782,7 @@ function studioPick(key,val){
   // 다음 단계 자동 이동
   setTimeout(()=>{ state.studioStep++; renderStudio(); }, 180);
   renderStudio();
+  if (typeof renderStudioPreview==='function') renderStudioPreview();
 }
 function studioUpload(key,val,inp){
   const file=inp.files&&inp.files[0];
@@ -7698,7 +7820,7 @@ function studioSampleHTML(){
   return `<div class="std-sample">
     <div class="smp-head"><i class="ti ti-sparkles" style="color:#c8914a"></i> <b>${state.studioPart==='bot'?'하의':state.studioPart==='vest'?'조끼':'상의'} 디자인 샘플</b> <span style="color:var(--t3);font-size:12.5px">— 선택 ${picks.length}항목</span></div>
     <div class="smp-body">
-      <div class="smp-base">${baseImg?`<img src="data:image/png;base64,${baseImg}">`:''}<div class="smp-base-cap">기준 도식 (2D)</div></div>
+      <div class="smp-base">${composeGarment(state.studioPart==='vest'?'vest':state.studioPart, state.studioPick||{}, fabHex(''))}<div class="smp-base-cap">합성 미리보기</div></div>
       <div class="smp-tiles">${tiles||'<div class="empty-state" style="padding:30px"><i class="ti ti-photo"></i><div class="empty-state-title">선택한 디자인이 없습니다</div></div>'}</div>
     </div>
     <div class="smp-actions">
