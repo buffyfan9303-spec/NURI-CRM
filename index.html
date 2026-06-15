@@ -1474,6 +1474,12 @@ body.dk .dh-cell{border-color:var(--bd)}
 .g-day.buf{background:repeating-linear-gradient(45deg,#cbd5e0,#cbd5e0 3px,#e2e8f0 3px,#e2e8f0 6px)!important}
 .g-legend .lg.buf{background:repeating-linear-gradient(45deg,#cbd5e0,#cbd5e0 2px,#e2e8f0 2px,#e2e8f0 4px)}
 body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3px,#2a323c 3px,#2a323c 6px)!important}
+/* 36차 — 수명·교환 */
+.hist-stats{display:flex;flex-wrap:wrap;gap:6px 14px;padding:11px 14px;background:var(--sf2);border:1px solid var(--bd);border-radius:3px;margin-bottom:12px}
+.hist-stat{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)}
+.hist-stat b{color:var(--t);font-size:13.5px}
+.swap-opt{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--bd2);border-radius:3px;cursor:pointer}
+.swap-opt:hover{border-color:#1ab394;background:var(--sf2)}
 /* 35차 — 컨디션 사진 */
 .cond-grid{display:flex;flex-wrap:wrap;gap:6px}
 .cond-th{width:60px;height:60px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--bd2);position:relative;cursor:zoom-in}
@@ -1751,6 +1757,7 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
       </div>
       <span class="badge" id="hist-badge">—</span>
     </div>
+    <div class="hist-stats" id="hist-stats"></div>
     <div class="tl" id="hist-tl" style="max-height:56vh;overflow-y:auto"></div>
   </div>
 </div>
@@ -3098,7 +3105,20 @@ body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3p
     </div>
   </div>
   <div class="prv-scroll">
-<!-- 컨디션 사진 모달 -->
+<!-- 사이즈 교환 모달 -->
+  <div id="swap-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="signup-card" onclick="event.stopPropagation()" style="max-width:460px">
+      <button class="signup-x" onclick="$('#swap-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+      <div class="signup-head" style="margin-bottom:8px">
+        <h2 class="signup-title" id="swap-title">사이즈 교환</h2>
+        <p class="signup-sub" id="swap-sub">—</p>
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-bottom:12px"><i class="ti ti-bolt"></i> 핏이 안 맞을 때, 같은 계약을 유지한 채 같은 디자인의 다른 사이즈로 즉시 재발행합니다. 기존 개체는 자동 회수→세탁 처리됩니다.</div>
+      <div id="swap-list" style="display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow:auto"></div>
+    </div>
+  </div>
+
+  <!-- 컨디션 사진 모달 -->
   <div id="cond-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
     <div class="signup-card" onclick="event.stopPropagation()" style="max-width:560px">
       <button class="signup-x" onclick="$('#cond-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
@@ -6253,7 +6273,7 @@ function invTab(t){
    상태 흐름: 대여가능 → [출고] → 출고중 → [회수] → 세탁중 → [완료] → 대여가능 */
 function stDisp(s){ return s==='출고중' ? '대여중' : s; }
 function rentalStatusBadge(s){
-  return s==='대여가능' ? 'b-ok' : s==='예약중' ? 'b-resv' : s==='출고중' ? 'b-info' : s==='세탁중' ? 'b-warn' : 'b-err';
+  return s==='대여가능' ? 'b-ok' : s==='예약중' ? 'b-resv' : s==='출고중' ? 'b-info' : s==='세탁중' ? 'b-warn' : s==='은퇴' ? 'b-mut' : 'b-err';
 }
 function renderRental(){
   const list = state.rentals.filter(brMatch);
@@ -6297,6 +6317,7 @@ function renderRental(){
       act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="action-btn" onclick="returnRental('${r.code}')"><i class="ti ti-arrow-back-up"></i>회수</button>
         <button class="mini-act" onclick="openCondModal('${r.code}')" title="컨디션 사진·점검 기록"><i class="ti ti-camera"></i></button>
+        <button class="mini-act" onclick="openSwapModal('${r.code}')" title="핏 실패 → 같은 디자인 다른 사이즈로 교환"><i class="ti ti-arrows-exchange"></i></button>
         ${_od ? `<button class="action-btn" onclick="overdueMsg('${r.code}')" style="background:var(--eb);color:var(--et);border-color:transparent" title="${_od.days}일 연체 · ${_od.label} · ${fmt(_od.fee)}"><i class="ti ti-message-exclamation"></i>독촉</button>` : `<button class="action-btn" onclick="buildRentContract('${r.code}')" style="background:var(--sf3);border-color:transparent"><i class="ti ti-file-text"></i>계약서</button>`}
       </div>`;
     } else {
@@ -6340,6 +6361,83 @@ function renderRental(){
   if (state.rentalView==='stats' && typeof renderRentalStats==='function') renderRentalStats();
 }
 function rentalTab(t){ state.rentalFilter = t; renderRental(); }
+
+/* ─── 개체 수명·가동률·은퇴 (이용경제) ─── */
+function unitLifecycle(r){
+  const logs = state.rentalLog.filter(l=>l.code===r.code && l.rentDt);
+  const rentN = logs.length;
+  const rev = logs.reduce((s,l)=>s+(l.fee||0)+(l.deduct||0), 0);
+  const cost = r.cost||0;
+  const payback = cost ? Math.round(rev/cost*100) : null;   // 원가 대비 회수율 %
+  // 은퇴 기준: 원가 3배 회수(=payback 300%) 또는 25회전 이상
+  const RETIRE_PAYBACK = 300, RETIRE_N = 25;
+  let flag = null;
+  if (cost && payback>=RETIRE_PAYBACK) flag = { kind:'retire', why:`원가 ${payback}% 회수 — 충분히 본전` };
+  else if (rentN>=RETIRE_N) flag = { kind:'retire', why:`${rentN}회전 — 수명 임박` };
+  else if (cost && payback>=220) flag = { kind:'soon', why:`회수율 ${payback}% — 은퇴 임박` };
+  else if (rentN>=18) flag = { kind:'soon', why:`${rentN}회전 — 은퇴 임박` };
+  const costPerWear = rentN ? Math.round(cost/rentN) : null;
+  return { rentN, rev, cost, payback, flag, costPerWear };
+}
+function retireUnit(code){
+  const r = state.rentals.find(x=>x.code===code);
+  if (!r) return;
+  if (r.status==='출고중'){ toast('대여 중인 상품은 회수 후 은퇴 처리하세요','warn'); return; }
+  if (!confirm(`${r.code} ${r.name}을(를) 은퇴 처리할까요?\n대여 목록에서 빠지고 '은퇴(세일)' 상태가 됩니다. (휴지통 30일 복구 가능)`)) return;
+  r.status = '은퇴'; r.resv = null;
+  state.rentalLog.unshift({ code:r.code, name:r.name, status:'은퇴', rentDt:dStr(today()), nm:'', swapNote:'수명 종료 — 세일/기성복 전환 대상' });
+  saveDB();
+  $('#hist-modal')?.classList.remove('open');
+  toast(`${r.code} 은퇴 처리 — 기성복 판매(세일) 대상으로 분류`,'ok','개체 수명');
+  renderRental();
+}
+
+/* ─── 빠른 사이즈 교환 (핏 실패 → 같은 디자인 다른 사이즈 즉시 재발행) ─── */
+function openSwapModal(code){
+  const r = state.rentals.find(x=>x.code===code);
+  if (!r || r.status!=='출고중'){ toast('출고 중인 상품만 교환할 수 있습니다','warn'); return; }
+  // 같은 품명(디자인)의 대여가능 다른 개체
+  const buf = (typeof bufferDays==='function')?bufferDays():2;
+  const alts = state.rentals.filter(x=>x.code!==code && x.name===r.name && x.status==='대여가능');
+  state.swapTarget = code;
+  $('#swap-title').textContent = `${r.code} · ${r.name} (${r.size})`;
+  $('#swap-sub').textContent = `${r.renter||''} 님 · 반납예정 ${r.dueDt||''} — 같은 디자인 다른 사이즈로 교환`;
+  $('#swap-list').innerHTML = alts.length ? alts.map(a=>`
+    <div class="swap-opt" onclick="doSwap('${a.code}')">
+      <div style="flex:1"><b>${a.size}</b> <span style="color:var(--t3);font-size:11.5px">${a.code} · ${a.color||''}</span></div>
+      <span class="badge b-ok">대여가능</span>
+      <button class="btn-primary" style="border:0;color:#fff;padding:7px 12px;border-radius:3px;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer">이 사이즈로 교환</button>
+    </div>`).join('') : `<div class="empty-state" style="padding:24px"><i class="ti ti-hanger"></i><div class="empty-state-title">교환 가능한 다른 사이즈가 없습니다</div><div class="empty-state-sub">'${r.name}'의 대여가능 재고가 없습니다 — 세탁/수선 중이거나 전량 대여중</div></div>`;
+  $('#swap-modal').classList.add('open');
+}
+function doSwap(newCode){
+  const oldCode = state.swapTarget;
+  const oldR = state.rentals.find(x=>x.code===oldCode);
+  const newR = state.rentals.find(x=>x.code===newCode);
+  if (!oldR || !newR) return;
+  if (newR.status!=='대여가능'){ toast('이미 다른 예약이 잡혔습니다','err','교환 실패'); return; }
+  // 출고 정보 이전
+  const renter=oldR.renter, ph=oldR.ph, rentDt=oldR.rentDt, dueDt=oldR.dueDt, held=oldR.depositHeld, fee=oldR.fee;
+  // 기존 로그를 새 개체로 갱신(같은 계약 유지) — 사이즈 교환 이력 기록
+  const log = state.rentalLog.find(l=>l.code===oldCode && l.status==='출고중');
+  if (log){
+    log.code = newCode; log.name = newR.name;
+    log.swapNote = `${oldR.size}→${newR.size} 교환 (${dStr(today())})`;
+  }
+  // 새 개체 출고 상태로
+  newR.status='출고중'; newR.renter=renter; newR.ph=ph; newR.rentDt=rentDt; newR.dueDt=dueDt;
+  newR.depositHeld=held; newR.fee=fee;
+  // 기존 개체는 회수→세탁(버퍼) 처리
+  oldR.status='세탁중'; oldR.renter=''; oldR.ph=''; oldR.depositHeld=0;
+  oldR.care = { type:'세탁', vendor:'', cost:0, sentDt:dStr(today()),
+    dueDt:(()=>{ const d=new Date(today()); d.setDate(d.getDate()+ (typeof bufferDays==='function'?bufferDays():2)); return dStr(d); })(), memo:'사이즈 교환 반납' };
+  state.rentalLog.unshift({ code:oldCode, name:oldR.name, status:'교환', rentDt:dStr(today()),
+    nm:renter, swapNote:`${oldR.size}→${newR.size} 교환으로 회수` });
+  saveDB();
+  $('#swap-modal').classList.remove('open');
+  toast(`${oldR.size} → ${newR.size} 교환 완료 (${newCode}) — 계약 유지`,'ok','사이즈 교환');
+  renderRental();
+}
 
 /* ─── 컨디션 사진 + 체크리스트 (인수/반납 상태 증거) ─── */
 const COND_ITEMS = ['얼룩·오염','단추 누락','지퍼/후크','올풀림·찢김','냄새','수선 필요'];
@@ -7772,7 +7870,20 @@ function openHistModal(code){
   else { ph.style.backgroundImage=''; ph.innerHTML = '<i class="ti ti-hanger"></i>'; }
   const bdg = $('#hist-badge');
   bdg.className = 'badge ' + rentalStatusBadge(r.status);
-  bdg.textContent = r.status;
+  bdg.textContent = stDisp(r.status);
+  // 수명·가동률 요약
+  const lc = unitLifecycle(r);
+  const hs = $('#hist-stats');
+  if (hs){
+    const flagBadge = lc.flag ? `<span class="badge ${lc.flag.kind==='retire'?'b-err':'b-warn'}" title="${lc.flag.why}">${lc.flag.kind==='retire'?'은퇴/세일 후보':'은퇴 임박'}</span>` : '<span class="badge b-ok">정상 운용</span>';
+    hs.innerHTML = `
+      <div class="hist-stat"><span>누적 대여</span><b>${lc.rentN}회</b></div>
+      <div class="hist-stat"><span>대여 매출</span><b>${fmt(lc.rev)}</b></div>
+      <div class="hist-stat"><span>구입가</span><b>${lc.cost?fmt(lc.cost):'-'}</b></div>
+      <div class="hist-stat"><span>원가 회수율</span><b style="color:${lc.payback>=300?'var(--okt)':lc.payback>=200?'var(--wt)':'var(--t)'}">${lc.payback!=null?lc.payback+'%':'-'}</b></div>
+      <div class="hist-stat"><span>회당 원가</span><b>${lc.costPerWear!=null?fmt(lc.costPerWear):'-'}</b></div>
+      <div class="hist-stat" style="flex:1.4;justify-content:flex-end">${flagBadge}${lc.flag&&lc.flag.kind==='retire'?`<button class="action-btn" style="margin-left:8px;border-color:var(--et);color:var(--et)" onclick="retireUnit('${r.code}')"><i class="ti ti-archive"></i>은퇴·세일 처리</button>`:''}</div>`;
+  }
 
   // 이력 이벤트 수집 (최신순)
   const ev = [];
