@@ -1466,6 +1466,14 @@ body.no-cost .cost-only{display:none!important}
 .dh-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--t2);align-items:center}
 .dh-sw{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:4px}
 body.dk .dh-cell{border-color:var(--bd)}
+/* 33차 — 가용성 충돌 + 버퍼 */
+.rm-conflict{margin-top:12px;padding:9px 12px;border-radius:3px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px;min-height:20px}
+.rm-conflict:empty{display:none}
+.rm-conflict.ok{background:var(--okb);color:var(--okt)}
+.rm-conflict.bad{background:var(--eb);color:var(--et)}
+.g-day.buf{background:repeating-linear-gradient(45deg,#cbd5e0,#cbd5e0 3px,#e2e8f0 3px,#e2e8f0 6px)!important}
+.g-legend .lg.buf{background:repeating-linear-gradient(45deg,#cbd5e0,#cbd5e0 2px,#e2e8f0 2px,#e2e8f0 4px)}
+body.dk .g-day.buf{background:repeating-linear-gradient(45deg,#3a4452,#3a4452 3px,#2a323c 3px,#2a323c 6px)!important}
 .cust-photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .cphoto{width:72px;height:90px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--bd2);position:relative;cursor:zoom-in}
 .cphoto-del{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--et);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;border:2px solid var(--sf)}
@@ -1554,9 +1562,10 @@ body.dk .dh-cell{border-color:var(--bd)}
       <div class="form-group"><label>대여자 이름 <span class="rq">*</span></label><input id="rm-nm" placeholder="홍길동"></div>
       <div class="form-group"><label>연락처</label><input id="rm-ph" placeholder="010-0000-0000"></div>
       <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group" style="margin-bottom:0"><label id="rm-rentlbl">대여일 (출고)</label><input id="rm-rent" type="date"></div>
-        <div class="form-group" style="margin-bottom:0"><label>반납 예정일 <span class="rq">*</span></label><input id="rm-due" type="date"></div>
+        <div class="form-group" style="margin-bottom:0"><label id="rm-rentlbl">대여일 (출고)</label><input id="rm-rent" type="date" oninput="rmCheckConflict()"></div>
+        <div class="form-group" style="margin-bottom:0"><label>반납 예정일 <span class="rq">*</span></label><input id="rm-due" type="date" oninput="rmCheckConflict()"></div>
       </div>
+      <div id="rm-conflict" class="rm-conflict"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
         <div class="form-group" style="margin-bottom:0"><label>대여료 (원)</label><input id="rm-fee" type="number"></div>
         <div class="form-group" style="margin-bottom:0"><label>보증금 (원)</label><input id="rm-deposit" type="number" placeholder="0"></div>
@@ -2214,7 +2223,7 @@ body.dk .dh-cell{border-color:var(--bd)}
             <button class="cal-nav-btn" onclick="ganttMove(-1)"><i class="ti ti-chevron-left"></i></button>
             <span id="g-title" style="font-weight:800;font-size:14px;min-width:104px;text-align:center"></span>
             <button class="cal-nav-btn" onclick="ganttMove(1)"><i class="ti ti-chevron-right"></i></button>
-            <span class="g-legend"><i class="lg rent"></i>출고 <i class="lg resv"></i>예약 <i class="lg over"></i>연체 · 빈 칸 클릭 = 즉시 예약</span>
+            <span class="g-legend"><i class="lg rent"></i>출고 <i class="lg resv"></i>예약 <i class="lg buf"></i>세탁버퍼 <i class="lg over"></i>연체 · 빈 칸 클릭 = 즉시 예약</span>
           </div>
         </div>
         <div id="rental-gantt" class="gantt-wrap" style="display:none"></div>
@@ -3953,6 +3962,38 @@ function checkDesktopNoti(){
   if (lateFac.length) _pushOnce('fac', `⚠ 공정 지연 위험 ${lateFac.length}건`, lateFac.slice(0,3).map(o=>`#${o.no} ${o.nm} — 가봉 ${o.fitDt} · 현재 ${facStageName((o.fac&&o.fac.stage)||0)}`).join('\n'));
   const lateCare = state.rentals.filter(r=>(r.status==='세탁중'||r.status==='수선중') && r.care && r.care.dueDt && r.care.dueDt<tStr);
   if (lateCare.length) _pushOnce('care', `🧺 세탁·수선 복귀 지연 ${lateCare.length}건`, lateCare.slice(0,3).map(r=>`${r.code} (${r.care.vendor||r.status})`).join('\n'));
+}
+function renderBufferCard(){
+  let card = $('#set-buffer-card');
+  if (!card){
+    card = document.createElement('div');
+    card.id = 'set-buffer-card';
+    const pc = document.querySelector('#view-settings .page-content');
+    if (pc) pc.appendChild(card);
+  }
+  if (!card) return;
+  const cur = bufferDays();
+  card.innerHTML = `
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-calendar-x"></i> 세탁 회전 버퍼 (더블부킹 방지)</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:13.5px;color:var(--t2)">반납 후 재대여까지 자동으로 막을 일수</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="action-btn" onclick="setBuffer(${cur-1})" ${cur<=0?'disabled style=opacity:.4':''}><i class="ti ti-minus"></i></button>
+          <b style="min-width:54px;text-align:center;font-size:16px;color:var(--okt)">${cur}일</b>
+          <button class="action-btn" onclick="setBuffer(${cur+1})"><i class="ti ti-plus"></i></button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:9px;line-height:1.6">렌탈 개체는 "수량"이 아니라 "개체별 타임라인"입니다. 착용 기간 + 세탁 회전 버퍼가 점유로 잡혀 그 사이 재대여·재예약이 자동 차단됩니다. 간트에 회색 빗금(세탁)으로 표시됩니다.</div>
+    </div>`;
+}
+function setBuffer(n){
+  n = Math.max(0, Math.min(14, n));
+  if (!state.shop) loadShop();
+  state.shop.bufferDays = n;
+  saveShop();
+  renderBufferCard();
+  toast(`세탁 회전 버퍼 ${n}일로 설정 — 반납 후 ${n}일간 재대여 자동 차단`,'ok','가용성');
 }
 function renderPermCard(){
   if (!isAdmin()) return;
@@ -6276,6 +6317,51 @@ function renderRental(){
 }
 function rentalTab(t){ state.rentalFilter = t; renderRental(); }
 
+/* ─── 개체 가용성 엔진 (버퍼 + 더블부킹 하드차단) ─── */
+function bufferDays(){ return (state.shop && state.shop.bufferDays!=null) ? state.shop.bufferDays : 2; }
+function addDays(ds, n){ const d = new Date(ds); d.setDate(d.getDate()+n); return dStr(d); }
+// 한 개체의 점유 구간들 (현재 출고 + 예약 + 케어) — 각 구간에 세탁 버퍼 포함
+function occupiedRanges(r, opts){
+  opts = opts || {};
+  const buf = bufferDays();
+  const out = [];
+  if (r.status==='출고중' && r.rentDt && r.dueDt && !opts.ignoreOut){
+    out.push({ s:r.rentDt, e:addDays(r.dueDt, buf), label:`출고중 ${r.renter||''} (~${r.dueDt} +세탁${buf}일)`, kind:'out' });
+  }
+  if (r.resv && r.resv.useDt && r.resv.dueDt && !opts.ignoreResv){
+    out.push({ s:r.resv.useDt, e:addDays(r.resv.dueDt, buf), label:`예약 ${r.resv.nm||''} (${r.resv.useDt}~${r.resv.dueDt} +세탁${buf}일)`, kind:'resv' });
+  }
+  if ((r.status==='세탁중'||r.status==='수선중') && r.care && r.care.sentDt){
+    out.push({ s:r.care.sentDt, e:r.care.dueDt||addDays(r.care.sentDt, buf), label:`${r.status} ${r.care.vendor||''}`, kind:'care' });
+  }
+  return out;
+}
+// 새 기간(fromDt~toDt)이 점유 구간과 겹치는지 — 겹치면 첫 충돌 반환
+function availabilityCheck(r, fromDt, toDt, opts){
+  if (!fromDt || !toDt) return { ok:false, reason:'날짜를 선택하세요' };
+  if (toDt < fromDt) return { ok:false, reason:'반납 예정일이 시작일보다 빠릅니다' };
+  const ranges = occupiedRanges(r, opts);
+  for (const g of ranges){
+    if (fromDt <= g.e && toDt >= g.s){
+      return { ok:false, reason:`충돌 — ${g.label}`, conflict:g };
+    }
+  }
+  return { ok:true, reason:`예약 가능 (반납 후 세탁 ${bufferDays()}일 버퍼 자동 확보)` };
+}
+// 모달 실시간 충돌 표시
+function rmCheckConflict(){
+  const r = state.rentals.find(x=>x.code===state.rentTarget);
+  const el = $('#rm-conflict');
+  if (!r || !el) return;
+  const from = $('#rm-rent').value, to = $('#rm-due').value;
+  const isResv = state.rentMode==='resv';
+  // 출고 모드에서 자기 예약을 출고로 전환하는 경우는 자기 예약 무시
+  const opts = (!isResv && r.resv) ? { ignoreResv:true } : {};
+  const res = availabilityCheck(r, from, to, opts);
+  el.className = 'rm-conflict ' + (res.ok ? 'ok' : 'bad');
+  el.innerHTML = `<i class="ti ti-${res.ok?'circle-check':'alert-triangle'}"></i> ${res.reason}`;
+}
+
 function openRentModal(code, mode){
   const r = state.rentals.find(x=>x.code===code);
   if (!r) return;
@@ -6307,6 +6393,7 @@ function openRentModal(code, mode){
     $('#rm-due').value = dStr(due);
   }
   $('#rent-modal').classList.add('open');
+  if (typeof rmCheckConflict==='function') rmCheckConflict();
   setTimeout(()=>$('#rm-nm')?.focus(), 80);
 }
 function rmCustPick(){
@@ -6327,6 +6414,9 @@ function doRent(){
   if (!nm){ toast('대여자 이름을 입력하세요','warn'); return; }
   if (!$('#rm-due').value){ toast('반납 예정일을 선택하세요','warn'); return; }
   if (r.status==='출고중'){ toast('이미 출고 중인 상품입니다','err','더블부킹 방지'); return; }
+  // 가용성 하드차단 — 예약/케어 버퍼 충돌 검사 (자기 예약을 출고로 전환하는 건 허용)
+  const _rentChk = availabilityCheck(r, $('#rm-rent').value||dStr(today()), $('#rm-due').value, r.resv?{ignoreResv:true}:{});
+  if (!_rentChk.ok){ toast(_rentChk.reason,'err','더블부킹 차단'); return; }
 
   r.status='출고중';
   r.renter=nm; r.ph=ph;
@@ -6395,12 +6485,8 @@ function doResv(){
   const useDt = $('#rm-rent').value, dueDt = $('#rm-due').value;
   if (!useDt || !dueDt){ toast('사용일과 반납 예정일을 선택하세요','warn'); return; }
   if (dueDt < useDt){ toast('반납 예정일이 사용일보다 빠릅니다','err'); return; }
-  if (r.status==='예약중' && r.resv){
-    toast(`이미 ${r.resv.useDt} 예약이 있습니다 (${r.resv.nm} 님)`,'err','더블부킹 방지'); return;
-  }
-  if (r.status==='출고중' && r.dueDt && useDt <= r.dueDt){
-    toast(`현재 출고 중 — ${r.dueDt} 회수 이후 사용 가능합니다`,'err','더블부킹 방지'); return;
-  }
+  const _resvChk = availabilityCheck(r, useDt, dueDt);
+  if (!_resvChk.ok){ toast(_resvChk.reason,'err','더블부킹 차단'); return; }
 
   let c = state.customers.find(x=>x.id===$('#rm-cust').value) ||
           state.customers.find(x=>x.nm===nm && (!ph || x.ph===ph));
@@ -7679,6 +7765,14 @@ function renderRentalGantt(){
         cls='careg'; tip=`${r.status} · ${r.care.vendor||''} 복귀예정 ${r.care.dueDt||'미정'}`;
         if (prevCls!=='careg') lbl = r.status==='수선중'?'수선':'세탁';
       }
+      else if (r.status==='출고중' && r.dueDt && ds>r.dueDt && ds<=addDays(r.dueDt, bufferDays())){
+        cls='buf'; tip=`세탁 회전 버퍼 (~${addDays(r.dueDt, bufferDays())})`;
+        if (prevCls!=='buf') lbl='세탁';
+      }
+      else if (r.status==='예약중' && r.resv && r.resv.dueDt && ds>r.resv.dueDt && ds<=addDays(r.resv.dueDt, bufferDays())){
+        cls='buf'; tip=`예약 후 세탁 버퍼 (~${addDays(r.resv.dueDt, bufferDays())})`;
+        if (prevCls!=='buf') lbl='세탁';
+      }
       if (cls) busy++;
       const free = !cls && r.status==='대여가능';
       cells += `<div class="g-day ${ds===tStr?'today':''} ${cls} ${free?'free':''}" title="${tip||(free?ds+' — 클릭하여 바로 예약':'')}" ${free?`onclick="ganttQuickResv('${r.code}','${ds}')"`:''}>${lbl?`<span class="g-lbl">${lbl}</span>`:''}</div>`;
@@ -7951,6 +8045,7 @@ function renderSettings(){
   renderBranchCard();
   renderPushCard();
   renderPermCard();
+  renderBufferCard();
 }
 function shopLogoPick(inp){
   const file = inp.files && inp.files[0];
