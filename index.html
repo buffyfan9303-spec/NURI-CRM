@@ -536,7 +536,7 @@ select.f-input{padding-right:38px}
 
 /* 선택 박스 (펼침 컨테이너) */
 .pick-box{background:var(--sf2);border:.5px solid var(--bd);border-radius:11px;padding:14px;margin-top:6px}
-.pick-empty{padding:18px;text-align:center;font-size:12.5px;color:var(--t3);font-weight:600}
+.pick-empty{grid-column:1/-1;padding:13px;text-align:center;font-size:12.5px;color:var(--t3);font-weight:600;white-space:nowrap}
 
 /* ─── 패턴 수정 옵션 (강상/중상/약상 ...) ────── */
 .modi-block{background:var(--sf2);border:.5px solid var(--bd);border-radius:11px;padding:14px;margin-bottom:10px}
@@ -1651,6 +1651,26 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 61차 — 렌탈 액션버튼 통일 + 히트맵 범례 우측 + 고객카드 축소 ════ */
+.r-acts{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.ract{height:33px;display:inline-flex;align-items:center;gap:5px;padding:0 11px;font-size:12.5px;font-weight:700;font-family:inherit;border:1px solid var(--bd2);border-radius:7px;background:var(--sf);color:var(--t);cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+.ract:hover{border-color:#1ab394;background:var(--sf2)}
+.ract .ti{font-size:15px}
+.ract-pri{background:#1ab394;color:#fff;border-color:transparent}
+.ract-pri:hover{background:#16a085;color:#fff;border-color:transparent}
+.ract-ok{background:var(--okb);color:var(--okt);border-color:transparent}
+.ract-danger{background:var(--eb);color:var(--et);border-color:transparent}
+.ract-ic{width:33px;height:33px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--bd2);border-radius:7px;background:var(--sf);color:var(--t2);cursor:pointer;transition:background .12s,border-color .12s}
+.ract-ic:hover{border-color:#1ab394;color:#1ab394;background:var(--sf2)}
+.ract-ic .ti{font-size:16px}
+.dh-body{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.dh-legend-side{flex-direction:column;gap:9px;margin-top:0;align-items:flex-start;flex:1;min-width:140px}
+#pick-cust{grid-template-columns:repeat(auto-fill,minmax(126px,1fr))!important;gap:8px;max-height:188px}
+#pick-cust .pick-card{padding:8px 10px!important;min-height:0!important;flex-direction:column;align-items:flex-start!important;text-align:left!important;gap:1px}
+#pick-cust .pick-card .pc-title{font-size:13px!important;text-align:left!important;width:auto!important}
+#pick-cust .pick-card .pc-sub{font-size:11px}
+#pick-cust .pick-card .pc-tag{font-size:9.5px;margin-top:3px;padding:1px 6px}
+@media (max-width:760px){ .r-acts{gap:4px} .ract{height:32px;padding:0 9px;font-size:12px} .ract-ic{width:32px;height:32px} }
 /* ════ 60차 — 매장정보 백업 노트 ════ */
 .shop-bak-note{background:var(--wb);color:var(--wt);border:1px solid rgba(232,149,12,.42);border-radius:8px;padding:10px 13px;font-size:12.5px;margin:14px 0 0;display:flex;align-items:center;gap:8px}
 .shop-bak-note .ti{font-size:17px;flex-shrink:0}
@@ -2469,6 +2489,12 @@ body.dk{ --t3:#9b9994; }
           </div>
           <div class="form-full"><label class="f-label">주소</label><input id="r-addr" class="f-input" placeholder="서울특별시 ..."></div>
 
+          <div class="form-row3">
+            <div><label class="f-label">예식일 <span style="color:var(--t3);font-weight:600;font-size:11px">(선택)</span></label><input id="r-wedDt" type="date" class="f-input"></div>
+            <div><label class="f-label">본식일 <span style="color:var(--t3);font-weight:600;font-size:11px">(선택)</span></label><input id="r-mainDt" type="date" class="f-input"></div>
+            <div><label class="f-label">&nbsp;</label><div style="font-size:11.5px;color:var(--t3);padding-top:11px;line-height:1.4"><i class="ti ti-businessplan"></i> 웨딩 패키지·납기 역산에 활용</div></div>
+          </div>
+
           <div class="form-section-hd"><i class="ti ti-ruler-measure"></i>기본 체형 (선택)</div>
           <div class="form-row">
             <div>
@@ -2566,7 +2592,7 @@ body.dk{ --t3:#9b9994; }
           <div class="table-scroll">
             <table class="data-table">
               <thead><tr>
-                <th style="width:8%">구분</th><th style="width:28%">상품 (코드 · 품명)</th><th style="width:8%">사이즈</th><th style="width:10%">컬러</th><th style="width:10%">대여료</th><th style="width:12%">상태</th><th style="width:14%">대여자 / 반납예정</th><th style="width:10%">처리</th>
+                <th style="width:7%">구분</th><th style="width:24%">상품 (코드 · 품명)</th><th style="width:7%">사이즈</th><th style="width:8%">컬러</th><th style="width:9%">대여료</th><th style="width:11%">상태</th><th style="width:13%">대여자 / 반납예정</th><th style="width:21%">처리</th>
               </tr></thead>
               <tbody id="rental-tbody"></tbody>
             </table>
@@ -4924,6 +4950,8 @@ function saveReg(){
     bt: $('#r-bt').value,
     addr: $('#r-addr').value.trim(),
     src: $('#r-src').value,
+    wedDt: ($('#r-wedDt')&&$('#r-wedDt').value)||'',
+    mainDt: ($('#r-mainDt')&&$('#r-mainDt').value)||'',
     ht: ht||'', wt: wt||'',
     top: $('#r-top').value, bot: $('#r-bot').value,
     memo: $('#r-memo').value.trim(),
@@ -6538,8 +6566,10 @@ function renderDueHeatmap(){
           <button class="cal-nav-btn" onclick="dueMove(1)"><i class="ti ti-chevron-right"></i></button>
         </div>
       </div>
-      <div class="dh-grid">${cells}</div>
-      <div class="dh-legend"><span><span class="dh-sw" style="background:rgba(26,179,148,.3)"></span>완성출고</span><span><span class="dh-sw" style="background:rgba(237,85,101,.6)"></span>과부하(${OVER}건↑)</span><span style="color:var(--t3)">날짜 클릭 → 그날 주문만 보기</span></div>
+      <div class="dh-body">
+        <div class="dh-grid">${cells}</div>
+        <div class="dh-legend dh-legend-side"><span><span class="dh-sw" style="background:rgba(26,179,148,.3)"></span>완성출고</span><span><span class="dh-sw" style="background:rgba(237,85,101,.6)"></span>과부하(${OVER}건↑)</span><span style="color:var(--t3)">날짜 클릭 → 그날 주문만 보기</span></div>
+      </div>
     </div>`;
 }
 function dueFilter(ds){
@@ -6935,32 +6965,17 @@ function renderRental(){
     const overdue = r.status==='출고중' && r.dueDt && r.dueDt < todayS;
     let act='';
     if (r.status==='대여가능'){
-      act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="action-btn" onclick="openRentModal('${r.code}','resv')" style="background:var(--pb);color:var(--pt);border-color:transparent"><i class="ti ti-calendar-plus"></i>예약</button>
-        <button class="action-btn" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button>
-        <button class="mini-act" onclick="openCareModal('${r.code}')" title="세탁·수선 보내기"><i class="ti ti-wash"></i></button>
-      </div>`;
+      act = `<button class="ract ract-pri" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button><button class="ract" onclick="openRentModal('${r.code}','resv')" style="background:var(--pb);color:var(--pt);border-color:transparent"><i class="ti ti-calendar-plus"></i>예약</button><button class="ract-ic" onclick="openCareModal('${r.code}')" title="세탁·수선 보내기"><i class="ti ti-wash"></i></button>`;
     } else if (r.status==='예약중'){
-      act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="action-btn" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button>
-        <button class="action-btn" onclick="cancelResv('${r.code}')" style="background:var(--eb);color:var(--et);border-color:transparent"><i class="ti ti-x"></i>취소</button>
-      </div>`;
+      act = `<button class="ract ract-pri" onclick="openRentModal('${r.code}','rent')"><i class="ti ti-hanger"></i>출고</button><button class="ract ract-danger" onclick="cancelResv('${r.code}')"><i class="ti ti-x"></i>예약취소</button>`;
     } else if (r.status==='출고중'){
       const _od = overdueInfo(r);
-      act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="action-btn" onclick="returnRental('${r.code}')"><i class="ti ti-arrow-back-up"></i>회수</button>
-        <button class="mini-act" onclick="openCondModal('${r.code}')" title="컨디션 사진·점검 기록"><i class="ti ti-camera"></i></button>
-        <button class="mini-act" onclick="openSwapModal('${r.code}')" title="핏 실패 → 같은 디자인 다른 사이즈로 교환"><i class="ti ti-arrows-exchange"></i></button>
-        ${_od ? `<button class="action-btn" onclick="overdueMsg('${r.code}')" style="background:var(--eb);color:var(--et);border-color:transparent" title="${_od.days}일 연체 · ${_od.label} · ${fmt(_od.fee)}"><i class="ti ti-message-exclamation"></i>독촉</button>` : `<button class="action-btn" onclick="buildRentContract('${r.code}')" style="background:var(--sf3);border-color:transparent"><i class="ti ti-file-text"></i>계약서</button>`}
-      </div>`;
+      act = `<button class="ract ract-pri" onclick="returnRental('${r.code}')"><i class="ti ti-arrow-back-up"></i>회수</button>${_od ? `<button class="ract ract-danger" onclick="overdueMsg('${r.code}')" title="${_od.days}일 연체 · ${_od.label} · ${fmt(_od.fee)}"><i class="ti ti-message-exclamation"></i>독촉</button>` : `<button class="ract" onclick="buildRentContract('${r.code}')"><i class="ti ti-file-text"></i>계약서</button>`}<button class="ract-ic" onclick="openCondModal('${r.code}')" title="컨디션 사진·점검 기록"><i class="ti ti-camera"></i></button><button class="ract-ic" onclick="openSwapModal('${r.code}')" title="핏 실패 → 같은 디자인 다른 사이즈로 교환"><i class="ti ti-arrows-exchange"></i></button>`;
     } else {
       const lateCare = r.care && r.care.dueDt && r.care.dueDt < todayS;
-      act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="action-btn" onclick="finishCare('${r.code}')" style="background:var(--okb);color:var(--okt);border-color:transparent"><i class="ti ti-check"></i>복귀 완료</button>
-        <button class="action-btn" onclick="openCareModal('${r.code}')"><i class="ti ti-wash"></i>기록${lateCare?' <span class="badge b-err" style="font-size:10px;padding:1px 5px">지연</span>':''}</button>
-      </div>`;
+      act = `<button class="ract ract-ok" onclick="finishCare('${r.code}')"><i class="ti ti-check"></i>복귀 완료</button><button class="ract" onclick="openCareModal('${r.code}')"><i class="ti ti-wash"></i>케어 기록${lateCare?' <span class="badge b-err" style="font-size:10px;padding:1px 5px">지연</span>':''}</button>`;
     }
-    act += ` <button class="mini-act" onclick="openProdModal('${r.code}')" title="상품 정보 수정"><i class="ti ti-pencil"></i></button>`;
+    act += `<button class="ract-ic" onclick="openProdModal('${r.code}')" title="상품 정보 수정"><i class="ti ti-pencil"></i></button>`;
     let who = '-';
     if ((r.status==='세탁중'||r.status==='수선중') && r.care){
       const late = r.care.dueDt && r.care.dueDt < todayS;
@@ -6976,7 +6991,7 @@ function renderRental(){
       <td>${fmt(r.fee)}</td>
       <td><span class="badge ${rentalStatusBadge(r.status)}">${stDisp(r.status)}</span>${overdue?(()=>{ const _o=overdueInfo(r); return ` <span class="badge b-err" title="${_o?_o.label+' · '+fmt(_o.fee):''}">연체 ${_o?_o.days+'일':''}${_o&&_o.stage>=3?' · 교체비':''}</span>`; })():''}${(r.qrFail||0)>=2?' <span class="badge b-warn" title="실사에서 QR 인식 실패 누적 — 태그 재발급 권장"><i class="ti ti-qrcode"></i></span>':''}</td>
       <td>${who}</td>
-      <td>${act}</td>
+      <td><div class="r-acts">${act}</div></td>
     </tr>`;
   }).join('') || `<tr><td colspan="8"><div class="empty-state"><i class="ti ti-hanger"></i>
       <div class="empty-state-title">${state.rentals.length ? '해당 조건의 상품이 없습니다' : '등록된 렌탈 상품이 없습니다'}</div>
