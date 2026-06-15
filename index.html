@@ -6271,9 +6271,10 @@ function renderRental(){
         <button class="action-btn" onclick="cancelResv('${r.code}')" style="background:var(--eb);color:var(--et);border-color:transparent"><i class="ti ti-x"></i>취소</button>
       </div>`;
     } else if (r.status==='출고중'){
+      const _od = overdueInfo(r);
       act = `<div style="display:flex;gap:5px;flex-wrap:wrap">
         <button class="action-btn" onclick="returnRental('${r.code}')"><i class="ti ti-arrow-back-up"></i>회수</button>
-        <button class="action-btn" onclick="buildRentContract('${r.code}')" style="background:var(--sf3);border-color:transparent"><i class="ti ti-file-text"></i>계약서</button>
+        ${_od ? `<button class="action-btn" onclick="overdueMsg('${r.code}')" style="background:var(--eb);color:var(--et);border-color:transparent" title="${_od.days}일 연체 · ${_od.label} · ${fmt(_od.fee)}"><i class="ti ti-message-exclamation"></i>독촉</button>` : `<button class="action-btn" onclick="buildRentContract('${r.code}')" style="background:var(--sf3);border-color:transparent"><i class="ti ti-file-text"></i>계약서</button>`}
       </div>`;
     } else {
       const lateCare = r.care && r.care.dueDt && r.care.dueDt < todayS;
@@ -6296,7 +6297,7 @@ function renderRental(){
       <td>${r.size}</td>
       <td>${r.color}</td>
       <td>${fmt(r.fee)}</td>
-      <td><span class="badge ${rentalStatusBadge(r.status)}">${stDisp(r.status)}</span>${overdue?' <span class="badge b-err">연체</span>':''}${(r.qrFail||0)>=2?' <span class="badge b-warn" title="실사에서 QR 인식 실패 누적 — 태그 재발급 권장"><i class="ti ti-qrcode"></i></span>':''}</td>
+      <td><span class="badge ${rentalStatusBadge(r.status)}">${stDisp(r.status)}</span>${overdue?(()=>{ const _o=overdueInfo(r); return ` <span class="badge b-err" title="${_o?_o.label+' · '+fmt(_o.fee):''}">연체 ${_o?_o.days+'일':''}${_o&&_o.stage>=3?' · 교체비':''}</span>`; })():''}${(r.qrFail||0)>=2?' <span class="badge b-warn" title="실사에서 QR 인식 실패 누적 — 태그 재발급 권장"><i class="ti ti-qrcode"></i></span>':''}</td>
       <td>${who}</td>
       <td>${act}</td>
     </tr>`;
@@ -6316,6 +6317,38 @@ function renderRental(){
   if (state.rentalView==='stats' && typeof renderRentalStats==='function') renderRentalStats();
 }
 function rentalTab(t){ state.rentalFilter = t; renderRental(); }
+
+/* ─── 연체 에스컬레이션 (단계별 연체료 → 교체비 전환) ─── */
+function overdueInfo(r){
+  const tStr = dStr(today());
+  if (r.status!=='출고중' || !r.dueDt || r.dueDt >= tStr) return null;
+  const days = Math.round((new Date(tStr) - new Date(r.dueDt))/86400000);
+  const dayFee = Math.round((r.fee||0) * 0.2); // 일 연체료 = 대여료 20%
+  // 7일 경과 시 교체비(원가의 1.5배, 없으면 대여료 10배)로 전환
+  const replace = r.cost ? Math.round(r.cost*1.5) : (r.fee||0)*10;
+  let stage, fee, label;
+  if (days >= 7){ stage=3; fee=replace; label='교체비 청구 단계'; }
+  else if (days >= 3){ stage=2; fee=dayFee*days; label='연체료 가중'; }
+  else { stage=1; fee=dayFee*days; label='초기 연체'; }
+  return { days, fee, stage, label, dayFee, replace };
+}
+function overdueMsg(code){
+  const r = state.rentals.find(x=>x.code===code);
+  if (!r) return;
+  const o = overdueInfo(r);
+  if (!o){ toast('연체 상태가 아닙니다','info'); return; }
+  const shop = shopName();
+  const msg = `[${shop}] ${r.renter||'고객'}님, 대여하신 '${r.name}'(${r.code})의 반납 예정일(${r.dueDt})이 ${o.days}일 지났습니다.\n` +
+    (o.stage>=3
+      ? `7일 이상 미반납으로 교체비 ${fmt(o.fee)} 청구 대상입니다. 빠른 반납 부탁드립니다.`
+      : `현재 연체료 ${fmt(o.fee)} (1일 ${fmt(o.dayFee)})가 발생 중입니다. 빠른 반납 부탁드립니다.`) +
+    `\n문의: ${(state.shop&&state.shop.ph)||''}`;
+  // 클립보드 복사
+  const done = ()=>{ toast('독촉 문구를 복사했습니다 — 카톡/문자에 붙여넣기','ok','반납 독촉'); };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(msg).then(done).catch(()=>{ prompt('아래 문구를 복사하세요 (Ctrl+C)', msg); });
+  } else { prompt('아래 문구를 복사하세요 (Ctrl+C)', msg); }
+}
 
 /* ─── 개체 가용성 엔진 (버퍼 + 더블부킹 하드차단) ─── */
 function bufferDays(){ return (state.shop && state.shop.bufferDays!=null) ? state.shop.bufferDays : 2; }
@@ -6533,8 +6566,9 @@ function returnRental(code){
     state.settleTarget = code;
     $('#st-info').textContent = `${r.code} · ${r.name} — ${r.renter} 님`;
     $('#st-held').textContent = fmt(r.depositHeld);
-    $('#st-deduct').value = 0;
-    $('#st-reason').value = '';
+    const _od = overdueInfo(r);
+    $('#st-deduct').value = _od ? Math.min(r.depositHeld, _od.fee) : 0;
+    $('#st-reason').value = _od ? `연체 ${_od.days}일 — ${_od.label} (${fmt(_od.fee)})` : '';
     settleCalc();
     $('#settle-modal').classList.add('open');
     return;
