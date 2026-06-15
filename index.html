@@ -1651,6 +1651,40 @@ select.f-input,select{min-height:44px}
 .cal-title{font-size:16.5px}
 .topbar-title{font-size:16.5px}
 /* 6. 모바일에선 더 크게 */
+/* ════ 54차 — 주문목록 재디자인 + 날짜 잠금 ════ */
+input.locked{background:var(--sf3)!important;cursor:not-allowed;color:var(--t3)}
+.ord-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.ord-chip{border:1px solid var(--bd2);background:var(--sf);color:var(--t2);font-weight:700;font-size:13.5px;padding:8px 14px;border-radius:999px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.ord-chip:hover{border-color:#1ab394;color:#1ab394}
+.ord-chip.active{background:#1ab394;border-color:#1ab394;color:#fff}
+.ord-chip.danger:not(.active){border-color:var(--et);color:var(--et)}
+.ord-chip-n{font-size:12px;background:rgba(0,0,0,.08);border-radius:999px;padding:1px 7px;min-width:18px;text-align:center}
+.ord-chip.active .ord-chip-n{background:rgba(255,255,255,.25)}
+.od-row.od-over td:first-child{box-shadow:inset 3px 0 0 var(--et)}
+.od-no{font-size:15px;font-weight:800;color:var(--t)}
+.od-sub{font-size:12px;color:var(--t3);margin-top:2px}
+.od-cust .ent-link{font-size:14.5px;font-weight:700}
+.od-qty{font-size:13px;color:var(--t2);font-weight:600}
+.od-sched{display:flex;flex-direction:column;gap:3px}
+.od-s{font-size:12.5px;color:var(--t2);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.od-s.mut{color:var(--t3)}
+.od-s .ti{font-size:13px;color:var(--t3)}
+.od-dd{font-size:11px;font-weight:800;color:var(--t3);background:var(--sf3);border-radius:3px;padding:1px 5px;margin-left:2px}
+.od-dd.soon{color:var(--wt);background:var(--wb)}
+.od-dd.today{color:var(--it);background:var(--ib)}
+.od-dd.late{color:var(--et);background:var(--eb)}
+.od-amt{font-size:14.5px;color:var(--t);font-variant-numeric:tabular-nums}
+.od-fac{height:5px;background:var(--sf3);border-radius:99px;overflow:hidden;margin-top:6px}
+.od-fac-fill{height:100%;background:#1c84c6}
+.od-fac-lbl{font-size:10.5px;color:var(--it);font-weight:700}
+.od-acts{display:flex;gap:5px;justify-content:center}
+@media (max-width:760px){
+  #view-orders .data-table thead{display:none}
+  #view-orders .data-table,#view-orders .data-table tbody,#view-orders .data-table tr,#view-orders .data-table td{display:block;width:auto}
+  #view-orders .data-table tr{border:1px solid var(--bd);border-radius:8px;margin-bottom:10px;padding:10px 12px;background:var(--sf)}
+  #view-orders .data-table td{border:0!important;padding:4px 0!important;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  #view-orders .od-sched{align-items:flex-end}
+}
 /* ════ 53차 — 대비 보강 + 여백·구분선 일관화 ════ */
 /* 흐린 글씨(--t3) 대비 상향: 라이트 2.2→3.9 / 다크 2.8→4.0 */
 :root{ --t3:#767e8a; }
@@ -3111,12 +3145,13 @@ body.dk{ --t3:#9b9994; }
           <button class="action-btn" onclick="exportOrders()"><i class="ti ti-download"></i>CSV</button>
           <button class="action-btn" onclick="go('mtm-suit')"><i class="ti ti-plus"></i>새 주문서</button>
         </div>
+        <div id="ord-filters" class="ord-filters"></div>
         <div id="due-heatmap"></div>
         <div class="table-wrap">
           <div class="table-scroll">
             <table class="data-table">
               <thead><tr>
-                <th style="width:9%">투입번호</th><th style="width:11%">주문일</th><th style="width:12%">고객</th><th style="width:18%">상의 패턴</th><th style="width:11%">수량</th><th style="width:11%">가봉출고</th><th style="width:11%">완성출고</th><th style="width:10%">금액</th><th style="width:6%">상태</th><th style="width:7%">처리</th>
+                <th style="width:13%">투입·주문일</th><th style="width:22%">고객 · 패턴</th><th style="width:9%">수량</th><th style="width:21%">일정</th><th style="width:11%">금액</th><th style="width:15%">상태·공정</th><th style="width:9%">처리</th>
               </tr></thead>
               <tbody id="orders-tbody"></tbody>
             </table>
@@ -4418,7 +4453,7 @@ function go(view, fromPop){
   if (view==='list')      renderCustList();
   if (view==='reg')       { initRegForm(); resetReg(); }
   if (view==='studio') { if (typeof renderStudio==='function') renderStudio(); }
-  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); if (typeof suitDraftCheck==='function') suitDraftCheck(); if (typeof showMeasureHint==='function') showMeasureHint(null); }
+  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); if (typeof suitDraftCheck==='function') suitDraftCheck(); if (typeof showMeasureHint==='function') showMeasureHint(null); if (typeof applyFitYnDates==='function') applyFitYnDates(state.opt&&state.opt.fitYn==='Y'?'Y':'N'); }
   if (view==='fab')       renderFabList();
   if (view==='sales-day') { $('#sd-date').value = dStr(today()); renderSalesDay(); }
   if (view==='sales-period'){
@@ -5452,8 +5487,15 @@ function onFitYnPick(v){
   const grp = document.querySelector('[data-opt="fitYn"]');
   grp.querySelectorAll('.opt-btn').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
   state.opt.fitYn = v;
-  // 가봉 출고일은 항상 입력 가능 (사용자가 직접 비우거나 입력)
+  applyFitYnDates(v);
   computePrice();
+}
+// 중가봉(Y): 가봉출고일 입력 / 완성출고일 잠금 · 직봉(N): 완성출고일 입력 / 가봉출고일 잠금
+function applyFitYnDates(v){
+  const fit=$('#o-fitDt'), done=$('#o-doneDt');
+  const lock=(el,on)=>{ if(!el)return; el.disabled=on; el.classList.toggle('locked',on); const wrap=el.closest('div'); if(wrap){ wrap.style.opacity=on?'.45':''; } if(on) el.value=''; };
+  if (v==='Y'){ lock(fit,false); lock(done,true); }
+  else { lock(fit,true); lock(done,false); }
 }
 function onQtyChange(){
   const s = parseInt($('#qty-s').value)||0;
@@ -6401,28 +6443,50 @@ function renderOrders(){
   $('#od-prog').textContent  = all.filter(o=>o.status!=='완료').length;
   $('#od-fit').textContent   = all.filter(o=>o.fitDt).length;
   $('#od-sum').textContent   = isAdmin() ? fmt(all.reduce((s,o)=>s+o.total,0)) : '관리자 전용';
+  const tStr = dStr(today());
+  const thisWeek = (ds)=>{ if(!ds)return false; const t=today(); const mon=new Date(t); mon.setDate(t.getDate()-((t.getDay()+6)%7)); const sun=new Date(mon); sun.setDate(mon.getDate()+6); return ds>=dStr(mon)&&ds<=dStr(sun); };
+  const isOverdue = (o)=> o.status!=='완료' && o.doneDt && o.doneDt<tStr;
+  // 필터칩
+  if (!state.ordFilter) state.ordFilter='all';
+  const F=state.ordFilter;
+  const counts={ all:all.length, prog:all.filter(o=>o.status!=='완료').length, done:all.filter(o=>o.status==='완료').length,
+    wfit:all.filter(o=>thisWeek(o.fitDt)&&o.status!=='완료').length, wdone:all.filter(o=>thisWeek(o.doneDt)&&o.status!=='완료').length, over:all.filter(isOverdue).length };
+  const CHIPS=[['all','전체',counts.all],['prog','진행중',counts.prog],['done','완료',counts.done],['wfit','이번주 가봉',counts.wfit],['wdone','이번주 완성',counts.wdone],['over','연체',counts.over]];
+  const fc=$('#ord-filters');
+  if(fc) fc.innerHTML = CHIPS.map(([k,lb,n])=>`<button class="ord-chip ${F===k?'active':''} ${k==='over'&&n>0?'danger':''}" onclick="state.ordFilter='${k}';renderOrders()">${lb} <span class="ord-chip-n">${n}</span></button>`).join('');
+  // 검색 + 필터 적용
   const q = ($('#q-orders')?.value||'').trim().toLowerCase();
   let rows = all;
-  if (q) if (/^\d{4}-\d{2}-\d{2}$/.test(q)) rows = rows.filter(o=> o.doneDt===q || o.fitDt===q || o.date===q);
-    else rows = rows.filter(o=> String(o.no).includes(q) || o.nm.toLowerCase().includes(q) || ((o.pattern?.top||'')+'').toLowerCase().includes(q));
+  if (F==='prog') rows=rows.filter(o=>o.status!=='완료');
+  else if (F==='done') rows=rows.filter(o=>o.status==='완료');
+  else if (F==='wfit') rows=rows.filter(o=>thisWeek(o.fitDt)&&o.status!=='완료');
+  else if (F==='wdone') rows=rows.filter(o=>thisWeek(o.doneDt)&&o.status!=='완료');
+  else if (F==='over') rows=rows.filter(isOverdue);
+  if (q){ if (/^\d{4}-\d{2}-\d{2}$/.test(q)) rows=rows.filter(o=> o.doneDt===q||o.fitDt===q||o.date===q);
+    else rows=rows.filter(o=> String(o.no).includes(q)||o.nm.toLowerCase().includes(q)||((o.pattern?.top||'')+'').toLowerCase().includes(q)); }
+  const dday=(ds)=>{ if(!ds)return ''; const d=Math.round((new Date(ds)-new Date(tStr))/86400000); return d<0?`<span class="od-dd late">D+${-d}</span>`:d===0?`<span class="od-dd today">D-0</span>`:d<=3?`<span class="od-dd soon">D-${d}</span>`:`<span class="od-dd">D-${d}</span>`; };
+  const FAC=['대기','재단','봉제','마무리','입고'];
   $('#orders-tbody').innerHTML = rows.map(o=>{
-    const qy = o.qty ? `S${o.qty.s||0}·P${o.qty.p||0}${o.qty.v?'·V'+o.qty.v:''}${o.qty.c?'·C'+o.qty.c:''}` : '-';
-    return `<tr onclick="openOrderDet('${o.no}')" style="cursor:pointer">
-      <td><b>#${o.no}</b></td>
-      <td>${o.date}</td>
-      <td><span class="ent-link" onclick="event.stopPropagation();openCustByName('${o.nm}')">${o.nm}</span></td>
-      <td>${o.pattern?.top||'-'} ${o.size?.top||''}</td>
-      <td>${qy}</td>
-      <td>${o.fitDt||'<span style="color:var(--t3)">직봉</span>'}</td>
-      <td><b>${o.doneDt||'-'}</b></td>
-      <td>${fmt(o.total)}</td>
-      <td><span class="badge ${o.status==='완료'?'b-ok':'b-info'}">${o.status}</span>${o.status!=='완료' && o.fac && o.fac.stage>0 ? `<div style="font-size:10px;color:var(--it);font-weight:800;margin-top:3px">${facStageName(o.fac.stage)} 완료${o.fac.stage<4?' ·진행중':''}</div>`:''}</td>
-      <td><div style="display:flex;gap:5px;justify-content:center">
-        <button class="mini-act" onclick="event.stopPropagation();openFitModal('${o.no}')" title="가봉 수정 기록${o.fitFix?' (작성됨)':''}" style="${o.fitFix?'border-color:var(--okt);color:var(--okt)':''}"><i class="ti ti-needle-thread"></i></button>
-        <button class="mini-act" onclick="event.stopPropagation();deleteOrder('${o.no}')" title="휴지통으로 이동"><i class="ti ti-trash"></i></button>
+    const q2=o.qty||{};
+    const qy=[q2.s?`수트${q2.s}`:'',q2.j?`자켓${q2.j}`:'',q2.p?`하의${q2.p}`:'',q2.v?`조끼${q2.v}`:'',q2.c?`코트${q2.c}`:''].filter(Boolean).join(' ')||'-';
+    const ov=isOverdue(o);
+    const fst=(o.fac&&o.fac.stage)||0;
+    const facBar = o.status!=='완료' ? `<div class="od-fac"><div class="od-fac-fill" style="width:${fst/4*100}%"></div></div><span class="od-fac-lbl">${FAC[fst]}${fst<4?' 진행':''}</span>` : '';
+    const sizeT = o.size?.top==='기타'?'기타':(o.size?.top||'');
+    return `<tr onclick="openOrderDet('${o.no}')" class="od-row ${ov?'od-over':''}" style="cursor:pointer">
+      <td><div class="od-no">#${o.no}</div><div class="od-sub">${o.date||''}</div></td>
+      <td><div class="od-cust"><span class="ent-link" onclick="event.stopPropagation();openCustByName('${o.nm}')">${o.nm}</span></div><div class="od-sub">${o.pattern?.top||'-'} ${sizeT}</div></td>
+      <td><span class="od-qty">${qy}</span></td>
+      <td><div class="od-sched">${o.fitYn==='Y'&&o.fitDt?`<span class="od-s"><i class="ti ti-ruler-2"></i>가봉 ${o.fitDt.slice(5)} ${dday(o.fitDt)}</span>`:o.fitYn!=='Y'?'<span class="od-s mut"><i class="ti ti-arrow-right"></i>직봉</span>':''}${o.doneDt?`<span class="od-s"><i class="ti ti-package"></i>완성 ${o.doneDt.slice(5)} ${dday(o.doneDt)}</span>`:''}</div></td>
+      <td><b class="od-amt">${fmt(o.total)}</b></td>
+      <td><span class="badge ${o.status==='완료'?'b-ok':ov?'b-err':'b-info'}">${o.status}${ov?' · 연체':''}</span>${facBar}</td>
+      <td onclick="event.stopPropagation()"><div class="od-acts">
+        <button class="mini-act" onclick="openFitModal('${o.no}')" title="가봉 수정 기록${o.fitFix?' (작성됨)':''}" style="${o.fitFix?'border-color:var(--okt);color:var(--okt)':''}"><i class="ti ti-needle-thread"></i></button>
+        <button class="mini-act" onclick="reorderToForm('${o.no}')" title="재주문"><i class="ti ti-copy"></i></button>
+        <button class="mini-act" onclick="deleteOrder('${o.no}')" title="휴지통"><i class="ti ti-trash"></i></button>
       </div></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="10"><div class="empty-state"><i class="ti ti-clipboard-off"></i><div class="empty-state-title">아직 주문이 없습니다</div><div class="empty-state-sub">주문서를 작성하면 작지서 인쇄·가봉 일정·매출까지 자동으로 연결됩니다</div><button class="action-btn es-btn" onclick="go('mtm-suit')"><i class="ti ti-pencil"></i>정장 주문서 작성</button></div></td></tr>`;
+  }).join('') || `<tr><td colspan="7"><div class="empty-state"><i class="ti ti-clipboard-off"></i><div class="empty-state-title">${q||F!=='all'?'조건에 맞는 주문이 없습니다':'아직 주문이 없습니다'}</div><div class="empty-state-sub">${q||F!=='all'?'필터·검색을 바꿔보세요':'주문서를 작성하면 작지서 인쇄·가봉 일정·매출까지 자동으로 연결됩니다'}</div>${q||F!=='all'?`<button class="action-btn es-btn" onclick="state.ordFilter='all';$('#q-orders').value='';renderOrders()"><i class="ti ti-x"></i>필터 초기화</button>`:`<button class="action-btn es-btn" onclick="go('mtm-suit')"><i class="ti ti-pencil"></i>정장 주문서 작성</button>`}</div></td></tr>`;
   if (typeof renderDueHeatmap==='function') renderDueHeatmap();
 }
 
