@@ -8652,13 +8652,22 @@ function studioPrint(){
 
 /* ─── 결혼 패키지 그룹 주문 (혼주·들러리) ─── */
 const WED_ROLES = ['신랑','신부','들러리','혼주(부)','혼주(모)','사회자','기타'];
+function _logoBoxColor(){ const c=(state.shop&&state.shop.logoBoxColor)||'white'; return c==='gray'?'#f1f1f3':c==='theme'?'#1ab394':'#fff'; }
+function _logoBoxBorder(){ return ((state.shop&&state.shop.logoBoxColor)==='theme')?'transparent':'#e0e0e0'; }
+function _logoBoxShow(forPrint){
+  const s=state.shop||{};
+  const mode = s.logoBoxMode || (s.logoBox?'always':'none');
+  if(mode==='always') return true;
+  if(mode==='dark') return forPrint ? false : (typeof document!=='undefined' && document.body.classList.contains('dk'));
+  return false;
+}
 function printLogoBar(){
   const s=state.shop||{};
   if(!s.logo) return '';
   const SZ={sm:30,md:48,lg:66}; const h=SZ[s.logoPrintSize||'md']||48;
   const center=(s.logoPrintPos||'center')==='center';
   const img=`<img src="${s.logo}" style="max-height:${h}px;max-width:240px;object-fit:contain;display:block">`;
-  const inner = s.logoBox ? `<span style="display:inline-block;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:8px 13px">${img}</span>` : img;
+  const inner = _logoBoxShow(true) ? `<span style="display:inline-block;background:${_logoBoxColor()};border:1px solid ${_logoBoxBorder()};border-radius:8px;padding:8px 13px">${img}</span>` : img;
   return `<div style="text-align:${center?'center':'left'};margin-bottom:9px">${inner}</div>`;
 }
 function setLogoCfg(key,val){ if(!state.shop)loadShop(); state.shop[key]=val; saveShop(); renderPrintLogoCard(); if(typeof applyShop==='function')applyShop(); toast('로고 설정 저장','ok','설정'); }
@@ -8670,14 +8679,17 @@ function renderPrintLogoCard(){
   const on='background:#1ab394;color:#fff;border-color:transparent';
   const pB=(v,l)=>`<button class="action-btn" onclick="setLogoCfg('logoPrintPos','${v}')" style="${pos===v?on:''}">${l}</button>`;
   const sB=(v,l)=>`<button class="action-btn" onclick="setLogoCfg('logoPrintSize','${v}')" style="${size===v?on:''}">${l}</button>`;
-  const bB=(v,l)=>`<button class="action-btn" onclick="setLogoCfg('logoBox',${v})" style="${(!!s.logoBox)===v?on:''}">${l}</button>`;
+  const _mode=s.logoBoxMode||(s.logoBox?'always':'none'), _col=s.logoBoxColor||'white';
+  const mB=(v,l)=>`<button class="action-btn" onclick="setLogoCfg('logoBoxMode','${v}')" style="${_mode===v?on:''}">${l}</button>`;
+  const cB=(v,l)=>`<button class="action-btn" onclick="setLogoCfg('logoBoxColor','${v}')" style="${_col===v?on:''}">${l}</button>`;
   card.innerHTML=`<div class="form-card" style="margin-top:18px;padding:16px 18px">
     <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-photo"></i> 인쇄물 로고 (작지서·계약서·예식 표지 공통)</div>
     ${s.logo?'':'<div style="font-size:12px;color:var(--wt);background:var(--wb);padding:8px 11px;border-radius:7px;margin-bottom:12px"><i class="ti ti-info-circle"></i> 위 매장정보에 로고를 먼저 등록하면 모든 인쇄물에 반영됩니다</div>'}
     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:11px"><span style="font-size:13px;color:var(--t2);min-width:42px">위치</span>${pB('left','좌측')}${pB('center','중앙')}</div>
     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:11px"><span style="font-size:13px;color:var(--t2);min-width:42px">크기</span>${sB('sm','작게')}${sB('md','보통')}${sB('lg','크게')}</div>
-    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span style="font-size:13px;color:var(--t2);min-width:42px">배경</span>${bB(false,'투명')}${bB(true,'흰 박스')}</div>
-    <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 투명 로고가 어두운 사이드바에서 안 보이면 '흰 박스'를 선택하세요</div>
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:11px"><span style="font-size:13px;color:var(--t2);min-width:42px">박스</span>${mB('none','없음')}${mB('always','항상')}${mB('dark','다크만')}</div>
+    ${_mode!=='none'?`<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap"><span style="font-size:13px;color:var(--t2);min-width:42px">색상</span>${cB('white','흰색')}${cB('gray','연회색')}${cB('theme','테마')}</div>`:''}
+    <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 투명 로고가 안 보이면 박스를 켜세요 · '다크만'=다크모드일 때만 박스</div>
   </div>`;
 }
 function printWedPackage(gid){
@@ -10043,7 +10055,7 @@ function renderBranchCard(){
 function shopName(){ return (state.shop && state.shop.name) || 'NURI CRM'; }
 function shopBrandBig(){
   const s = state.shop||{};
-  const logo = s.logo ? (s.logoBox ? `<span style="display:inline-block;background:#fff;border:1px solid #e0e0e0;border-radius:6px;padding:3px 6px;vertical-align:middle;margin-right:8px"><img src="${s.logo}" style="height:26px;vertical-align:middle;display:block"></span>` : `<img src="${s.logo}" style="height:30px;vertical-align:middle;margin-right:8px;border-radius:5px">`) : '';
+  const logo = s.logo ? (_logoBoxShow(false) ? `<span style="display:inline-block;background:${_logoBoxColor()};border:1px solid ${_logoBoxBorder()};border-radius:6px;padding:3px 6px;vertical-align:middle;margin-right:8px"><img src="${s.logo}" style="height:26px;vertical-align:middle;display:block"></span>` : `<img src="${s.logo}" style="height:30px;vertical-align:middle;margin-right:8px;border-radius:5px">`) : '';
   if (s.name && s.name !== 'NURI CRM')
     return `${logo}<span style="font-size:21px;font-weight:900;color:#0c1f35;letter-spacing:-.5px;vertical-align:middle">${s.name}</span>`;
   return `${logo}<span style="font-size:24px;font-weight:900;letter-spacing:-1.5px;color:#0c1f35;vertical-align:middle">N<span style="color:#c8914a">URI</span></span> <span style="font-size:11px;font-weight:700;letter-spacing:4px;color:#c8914a">CRM</span>`;
@@ -10056,7 +10068,7 @@ function applyShop(){
   if ((s.name && s.name!=='NURI CRM') || s.logo){
     head.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px">
-        ${s.logo?(s.logoBox?`<span style="background:#fff;border-radius:8px;padding:5px 7px;display:inline-flex;align-items:center;flex-shrink:0"><img src="${s.logo}" style="height:28px;max-width:104px;object-fit:contain;display:block"></span>`:`<img src="${s.logo}" style="width:36px;height:36px;border-radius:9px;object-fit:cover;background:#fff;flex-shrink:0">`):''}
+        ${s.logo?(_logoBoxShow(false)?`<span style="background:${_logoBoxColor()};border-radius:8px;padding:5px 7px;display:inline-flex;align-items:center;flex-shrink:0"><img src="${s.logo}" style="height:28px;max-width:104px;object-fit:contain;display:block"></span>`:`<img src="${s.logo}" style="width:36px;height:36px;border-radius:9px;object-fit:cover;background:#fff;flex-shrink:0">`):''}
         <div style="min-width:0">
           <div style="font-size:15.5px;font-weight:900;color:#fff;letter-spacing:-.3px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name||'NURI CRM'}</div>
           <div class="nuri-tagline">${s.tag||'MTM 통합 관리 시스템'}</div>
@@ -11108,6 +11120,7 @@ function toggleDark(){
   const on = document.body.classList.contains('dk');
   const ic = $('#theme-ic');
   if (ic) ic.className = on ? 'ti ti-sun' : 'ti ti-moon';
+  if (typeof applyShop==='function') applyShop();
   try{ localStorage.setItem('nuri_dark', on ? '1' : '0'); }catch(e){}
   if (state.view==='dash' && typeof renderSalesChart==='function') renderSalesChart();
 }
