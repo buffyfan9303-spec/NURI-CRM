@@ -3054,6 +3054,27 @@ body.dk{ --t3:#9b9994; }
             </tbody>
           </table>
 
+          <div id="vest-size-sec" style="display:none">
+          <div class="spec-table-head" style="margin-top:18px">
+            <div class="ttl"><i class="ti ti-ruler-2"></i>조끼 부위별 측정
+              <span class="unit-toggle unit-toggle-sm" data-target="vest">
+                <button type="button" class="u-opt active" data-u="cm" onclick="setAllUnit('vest','cm')">cm</button>
+                <button type="button" class="u-opt" data-u="in" onclick="setAllUnit('vest','in')">in</button>
+              </span>
+              <span class="unit-hint">표 전체 단위 전환</span>
+            </div>
+          </div>
+          <table class="spec-table">
+            <thead><tr>
+              <th style="width:21%">부 위</th>
+              <th class="col-pat" style="width:23%">신체사이즈 (패턴)</th>
+              <th class="col-fix" style="width:32%">수정치수 ± <span class="th-hint">(버튼 1회 = 0.5)</span></th>
+              <th class="col-fin" style="width:24%">완성사이즈</th>
+            </tr></thead>
+            <tbody id="spec-vest-body"><!-- JS로 렌더링 --></tbody>
+          </table>
+          </div>
+
           <div class="form-row3" style="margin-top:18px">
             <div>
               <label class="f-label">① 봉제 방식</label>
@@ -5249,6 +5270,7 @@ function nextFacNo(){
 // ─── 사이즈 테이블 (행별 단위 토글) ──────────────────
 // 각 행: data-unit="cm" | "in"  — input.value 는 표시값(현재 단위 기준)
 //        input.dataset.cm        — 원본 cm 값 (저장/계산용)
+const VEST_PARTS = [ { id:'chest', label:'가슴둘레' }, { id:'waist', label:'허리둘레' }, { id:'shoul', label:'어 깨' }, { id:'len', label:'조끼길이' } ];
 function renderSpecTable(){
   const buildRow = (part, prefix)=>`
     <tr data-part="${prefix}-${part.id}" data-unit="cm">
@@ -5265,6 +5287,8 @@ function renderSpecTable(){
     </tr>`;
   const top = $('#spec-top-body'); if (top) top.innerHTML = TOP_PARTS.map(p=>buildRow(p,'top')).join('');
   const bot = $('#spec-bot-body'); if (bot) bot.innerHTML = BOT_PARTS.map(p=>buildRow(p,'bot')).join('');
+  const vest = $('#spec-vest-body'); if (vest) vest.innerHTML = VEST_PARTS.map(p=>buildRow(p,'vest')).join('');
+  const vsec = $('#vest-size-sec'); if (vsec) vsec.style.display = (($('#o-pVest')&&$('#o-pVest').value) || ((state.opt&&state.opt.qty&&state.opt.qty.v)>0)) ? '' : 'none';
 }
 
 // −/+ 버튼 — 한 번에 0.5cm 보정 (완성사이즈 즉시 재계산)
@@ -5930,9 +5954,10 @@ function autoSizeAll(){
   }
   // 조끼·코트 사이즈 스펙 자동 (폼 측정칸 있으면 채움 — 작지서는 항상 스펙 자동)
   try{
-    const fillSpec=(pid,sid,pre,tbl,keys)=>{ const p=$(pid)?.value,s=$(sid)?.value; if(p&&s&&typeof tbl!=='undefined'&&tbl[p]&&tbl[p][s]){ const sp=tbl[p][s]; keys.forEach(k=>{ if(sp[k]!=null && typeof setPatternVal==='function') setPatternVal(`sz-${pre}-${k}-pat`, sp[k]); }); } };
+    const fillSpec=(pid,sid,pre,tbl,keys)=>{ const p=$(pid)?.value,s=$(sid)?.value; if(p&&s&&typeof tbl!=='undefined'&&tbl[p]&&tbl[p][s]){ const sp=tbl[p][s]; keys.forEach(k=>{ const cm=sp[k]; if(cm!=null && typeof setPatternVal==='function'){ setPatternVal(`sz-${pre}-${k}-pat`, cm); if(typeof setCmToInput==='function'){ const fx=(typeof getCmVal==='function')?getCmVal(`sz-${pre}-${k}-fix`):0; setCmToInput(`sz-${pre}-${k}-fin`, cm+fx); } } }); } };
     if(typeof PATTERN_SPEC_VEST!=='undefined') fillSpec('#o-pVest','#o-sVest','vest',PATTERN_SPEC_VEST,['chest','waist','shoul','len']);
     if(typeof PATTERN_SPEC_COAT!=='undefined') fillSpec('#o-pCoat','#o-sCoat','coat',PATTERN_SPEC_COAT,['chest','waist','shoul','slv','len','vent']);
+      const _vsec=$('#vest-size-sec'); if(_vsec) _vsec.style.display=(($('#o-pVest')&&$('#o-pVest').value)||((state.opt&&state.opt.qty&&state.opt.qty.v)>0))?'':'none';
   }catch(e){}
   applyLapelDefault();
   computePrice();
