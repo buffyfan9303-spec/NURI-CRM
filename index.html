@@ -3075,6 +3075,27 @@ body.dk{ --t3:#9b9994; }
           </table>
           </div>
 
+          <div id="coat-size-sec" style="display:none">
+          <div class="spec-table-head" style="margin-top:18px">
+            <div class="ttl"><i class="ti ti-ruler-2"></i>코트 부위별 측정
+              <span class="unit-toggle unit-toggle-sm" data-target="coat">
+                <button type="button" class="u-opt active" data-u="cm" onclick="setAllUnit('coat','cm')">cm</button>
+                <button type="button" class="u-opt" data-u="in" onclick="setAllUnit('coat','in')">in</button>
+              </span>
+              <span class="unit-hint">표 전체 단위 전환</span>
+            </div>
+          </div>
+          <table class="spec-table">
+            <thead><tr>
+              <th style="width:21%">부 위</th>
+              <th class="col-pat" style="width:23%">신체사이즈 (패턴)</th>
+              <th class="col-fix" style="width:32%">수정치수 ± <span class="th-hint">(버튼 1회 = 0.5)</span></th>
+              <th class="col-fin" style="width:24%">완성사이즈</th>
+            </tr></thead>
+            <tbody id="spec-coat-body"><!-- JS로 렌더링 --></tbody>
+          </table>
+          </div>
+
           <div class="form-row3" style="margin-top:18px">
             <div>
               <label class="f-label">① 봉제 방식</label>
@@ -5271,6 +5292,7 @@ function nextFacNo(){
 // 각 행: data-unit="cm" | "in"  — input.value 는 표시값(현재 단위 기준)
 //        input.dataset.cm        — 원본 cm 값 (저장/계산용)
 const VEST_PARTS = [ { id:'chest', label:'가슴둘레' }, { id:'waist', label:'허리둘레' }, { id:'shoul', label:'어 깨' }, { id:'len', label:'조끼길이' } ];
+const COAT_PARTS = [ { id:'chest', label:'가슴둘레' }, { id:'waist', label:'허리둘레' }, { id:'shoul', label:'어 깨' }, { id:'slv', label:'소 매' }, { id:'len', label:'코트기장' }, { id:'vent', label:'뒤트임' } ];
 function renderSpecTable(){
   const buildRow = (part, prefix)=>`
     <tr data-part="${prefix}-${part.id}" data-unit="cm">
@@ -5289,6 +5311,8 @@ function renderSpecTable(){
   const bot = $('#spec-bot-body'); if (bot) bot.innerHTML = BOT_PARTS.map(p=>buildRow(p,'bot')).join('');
   const vest = $('#spec-vest-body'); if (vest) vest.innerHTML = VEST_PARTS.map(p=>buildRow(p,'vest')).join('');
   const vsec = $('#vest-size-sec'); if (vsec) vsec.style.display = (($('#o-pVest')&&$('#o-pVest').value) || ((state.opt&&state.opt.qty&&state.opt.qty.v)>0)) ? '' : 'none';
+  const coat = $('#spec-coat-body'); if (coat) coat.innerHTML = COAT_PARTS.map(p=>buildRow(p,'coat')).join('');
+  const csec = $('#coat-size-sec'); if (csec) csec.style.display = (($('#o-pCoat')&&$('#o-pCoat').value) || ((state.opt&&state.opt.qty&&state.opt.qty.c)>0)) ? '' : 'none';
 }
 
 // −/+ 버튼 — 한 번에 0.5cm 보정 (완성사이즈 즉시 재계산)
@@ -5341,7 +5365,7 @@ function toggleRowUnit(btn, unit){
 
 // 전체 단위 토글 (cm | in) — 표의 모든 행을 한 번에 변환
 function setAllUnit(prefix, unit){
-  const bodyId = prefix==='top' ? 'spec-top-body' : 'spec-bot-body';
+  const bodyId = 'spec-'+prefix+'-body';
   document.querySelectorAll(`#${bodyId} tr`).forEach(tr=>{
     const prev = tr.dataset.unit || 'cm';
     if (prev===unit) return;
@@ -5916,6 +5940,10 @@ function setPatternVal(inputId, cmVal){
 
 // 패턴+호칭 선택 → 부위별 신체사이즈 + 완성사이즈 자동 채움
 // (사용자가 수정 중인 부위는 fix 값이 이미 있을 수 있으니 그것을 반영해 완성 재계산)
+function _custMeasVal(key){
+  if(!key) return 0;
+  try{ const id=$('#o-cust')?$('#o-cust').value:''; const c=state.customers.find(x=>x.id===id); return (c&&c.measure&&c.measure[key])||0; }catch(e){ return 0; }
+}
 function autoSizeAll(){
   refreshSizeOptions();
 
@@ -5929,8 +5957,9 @@ function autoSizeAll(){
       setPatternVal(`sz-top-${k}-pat`, cm);
       if (cm){
         // 기존 수정치수가 있으면 완성 = 패턴 + 수정, 없으면 완성 = 패턴
-        const fixCm = getCmVal(`sz-top-${k}-fix`);
-        setCmToInput(`sz-top-${k}-fin`, cm + fixCm);
+        const _cv = _custMeasVal({chest:'chest',waist:'waist',shoul:'shoul',len:'len',slvL:'slvL',slvR:'slvL'}[k]);
+        if(_cv){ setCmToInput(`sz-top-${k}-fix`, +(_cv-cm).toFixed(1)); setCmToInput(`sz-top-${k}-fin`, _cv); }
+        else { const fixCm = getCmVal(`sz-top-${k}-fix`); setCmToInput(`sz-top-${k}-fin`, cm + fixCm); }
       } else {
         setCmToInput(`sz-top-${k}-fin`, 0);
       }
@@ -5945,8 +5974,9 @@ function autoSizeAll(){
       const cm = map[k];
       setPatternVal(`sz-bot-${k}-pat`, cm);
       if (cm){
-        const fixCm = getCmVal(`sz-bot-${k}-fix`);
-        setCmToInput(`sz-bot-${k}-fin`, cm + fixCm);
+        const _cv = _custMeasVal({w:'botWaist',in:'inseam'}[k]);
+        if(_cv){ setCmToInput(`sz-bot-${k}-fix`, +(_cv-cm).toFixed(1)); setCmToInput(`sz-bot-${k}-fin`, _cv); }
+        else { const fixCm = getCmVal(`sz-bot-${k}-fix`); setCmToInput(`sz-bot-${k}-fin`, cm + fixCm); }
       } else {
         setCmToInput(`sz-bot-${k}-fin`, 0);
       }
@@ -5954,10 +5984,11 @@ function autoSizeAll(){
   }
   // 조끼·코트 사이즈 스펙 자동 (폼 측정칸 있으면 채움 — 작지서는 항상 스펙 자동)
   try{
-    const fillSpec=(pid,sid,pre,tbl,keys)=>{ const p=$(pid)?.value,s=$(sid)?.value; if(p&&s&&typeof tbl!=='undefined'&&tbl[p]&&tbl[p][s]){ const sp=tbl[p][s]; keys.forEach(k=>{ const cm=sp[k]; if(cm!=null && typeof setPatternVal==='function'){ setPatternVal(`sz-${pre}-${k}-pat`, cm); if(typeof setCmToInput==='function'){ const fx=(typeof getCmVal==='function')?getCmVal(`sz-${pre}-${k}-fix`):0; setCmToInput(`sz-${pre}-${k}-fin`, cm+fx); } } }); } };
-    if(typeof PATTERN_SPEC_VEST!=='undefined') fillSpec('#o-pVest','#o-sVest','vest',PATTERN_SPEC_VEST,['chest','waist','shoul','len']);
-    if(typeof PATTERN_SPEC_COAT!=='undefined') fillSpec('#o-pCoat','#o-sCoat','coat',PATTERN_SPEC_COAT,['chest','waist','shoul','slv','len','vent']);
+    const fillSpec=(pid,sid,pre,tbl,keys,mmap)=>{ const p=$(pid)?.value,s=$(sid)?.value; if(p&&s&&typeof tbl!=='undefined'&&tbl[p]&&tbl[p][s]){ const sp=tbl[p][s]; keys.forEach(k=>{ const cm=sp[k]; if(cm!=null && typeof setPatternVal==='function'){ setPatternVal(`sz-${pre}-${k}-pat`, cm); if(typeof setCmToInput==='function'){ const cv=_custMeasVal(mmap?mmap[k]:null); if(cv){ setCmToInput(`sz-${pre}-${k}-fix`, +(cv-cm).toFixed(1)); setCmToInput(`sz-${pre}-${k}-fin`, cv); } else { const fx=(typeof getCmVal==='function')?getCmVal(`sz-${pre}-${k}-fix`):0; setCmToInput(`sz-${pre}-${k}-fin`, cm+fx); } } } }); } };
+    if(typeof PATTERN_SPEC_VEST!=='undefined') fillSpec('#o-pVest','#o-sVest','vest',PATTERN_SPEC_VEST,['chest','waist','shoul','len'],{chest:'chest',waist:'waist',shoul:'shoul',len:'len'});
+    if(typeof PATTERN_SPEC_COAT!=='undefined') fillSpec('#o-pCoat','#o-sCoat','coat',PATTERN_SPEC_COAT,['chest','waist','shoul','slv','len','vent'],{chest:'chest',waist:'waist',shoul:'shoul',slv:'slvL',len:'len'});
       const _vsec=$('#vest-size-sec'); if(_vsec) _vsec.style.display=(($('#o-pVest')&&$('#o-pVest').value)||((state.opt&&state.opt.qty&&state.opt.qty.v)>0))?'':'none';
+      const _csec=$('#coat-size-sec'); if(_csec) _csec.style.display=(($('#o-pCoat')&&$('#o-pCoat').value)||((state.opt&&state.opt.qty&&state.opt.qty.c)>0))?'':'none';
   }catch(e){}
   applyLapelDefault();
   computePrice();
@@ -8420,7 +8451,7 @@ function buildDiagramSheet(){
   }
   if((q.v||0)>0){
     const sp=(typeof PATTERN_SPEC_VEST!=='undefined'&&PATTERN_SPEC_VEST[g('o-pVest')]||{})[g('o-sVest')]||{};
-    const mv={chest:sp.chest||'',len:sp.len||''};
+    const mv={chest:_woM('vest','chest')||sp.chest||'',waist:_woM('vest','waist')||sp.waist||'',shoul:_woM('vest','shoul')||sp.shoul||'',len:_woM('vest','len')||sp.len||''};
     sections.push(`<div class="ds-sec"><div class="ds-t">조끼 — 앞·뒤 + 치수</div><div class="ds-row">${composeVest2View(o,hex,patt)}<div class="ds-spec">${composeVestSpec(o,'#eef1f3',mv)}</div></div></div>`);
   }
   if(!sections.length){ toast('수량을 입력하세요 — 도식을 만들 항목이 없습니다','warn'); return; }
