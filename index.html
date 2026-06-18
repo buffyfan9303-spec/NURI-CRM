@@ -150,7 +150,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 /* ─── Views ──────────────────────────────────────── */
 [id^="view-"]{flex:1;display:none;flex-direction:column;min-height:0;animation:viewIn .25s var(--ease)}
 [id^="view-"].active{display:flex}
-@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* viewIn: 중복 정의 제거 — 아래 후행 정의 사용 */
 
 /* ─── Login ──────────────────────────────────────── */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(circle at top right,rgba(200,145,74,.06),transparent 60%),radial-gradient(circle at bottom left,rgba(12,31,53,.04),transparent 60%),var(--bg);padding:24px}
@@ -537,7 +537,7 @@ select.f-input{padding-right:38px}
 
 /* 선택 박스 (펼침 컨테이너) */
 .pick-box{background:var(--sf2);border:.5px solid var(--bd);border-radius:11px;padding:14px;margin-top:6px}
-.pick-empty{grid-column:1/-1;padding:13px;text-align:center;font-size:12.5px;color:var(--t3);font-weight:600;white-space:nowrap}
+.pick-empty{grid-column:1/-1;padding:13px;text-align:center;font-size:12.5px;color:var(--t3);font-weight:600;white-space:normal;line-height:1.4}
 
 /* ─── 패턴 수정 옵션 (강상/중상/약상 ...) ────── */
 .modi-block{background:var(--sf2);border:.5px solid var(--bd);border-radius:11px;padding:14px;margin-bottom:10px}
@@ -1656,6 +1656,17 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 81차 — 모바일 정합 + 컨트롤 높이 통일 ════ */
+.cal-nav-btn{height:36px;min-width:36px}
+.noti-bell{width:36px;height:36px}
+@media (max-width:600px){
+  #due-heatmap .dh-grid{grid-template-columns:repeat(7,minmax(0,1fr))!important;max-width:100%}
+  #due-heatmap .dh-cell{height:46px;padding:3px 4px}
+  #due-heatmap .dh-d{font-size:11px} #due-heatmap .dh-n{font-size:11px}
+  .topbar-search input{font-size:14px} .topbar-search{padding:0 3px}
+  .cal-nav-btn{height:42px;min-width:42px}
+  .noti-bell{width:42px;height:42px}
+}
 /* ════ 68차 — 공용 확인/입력 다이얼로그 ════ */
 #ui-dialog .uid-card{max-width:400px;padding:24px}
 .uid-msg{font-size:14.5px;color:var(--t);line-height:1.55;font-weight:600;margin-bottom:17px}
@@ -1842,7 +1853,7 @@ input.locked{background:var(--sf3)!important;cursor:not-allowed;color:var(--t3)}
 }
 /* ════ 53차 — 대비 보강 + 여백·구분선 일관화 ════ */
 /* 흐린 글씨(--t3) 대비 상향: 라이트 2.2→3.9 / 다크 2.8→4.0 */
-:root{ --t3:#767e8a; }
+:root{ --t3:#6e7681; }
 body.dk{ --t3:#9b9994; }
 /* 여백·구분선 일관화 (밀집감 해소) */
 .page-content{padding:22px}
@@ -10070,6 +10081,7 @@ function loadShop(){
   }catch(e){
     state.shop = { name:'NURI CRM', tag:'MTM 통합 관리 시스템', ph:'', addr:'', bizno:'', owner:'', logo:'' };
   }
+  if (state.shop && !state.shop.perms) state.shop.perms = {};
 }
 /* ─── 다중 지점 (지점 분리 구조) ─────────── */
 function ensureBranches(){
@@ -10994,11 +11006,16 @@ async function doLogin(){
       const { data, error } = await sb.auth.signInWithPassword({ email:id, password:pw });
       if (!error && data && data.session){
         // CRM 직원 명단(crm_staff) 검사 — 미등록 계정은 접근 차단
-        let staffRow = null;
+        let staffRow = null, staffErr = null;
         try{
-          const { data: st } = await sb.from('crm_staff').select('role,name').eq('email', id).maybeSingle();
-          staffRow = st;
-        }catch(e){}
+          const { data: st, error: se } = await sb.from('crm_staff').select('role,name').eq('email', id).maybeSingle();
+          staffRow = st; staffErr = se;
+        }catch(e){ staffErr = e; }
+        if (staffErr){
+          try{ await sb.auth.signOut(); }catch(e){}
+          toast('직원 명단 확인 중 오류 — 네트워크 확인 후 다시 시도하세요','warn','로그인 보류');
+          return;
+        }
         if (!staffRow){
           try{ await sb.auth.signOut(); }catch(e){}
           _logLoginFail(id, 'CRM 직원 미등록'); _srvLoginLog(id,false,'not-staff');
@@ -11062,7 +11079,7 @@ async function doSignup(){
 
   if (!name){ toast('이름을 입력하세요','warn'); return; }
   if (!id || !id.includes('@')){ toast('올바른 이메일 형식을 입력하세요','warn'); return; }
-  if (!pw || pw.length < 4){ toast('비밀번호는 4자 이상이어야 합니다','warn'); return; }
+  if (!pw || pw.length < 8 || !/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)){ toast('비밀번호는 영문+숫자 포함 8자 이상이어야 합니다','warn'); return; }
   if (pw !== pw2){ toast('비밀번호 확인이 일치하지 않습니다','err'); return; }
 
   ensureDefaultAccount();
@@ -11080,12 +11097,9 @@ async function doSignup(){
     }catch(e){}
   }
 
-  accs.push({ id, pw, name, store, role:'user', created: dStr(today()) });
-  saveAccounts(accs);
-
-  toast(`${name} 님, 계정이 생성되었습니다`,'ok','회원가입 완료');
+  // 승인형: 로컬 계정을 만들지 않음(로컬 폴백 로그인 우회 차단). 관리자가 설정→직원 관리에서 crm_staff 등록해야 로그인 가능.
+  toast(`${name} 님, 가입 신청이 접수되었습니다 — 관리자 승인(직원 등록) 후 로그인할 수 있습니다`,'ok','가입 신청');
   $('#signup-modal').classList.remove('open');
-  $('#lg-id').value = id; $('#lg-pw').value = pw; $('#lg-pw').focus();
 }
 
 // 자동 로그인 시도 — 클라우드 세션 우선, 로컬 세션 폴백
