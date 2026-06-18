@@ -1882,14 +1882,14 @@ body.dk{ --t3:#9b9994; }
         <div class="lg-sub">MTM 통합 관리 시스템</div>
         <div class="lg-line"></div>
       </div>
-      <div class="form-group"><label>아이디 (이메일)</label><input id="lg-id" type="text" value="admin@nuri.kr"></div>
-      <div class="form-group"><label>비밀번호</label><input id="lg-pw" type="password" value="nuri2026" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-group"><label>아이디 (이메일)</label><input id="lg-id" type="text" value="" placeholder="이메일 (관리자 계정)" autocomplete="username"></div>
+      <div class="form-group"><label>비밀번호</label><input id="lg-pw" type="password" value="" placeholder="비밀번호" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="lg-rememberbar">
-        <label class="lg-check"><input type="checkbox" id="lg-remember" checked><span>로그인 유지 (30일)</span></label>
+        <span style="color:var(--t3);display:inline-flex;align-items:center;gap:5px;font-size:11.5px"><i class="ti ti-shield-lock"></i>보안 — 매번 로그인 필요</span>
         <span class="lg-link" onclick="openSignup()">회원가입</span>
       </div>
       <button class="login-btn" onclick="doLogin()">매장 시스템 진입 →</button>
-      <div class="lg-hint">초기 계정 — admin@nuri.kr / nuri2026</div>
+      <div class="lg-hint">관리자에게 받은 계정으로 로그인하세요</div>
     </div>
   </div>
 </div>
@@ -11319,11 +11319,12 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   }
   window.addEventListener('beforeunload', saveDB);
   window.addEventListener('resize', ()=>{ if (state.view==='dash') renderSalesChart(); });
-  const okAuto = await tryAutoLogin();
-  if (!okAuto){
-    const lg = document.getElementById('pg-login');
-    if (lg) lg.style.display='block';
-  }
+  // 자동 로그인 제거 — 저장된 세션(로컬+클라우드)을 전부 무효화하고 매번 로그인 요구.
+  // 로그인돼 있던 기기도 다음 접속 시 로그인 화면으로 차단됨.
+  try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+  try{ if (typeof sb!=='undefined' && sb && sb.auth) await sb.auth.signOut(); }catch(e){}
+  state.user = null; state._cloud = false;
+  { const lg = document.getElementById('pg-login'); if (lg) lg.style.display='block'; }
 });
 </script>
 
