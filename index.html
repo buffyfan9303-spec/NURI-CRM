@@ -10914,6 +10914,25 @@ function ensureDefaultAccount(){
   }
 }
 
+function _logLoginFail(id, reason){
+  try{
+    const arr = JSON.parse(localStorage.getItem('nuri_login_fail')||'[]');
+    arr.unshift({ id:(id||'(미입력)'), reason, at:new Date().toISOString() });
+    if (arr.length>50) arr.length = 50;
+    localStorage.setItem('nuri_login_fail', JSON.stringify(arr));
+  }catch(e){}
+  try{ toast('로그인 실패가 기록되었습니다','warn','보안'); }catch(e){}
+}
+function _flushLoginFails(){
+  try{
+    const arr = JSON.parse(localStorage.getItem('nuri_login_fail')||'[]');
+    if (!arr.length) return;
+    const list = arr.slice(0,5).map(f=>`${(f.at||'').slice(5,16).replace('T',' ')} ${f.id}(${f.reason})`).join(' / ');
+    if (typeof actLog==='function') actLog(`마지막 접속 후 로그인 실패 ${arr.length}건 — ${list}`, '보안 경고');
+    try{ toast(`이전 로그인 실패 ${arr.length}건 감지 — 활동 기록 확인`,'warn','보안 경고'); }catch(e){}
+    localStorage.removeItem('nuri_login_fail');
+  }catch(e){}
+}
 async function doLogin(){
   ensureDefaultAccount();
   const id = ($('#lg-id')?.value || '').trim().toLowerCase();
@@ -10933,6 +10952,7 @@ async function doLogin(){
         }catch(e){}
         if (!staffRow){
           try{ await sb.auth.signOut(); }catch(e){}
+          _logLoginFail(id, 'CRM 직원 미등록');
           toast('이 계정은 CRM 직원으로 등록되지 않았습니다 — 관리자에게 승인을 요청하세요','err','접근 제한');
           return;
         }
@@ -10947,6 +10967,8 @@ async function doLogin(){
         state._cloud = true;
         if ($('#lg-remember')?.checked) localStorage.setItem(SESSION_KEY, JSON.stringify({ id, t: Date.now() }));
         await enterApp();
+        try{ actLog(`${state.user.name} 로그인 — 클라우드 동기화 (${(state.user.role||'staff')})`, '접속'); }catch(e){}
+        _flushLoginFails();
         toast(`${state.user.name} 님 — 클라우드 동기화 활성`,'ok','클라우드 로그인');
         return;
       }
@@ -10955,7 +10977,7 @@ async function doLogin(){
 
   // ② 로컬 계정 폴백 (오프라인에서도 동작)
   const acc = loadAccounts().find(a=>a.id.toLowerCase()===id && a.pw===pw);
-  if (!acc){ toast('아이디 또는 비밀번호가 일치하지 않습니다','err','로그인 실패'); return; }
+  if (!acc){ _logLoginFail(id, '비밀번호 불일치'); toast('아이디 또는 비밀번호가 일치하지 않습니다','err','로그인 실패'); return; }
   state.user = acc;
   state._cloud = false;
   if ($('#lg-remember')?.checked){
@@ -10964,6 +10986,8 @@ async function doLogin(){
     localStorage.removeItem(SESSION_KEY);
   }
   await enterApp();
+  try{ actLog(`${acc.name} 로그인 — 로컬 모드`, '접속'); }catch(e){}
+  _flushLoginFails();
   toast(`${acc.name} 님, 환영합니다 (로컬 모드)`,'ok','로그인 완료');
 }
 
