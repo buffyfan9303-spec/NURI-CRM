@@ -4413,6 +4413,7 @@ function refreshActBadge(){
   ab.textContent = n>99?'99+':n;
   ab.style.display = n?'flex':'none';
 }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function actLog(text, title){
   try{
     if (!state || !Array.isArray(state.acts)) return;
@@ -4420,9 +4421,9 @@ function actLog(text, title){
       id: 'a'+Date.now().toString(36)+Math.floor(Math.random()*99),
       d: dStr(today()),
       hm: new Date().toTimeString().slice(0,5),
-      title: title||'',
+      title: String(title||'').replace(/<[^>]*>/g,'').slice(0,80),
       text: String(text).replace(/<[^>]*>/g,'').slice(0,140),
-      by: (state.user&&state.user.name)||''
+      by: String((state.user&&state.user.name)||'').replace(/<[^>]*>/g,'')
     });
     if (state.acts.length>500) state.acts.length = 500;
     clearTimeout(window._actT);
@@ -4596,6 +4597,49 @@ function setBuffer(n){
   saveShop();
   renderBufferCard();
   toast(`세탁 회전 버퍼 ${n}일로 설정 — 반납 후 ${n}일간 재대여 자동 차단`,'ok','가용성');
+}
+function renderStaffCard(){
+  if (!isAdmin()) return;
+  let card = $('#set-staff-card');
+  if (!card){ card=document.createElement('div'); card.id='set-staff-card'; const pc=document.querySelector('#view-settings .page-content'); if(pc)pc.appendChild(card); }
+  if (!card) return;
+  card.innerHTML = `<div class="form-card" style="margin-top:18px;padding:16px 18px">
+    <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-users-group"></i> 직원 계정 관리 (접속 추적)</div>
+    <div style="font-size:11.5px;color:var(--t3);margin-bottom:11px;line-height:1.5"><i class="ti ti-info-circle"></i> 직원은 회원가입으로 본인 계정을 만든 뒤 아래에서 승인(crm_staff 등록)해야 로그인됩니다. 누가 언제 접속했는지는 우측 상단 <b>활동 기록</b>에서 확인하세요.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:11px">
+      <input id="stf-email" class="f-input" placeholder="직원 이메일" style="flex:2;min-width:150px">
+      <input id="stf-name" class="f-input" placeholder="이름" style="flex:1;min-width:80px">
+      <select id="stf-role" class="f-input" style="flex:0 0 100px"><option value="staff">직원</option><option value="admin">관리자</option></select>
+      <button class="btn-primary" style="border:0;color:#fff;padding:0 16px;border-radius:8px;font-family:inherit;font-weight:700;cursor:pointer" onclick="addStaff()">승인 추가</button>
+    </div>
+    <div id="stf-list" style="font-size:12.5px;color:var(--t2)">불러오는 중...</div>
+  </div>`;
+  loadStaffList();
+}
+async function loadStaffList(){
+  const box=$('#stf-list'); if(!box) return;
+  if(typeof sb==='undefined' || !sb){ box.innerHTML='<span style="color:var(--t3)">클라우드 미연결 — 직원 관리는 클라우드 로그인 시 사용 가능</span>'; return; }
+  try{
+    const { data, error } = await sb.from('crm_staff').select('email,name,role');
+    if(error){ box.innerHTML='<span style="color:var(--wt)"><i class="ti ti-alert-triangle"></i> 직원 목록 조회 불가 (Supabase RLS에서 admin 읽기 허용 필요)</span>'; return; }
+    box.innerHTML = (data&&data.length) ? data.map(s=>`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--bd)"><b>${esc(s.name||(s.email||'').split('@')[0])}</b><span style="color:var(--t3);font-size:11.5px">${esc(s.email)}</span><span class="badge ${s.role==='admin'?'b-warn':'b-info'}" style="margin-left:auto">${esc(s.role||'staff')}</span></div>`).join('') : '<span style="color:var(--t3)">아직 등록된 직원이 없습니다</span>';
+  }catch(e){ box.innerHTML='<span style="color:var(--t3)">불러오기 오류</span>'; }
+}
+async function addStaff(){
+  const email=($('#stf-email')?.value||'').trim().toLowerCase();
+  const name=($('#stf-name')?.value||'').trim();
+  const role=$('#stf-role')?.value||'staff';
+  if(!email||!email.includes('@')){ toast('직원 이메일을 입력하세요','warn'); return; }
+  if(typeof sb==='undefined' || !sb){ toast('클라우드 미연결','warn'); return; }
+  try{
+    const { error } = await sb.from('crm_staff').upsert({ email, name:name||email.split('@')[0], role });
+    if(error){ toast('등록 실패: '+error.message+' — Supabase RLS에서 admin write 허용 필요','err','직원 등록'); return; }
+    toast(`${name||email} 직원 승인 완료`,'ok','직원 등록');
+    try{ actLog(`직원 승인: ${esc(name||email)} (${role})`, '계정 관리'); }catch(e){}
+    if($('#stf-email')) $('#stf-email').value='';
+    if($('#stf-name')) $('#stf-name').value='';
+    loadStaffList();
+  }catch(e){ toast('등록 오류','err'); }
 }
 function renderPermCard(){
   if (!isAdmin()) return;
@@ -9688,11 +9732,11 @@ async function deleteOrder(no){
 }
 
 /* ─── 직원 권한 (관리자/직원) ─────────────── */
-function isAdmin(){ return !state.user || state.user.role==='admin'; } // crm_staff: admin/staff
+function isAdmin(){ return !!(state.user && state.user.role==='admin'); } // crm_staff: admin/staff
 // 세분 권한 — 관리자가 설정에서 직원(staff)에게 부여. 기본은 전부 차단(현행 유지)
 function permCan(act){
   if (isAdmin()) return true;
-  const p = (state.shop && state.shop.perms) || {};
+  const p = (state.user && state.user.perms) || (state.shop && state.shop.perms) || {};
   return !!p[act];  // 'sales'(매출보기) · 'cost'(원가/마진보기) · 'delete'(삭제)
 }
 function applyRole(){
@@ -10157,6 +10201,7 @@ function renderSettings(){
   renderBranchCard();
   renderPushCard();
   renderPermCard();
+  renderStaffCard();
   renderBufferCard();
   renderShopBakNote();
   renderPrintLogoCard();
@@ -10914,6 +10959,9 @@ function ensureDefaultAccount(){
   }
 }
 
+async function _srvLoginLog(email, ok2, reason){
+  try{ if (typeof sb!=='undefined' && sb) await sb.from('crm_login_log').insert({ email:email||'', success:!!ok2, reason:reason||'', ua:(navigator.userAgent||'').slice(0,200) }); }catch(e){}
+}
 function _logLoginFail(id, reason){
   try{
     const arr = JSON.parse(localStorage.getItem('nuri_login_fail')||'[]');
@@ -10938,6 +10986,7 @@ async function doLogin(){
   const id = ($('#lg-id')?.value || '').trim().toLowerCase();
   const pw = $('#lg-pw')?.value || '';
   if (!id || !pw){ toast('아이디와 비밀번호를 입력하세요','warn'); return; }
+  try{ const _rf=(JSON.parse(localStorage.getItem('nuri_login_fail')||'[]')).filter(f=>{ try{ return Date.now()-new Date(f.at).getTime()<60000; }catch(e){ return false; } }); if(_rf.length>=5){ toast('로그인 시도가 너무 많습니다 — 1분 후 다시 시도하세요','err','보안 잠금'); return; } }catch(e){}
 
   // ① 클라우드 로그인 (Supabase Auth) — 어느 PC에서나 같은 데이터
   if (sb){
@@ -10952,7 +11001,7 @@ async function doLogin(){
         }catch(e){}
         if (!staffRow){
           try{ await sb.auth.signOut(); }catch(e){}
-          _logLoginFail(id, 'CRM 직원 미등록');
+          _logLoginFail(id, 'CRM 직원 미등록'); _srvLoginLog(id,false,'not-staff');
           toast('이 계정은 CRM 직원으로 등록되지 않았습니다 — 관리자에게 승인을 요청하세요','err','접근 제한');
           return;
         }
@@ -10968,6 +11017,7 @@ async function doLogin(){
         if ($('#lg-remember')?.checked) localStorage.setItem(SESSION_KEY, JSON.stringify({ id, t: Date.now() }));
         await enterApp();
         try{ actLog(`${state.user.name} 로그인 — 클라우드 동기화 (${(state.user.role||'staff')})`, '접속'); }catch(e){}
+        _srvLoginLog(id,true,'cloud');
         _flushLoginFails();
         toast(`${state.user.name} 님 — 클라우드 동기화 활성`,'ok','클라우드 로그인');
         return;
@@ -10977,7 +11027,7 @@ async function doLogin(){
 
   // ② 로컬 계정 폴백 (오프라인에서도 동작)
   const acc = loadAccounts().find(a=>a.id.toLowerCase()===id && a.pw===pw);
-  if (!acc){ _logLoginFail(id, '비밀번호 불일치'); toast('아이디 또는 비밀번호가 일치하지 않습니다','err','로그인 실패'); return; }
+  if (!acc){ _logLoginFail(id, '비밀번호 불일치'); _srvLoginLog(id,false,'bad-pw'); toast('아이디 또는 비밀번호가 일치하지 않습니다','err','로그인 실패'); return; }
   state.user = acc;
   state._cloud = false;
   if ($('#lg-remember')?.checked){
@@ -10987,6 +11037,7 @@ async function doLogin(){
   }
   await enterApp();
   try{ actLog(`${acc.name} 로그인 — 로컬 모드`, '접속'); }catch(e){}
+  _srvLoginLog(acc.id,true,'local');
   _flushLoginFails();
   toast(`${acc.name} 님, 환영합니다 (로컬 모드)`,'ok','로그인 완료');
 }
