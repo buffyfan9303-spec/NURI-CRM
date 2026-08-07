@@ -1658,6 +1658,16 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 86차 — 일일 마감 카드 ════ */
+.daily-close-card{background:var(--sf);border:.5px solid var(--bd);border-radius:14px;padding:18px 22px;box-shadow:var(--shadow-sm);margin-bottom:16px}
+.dc-head{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;color:var(--t);margin-bottom:13px}
+.dc-head .ti{color:var(--gold);font-size:19px}
+.dc-date{font-size:12px;font-weight:600;color:var(--t3)}
+.dc-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.dc-it{background:var(--sf2);border:1px solid var(--bd);border-radius:9px;padding:11px 13px;text-align:center}
+.dc-it span{display:block;font-size:11px;color:var(--t3);margin-bottom:3px}
+.dc-it b{font-size:16.5px;color:var(--t);font-variant-numeric:tabular-nums}
+@media (max-width:600px){ .dc-row{grid-template-columns:repeat(2,minmax(0,1fr))} }
 /* ════ 84차 — 범례 필터 칩 + 사이드바 뱃지 ════ */
 .cal-leg-btn{cursor:pointer;padding:3px 8px;border-radius:7px;border:1px solid transparent;transition:background .12s,border-color .12s}
 .cal-leg-btn:hover{background:var(--sf2)}
@@ -1871,7 +1881,9 @@ input.locked{background:var(--sf3)!important;cursor:not-allowed;color:var(--t3)}
 .od-amt{font-size:14.5px;color:var(--t);font-variant-numeric:tabular-nums}
 .od-fac{height:5px;background:var(--sf3);border-radius:99px;overflow:hidden;margin-top:6px}
 .od-fac-fill{height:100%;background:#1c84c6}
+.od-fac-fill.late{background:var(--et)}
 .od-fac-lbl{font-size:10.5px;color:var(--it);font-weight:700}
+.od-fac-lbl.late{color:var(--et);font-weight:800}
 .od-acts{display:flex;gap:5px;justify-content:center}
 @media (max-width:760px){
   #view-orders .data-table thead{display:none}
@@ -2756,7 +2768,10 @@ body.dk{ --t3:#9b9994; }
                 <button type="button" class="opt-btn" data-v="Y" onclick="onFitYnPick('Y')">중가봉</button>
               </div>
             </div>
-            <div><label class="f-label">가봉 출고일</label><input id="o-fitDt" class="f-input" type="date"></div>
+            <div><label class="f-label">가봉 출고일</label><input id="o-fitDt" class="f-input" type="date" onchange="updateFitSlots()">
+              <select id="o-fitTime" class="f-input" style="margin-top:6px" onchange="updateFitSlots()"><option value="">가봉 시간 선택</option></select>
+              <div id="fit-slot-note" style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.4"></div>
+            </div>
             <div><label class="f-label">완성 출고일<span class="f-req">*</span></label><input id="o-doneDt" class="f-input" type="date"></div>
           </div>
         
@@ -3579,6 +3594,7 @@ body.dk{ --t3:#9b9994; }
     <div class="prv-actions">
       <button type="button" class="prv-btn ghost" id="prv-edit-btn" onclick="togglePrvEdit()"><i class="ti ti-pencil"></i>편집</button>
       <button type="button" class="prv-btn ghost" onclick="closePrintPreview()"><i class="ti ti-x"></i>닫기</button>
+      <button type="button" class="prv-btn" onclick="savePdf()" title="인쇄 대화상자에서 '대상: PDF로 저장'을 선택하면 파일명이 자동 지정됩니다"><i class="ti ti-file-type-pdf"></i>PDF 저장</button>
       <button type="button" class="prv-btn primary" onclick="window.print()"><i class="ti ti-printer"></i>인쇄</button>
     </div>
   </div>
@@ -4631,6 +4647,33 @@ function renderAlertCard(){
       <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 지연 건수가 많아도 '심각'(${cur}일+)만 진하게 떠서 진짜 급한 건의 우선순위를 가립니다.</div>
     </div>`;
 }
+function setFitSlotMax(n){
+  n = Math.max(1, Math.min(12, n));
+  if (!state.shop) loadShop();
+  state.shop.fitSlotMax = n;
+  saveShop();
+  renderFitSlotCard();
+  toast(`하루 가봉 정원 ${n}건으로 설정`,'ok','가봉 슬롯');
+}
+function renderFitSlotCard(){
+  let card = $('#set-fitslot-card');
+  if (!card){ card=document.createElement('div'); card.id='set-fitslot-card'; const pc=document.querySelector('#view-settings .page-content'); if(pc)pc.appendChild(card); }
+  if (!card) return;
+  const cur = fitSlotMax();
+  card.innerHTML = `
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-ruler-2"></i> 가봉 예약 슬롯 (더블부킹 방지)</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:13.5px;color:var(--t2)">하루 가봉 가능 건수</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="action-btn" onclick="setFitSlotMax(${cur-1})" ${cur<=1?'disabled style=opacity:.4':''}><i class="ti ti-minus"></i></button>
+          <b style="min-width:54px;text-align:center;font-size:16px;color:var(--okt)">${cur}건</b>
+          <button class="action-btn" onclick="setFitSlotMax(${cur+1})"><i class="ti ti-plus"></i></button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 주문서에서 가봉일 선택 시 정원·시간대(${FIT_TIMES[0]}~${FIT_TIMES[FIT_TIMES.length-1]}) 중복이 자동 확인됩니다.</div>
+    </div>`;
+}
 function setBuffer(n){
   n = Math.max(0, Math.min(14, n));
   if (!state.shop) loadShop();
@@ -5216,7 +5259,8 @@ function renderDash(){
   renderEvents();
   const __adm = isAdmin();
   const __sc = document.querySelector('.settle-card'); if (__sc) __sc.style.display = __adm ? '' : 'none';
-  if (__adm){ renderMonthlySettle(); }
+  if (__adm){ renderMonthlySettle(); renderDailyClose(); }
+  const __dc = document.getElementById('daily-close-card'); if (__dc) __dc.style.display = __adm ? '' : 'none';
 }
 
 /* ⑥ Customer ──────────────────────────────────────────── */
@@ -6046,8 +6090,35 @@ function onFitYnPick(v){
   computePrice();
 }
 // 중가봉(Y): 가봉출고일 입력 / 완성출고일 잠금 · 직봉(N): 완성출고일 입력 / 가봉출고일 잠금
+// ─── 가봉 예약 슬롯 (하루 정원 + 시간대 더블부킹 방지) ───
+const FIT_TIMES = ['10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
+function fitSlotMax(){ return (state.shop && state.shop.fitSlotMax) || 4; }
+function fitBookingsOn(ds, exceptNo){
+  return state.orders.filter(brMatch).filter(o=> o.type==='정장' && o.status!=='완료' && o.fitDt===ds && String(o.no)!==String(exceptNo||''));
+}
+function updateFitSlots(){
+  const ds = $('#o-fitDt') ? $('#o-fitDt').value : '';
+  const sel = $('#o-fitTime'); const note = $('#fit-slot-note');
+  if (!sel || !note) return;
+  if (!ds){ sel.innerHTML='<option value="">가봉 시간 선택</option>'; note.textContent=''; return; }
+  const curNo = (($('#o-fac')&&$('#o-fac').textContent)||'').replace('#','');
+  const books = fitBookingsOn(ds, curNo);
+  const taken = books.map(o=>o.fitTime).filter(Boolean);
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">가봉 시간 선택</option>' + FIT_TIMES.map(t=>{
+    const used = taken.includes(t);
+    return `<option value="${t}" ${used?'disabled':''}>${t}${used?' — 예약됨':''}</option>`;
+  }).join('');
+  if (keep && !taken.includes(keep)) sel.value = keep;
+  const max = fitSlotMax(), n = books.length;
+  if (n >= max) note.innerHTML = `<b style="color:var(--et)">⚠ 이 날짜 가봉 ${n}/${max}건 — 정원이 찼습니다. 다른 날짜를 선택하세요</b>`;
+  else if (n >= max-1) note.innerHTML = `<b style="color:var(--wt)">이 날짜 가봉 ${n}/${max}건 — 마지막 자리</b>`;
+  else note.textContent = `이 날짜 가봉 예약 ${n}/${max}건`;
+}
 function applyFitYnDates(v){
   const fit=$('#o-fitDt'), done=$('#o-doneDt');
+  const ftSel=$('#o-fitTime'), ftNote=$('#fit-slot-note');
+  if (ftSel){ ftSel.disabled = (v!=='Y'); if (v!=='Y'){ ftSel.value=''; if(ftNote) ftNote.textContent=''; } }
   const lock=(el,on)=>{ if(!el)return; el.disabled=on; el.classList.toggle('locked',on); const wrap=el.closest('div'); if(wrap){ wrap.style.opacity=on?'.45':''; } if(on) el.value=''; };
   if (v==='Y'){ lock(fit,false); lock(done,true); }
   else { lock(fit,true); lock(done,false); }
@@ -6344,6 +6415,12 @@ function saveSuit(){
   const doneDt = $('#o-doneDt').value;
   if (!doneDt){ toast('완성 출고일을 선택하세요','warn','입력 오류'); scrollToSec(1); return; }
   if (state.opt.fitYn==='Y' && !$('#o-fitDt').value){ toast('가봉 출고일을 선택하세요','warn','입력 오류'); scrollToSec(1); return; }
+  if (state.opt.fitYn==='Y' && $('#o-fitDt').value && typeof fitBookingsOn==='function'){
+    const _fb = fitBookingsOn($('#o-fitDt').value, (($('#o-fac')&&$('#o-fac').textContent)||'').replace('#',''));
+    const _ft = ($('#o-fitTime')&&$('#o-fitTime').value)||'';
+    if (_ft && _fb.some(o=>o.fitTime===_ft)){ toast(`${_ft} 시간대는 이미 가봉 예약이 있습니다 — 다른 시간을 선택하세요`,'err','가봉 슬롯'); scrollToSec(1); return; }
+    if (_fb.length >= fitSlotMax()){ toast(`이 날짜 가봉 정원(${fitSlotMax()}건)이 찼습니다 — 다른 날짜를 선택하세요`,'err','가봉 슬롯'); scrollToSec(1); return; }
+  }
 
   const facNo = $('#o-fac').textContent.replace('#','');
   const sup = parseInt(($('#p-sup').textContent||'').replace(/[^0-9]/g,''))||0;
@@ -6382,7 +6459,7 @@ function saveSuit(){
     pad: { L:parseInt($('#o-padL').value)||0, R:parseInt($('#o-padR').value)||0 },
     lapelSize: parseFloat($('#o-lapelSize').value)||0,
     opt: {...state.opt, fit:state.opt.fitYn||'N'},
-    fitDt: $('#o-fitDt').value, doneDt,
+    fitDt: $('#o-fitDt').value, fitTime: (($('#o-fitTime')&&$('#o-fitTime').value)||''), doneDt,
     memo: $('#o-memo').value.trim(),
     patMemo: $('#o-patMemo').value.trim(),
     date: dStr(today()),
@@ -6426,7 +6503,7 @@ function saveSuit(){
 
   // 캘린더 이벤트
   state.events.push({ date: order.date, type:'consult', name:nm, sub:`정장 주문 #${facNo}`, orderNo:facNo });
-  if (order.fitDt) state.events.push({ date: order.fitDt, type:'fit', name:nm, sub:`가봉 출고 · ${order.pattern.top||'정장'}`, orderNo:facNo });
+  if (order.fitDt) state.events.push({ date: order.fitDt, type:'fit', name:nm, sub:`가봉${order.fitTime?' '+order.fitTime:''} · ${order.pattern.top||'정장'}`, orderNo:facNo });
   if (order.doneDt) state.events.push({ date: order.doneDt, type:'deliver', name:nm, sub:`완성 출고 · ${fmt(tot)}`, orderNo:facNo });
 
   // 고객 누적 (선택된 고객 ID 우선 매칭 → 이름 매칭)
@@ -6758,7 +6835,7 @@ function buildWorkOrder(){
   let page1 = `<div class="wo-sheet">${printLogoBar()}
     <div class="wo-sec">MTM 정장 작업지시서 — 상의 (싱글 작지서 양식)</div>
     ${head}${optTop}${sizeTop}${memoTop}
-    ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); const _m3={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')}; return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _fabPatt(_f3))}</div><div class="d wo-d-spec"><div class="jk3v jk3spec">${composeJacketSpec(o, '#e8ebee', _m3)}</div><span>치수도</span></div></div>`; })():''}
+    ${(typeof composeJacket3View==='function')?(()=>{ const _f3=state.fabrics.find(x=>x.no===$('#o-fabNo').value); const _m3={shoul:_woM('top','shoul'),chest:_woM('top','chest'),slvL:_woM('top','slvL'),len:_woM('top','len')}; const _pv3={shoul:_m3.shoul-_woFix('top','shoul'),chest:_m3.chest-_woFix('top','chest'),slvL:_m3.slvL-_woFix('top','slvL'),len:_m3.len-_woFix('top','len')}; const _hasFix3=['shoul','chest','slvL','len'].some(k=>_woFix('top',k)); return `<div class="wo-diag"><div class="d wo-d-3v">${composeJacket3View(o, fabHex(_f3?_f3.color:''), _fabPatt(_f3))}</div><div class="d wo-d-spec"><div class="jk3v jk3spec">${composeJacketSpec(o, '#e8ebee', _m3, _pv3)}</div><span>치수도${_hasFix3?' · <b style="color:#d64545">빨강=수정반영</b>':''}</span></div></div>`; })():''}
     ${(()=>{ if(typeof studioSvg!=='function')return ''; const dd=[['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak],['amf','AMF',o.amf],['ticketP','티켓P',o.ticketP]]; const ds=dd.map(([k,lb,v])=>{ if(!v||v==='없음'&&k==='amf')return ''; const s=studioSvg(k,v); return s?`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`:''; }).filter(Boolean); return ds.length?`<div class="wo-diag">${ds.join('')}</div>`:''; })()}
     <div class="wo-foot"><span>인쇄 <span id="wo-pd"></span> · 담당 ${ (state.user||{}).name||'관리자' }</span><span class="sign">매장 확인 __________ &nbsp; 공장 수령 __________</span><b>${shopName()}</b></div>
   </div>`;
@@ -6817,8 +6894,8 @@ function buildWorkOrder(){
         if ((q.s||0)+(q.j||0) > 0) woDia.forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`); } });
         if ((q.p||0) > 0){ [['botTuck','주름',o.botTuck],['botFrontP','앞주머니',o.botFrontP],['botHem','밑단',o.botHem]].forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${k==='botTuck'?(v==='2'?'2주름':v==='1'?'1주름':'노턱'):v}</div></div>`); } }); }
       }
-      if ((q.p||0) > 0 && typeof composePants2View==='function'){ const _fp2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composePants2View(o, fabHex(_fp2?_fp2.color:''), _fabPatt(_fp2))}</div>`); } else if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
-      if ((q.v||0) > 0 && typeof composeVest2View==='function'){ const _fv2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composeVest2View(o, fabHex(_fv2?_fv2.color:''), _fabPatt(_fv2))}</div>`); } else if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
+      if ((q.p||0) > 0 && typeof composePants2View==='function'){ const _fp2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composePants2View(o, fabHex(_fp2?_fp2.color:''), _fabPatt(_fp2))}</div>`); if(typeof composePantsSpec==='function'){ const _mp2={w:_woM('bot','w'),in:_woM('bot','in'),bt:_woM('bot','bt')}; const _pvp2={w:_mp2.w-_woFix('bot','w'),in:_mp2.in-_woFix('bot','in'),bt:_mp2.bt-_woFix('bot','bt')}; const _hasFixP=['w','in','bt'].some(k=>_woFix('bot',k)); ds.push(`<div class="d wo-d-spec"><div class="jk3v jk3spec">${composePantsSpec(o,'#e8ebee',_mp2,_pvp2)}</div><span>치수도${_hasFixP?' · <b style="color:#d64545">빨강=수정반영</b>':''}</span></div>`); } } else if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
+      if ((q.v||0) > 0 && typeof composeVest2View==='function'){ const _fv2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composeVest2View(o, fabHex(_fv2?_fv2.color:''), _fabPatt(_fv2))}</div>`); if(typeof composeVestSpec==='function'){ const _mv2={chest:_woM('vest','chest'),len:_woM('vest','len')}; const _pvv2={chest:_mv2.chest-_woFix('vest','chest'),len:_mv2.len-_woFix('vest','len')}; const _hasFixV=['chest','len'].some(k=>_woFix('vest',k)); ds.push(`<div class="d wo-d-spec"><div class="jk3v jk3spec">${composeVestSpec(o,'#e8ebee',_mv2,_pvv2)}</div><span>치수도${_hasFixV?' · <b style="color:#d64545">빨강=수정반영</b>':''}</span></div>`); } } else if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
       if (ds.length) diag = `<div class="wo-diag">${ds.join('')}</div>`;
     }
     page2 = `<div class="wo-sheet">
@@ -6844,12 +6921,25 @@ function printSuit(){
   const nm = ($('#o-nm').value||'').trim();
   if (!nm){ toast('고객명을 먼저 입력하세요','warn','미리보기 불가'); switchTab(1); return; }
   buildWorkOrder();
+  try{ window.__pdfName = `작업지시서_#${$('#o-fac').textContent.replace('#','')}_${nm}`; }catch(e){}
   const tt = $('#prv-title-text'); if (tt) tt.textContent = '작업지시서 미리보기';
   const ts = $('#prv-sub-text');   if (ts) ts.textContent = '엑셀 작지서 양식 · A4';
   $('#prv-modal').classList.add('open');
 }
+// PDF 저장 — document.title을 파일명으로 임시 변경 후 인쇄(브라우저가 PDF 파일명으로 사용)
+function savePdf(){
+  const orig = document.title;
+  const raw = window.__pdfName || (($('#prv-title-text')&&$('#prv-title-text').textContent)||'문서');
+  document.title = String(raw).replace(/[\\/:*?"<>|]/g,'').trim() || orig;
+  const restore = ()=>{ document.title = orig; window.removeEventListener('afterprint', restore); };
+  window.addEventListener('afterprint', restore);
+  setTimeout(restore, 60000);
+  toast("인쇄 대화상자에서 '대상: PDF로 저장'을 선택하세요 — 파일명 자동 지정됨",'info','PDF 저장');
+  window.print();
+}
 function closePrintPreview(e){
   if (e && e.target && !e.target.classList.contains('prv-overlay')) return;
+  window.__pdfName = '';
   $('#prv-modal').classList.remove('open');
   const pa = document.getElementById('print-area');
   if (pa){ pa.removeAttribute('contenteditable'); pa.style.outline=''; }
@@ -7049,7 +7139,8 @@ function renderOrders(){
     const qy=[q2.s?`수트${q2.s}`:'',q2.j?`자켓${q2.j}`:'',q2.p?`하의${q2.p}`:'',q2.v?`조끼${q2.v}`:'',q2.c?`코트${q2.c}`:''].filter(Boolean).join(' ')||'-';
     const ov=isOverdue(o);
     const fst=(o.fac&&o.fac.stage)||0;
-    const facBar = o.status!=='완료' ? `<div class="od-fac"><div class="od-fac-fill" style="width:${fst/4*100}%"></div></div><span class="od-fac-lbl">${FAC[fst]}${fst<4?' 진행':''}</span>` : '';
+    const _fd = (typeof facDelay==='function') ? facDelay(o) : null;
+    const facBar = o.status!=='완료' ? `<div class="od-fac"><div class="od-fac-fill${_fd?' late':''}" style="width:${fst/4*100}%"></div></div><span class="od-fac-lbl${_fd?' late':''}">${_fd?`⚠ ${_fd.name} ${_fd.over}일 지연`:`${FAC[fst]}${fst<4?' 진행':''}`}</span>` : '';
     const sizeT = o.size?.top==='기타'?'기타':(o.size?.top||'');
     return `<tr onclick="openOrderDet('${o.no}')" class="od-row ${ov?'od-over':''}" style="cursor:pointer">
       <td><div class="od-no">#${o.no}</div><div class="od-sub">${o.date||''}</div></td>
@@ -8494,6 +8585,7 @@ function _dimL(x1,y1,x2,y2,label,d){
 }
 // 측정값 읽기 (작지서)
 function _woM(part, key){ try{ const v=(typeof getCmVal==='function')?getCmVal(`sz-${part}-${key}-fin`):0; return v? Math.round(v*10)/10 : 0; }catch(e){ return 0; } }
+function _woFix(part, key){ try{ const v=(typeof getCmVal==='function')?getCmVal(`sz-${part}-${key}-fix`):0; return v? Math.round(v*10)/10 : 0; }catch(e){ return 0; } }
 // 자켓 스펙 도식 (정면 + POM 치수선)
 function _bodyFix(o){
   o=o||{}; const C='#8e6bc8'; let s='';
@@ -8557,12 +8649,13 @@ function composePantsSpec(o, hex, m, prev){
   return base.replace('</svg>', dims+'</svg>');
 }
 // 조끼 스펙 (POM: 가슴·기장)
-function composeVestSpec(o, hex, m){
-  m=m||{};
+function composeVestSpec(o, hex, m, prev){
+  m=m||{}; prev=prev||{};
   const base=composeVest(o, hex||'#d7dde3', '');
   const lab=(k,d)=> m[k]? `${d} ${m[k]}` : d;
-  const dims = _dimH(40,160,50, lab('chest','가슴'))
-    + _dimV(26,188,170, lab('len','기장'));
+  const D=k=> (m[k]&&prev[k])?(m[k]-prev[k]):0;
+  const dims = _dimH(40,160,50, lab('chest','가슴'), D('chest'))
+    + _dimV(26,188,170, lab('len','기장'), D('len'));
   return base.replace('</svg>', dims+'</svg>');
 }
 // 도식 단독 출력 시트 (작지서와 별도 — 도면 1장)
@@ -9602,6 +9695,43 @@ function fallbackCopy(text, cb){
 }
 
 /* ─── 월간 정산 (목표 게이지 · 전월 대비 · 보증금) ── */
+function renderDailyClose(){
+  let card = document.getElementById('daily-close-card');
+  if (!card){
+    card = document.createElement('div');
+    card.id = 'daily-close-card';
+    card.className = 'daily-close-card';
+    const anchor = document.querySelector('.settle-card');
+    if (anchor && anchor.parentElement) anchor.parentElement.insertBefore(card, anchor);
+    else { const pc=document.querySelector('#view-dash .page-content'); if(pc) pc.appendChild(card); }
+  }
+  const tStr = dStr(today());
+  const ords = state.orders.filter(brMatch);
+  const newN = ords.filter(o=>o.date===tStr).length;
+  const fitN = ords.filter(o=>o.type==='정장' && o.fitDt===tStr).length;
+  const doneN = ords.filter(o=>o.type==='정장' && o.doneDt===tStr).length;
+  const sales = ords.filter(o=>o.date===tStr).reduce((s,o)=>s+(o.total||0),0);
+  card.innerHTML = `
+    <div class="dc-head"><i class="ti ti-sunset-2"></i>오늘 마감 요약 <span class="dc-date">${tStr}</span>
+      <button class="action-btn" style="margin-left:auto" onclick="copyDailyClose()"><i class="ti ti-copy"></i>카톡 복사</button></div>
+    <div class="dc-row">
+      <div class="dc-it"><span>신규 주문</span><b>${newN}건</b></div>
+      <div class="dc-it"><span>가봉</span><b>${fitN}건</b></div>
+      <div class="dc-it"><span>완성 출고</span><b>${doneN}건</b></div>
+      <div class="dc-it"><span>오늘 매출</span><b>${fmt(sales)}</b></div>
+    </div>`;
+}
+function copyDailyClose(){
+  const tStr = dStr(today());
+  const ords = state.orders.filter(brMatch);
+  const newN = ords.filter(o=>o.date===tStr).length;
+  const fitN = ords.filter(o=>o.type==='정장' && o.fitDt===tStr).length;
+  const doneN = ords.filter(o=>o.type==='정장' && o.doneDt===tStr).length;
+  const sales = ords.filter(o=>o.date===tStr).reduce((s,o)=>s+(o.total||0),0);
+  const txt = `[${shopName()}] ${tStr} 마감 요약\n· 신규 주문 ${newN}건\n· 가봉 ${fitN}건\n· 완성 출고 ${doneN}건\n· 오늘 매출 ${fmt(sales)}`;
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('마감 요약 복사 — 카톡에 붙여넣으세요','ok','일일 마감')).catch(()=>uiCopy(txt,'일일 마감 요약'));
+  else uiCopy(txt,'일일 마감 요약');
+}
 function renderMonthlySettle(){
   const t = new Date(today());
   const y = t.getFullYear(), m = t.getMonth();
@@ -10310,6 +10440,7 @@ function renderSettings(){
   renderPermCard();
   renderStaffCard();
   renderMenuVisCard();
+  renderFitSlotCard();
   renderBufferCard();
   renderShopBakNote();
   renderPrintLogoCard();
@@ -10764,6 +10895,19 @@ function delTodo(id){
 /* ─── 공장 발주 추적 (재단→봉제→마무리→입고) ─────────── */
 const FAC_STAGES = ['재단','봉제','마무리','입고'];
 function facStageName(st){ return st<=0 ? '작지 대기' : (FAC_STAGES[st-1]||''); }
+// 단계별 표준 소요일(재단2·봉제4·마무리2) — 현 단계 진입일(fac.log) 기준 초과분 감지
+const FAC_STD_DAYS = [0, 2, 4, 2, 0];
+function facDelay(o){
+  try{
+    const st=(o.fac&&o.fac.stage)||0;
+    if (o.status==='완료' || st<=0 || st>=4) return null;
+    const lg=(o.fac.log||[]).find(l=>l.stage===st);
+    if (!lg || !lg.dt) return null;
+    const days=Math.round((new Date(dStr(today()))-new Date(lg.dt))/86400000);
+    const std=FAC_STD_DAYS[st]||0;
+    return (std && days>std) ? { stage:st, name:FAC_STAGES[st-1], days, over:days-std } : null;
+  }catch(e){ return null; }
+}
 function facStepperHTML(o){
   const st = (o.fac && o.fac.stage) || 0;
   const tStr = dStr(today());
@@ -10772,6 +10916,8 @@ function facStepperHTML(o){
     const dd = Math.round((new Date(o.fitDt) - new Date(tStr))/86400000);
     if (dd <= 3) warn = `<div style="margin-top:9px;font-size:12.5px;font-weight:700;color:var(--et)"><i class="ti ti-alert-triangle"></i> 가봉 ${dd<0?`${-dd}일 경과`:dd===0?'오늘':'D-'+dd} — 현재 '${facStageName(st)}' 단계, 공정 지연 위험</div>`;
   }
+  const _fd2 = (typeof facDelay==='function') ? facDelay(o) : null;
+  if (_fd2) warn += `<div style="margin-top:7px;font-size:12.5px;font-weight:700;color:var(--et)"><i class="ti ti-clock-exclamation"></i> '${_fd2.name}' 단계 ${_fd2.days}일째 — 표준 ${FAC_STD_DAYS[_fd2.stage]}일보다 ${_fd2.over}일 지연</div>`;
   const cells = [0,1,2,3,4].map(i=>{
     const done = st>0 && i>0 && i<=st;
     const logE = o.fac && (o.fac.log||[]).find(l=>l.stage===i);
@@ -10875,6 +11021,7 @@ function loadOrderToForm(no, mode){
   if (mode==='reprint'){
     set('o-fitDt', o.fitDt||'');
     set('o-doneDt', o.doneDt||'');
+    if (document.getElementById('o-fitTime')){ if (typeof updateFitSlots==='function') updateFitSlots(); document.getElementById('o-fitTime').value = o.fitTime||''; }
     const f = document.getElementById('o-fac');
     if (f) f.textContent = '#'+o.no;
     const dt = document.getElementById('o-date');
