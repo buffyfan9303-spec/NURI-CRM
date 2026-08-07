@@ -1658,6 +1658,19 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 87차 — 가봉 시간표 + 내일 예정 ════ */
+#fit-timetable{margin-bottom:12px;background:var(--acc-soft);border:1px solid rgba(26,179,148,.3);border-radius:10px;padding:11px 13px}
+.ftb-head{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--t);margin-bottom:7px}
+.ftb-head .ti{color:var(--okt);font-size:16px}
+.ftb-head em{font-style:normal;margin-left:auto;font-size:11.5px;font-weight:800;color:var(--okt)}
+.ftb-head em.full{color:var(--et)}
+.ftb-row{display:flex;align-items:center;gap:9px;padding:6px 4px;border-top:1px dashed rgba(26,179,148,.25);cursor:pointer;font-size:13px}
+.ftb-row:hover{background:rgba(26,179,148,.08)}
+.ftb-t{min-width:44px;font-variant-numeric:tabular-nums;color:var(--okt)}
+.ftb-nm{flex:1;font-weight:700;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftb-no{font-size:11px;color:var(--t3)}
+.dc-tmr{margin-top:12px;padding-top:11px;border-top:1px dashed var(--bd);font-size:12.5px;color:var(--t2);display:flex;align-items:center;gap:7px}
+.dc-tmr .ti{color:var(--it)} .dc-tmr b{color:var(--t)}
 /* ════ 86차 — 일일 마감 카드 ════ */
 .daily-close-card{background:var(--sf);border:.5px solid var(--bd);border-radius:14px;padding:18px 22px;box-shadow:var(--shadow-sm);margin-bottom:16px}
 .dc-head{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;color:var(--t);margin-bottom:13px}
@@ -5035,6 +5048,25 @@ function renderEvents(){
   const _mtmOnly = document.body.classList.contains('mtm-only');
   const evs = state.events.filter(e=>e.date===ds).filter(e=> !(_mtmOnly && /렌탈|반납/.test(e.sub||'')) && (!state.calTypeF || e.type===state.calTypeF));
   state._dayEvs = evs;
+  // 가봉 시간표 — 선택일의 가봉 예약(누가 몇 시)
+  try{
+    let ftb = document.getElementById('fit-timetable');
+    const lp = $('#ev-list');
+    if (!ftb && lp && lp.parentElement){
+      ftb = document.createElement('div'); ftb.id='fit-timetable';
+      lp.parentElement.insertBefore(ftb, lp);
+    }
+    if (ftb){
+      const fits = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료' && o.fitDt===ds);
+      if (fits.length){
+        const max = (typeof fitSlotMax==='function') ? fitSlotMax() : 4;
+        const rows = fits.slice().sort((a,b)=>(a.fitTime||'99').localeCompare(b.fitTime||'99'))
+          .map(o=>`<div class="ftb-row" onclick="go('orders');if(typeof openOrderDet==='function')openOrderDet('${o.no}')"><b class="ftb-t">${o.fitTime||'미정'}</b><span class="ftb-nm">${esc(o.nm)}</span><span class="ftb-no">#${o.no}</span></div>`).join('');
+        ftb.innerHTML = `<div class="ftb-head"><i class="ti ti-ruler-2"></i>가봉 시간표 <em class="${fits.length>=max?'full':''}">${fits.length}/${max}</em></div>${rows}`;
+        ftb.style.display='';
+      } else { ftb.style.display='none'; ftb.innerHTML=''; }
+    }
+  }catch(e){}
   const list = $('#ev-list');
   if (!evs.length){
     list.innerHTML = `<div class="ev-empty"><i class="ti ti-calendar-off"></i><span>이 날짜에 등록된 일정이 없습니다</span><button class="action-btn es-btn" style="margin-top:2px" onclick="openEvtModal()"><i class="ti ti-plus"></i>일정 추가</button></div>`;
@@ -7118,10 +7150,10 @@ function renderOrders(){
   if (!state.ordFilter) state.ordFilter='all';
   const F=state.ordFilter;
   const counts={ all:all.length, prog:all.filter(o=>o.status!=='완료').length, done:all.filter(o=>o.status==='완료').length,
-    wfit:all.filter(o=>thisWeek(o.fitDt)&&o.status!=='완료').length, wdone:all.filter(o=>thisWeek(o.doneDt)&&o.status!=='완료').length, over:all.filter(isOverdue).length };
-  const CHIPS=[['all','전체',counts.all],['prog','진행중',counts.prog],['done','완료',counts.done],['wfit','이번주 가봉',counts.wfit],['wdone','이번주 완성',counts.wdone],['over','연체',counts.over]];
+    wfit:all.filter(o=>thisWeek(o.fitDt)&&o.status!=='완료').length, wdone:all.filter(o=>thisWeek(o.doneDt)&&o.status!=='완료').length, over:all.filter(isOverdue).length, fdelay:all.filter(o=>typeof facDelay==='function'&&facDelay(o)).length };
+  const CHIPS=[['all','전체',counts.all],['prog','진행중',counts.prog],['done','완료',counts.done],['wfit','이번주 가봉',counts.wfit],['wdone','이번주 완성',counts.wdone],['fdelay','공정 지연',counts.fdelay],['over','연체',counts.over]];
   const fc=$('#ord-filters');
-  if(fc) fc.innerHTML = CHIPS.map(([k,lb,n])=>`<button class="ord-chip ${F===k?'active':''} ${k==='over'&&n>0?'danger':''}" onclick="state.ordFilter='${k}';renderOrders()">${lb} <span class="ord-chip-n">${n}</span></button>`).join('');
+  if(fc) fc.innerHTML = CHIPS.map(([k,lb,n])=>`<button class="ord-chip ${F===k?'active':''} ${(k==='over'||k==='fdelay')&&n>0?'danger':''}" onclick="state.ordFilter='${k}';renderOrders()">${lb} <span class="ord-chip-n">${n}</span></button>`).join('');
   // 검색 + 필터 적용
   const q = ($('#q-orders')?.value||'').trim().toLowerCase();
   let rows = all;
@@ -7130,6 +7162,7 @@ function renderOrders(){
   else if (F==='wfit') rows=rows.filter(o=>thisWeek(o.fitDt)&&o.status!=='완료');
   else if (F==='wdone') rows=rows.filter(o=>thisWeek(o.doneDt)&&o.status!=='완료');
   else if (F==='over') rows=rows.filter(isOverdue);
+  else if (F==='fdelay') rows=rows.filter(o=>typeof facDelay==='function'&&facDelay(o));
   if (q){ if (/^\d{4}-\d{2}-\d{2}$/.test(q)) rows=rows.filter(o=> o.doneDt===q||o.fitDt===q||o.date===q);
     else rows=rows.filter(o=> String(o.no).includes(q)||o.nm.toLowerCase().includes(q)||((o.pattern?.top||'')+'').toLowerCase().includes(q)); }
   const dday=(ds)=>{ if(!ds)return ''; const d=Math.round((new Date(ds)-new Date(tStr))/86400000); return d<0?`<span class="od-dd late">D+${-d}</span>`:d===0?`<span class="od-dd today">D-0</span>`:d<=3?`<span class="od-dd soon">D-${d}</span>`:`<span class="od-dd">D-${d}</span>`; };
@@ -9719,7 +9752,11 @@ function renderDailyClose(){
       <div class="dc-it"><span>가봉</span><b>${fitN}건</b></div>
       <div class="dc-it"><span>완성 출고</span><b>${doneN}건</b></div>
       <div class="dc-it"><span>오늘 매출</span><b>${fmt(sales)}</b></div>
-    </div>`;
+    </div>
+    ${(()=>{ const tm=new Date(today()); tm.setDate(tm.getDate()+1); const tmS=dStr(tm);
+      const ft=ords.filter(o=>o.type==='정장'&&o.status!=='완료'&&o.fitDt===tmS).length;
+      const dt2=ords.filter(o=>o.type==='정장'&&o.status!=='완료'&&o.doneDt===tmS).length;
+      return `<div class="dc-tmr"><i class="ti ti-arrow-big-right-line"></i>내일 예정 — 가봉 <b>${ft}건</b> · 완성 출고 <b>${dt2}건</b></div>`; })()}`;
 }
 function copyDailyClose(){
   const tStr = dStr(today());
@@ -9728,7 +9765,10 @@ function copyDailyClose(){
   const fitN = ords.filter(o=>o.type==='정장' && o.fitDt===tStr).length;
   const doneN = ords.filter(o=>o.type==='정장' && o.doneDt===tStr).length;
   const sales = ords.filter(o=>o.date===tStr).reduce((s,o)=>s+(o.total||0),0);
-  const txt = `[${shopName()}] ${tStr} 마감 요약\n· 신규 주문 ${newN}건\n· 가봉 ${fitN}건\n· 완성 출고 ${doneN}건\n· 오늘 매출 ${fmt(sales)}`;
+  const tm=new Date(today()); tm.setDate(tm.getDate()+1); const tmS=dStr(tm);
+  const tmFit=ords.filter(o=>o.type==='정장'&&o.status!=='완료'&&o.fitDt===tmS).length;
+  const tmDone=ords.filter(o=>o.type==='정장'&&o.status!=='완료'&&o.doneDt===tmS).length;
+  const txt = `[${shopName()}] ${tStr} 마감 요약\n· 신규 주문 ${newN}건\n· 가봉 ${fitN}건\n· 완성 출고 ${doneN}건\n· 오늘 매출 ${fmt(sales)}\n· 내일 예정: 가봉 ${tmFit}건 · 완성 ${tmDone}건`;
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('마감 요약 복사 — 카톡에 붙여넣으세요','ok','일일 마감')).catch(()=>uiCopy(txt,'일일 마감 요약'));
   else uiCopy(txt,'일일 마감 요약');
 }
