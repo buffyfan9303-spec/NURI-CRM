@@ -687,8 +687,10 @@ select.f-input{padding-right:38px}
 .wo-memo .bx h5{font-size:9.5px;font-weight:800;margin-bottom:4px;letter-spacing:2px}
 .wo-memo .bx p{font-size:10px;white-space:pre-wrap;line-height:1.5}
 .wo-vest{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.wo-diag{display:flex;gap:6px;justify-content:space-around;align-items:flex-start;border:1px solid #000;padding:7px;margin-top:4px}
-.wo-diag .d{flex:1;text-align:center;min-width:0}
+.wo-diag{display:flex;flex-wrap:wrap;gap:8px 12px;justify-content:flex-start;align-items:flex-end;border:1px solid #000;padding:8px;margin-top:4px;overflow:hidden}
+.wo-diag .d{flex:0 0 auto;text-align:center}
+.wo-d-svg{width:78px}
+.wo-d-svg svg{width:78px;height:102px;display:block;margin:0 auto;background:#fff;border:.5px solid #e4e4e4}
 .wo-diag img{max-width:100%;max-height:150px;display:block;margin:0 auto}
 .wo-diag .c{font-size:9px;font-weight:800;margin-top:3px;letter-spacing:.5px}
 .wo-sec{font-size:10.5px;font-weight:900;background:#0c1f35;color:#fff;padding:4px 9px;margin:8px 0 4px;letter-spacing:1.5px}
@@ -1656,6 +1658,11 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 84차 — 범례 필터 칩 + 사이드바 뱃지 ════ */
+.cal-leg-btn{cursor:pointer;padding:3px 8px;border-radius:7px;border:1px solid transparent;transition:background .12s,border-color .12s}
+.cal-leg-btn:hover{background:var(--sf2)}
+.cal-leg-btn.on{border-color:#1ab394;background:var(--acc-soft);font-weight:800}
+.sb-badge{margin-left:8px;min-width:18px;height:18px;border-radius:9px;background:#1ab394;color:#fff;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0}
 /* ════ 83차 — 달력 개선 ════ */
 .cal-d{position:relative}
 .cal-d.today{background:var(--acc-soft);border-radius:11px}
@@ -2234,7 +2241,7 @@ body.dk{ --t3:#9b9994; }
 
     <nav class="sb-nav">
       <div class="sb-item" id="gnb-dash" onclick="go('dash')">
-        <i class="ti ti-layout-dashboard"></i><span class="sb-item-label">대시보드</span>
+        <i class="ti ti-layout-dashboard"></i><span class="sb-item-label">대시보드</span><span id="dash-today-badge" class="sb-badge" style="display:none"></span>
       </div>
 
       <div class="sb-sec">매 장</div>
@@ -2402,9 +2409,9 @@ body.dk{ --t3:#9b9994; }
               <div>
                 <div class="cal-title" id="cal-title">2026년 5월</div>
                 <div class="cal-hint">
-                  <span class="cal-legend"><span class="cal-legend-dot"></span>상담</span>
-                  <span class="cal-legend"><span class="cal-legend-dot fit"></span>가봉</span>
-                  <span class="cal-legend"><span class="cal-legend-dot deliver"></span><span id="cal-leg-del">출고·반납</span></span>
+                  <span class="cal-legend cal-leg-btn" data-t="consult" onclick="calTypeFilter('consult')"><span class="cal-legend-dot"></span>상담</span>
+                  <span class="cal-legend cal-leg-btn" data-t="fit" onclick="calTypeFilter('fit')"><span class="cal-legend-dot fit"></span>가봉</span>
+                  <span class="cal-legend cal-leg-btn" data-t="deliver" onclick="calTypeFilter('deliver')"><span class="cal-legend-dot deliver"></span><span id="cal-leg-del">출고·반납</span></span>
                 </div>
               </div>
               <div class="cal-nav">
@@ -4925,7 +4932,7 @@ function renderCal(){
   const grid = $('#cal-grid');
   const heads = ['일','월','화','수','목','금','토'];
   const mtmOnly = document.body.classList.contains('mtm-only');
-  const evFilter = e => !(mtmOnly && /렌탈|반납/.test(e.sub||''));
+  const evFilter = e => !(mtmOnly && /렌탈|반납/.test(e.sub||'')) && (!state.calTypeF || e.type===state.calTypeF);
   let html = heads.map((h,i)=>`<div class="cal-dh ${i===0?'sun':''} ${i===6?'sat':''}">${h}</div>`).join('');
   for (let i=0;i<startDow;i++){
     const dd = prevLast-startDow+i+1;
@@ -4949,6 +4956,22 @@ function renderCal(){
   const tail = 42 - total;
   for (let i=1;i<=tail;i++) html += `<div class="cal-d ot" onclick="calJump(1,${i})" title="다음 달 ${i}일로 이동"><span class="n">${i}</span><div class="cal-d-dots"></div></div>`;
   grid.innerHTML = html;
+  try{
+    const bd = document.getElementById('dash-today-badge');
+    if (bd){
+      const n = state.events.filter(e=>e.date===tStr).filter(e=> !(mtmOnly && /렌탈|반납/.test(e.sub||''))).length;
+      bd.textContent = n;
+      bd.style.display = n ? 'inline-flex' : 'none';
+    }
+  }catch(e){}
+}
+// 범례 클릭 → 해당 유형 일정만 표시 (다시 클릭 시 해제)
+function calTypeFilter(t){
+  state.calTypeF = (state.calTypeF===t) ? null : t;
+  document.querySelectorAll('.cal-leg-btn').forEach(b=>b.classList.toggle('on', b.dataset.t===state.calTypeF));
+  renderCal(); renderEvents();
+  const LB={consult:'상담',fit:'가봉',deliver:'출고'};
+  toast(state.calTypeF ? `${LB[t]} 일정만 표시 — 범례를 다시 누르면 해제` : '전체 일정 표시','info','달력 필터');
 }
 // 인접월 날짜 클릭 → 해당 월로 이동 + 그 날짜 선택
 function calJump(off, day){
@@ -4967,7 +4990,7 @@ function renderEvents(){
   const [y,m,d] = ds.split('-');
   $('#ev-date').textContent = `${y}.${m}.${d}`;
   const _mtmOnly = document.body.classList.contains('mtm-only');
-  const evs = state.events.filter(e=>e.date===ds).filter(e=> !(_mtmOnly && /렌탈|반납/.test(e.sub||'')));
+  const evs = state.events.filter(e=>e.date===ds).filter(e=> !(_mtmOnly && /렌탈|반납/.test(e.sub||'')) && (!state.calTypeF || e.type===state.calTypeF));
   state._dayEvs = evs;
   const list = $('#ev-list');
   if (!evs.length){
