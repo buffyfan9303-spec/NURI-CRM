@@ -1658,6 +1658,17 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 89차 — 시간표 드래그 + 캘린더 시각 ════ */
+.ftb-grip{cursor:grab;touch-action:none;color:var(--t3);padding:2px 3px;flex-shrink:0;display:inline-flex;align-items:center}
+.ftb-grip:active{cursor:grabbing;color:var(--okt)}
+.ftb-grip .ti{font-size:15px}
+.ftb-row.dragging{opacity:.45}
+.ftb-row.drop-target{outline:2px solid #1ab394;outline-offset:-2px;border-radius:7px;background:rgba(26,179,148,.16)}
+.cal-d.sun:not(.sel):not(.today) .n{color:#ed5565}
+.cal-d.sat:not(.sel):not(.today) .n{color:#1c84c6}
+.cal-d.past:not(.today):not(.sel) .n{opacity:.45}
+.cal-d.curwk{background:var(--sf2)!important;border-radius:10px!important}
+.cal-d.today{background:var(--acc-soft)!important;border-radius:11px!important}
 /* ════ 88차 — 시간표 인라인 편집 + 마감 리마인더 ════ */
 .ftb-edit{width:26px!important;height:26px!important;flex-shrink:0}
 .ftb-edit .ti{font-size:14px!important}
@@ -5013,6 +5024,9 @@ function renderCal(){
   }
   const tdy = today();
   const tStr = dStr(tdy);
+  const _wkS = new Date(tdy); _wkS.setDate(_wkS.getDate()-_wkS.getDay());
+  const _wkE = new Date(_wkS); _wkE.setDate(_wkE.getDate()+6);
+  const wkS = dStr(_wkS), wkE = dStr(_wkE);
   for (let i=1;i<=lastDay;i++){
     const ds = `${y}-${pad(m+1)}-${pad(i)}`;
     const evs = state.events.filter(e=>e.date===ds).filter(evFilter);
@@ -5020,9 +5034,15 @@ function renderCal(){
     const dots = types.map(t=>`<span class="d ${t}"></span>`).join('');
     const cnt = evs.length>=2 ? `<span class="cal-cnt">${evs.length}</span>` : '';
     const cls = ['cal-d'];
+    const dow = (startDow + i - 1) % 7;
+    if (dow===0) cls.push('sun');
+    if (dow===6) cls.push('sat');
+    if (ds < tStr) cls.push('past');
+    if (ds >= wkS && ds <= wkE) cls.push('curwk');
     if (ds===tStr) cls.push('today');
     if (state.selDate===ds) cls.push('sel');
-    html += `<div class="${cls.join(' ')}" onclick="selDate('${ds}')"${evs.length?` title="일정 ${evs.length}건"`:''}><span class="n">${i}</span>${cnt}<div class="cal-d-dots">${dots}</div></div>`;
+    const _tip = evs.length ? ` title="일정 ${evs.length}건 — ${esc(evs.slice(0,2).map(e=>e.name).filter(Boolean).join(', '))}${evs.length>2?' 외':''}"` : '';
+    html += `<div class="${cls.join(' ')}" onclick="selDate('${ds}')"${_tip}><span class="n">${i}</span>${cnt}<div class="cal-d-dots">${dots}</div></div>`;
   }
   // 항상 6주(42칸) 고정 렌더 — 월이 바뀌어도 캘린더 높이 동일
   const total = startDow + lastDay;
@@ -5037,6 +5057,45 @@ function renderCal(){
       bd.style.display = n ? 'inline-flex' : 'none';
     }
   }catch(e){}
+}
+// 시간표 드래그 — 행을 끌어 다른 행에 놓으면 두 주문의 가봉 시간 맞바꾸기 (포인터 이벤트 = 마우스+터치)
+var _ftbDrag = null;
+function ftbDragStart(e, no){
+  e.preventDefault(); e.stopPropagation();
+  _ftbDrag = { no: no };
+  const row = e.target.closest('.ftb-row');
+  if (row) row.classList.add('dragging');
+  document.addEventListener('pointermove', ftbDragMove);
+  document.addEventListener('pointerup', ftbDragEnd);
+}
+function ftbDragMove(e){
+  if (!_ftbDrag) return;
+  document.querySelectorAll('.ftb-row.drop-target').forEach(r=>r.classList.remove('drop-target'));
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const row = el && el.closest ? el.closest('.ftb-row[data-no]') : null;
+  if (row && row.dataset.no !== String(_ftbDrag.no)) row.classList.add('drop-target');
+}
+function ftbDragEnd(e){
+  document.removeEventListener('pointermove', ftbDragMove);
+  document.removeEventListener('pointerup', ftbDragEnd);
+  const drag = _ftbDrag; _ftbDrag = null;
+  document.querySelectorAll('.ftb-row.dragging,.ftb-row.drop-target').forEach(r=>{ r.classList.remove('dragging'); r.classList.remove('drop-target'); });
+  if (!drag) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const row = el && el.closest ? el.closest('.ftb-row[data-no]') : null;
+  if (row && row.dataset.no && row.dataset.no !== String(drag.no)) ftbSwapTimes(drag.no, row.dataset.no);
+}
+function ftbSwapTimes(noA, noB){
+  const a = state.orders.find(x=>String(x.no)===String(noA));
+  const b = state.orders.find(x=>String(x.no)===String(noB));
+  if (!a || !b) return;
+  const t = a.fitTime||''; a.fitTime = b.fitTime||''; b.fitTime = t;
+  [a,b].forEach(o=>{
+    const ev = state.events.find(x=> x.type==='fit' && String(x.orderNo)===String(o.no) && x.date===o.fitDt);
+    if (ev) ev.sub = `가봉${o.fitTime?' '+o.fitTime:''} · ${(o.pattern&&o.pattern.top)||'정장'}`;
+  });
+  saveDB(); renderEvents(); renderCal();
+  toast(`${a.nm}(${a.fitTime||'미정'}) ↔ ${b.nm}(${b.fitTime||'미정'}) 시간 교환`,'ok','가봉 시간표');
 }
 // 가봉 시간표 인라인 편집 — 주문서 안 열고 시간만 변경
 function editFitTime(no){ window._ftbEdit = no; renderEvents(); }
@@ -5102,7 +5161,7 @@ function renderEvents(){
                 FIT_TIMES.map(t=>`<option value="${t}" ${taken.includes(t)?'disabled':''} ${o.fitTime===t?'selected':''}>${t}${taken.includes(t)?' — 예약됨':''}</option>`).join('');
               return `<div class="ftb-row editing" onclick="event.stopPropagation()"><select class="f-input ftb-sel" onchange="applyFitTime('${o.no}', this.value)" onclick="event.stopPropagation()">${opts}</select><span class="ftb-nm">${esc(o.nm)}</span></div>`;
             }
-            return `<div class="ftb-row" onclick="go('orders');if(typeof openOrderDet==='function')openOrderDet('${o.no}')"><b class="ftb-t">${o.fitTime||'미정'}</b><span class="ftb-nm">${esc(o.nm)}</span><span class="ftb-no">#${o.no}</span><button class="mini-act ftb-edit" onclick="event.stopPropagation();editFitTime('${o.no}')" title="시간만 즉시 변경"><i class="ti ti-clock-edit"></i></button></div>`;
+            return `<div class="ftb-row" data-no="${o.no}" onclick="go('orders');if(typeof openOrderDet==='function')openOrderDet('${o.no}')"><span class="ftb-grip" onpointerdown="ftbDragStart(event,'${o.no}')" onclick="event.stopPropagation()" title="끌어서 다른 행에 놓으면 시간 맞바꾸기"><i class="ti ti-grip-vertical"></i></span><b class="ftb-t">${o.fitTime||'미정'}</b><span class="ftb-nm">${esc(o.nm)}</span><span class="ftb-no">#${o.no}</span><button class="mini-act ftb-edit" onclick="event.stopPropagation();editFitTime('${o.no}')" title="시간만 즉시 변경"><i class="ti ti-clock-edit"></i></button></div>`;
           }).join('');
         ftb.innerHTML = `<div class="ftb-head"><i class="ti ti-ruler-2"></i>가봉 시간표 <em class="${fits.length>=max?'full':''}">${fits.length}/${max}</em></div>${rows}`;
         ftb.style.display='';
