@@ -1656,6 +1656,12 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 83차 — 달력 개선 ════ */
+.cal-d{position:relative}
+.cal-d.today{background:var(--acc-soft);border-radius:11px}
+.cal-cnt{position:absolute;top:4px;right:5px;min-width:16px;height:16px;border-radius:9px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);font-size:9.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 3px}
+.cal-d.ot{cursor:pointer}
+.cal-d.ot:hover{opacity:.65}
 /* ════ 82차 — MTM 외 비공개 + 타이포 정규화 ════ */
 body.mtm-only [onclick="go('rental')"],
 body.mtm-only [onclick="go('catalog')"],
@@ -2398,7 +2404,7 @@ body.dk{ --t3:#9b9994; }
                 <div class="cal-hint">
                   <span class="cal-legend"><span class="cal-legend-dot"></span>상담</span>
                   <span class="cal-legend"><span class="cal-legend-dot fit"></span>가봉</span>
-                  <span class="cal-legend"><span class="cal-legend-dot deliver"></span>출고·반납</span>
+                  <span class="cal-legend"><span class="cal-legend-dot deliver"></span><span id="cal-leg-del">출고·반납</span></span>
                 </div>
               </div>
               <div class="cal-nav">
@@ -3366,6 +3372,7 @@ body.dk{ --t3:#9b9994; }
           <div class="search-wrap"><i class="ti ti-search"></i><input id="q-orders" class="search-inp" placeholder="투입번호 / 고객명 / 패턴" oninput="renderOrders()"></div>
           <button class="action-btn" onclick="batchPrintWO()" title="대기(미발주) 정장 주문의 작업지시서를 한 번에 인쇄"><i class="ti ti-printer"></i>발주 일괄인쇄</button>
           <button class="action-btn" onclick="exportOrders()"><i class="ti ti-download"></i>CSV</button>
+          <button class="action-btn" onclick="openScanModal()" title="작업지시서·상품 QR 스캔"><i class="ti ti-scan"></i>QR 스캔</button>
           <button class="action-btn" onclick="go('mtm-suit')"><i class="ti ti-plus"></i>새 주문서</button>
         </div>
         <div id="ord-filters" class="ord-filters"></div>
@@ -4845,8 +4852,8 @@ const VIEW_TITLE = {
 };
 function go(view, fromPop){
   if (['rental','catalog','wedding'].includes(view) && document.body.classList.contains('mtm-only')){
-    toast('비공개 메뉴입니다 — 설정 → 메뉴 공개에서 다시 켤 수 있습니다','warn','비공개');
-    return;
+    if (window._qrNav){ window._qrNav = false; } // QR 스캔 경유는 통과 (1회성)
+    else { toast('비공개 메뉴입니다 — 설정 → 메뉴 공개에서 다시 켤 수 있습니다','warn','비공개'); return; }
   }
   // 직원 권한 — 매출/설정/휴지통은 관리자 전용
   if (!permCan('sales') && ['sales-day','sales-period','analytics'].includes(view)){ toast('매출 열람 권한이 없습니다 — 관리자에게 문의','warn','권한 제한'); return; }
@@ -4917,29 +4924,39 @@ function renderCal(){
   const prevLast = new Date(y, m, 0).getDate();
   const grid = $('#cal-grid');
   const heads = ['일','월','화','수','목','금','토'];
+  const mtmOnly = document.body.classList.contains('mtm-only');
+  const evFilter = e => !(mtmOnly && /렌탈|반납/.test(e.sub||''));
   let html = heads.map((h,i)=>`<div class="cal-dh ${i===0?'sun':''} ${i===6?'sat':''}">${h}</div>`).join('');
   for (let i=0;i<startDow;i++){
-    html += `<div class="cal-d ot"><span class="n">${prevLast-startDow+i+1}</span><div class="cal-d-dots"></div></div>`;
+    const dd = prevLast-startDow+i+1;
+    html += `<div class="cal-d ot" onclick="calJump(-1,${dd})" title="이전 달 ${dd}일로 이동"><span class="n">${dd}</span><div class="cal-d-dots"></div></div>`;
   }
   const tdy = today();
   const tStr = dStr(tdy);
   for (let i=1;i<=lastDay;i++){
     const ds = `${y}-${pad(m+1)}-${pad(i)}`;
-    const evs = state.events.filter(e=>e.date===ds);
+    const evs = state.events.filter(e=>e.date===ds).filter(evFilter);
     const types = [...new Set(evs.map(e=>e.type))];
     const dots = types.map(t=>`<span class="d ${t}"></span>`).join('');
+    const cnt = evs.length>=2 ? `<span class="cal-cnt">${evs.length}</span>` : '';
     const cls = ['cal-d'];
     if (ds===tStr) cls.push('today');
     if (state.selDate===ds) cls.push('sel');
-    html += `<div class="${cls.join(' ')}" onclick="selDate('${ds}')"><span class="n">${i}</span><div class="cal-d-dots">${dots}</div></div>`;
+    html += `<div class="${cls.join(' ')}" onclick="selDate('${ds}')"${evs.length?` title="일정 ${evs.length}건"`:''}><span class="n">${i}</span>${cnt}<div class="cal-d-dots">${dots}</div></div>`;
   }
   // 항상 6주(42칸) 고정 렌더 — 월이 바뀌어도 캘린더 높이 동일
   const total = startDow + lastDay;
   const tail = 42 - total;
-  for (let i=1;i<=tail;i++) html += `<div class="cal-d ot"><span class="n">${i}</span><div class="cal-d-dots"></div></div>`;
+  for (let i=1;i<=tail;i++) html += `<div class="cal-d ot" onclick="calJump(1,${i})" title="다음 달 ${i}일로 이동"><span class="n">${i}</span><div class="cal-d-dots"></div></div>`;
   grid.innerHTML = html;
 }
-
+// 인접월 날짜 클릭 → 해당 월로 이동 + 그 날짜 선택
+function calJump(off, day){
+  const d = state.calDate;
+  state.calDate = new Date(d.getFullYear(), d.getMonth()+off, 1);
+  const y2 = state.calDate.getFullYear(), m2 = state.calDate.getMonth();
+  selDate(`${y2}-${pad(m2+1)}-${pad(day)}`);
+}
 function selDate(ds){
   state.selDate = ds;
   renderCal();
@@ -4949,7 +4966,8 @@ function renderEvents(){
   const ds = state.selDate || dStr(today());
   const [y,m,d] = ds.split('-');
   $('#ev-date').textContent = `${y}.${m}.${d}`;
-  const evs = state.events.filter(e=>e.date===ds);
+  const _mtmOnly = document.body.classList.contains('mtm-only');
+  const evs = state.events.filter(e=>e.date===ds).filter(e=> !(_mtmOnly && /렌탈|반납/.test(e.sub||'')));
   state._dayEvs = evs;
   const list = $('#ev-list');
   if (!evs.length){
@@ -9707,6 +9725,7 @@ async function handleScan(code){
   }
   const r = state.rentals.find(x=>x.code.toUpperCase() === raw.toUpperCase());
   if (!r){ toast(`'${code}' 항목을 찾을 수 없습니다`,'err','QR 스캔'); return; }
+  window._qrNav = true; // QR 스캔은 비공개 메뉴도 통과
   go('rental');
   if (r.status==='대여가능' || r.status==='예약중'){
     toast(`${r.code} ${r.name} — 출고 진행`,'info','QR 스캔');
@@ -10220,7 +10239,10 @@ function shopBrandBig(){
 // 사이드바 브랜드 반영
 function applyMenuVisibility(){
   const s = (state && state.shop) || {};
-  document.body.classList.toggle('mtm-only', s.hideNonMtm !== false);
+  const hide = s.hideNonMtm !== false;
+  document.body.classList.toggle('mtm-only', hide);
+  const lg = document.getElementById('cal-leg-del');
+  if (lg) lg.textContent = hide ? '완성 출고' : '출고·반납';
 }
 function applyShop(){
   const s = state.shop||{};
