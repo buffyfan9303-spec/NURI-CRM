@@ -4773,7 +4773,30 @@ async function loadStaffList(){
     const { data, error } = await sb.from('crm_staff').select('email,name,role');
     if(error){ box.innerHTML='<span style="color:var(--wt)"><i class="ti ti-alert-triangle"></i> 직원 목록 조회 불가 (Supabase RLS에서 admin 읽기 허용 필요)</span>'; return; }
     box.innerHTML = (data&&data.length) ? data.map(s=>`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--bd)"><b>${esc(s.name||(s.email||'').split('@')[0])}</b><span style="color:var(--t3);font-size:11.5px">${esc(s.email)}</span><span class="badge ${s.role==='admin'?'b-warn':'b-info'}" style="margin-left:auto">${esc(s.role||'staff')}</span></div>`).join('') : '<span style="color:var(--t3)">아직 등록된 직원이 없습니다</span>';
+    // 승인 대기(가입 신청 + 미승인 로그인 시도, 최근 30일) — 원클릭 승인
+    try{
+      const _since = new Date(Date.now()-30*86400000).toISOString();
+      const { data: reqs } = await sb.from('crm_login_log').select('email,reason,ua,ts').in('reason',['signup-request','not-staff']).gte('ts',_since).order('ts',{ascending:false}).limit(60);
+      if (reqs && reqs.length){
+        const staffSet = {}; (data||[]).forEach(s=>{ staffSet[(s.email||'').toLowerCase()]=1; });
+        const seen = {}; const pend = [];
+        reqs.forEach(q=>{ const em=(q.email||'').toLowerCase(); if(!em||seen[em]||staffSet[em]) return; seen[em]=1; pend.push(q); });
+        if (pend.length){
+          box.innerHTML += `<div style="margin-top:13px;font-size:12px;font-weight:800;color:var(--wt)"><i class="ti ti-user-question"></i> 승인 대기 ${pend.length}명 — 승인하면 바로 로그인됩니다</div>` +
+            pend.map(q=>{
+              const nm = (q.reason==='signup-request' && q.ua && q.ua.indexOf(' / ')>0) ? q.ua.split(' / ')[0] : '';
+              return `<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--bd)"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${nm?`<b>${esc(nm)}</b> `:''}${esc(q.email)}</span><span style="font-size:10.5px;color:var(--t3);flex-shrink:0">${(q.ts||'').slice(5,10)}</span><button class="action-btn" style="min-height:32px;padding:5px 13px;flex-shrink:0" onclick="approveStaff('${esc(q.email)}','${esc(nm)}')"><i class="ti ti-user-check"></i>승인</button></div>`;
+            }).join('');
+        }
+      }
+    }catch(e){}
   }catch(e){ box.innerHTML='<span style="color:var(--t3)">불러오기 오류</span>'; }
+}
+function approveStaff(email, name){
+  const ei=$('#stf-email'); if(ei) ei.value=email;
+  const ni=$('#stf-name'); if(ni) ni.value = name || (ni.value || String(email||'').split('@')[0]);
+  const ri=$('#stf-role'); if(ri) ri.value='staff';
+  addStaff();
 }
 async function addStaff(){
   const email=($('#stf-email')?.value||'').trim().toLowerCase();
@@ -11395,11 +11418,13 @@ async function doLogin(){
   const pw = $('#lg-pw')?.value || '';
   if (!id || !pw){ toast('아이디와 비밀번호를 입력하세요','warn'); return; }
   try{ const _rf=(JSON.parse(localStorage.getItem('nuri_login_fail')||'[]')).filter(f=>{ try{ return Date.now()-new Date(f.at).getTime()<60000; }catch(e){ return false; } }); if(_rf.length>=5){ toast('로그인 시도가 너무 많습니다 — 1분 후 다시 시도하세요','err','보안 잠금'); return; } }catch(e){}
+  window.__authErr = '';
 
   // ① 클라우드 로그인 (Supabase Auth) — 어느 PC에서나 같은 데이터
   if (sb){
     try{
       const { data, error } = await sb.auth.signInWithPassword({ email:id, password:pw });
+      if (error) window.__authErr = String(error.message||'');
       if (!error && data && data.session){
         // CRM 직원 명단(crm_staff) 검사 — 미등록 계정은 접근 차단
         let staffRow = null, staffErr = null;
@@ -11415,7 +11440,7 @@ async function doLogin(){
         if (!staffRow){
           try{ await sb.auth.signOut(); }catch(e){}
           _logLoginFail(id, 'CRM 직원 미등록'); _srvLoginLog(id,false,'not-staff');
-          toast('이 계정은 CRM 직원으로 등록되지 않았습니다 — 관리자에게 승인을 요청하세요','err','접근 제한');
+          toast('가입 승인 대기 중입니다 — 관리자가 설정 → 직원 계정 관리에서 승인하면 바로 로그인됩니다','warn','승인 대기');
           return;
         }
         const meta = (data.user && data.user.user_metadata) || {};
@@ -11440,7 +11465,13 @@ async function doLogin(){
 
   // ② 로컬 계정 폴백 (오프라인에서도 동작)
   const acc = loadAccounts().find(a=>a.id.toLowerCase()===id && a.pw===pw);
-  if (!acc){ _logLoginFail(id, '비밀번호 불일치'); _srvLoginLog(id,false,'bad-pw'); toast('아이디 또는 비밀번호가 일치하지 않습니다','err','로그인 실패'); return; }
+  if (!acc){
+    let _msg = '아이디 또는 비밀번호가 일치하지 않습니다';
+    const _ae = window.__authErr || '';
+    if (/email not confirmed/i.test(_ae)) _msg = '이메일 인증이 완료되지 않았습니다 — 가입 메일함의 인증 링크를 누르거나, 관리자에게 문의하세요';
+    else if (/invalid login credentials/i.test(_ae)) _msg = '아이디 또는 비밀번호가 일치하지 않습니다';
+    _logLoginFail(id, '비밀번호 불일치'); _srvLoginLog(id,false,'bad-pw');
+    toast(_msg,'err','로그인 실패'); return; }
   state.user = acc;
   state._cloud = false;
   if ($('#lg-remember')?.checked){
@@ -11482,19 +11513,26 @@ async function doSignup(){
   const accs = loadAccounts();
   if (accs.find(a=>a.id.toLowerCase()===id)){ toast('이미 등록된 아이디입니다','err'); return; }
 
-  // 클라우드 계정 생성 (Supabase Auth)
+  // 클라우드 계정 생성 (Supabase Auth) — 실패 시 여기서 중단(정직한 안내)
   if (sb){
     try{
       const { error } = await sb.auth.signUp({
         email: id, password: pw,
         options: { data: { name, store, role: 'user' } }
       });
-      if (error) toast('클라우드 가입 실패: ' + error.message + ' — 로컬 계정으로만 등록됩니다','warn','클라우드');
-    }catch(e){}
+      if (error){
+        const m = String(error.message||'');
+        if (/already|registered|exists/i.test(m)) toast('이미 가입된 이메일입니다 — 바로 로그인해 보시고, 안 되면 관리자에게 승인 요청하세요','warn','회원가입');
+        else toast('가입 실패: '+m,'err','회원가입');
+        return;
+      }
+      // 승인 대기 요청 기록 → 관리자 '직원 계정 관리' 카드에 자동 표시
+      try{ await sb.from('crm_login_log').insert({ email:id, success:false, reason:'signup-request', ua:(name+' / '+store).slice(0,200) }); }catch(e){}
+    }catch(e){ toast('네트워크 오류 — 잠시 후 다시 시도하세요','err','회원가입'); return; }
   }
 
-  // 승인형: 로컬 계정을 만들지 않음(로컬 폴백 로그인 우회 차단). 관리자가 설정→직원 관리에서 crm_staff 등록해야 로그인 가능.
-  toast(`${name} 님, 가입 신청이 접수되었습니다 — 관리자 승인(직원 등록) 후 로그인할 수 있습니다`,'ok','가입 신청');
+  // 승인형: 로컬 계정 미생성(우회 차단). 관리자가 설정→직원 관리에서 승인하면 로그인 가능.
+  toast(`${name} 님, 가입 신청이 접수되었습니다 — 관리자가 승인하면 바로 로그인할 수 있습니다`,'ok','가입 신청');
   $('#signup-modal').classList.remove('open');
 }
 
