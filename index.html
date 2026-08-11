@@ -1658,6 +1658,8 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 96차 — 가봉 사진 삭제 ════ */
+.cond-th{position:relative}
 /* ════ 95차 — 사진 뷰어 + 탭 하이라이트 ════ */
 .pv-wrap{position:relative;touch-action:pan-y;user-select:none}
 .pv-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
@@ -1676,21 +1678,12 @@ select.f-input,select{min-height:44px}
 .qty-step .ti{font-size:17px}
 .qty-cell input[type=number]{width:52px;text-align:center;font-size:17px;font-weight:800}
 /* ════ 89차 — 시간표 드래그 + 캘린더 시각 ════ */
-.ftb-grip{cursor:grab;touch-action:none;color:var(--t3);padding:2px 3px;flex-shrink:0;display:inline-flex;align-items:center}
-.ftb-grip:active{cursor:grabbing;color:var(--okt)}
-.ftb-grip .ti{font-size:15px}
-.ftb-row.dragging{opacity:.45}
-.ftb-row.drop-target{outline:2px solid #1ab394;outline-offset:-2px;border-radius:7px;background:rgba(26,179,148,.16)}
 .cal-d.sun:not(.sel):not(.today) .n{color:#ed5565}
 .cal-d.sat:not(.sel):not(.today) .n{color:#1c84c6}
 .cal-d.past:not(.today):not(.sel) .n{opacity:.45}
 .cal-d.curwk{background:var(--sf2)!important;border-radius:10px!important}
 .cal-d.today{background:var(--acc-soft)!important;border-radius:11px!important}
 /* ════ 88차 — 시간표 인라인 편집 + 마감 리마인더 ════ */
-.ftb-edit{width:26px!important;height:26px!important;flex-shrink:0}
-.ftb-edit .ti{font-size:14px!important}
-.ftb-sel{height:34px;font-size:12.5px;padding:0 8px;flex:0 0 128px}
-.ftb-row.editing{background:rgba(26,179,148,.1)}
 .dc-alert{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(200,145,74,.2)}
 .dc-now{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#fff;background:var(--gold);border-radius:20px;padding:3px 9px;margin-left:4px;animation:dcPulse 1.8s ease-in-out infinite}
 @keyframes dcPulse{0%,100%{opacity:1}50%{opacity:.65}}
@@ -1702,7 +1695,6 @@ select.f-input,select{min-height:44px}
 .ftb-head em.full{color:var(--et)}
 .ftb-row{display:flex;align-items:center;gap:9px;padding:6px 4px;border-top:1px dashed rgba(26,179,148,.25);cursor:pointer;font-size:13px}
 .ftb-row:hover{background:rgba(26,179,148,.08)}
-.ftb-t{min-width:44px;font-variant-numeric:tabular-nums;color:var(--okt)}
 .ftb-nm{flex:1;font-weight:700;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ftb-no{font-size:11px;color:var(--t3)}
 .dc-tmr{margin-top:12px;padding-top:11px;border-top:1px dashed var(--bd);font-size:12.5px;color:var(--t2);display:flex;align-items:center;gap:7px}
@@ -4727,33 +4719,6 @@ function renderAlertCard(){
       <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 지연 건수가 많아도 '심각'(${cur}일+)만 진하게 떠서 진짜 급한 건의 우선순위를 가립니다.</div>
     </div>`;
 }
-function setFitSlotMax(n){
-  n = Math.max(1, Math.min(12, n));
-  if (!state.shop) loadShop();
-  state.shop.fitSlotMax = n;
-  saveShop();
-  renderFitSlotCard();
-  toast(`하루 가봉 정원 ${n}건으로 설정`,'ok','가봉 슬롯');
-}
-function renderFitSlotCard(){
-  let card = $('#set-fitslot-card');
-  if (!card){ card=document.createElement('div'); card.id='set-fitslot-card'; const pc=document.querySelector('#view-settings .page-content'); if(pc)pc.appendChild(card); }
-  if (!card) return;
-  const cur = fitSlotMax();
-  card.innerHTML = `
-    <div class="form-card" style="margin-top:18px;padding:16px 18px">
-      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-ruler-2"></i> 가봉 예약 슬롯 (더블부킹 방지)</div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <span style="font-size:13.5px;color:var(--t2)">하루 가봉 가능 건수</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <button class="action-btn" onclick="setFitSlotMax(${cur-1})" ${cur<=1?'disabled style=opacity:.4':''}><i class="ti ti-minus"></i></button>
-          <b style="min-width:54px;text-align:center;font-size:16px;color:var(--okt)">${cur}건</b>
-          <button class="action-btn" onclick="setFitSlotMax(${cur+1})"><i class="ti ti-plus"></i></button>
-        </div>
-      </div>
-      <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 주문서에서 가봉일 선택 시 정원·시간대(${FIT_TIMES[0]}~${FIT_TIMES[FIT_TIMES.length-1]}) 중복이 자동 확인됩니다.</div>
-    </div>`;
-}
 function setBuffer(n){
   n = Math.max(0, Math.min(14, n));
   if (!state.shop) loadShop();
@@ -5120,62 +5085,6 @@ function renderCal(){
     }
   }catch(e){}
 }
-// 시간표 드래그 — 행을 끌어 다른 행에 놓으면 두 주문의 가봉 시간 맞바꾸기 (포인터 이벤트 = 마우스+터치)
-var _ftbDrag = null;
-function ftbDragStart(e, no){
-  e.preventDefault(); e.stopPropagation();
-  _ftbDrag = { no: no };
-  const row = e.target.closest('.ftb-row');
-  if (row) row.classList.add('dragging');
-  document.addEventListener('pointermove', ftbDragMove);
-  document.addEventListener('pointerup', ftbDragEnd);
-}
-function ftbDragMove(e){
-  if (!_ftbDrag) return;
-  document.querySelectorAll('.ftb-row.drop-target').forEach(r=>r.classList.remove('drop-target'));
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  const row = el && el.closest ? el.closest('.ftb-row[data-no]') : null;
-  if (row && row.dataset.no !== String(_ftbDrag.no)) row.classList.add('drop-target');
-}
-function ftbDragEnd(e){
-  document.removeEventListener('pointermove', ftbDragMove);
-  document.removeEventListener('pointerup', ftbDragEnd);
-  const drag = _ftbDrag; _ftbDrag = null;
-  document.querySelectorAll('.ftb-row.dragging,.ftb-row.drop-target').forEach(r=>{ r.classList.remove('dragging'); r.classList.remove('drop-target'); });
-  if (!drag) return;
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  const row = el && el.closest ? el.closest('.ftb-row[data-no]') : null;
-  if (row && row.dataset.no && row.dataset.no !== String(drag.no)) ftbSwapTimes(drag.no, row.dataset.no);
-}
-function ftbSwapTimes(noA, noB){
-  const a = state.orders.find(x=>String(x.no)===String(noA));
-  const b = state.orders.find(x=>String(x.no)===String(noB));
-  if (!a || !b) return;
-  const t = a.fitTime||''; a.fitTime = b.fitTime||''; b.fitTime = t;
-  [a,b].forEach(o=>{
-    const ev = state.events.find(x=> x.type==='fit' && String(x.orderNo)===String(o.no) && x.date===o.fitDt);
-    if (ev) ev.sub = `가봉${o.fitTime?' '+o.fitTime:''} · ${(o.pattern&&o.pattern.top)||'정장'}`;
-  });
-  saveDB(); renderEvents(); renderCal();
-  toast(`${a.nm}(${a.fitTime||'미정'}) ↔ ${b.nm}(${b.fitTime||'미정'}) 시간 교환`,'ok','가봉 시간표');
-}
-// 가봉 시간표 인라인 편집 — 주문서 안 열고 시간만 변경
-function editFitTime(no){ window._ftbEdit = no; renderEvents(); }
-function applyFitTime(no, t){
-  if (t==='__cancel'){ window._ftbEdit=null; renderEvents(); return; }
-  const o = state.orders.find(x=>String(x.no)===String(no));
-  if (!o){ window._ftbEdit=null; renderEvents(); return; }
-  const clash = state.orders.filter(brMatch).some(x=> x.type==='정장' && x.status!=='완료' && x.fitDt===o.fitDt && String(x.no)!==String(no) && t && x.fitTime===t);
-  if (clash){ toast(`${t} 시간대는 이미 예약이 있습니다`,'err','가봉 시간'); return; }
-  const prev = o.fitTime||'';
-  o.fitTime = t||'';
-  const ev = state.events.find(e=> e.type==='fit' && String(e.orderNo)===String(no) && e.date===o.fitDt);
-  if (ev) ev.sub = `가봉${o.fitTime?' '+o.fitTime:''} · ${(o.pattern&&o.pattern.top)||'정장'}`;
-  saveDB();
-  window._ftbEdit = null;
-  renderEvents(); renderCal();
-  toast(`#${no} ${o.nm} 가봉 ${prev||'미정'} → ${o.fitTime||'미정'}`,'ok','가봉 시간 변경');
-}
 // 범례 클릭 → 해당 유형 일정만 표시 (다시 클릭 시 해제)
 function calTypeFilter(t){
   state.calTypeF = (state.calTypeF===t) ? null : t;
@@ -5214,7 +5123,6 @@ function renderEvents(){
     if (ftb){
       const fits = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료' && o.fitDt===ds);
       if (fits.length){
-        const max = (typeof fitSlotMax==='function') ? fitSlotMax() : 4;
         const rows = fits.map(o=>`<div class="ftb-row" data-no="${o.no}" onclick="go('orders');if(typeof openOrderDet==='function')openOrderDet('${o.no}')"><i class="ti ti-ruler-2" style="color:var(--okt);flex-shrink:0"></i><span class="ftb-nm">${esc(o.nm)}</span><span class="ftb-no">#${o.no}</span></div>`).join('');
         ftb.innerHTML = `<div class="ftb-head"><i class="ti ti-ruler-2"></i>오늘 가봉 <em>${fits.length}건</em></div>${rows}`;
         ftb.style.display='';
@@ -6286,31 +6194,6 @@ function onFitYnPick(v){
   computePrice();
 }
 // 중가봉(Y): 가봉출고일 입력 / 완성출고일 잠금 · 직봉(N): 완성출고일 입력 / 가봉출고일 잠금
-// ─── 가봉 예약 슬롯 (하루 정원 + 시간대 더블부킹 방지) ───
-const FIT_TIMES = ['10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'];
-function fitSlotMax(){ return (state.shop && state.shop.fitSlotMax) || 4; }
-function fitBookingsOn(ds, exceptNo){
-  return state.orders.filter(brMatch).filter(o=> o.type==='정장' && o.status!=='완료' && o.fitDt===ds && String(o.no)!==String(exceptNo||''));
-}
-function updateFitSlots(){
-  const ds = $('#o-fitDt') ? $('#o-fitDt').value : '';
-  const sel = $('#o-fitTime'); const note = $('#fit-slot-note');
-  if (!sel || !note) return;
-  if (!ds){ sel.innerHTML='<option value="">가봉 시간 선택</option>'; note.textContent=''; return; }
-  const curNo = (($('#o-fac')&&$('#o-fac').textContent)||'').replace('#','');
-  const books = fitBookingsOn(ds, curNo);
-  const taken = books.map(o=>o.fitTime).filter(Boolean);
-  const keep = sel.value;
-  sel.innerHTML = '<option value="">가봉 시간 선택</option>' + FIT_TIMES.map(t=>{
-    const used = taken.includes(t);
-    return `<option value="${t}" ${used?'disabled':''}>${t}${used?' — 예약됨':''}</option>`;
-  }).join('');
-  if (keep && !taken.includes(keep)) sel.value = keep;
-  const max = fitSlotMax(), n = books.length;
-  if (n >= max) note.innerHTML = `<b style="color:var(--et)">⚠ 이 날짜 가봉 ${n}/${max}건 — 정원이 찼습니다. 다른 날짜를 선택하세요</b>`;
-  else if (n >= max-1) note.innerHTML = `<b style="color:var(--wt)">이 날짜 가봉 ${n}/${max}건 — 마지막 자리</b>`;
-  else note.textContent = `이 날짜 가봉 예약 ${n}/${max}건`;
-}
 // 출고일 한 칸: 직봉='직봉 출고일'(→doneDt) · 중가봉='가봉 출고일'(→fitDt)
 function applyFitYnDates(v){
   const lbl=$('#o-shipDt-label'), ship=$('#o-shipDt');
@@ -11148,6 +11031,20 @@ function fitPhotoPick(inp, no){
   };
   img.src = URL.createObjectURL(file);
 }
+function delFitPhoto(no, li, pi){
+  const o = state.orders.find(x=>String(x.no)===String(no));
+  if (!o || !o.fitLog || !o.fitLog[li] || !o.fitLog[li].photos) return;
+  const fl = o.fitLog[li];
+  const removed = fl.photos.splice(pi, 1)[0];
+  if (removed===undefined) return;
+  saveDB();
+  openOrderDet(no);
+  toastUndo('가봉 사진 삭제됨', function(){
+    fl.photos.splice(pi, 0, removed);
+    saveDB();
+    if (document.getElementById('det-ov') && document.getElementById('det-ov').classList.contains('open')) openOrderDet(no);
+  }, '가봉 기록');
+}
 async function addFitLog(no){
   const o = state.orders.find(x=>String(x.no)===String(no));
   if (!o) return;
@@ -11534,7 +11431,7 @@ function openOrderDet(no){
         <div class="dp-f full" style="margin-top:9px;border-top:1px dashed var(--bd);padding-top:9px">
           <div class="dp-fl">${fl.date||''} 가봉 메모</div>
           <div class="dp-fv" style="font-size:12.5px">${esc(fl.memo||'')}</div>
-          ${(fl.photos&&fl.photos.length)?(()=>{const _si=_regPhotoSet(fl.photos);return `<div class="cond-grid" style="margin-top:6px">${fl.photos.map((ph,pi)=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openPhotoSet(${_si},${pi})"></div>`).join('')}</div>`;})():''}
+          ${(fl.photos&&fl.photos.length)?(()=>{const _si=_regPhotoSet(fl.photos);return `<div class="cond-grid" style="margin-top:6px">${fl.photos.map((ph,pi)=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openPhotoSet(${_si},${pi})"><span class="cond-del" onclick="event.stopPropagation();delFitPhoto('${o.no}',${fi},${pi})" title="사진 삭제"><i class="ti ti-x"></i></span></div>`).join('')}</div>`;})():''}
         </div>`).join('')}
       <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;align-items:center">
         <label class="mini-act" title="가봉 사진 추가" style="cursor:pointer"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="fitPhotoPick(this,'${o.no}')"></label>
