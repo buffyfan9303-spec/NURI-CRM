@@ -2800,11 +2800,9 @@ body.dk{ --t3:#9b9994; }
                 <button type="button" class="opt-btn" data-v="Y" onclick="onFitYnPick('Y')">중가봉</button>
               </div>
             </div>
-            <div><label class="f-label">가봉 출고일</label><input id="o-fitDt" class="f-input" type="date" onchange="updateFitSlots()">
-              <select id="o-fitTime" class="f-input" style="margin-top:6px" onchange="updateFitSlots()"><option value="">가봉 시간 선택</option></select>
-              <div id="fit-slot-note" style="font-size:11px;color:var(--t3);margin-top:4px;line-height:1.4"></div>
+            <div><label class="f-label" id="o-shipDt-label">직봉 출고일<span class="f-req">*</span></label><input id="o-shipDt" class="f-input" type="date" onchange="onShipDtChange()">
+              <input id="o-fitDt" type="hidden"><input id="o-doneDt" type="hidden">
             </div>
-            <div><label class="f-label">완성 출고일<span class="f-req">*</span></label><input id="o-doneDt" class="f-input" type="date"></div>
           </div>
         
         <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
@@ -5176,17 +5174,8 @@ function renderEvents(){
       const fits = state.orders.filter(brMatch).filter(o=>o.type==='정장' && o.status!=='완료' && o.fitDt===ds);
       if (fits.length){
         const max = (typeof fitSlotMax==='function') ? fitSlotMax() : 4;
-        const rows = fits.slice().sort((a,b)=>(a.fitTime||'99').localeCompare(b.fitTime||'99'))
-          .map(o=>{
-            if (String(window._ftbEdit||'')===String(o.no)){
-              const taken = fits.filter(x=>String(x.no)!==String(o.no)).map(x=>x.fitTime).filter(Boolean);
-              const opts = '<option value="__cancel">✕ 취소</option><option value=""'+(o.fitTime?'':' selected')+'>미정</option>' +
-                FIT_TIMES.map(t=>`<option value="${t}" ${taken.includes(t)?'disabled':''} ${o.fitTime===t?'selected':''}>${t}${taken.includes(t)?' — 예약됨':''}</option>`).join('');
-              return `<div class="ftb-row editing" onclick="event.stopPropagation()"><select class="f-input ftb-sel" onchange="applyFitTime('${o.no}', this.value)" onclick="event.stopPropagation()">${opts}</select><span class="ftb-nm">${esc(o.nm)}</span></div>`;
-            }
-            return `<div class="ftb-row" data-no="${o.no}" onclick="go('orders');if(typeof openOrderDet==='function')openOrderDet('${o.no}')"><span class="ftb-grip" onpointerdown="ftbDragStart(event,'${o.no}')" onclick="event.stopPropagation()" title="끌어서 다른 행에 놓으면 시간 맞바꾸기"><i class="ti ti-grip-vertical"></i></span><b class="ftb-t">${o.fitTime||'미정'}</b><span class="ftb-nm">${esc(o.nm)}</span><span class="ftb-no">#${o.no}</span><button class="mini-act ftb-edit" onclick="event.stopPropagation();editFitTime('${o.no}')" title="시간만 즉시 변경"><i class="ti ti-clock-edit"></i></button></div>`;
-          }).join('');
-        ftb.innerHTML = `<div class="ftb-head"><i class="ti ti-ruler-2"></i>가봉 시간표 <em class="${fits.length>=max?'full':''}">${fits.length}/${max}</em></div>${rows}`;
+        const rows = fits.map(o=>`<div class="ftb-row" data-no="${o.no}" onclick="go('orders');if(typeof openOrderDet==='function')openOrderDet('${o.no}')"><i class="ti ti-ruler-2" style="color:var(--okt);flex-shrink:0"></i><span class="ftb-nm">${esc(o.nm)}</span><span class="ftb-no">#${o.no}</span></div>`).join('');
+        ftb.innerHTML = `<div class="ftb-head"><i class="ti ti-ruler-2"></i>오늘 가봉 <em>${fits.length}건</em></div>${rows}`;
         ftb.style.display='';
       } else { ftb.style.display='none'; ftb.innerHTML=''; }
     }
@@ -5907,7 +5896,7 @@ function renderSizeCards(boxId, list, selId, kind, emptyMsg){
   const cur = ($('#'+selId)?.value || '');
   let html = list.map(k=>{
     const isActive = String(k)===String(cur);
-    const disp = (kind==='top') ? ('S'+k) : k;
+    const disp = k;
     return `<div class="pick-card${isActive?' active':''}" data-v="${k}" onclick="pickSize('${selId}','${boxId}',this)">
       <div class="pc-title">${disp}</div>
     </div>`;
@@ -5958,7 +5947,7 @@ function showSizeAcc(selId, boxId, k, toggleOff){
     const hint = selId==='o-sTop' ? '③ 사이즈 탭의 측정표' : '측정표(수정치수란)';
     acc.innerHTML = `<div class="size-acc-in"><i class="ti ti-info-circle"></i> ${k==='기타' ? `기타 — ${hint}에서 치수를 직접 입력하세요` : "이 사이즈의 상세 치수 정보가 없습니다"}</div>`;
   } else {
-    acc.innerHTML = `<div class="size-acc-in"><b class="sa-head">${(selId==='o-sTop'?'S':'')}${k} 상세 치수</b>${Object.entries(spec).map(([key,v])=>`<span class="sa-item"><b>${LBL[key]||key}</b>${v}<small>cm</small></span>`).join('')}</div>`;
+    acc.innerHTML = `<div class="size-acc-in"><b class="sa-head">${k} 상세 치수</b>${Object.entries(spec).map(([key,v])=>`<span class="sa-item"><b>${LBL[key]||key}</b>${v}<small>cm</small></span>`).join('')}</div>`;
   }
   acc.classList.add('open');
 }
@@ -6271,13 +6260,20 @@ function updateFitSlots(){
   else if (n >= max-1) note.innerHTML = `<b style="color:var(--wt)">이 날짜 가봉 ${n}/${max}건 — 마지막 자리</b>`;
   else note.textContent = `이 날짜 가봉 예약 ${n}/${max}건`;
 }
+// 출고일 한 칸: 직봉='직봉 출고일'(→doneDt) · 중가봉='가봉 출고일'(→fitDt)
 function applyFitYnDates(v){
+  const lbl=$('#o-shipDt-label'), ship=$('#o-shipDt');
   const fit=$('#o-fitDt'), done=$('#o-doneDt');
-  const ftSel=$('#o-fitTime'), ftNote=$('#fit-slot-note');
-  if (ftSel){ ftSel.disabled = (v!=='Y'); if (v!=='Y'){ ftSel.value=''; if(ftNote) ftNote.textContent=''; } }
-  const lock=(el,on)=>{ if(!el)return; el.disabled=on; el.classList.toggle('locked',on); const wrap=el.closest('div'); if(wrap){ wrap.style.opacity=on?'.45':''; } if(on) el.value=''; };
-  if (v==='Y'){ lock(fit,false); lock(done,true); }
-  else { lock(fit,true); lock(done,false); }
+  if (lbl) lbl.innerHTML = (v==='Y') ? '가봉 출고일<span class="f-req">*</span>' : '직봉 출고일<span class="f-req">*</span>';
+  if (!ship) return;
+  if (v==='Y'){ if(fit) fit.value = ship.value; if(done) done.value=''; }
+  else { if(done) done.value = ship.value; if(fit) fit.value=''; }
+}
+function onShipDtChange(){
+  const v = (state.opt && state.opt.fitYn==='Y') ? 'Y' : 'N';
+  const ship=$('#o-shipDt'); if(!ship) return;
+  if (v==='Y'){ const f=$('#o-fitDt'); if(f) f.value=ship.value; const d=$('#o-doneDt'); if(d) d.value=''; }
+  else { const d=$('#o-doneDt'); if(d) d.value=ship.value; const f=$('#o-fitDt'); if(f) f.value=''; }
 }
 function onQtyChange(){
   const s = parseInt($('#qty-s').value)||0;
@@ -6504,7 +6500,7 @@ function computePrice(){
 }
 
 function resetSuit(){
-  ['o-nm','o-ph','o-fitDt','o-doneDt','o-memo','o-yard','o-fabFeat','o-swatch','o-patMemo','o-lapelSize'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
+  ['o-nm','o-ph','o-shipDt','o-fitDt','o-doneDt','o-memo','o-yard','o-fabFeat','o-swatch','o-patMemo','o-lapelSize'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
   ['o-cust','o-pTop','o-sTop','o-pBot','o-sBot','o-pVest','o-sVest','o-pCoat','o-sCoat','o-fabNo','o-lin','o-btn'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
   $('#qty-s').value=1; $('#qty-p').value=1; $('#qty-v').value=0; $('#qty-c').value=0; $('#qty-j').value=0;
   $('#o-padL').value=2; $('#o-padR').value=2;
@@ -6569,13 +6565,10 @@ function saveSuit(){
   const nm = $('#o-nm').value.trim();
   if (!nm){ toast('고객명을 입력하세요','warn','입력 오류'); scrollToSec(1); return; }
   const doneDt = $('#o-doneDt').value;
-  if (!doneDt){ toast('완성 출고일을 선택하세요','warn','입력 오류'); scrollToSec(1); return; }
-  if (state.opt.fitYn==='Y' && !$('#o-fitDt').value){ toast('가봉 출고일을 선택하세요','warn','입력 오류'); scrollToSec(1); return; }
-  if (state.opt.fitYn==='Y' && $('#o-fitDt').value && typeof fitBookingsOn==='function'){
-    const _fb = fitBookingsOn($('#o-fitDt').value, (($('#o-fac')&&$('#o-fac').textContent)||'').replace('#',''));
-    const _ft = ($('#o-fitTime')&&$('#o-fitTime').value)||'';
-    if (_ft && _fb.some(o=>o.fitTime===_ft)){ toast(`${_ft} 시간대는 이미 가봉 예약이 있습니다 — 다른 시간을 선택하세요`,'err','가봉 슬롯'); scrollToSec(1); return; }
-    if (_fb.length >= fitSlotMax()){ toast(`이 날짜 가봉 정원(${fitSlotMax()}건)이 찼습니다 — 다른 날짜를 선택하세요`,'err','가봉 슬롯'); scrollToSec(1); return; }
+  if (state.opt.fitYn==='Y'){
+    if (!$('#o-fitDt').value){ toast('가봉 출고일을 선택하세요','warn','입력 오류'); scrollToSec(1); return; }
+  } else {
+    if (!doneDt){ toast('직봉 출고일을 선택하세요','warn','입력 오류'); scrollToSec(1); return; }
   }
 
   const facNo = $('#o-fac').textContent.replace('#','');
@@ -6615,7 +6608,7 @@ function saveSuit(){
     pad: { L:parseInt($('#o-padL').value)||0, R:parseInt($('#o-padR').value)||0 },
     lapelSize: parseFloat($('#o-lapelSize').value)||0,
     opt: {...state.opt, fit:state.opt.fitYn||'N'},
-    fitDt: $('#o-fitDt').value, fitTime: (($('#o-fitTime')&&$('#o-fitTime').value)||''), doneDt,
+    fitDt: $('#o-fitDt').value, doneDt,
     memo: $('#o-memo').value.trim(),
     patMemo: $('#o-patMemo').value.trim(),
     date: dStr(today()),
@@ -6659,7 +6652,7 @@ function saveSuit(){
 
   // 캘린더 이벤트
   state.events.push({ date: order.date, type:'consult', name:nm, sub:`정장 주문 #${facNo}`, orderNo:facNo });
-  if (order.fitDt) state.events.push({ date: order.fitDt, type:'fit', name:nm, sub:`가봉${order.fitTime?' '+order.fitTime:''} · ${order.pattern.top||'정장'}`, orderNo:facNo });
+  if (order.fitDt) state.events.push({ date: order.fitDt, type:'fit', name:nm, sub:`가봉 출고 · ${order.pattern.top||'정장'}`, orderNo:facNo });
   if (order.doneDt) state.events.push({ date: order.doneDt, type:'deliver', name:nm, sub:`완성 출고 · ${fmt(tot)}`, orderNo:facNo });
 
   // 고객 누적 (선택된 고객 ID 우선 매칭 → 이름 매칭)
@@ -10614,7 +10607,6 @@ function renderSettings(){
   renderPermCard();
   renderStaffCard();
   renderMenuVisCard();
-  renderFitSlotCard();
   renderBufferCard();
   renderShopBakNote();
   renderPrintLogoCard();
@@ -11195,7 +11187,7 @@ function loadOrderToForm(no, mode){
   if (mode==='reprint'){
     set('o-fitDt', o.fitDt||'');
     set('o-doneDt', o.doneDt||'');
-    if (document.getElementById('o-fitTime')){ if (typeof updateFitSlots==='function') updateFitSlots(); document.getElementById('o-fitTime').value = o.fitTime||''; }
+    const _ship=document.getElementById('o-shipDt'); if(_ship) _ship.value = o.fitDt || o.doneDt || '';
     const f = document.getElementById('o-fac');
     if (f) f.textContent = '#'+o.no;
     const dt = document.getElementById('o-date');
@@ -11379,10 +11371,10 @@ function saveAccounts(arr){ localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(ar
 function ensureDefaultAccount(){
   const accs = loadAccounts();
   let dirty=false;
-  if (!accs.find(a=>a.id==='admin@nuri.kr')){
-    accs.push({ id:'admin@nuri.kr', pw:'nuri2026', name:'관리자', store:'가산 본점', role:'admin', created:'2026-05-22' });
-    dirty=true;
-  }
+  // 구 계정(비번 노출) 완전 제거 — 기존 기기에 저장돼 있어도 삭제
+  const _oldN = accs.length;
+  const _fil = accs.filter(a=>a.id!=='admin@nuri.kr');
+  if (_fil.length !== _oldN){ accs.length=0; _fil.forEach(a=>accs.push(a)); dirty=true; }
   if (!accs.find(a=>a.id==='admin@nuricrm.com')){
     accs.push({ id:'admin@nuricrm.com', pw:'12345678', name:'관리자', store:'가산 본점', role:'admin', created:'2026-06-19' });
     dirty=true;
@@ -11419,6 +11411,7 @@ async function doLogin(){
   if (!id || !pw){ toast('아이디와 비밀번호를 입력하세요','warn'); return; }
   try{ const _rf=(JSON.parse(localStorage.getItem('nuri_login_fail')||'[]')).filter(f=>{ try{ return Date.now()-new Date(f.at).getTime()<60000; }catch(e){ return false; } }); if(_rf.length>=5){ toast('로그인 시도가 너무 많습니다 — 1분 후 다시 시도하세요','err','보안 잠금'); return; } }catch(e){}
   window.__authErr = '';
+  if (id==='admin@nuri.kr'){ _logLoginFail(id,'폐기된 계정'); toast('이 계정은 폐기되었습니다 — 새 관리자 계정으로 로그인하세요','err','계정 폐기'); return; }
 
   // ① 클라우드 로그인 (Supabase Auth) — 어느 PC에서나 같은 데이터
   if (sb){
@@ -11820,6 +11813,11 @@ function injectTestData(){
 
 // Boot — 자동 로그인 시도, 실패 시 로그인 페이지
 window.addEventListener('DOMContentLoaded', async ()=>{
+  // 숫자칸 앞자리 0 정규화 (01→1, 0.5는 유지)
+  document.addEventListener('change', function(e){
+    const t=e.target;
+    if (t && t.tagName==='INPUT' && t.type==='number' && /^0\d/.test(t.value)){ t.value = String(parseFloat(t.value)); }
+  }, true);
   if (location.search.indexOf('wm=')>-1 && typeof handleRemoteMeasure==='function'){ if (handleRemoteMeasure()) return; }
   ensureDefaultAccount();
   loadShop();
