@@ -1658,6 +1658,13 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 93차 — 수량 스테퍼 ════ */
+.qty-step-wrap{display:flex;align-items:center;gap:5px;justify-content:center}
+.qty-step{width:38px;height:38px;border:1px solid var(--bd2);border-radius:9px;background:var(--sf);color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.qty-step:hover{border-color:#1ab394;color:#1ab394}
+.qty-step:active{transform:scale(.94)}
+.qty-step .ti{font-size:17px}
+.qty-cell input[type=number]{width:52px;text-align:center;font-size:17px;font-weight:800}
 /* ════ 89차 — 시간표 드래그 + 캘린더 시각 ════ */
 .ftb-grip{cursor:grab;touch-action:none;color:var(--t3);padding:2px 3px;flex-shrink:0;display:inline-flex;align-items:center}
 .ftb-grip:active{cursor:grabbing;color:var(--okt)}
@@ -2045,6 +2052,28 @@ body.dk{ --t3:#9b9994; }
 </div>
 
 <!-- ═══ 원단 발주(입고) 모달 ═══ -->
+<div id="fab-reg-modal" class="signup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="signup-card" onclick="event.stopPropagation()" style="max-width:480px">
+    <button class="signup-x" onclick="$('#fab-reg-modal').classList.remove('open')"><i class="ti ti-x"></i></button>
+    <div class="signup-head" style="margin-bottom:12px"><h2 class="signup-title" id="fr-title">원단 등록</h2><p class="signup-sub">원단상(업체)과 번호를 따로 입력합니다</p></div>
+    <div class="signup-form">
+      <div class="form-group"><label>원단상 (업체)</label>
+        <select id="fr-vendor-sel" onchange="frVendorPick()"><option value="">— 새 업체 직접 입력 —</option></select>
+        <input id="fr-vendor" placeholder="업체명 직접 입력 (예: 제일모직)" style="margin-top:6px">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>원단 번호</label><input id="fr-no" placeholder="예: 1024 또는 F-2410"></div>
+        <div class="form-group"><label>컬러</label><input id="fr-color" placeholder="네이비"></div>
+        <div class="form-group"><label>조성 (혼용률)</label><input id="fr-comp" placeholder="Wool 100"></div>
+        <div class="form-group"><label>요척 (Y)</label><input id="fr-yard" type="number" step="0.1" placeholder="2.1"></div>
+        <div class="form-group"><label>단가 (원)</label><input id="fr-price" type="number" placeholder="780000"></div>
+        <div class="form-group"><label>재고 (개)</label><input id="fr-stock" type="number" placeholder="10"></div>
+      </div>
+      <button class="login-btn" style="width:100%;margin-top:14px;border:0;color:#fff;padding:13px;border-radius:8px;font-family:inherit;font-weight:700;cursor:pointer" onclick="doSaveFabric()"><i class="ti ti-check"></i> 저장</button>
+    </div>
+  </div>
+</div>
+
 <div id="fab-modal" class="signup-overlay" onclick="closeFabModal(event)">
   <div class="signup-card" onclick="event.stopPropagation()">
     <button class="signup-x" onclick="closeFabModal()"><i class="ti ti-x"></i></button>
@@ -2816,10 +2845,10 @@ body.dk{ --t3:#9b9994; }
             <span class="step-badge">2</span><i class="ti ti-numbers"></i>주문서 작성 <span class="section-sub">※ 수량 + 패턴 + 사이즈 선택 → 상세 치수 자동 · 아래에서 상의 옵션까지 한 번에</span>
           </div>
 
-          <label class="f-label" style="margin-bottom:9px">주문 수량 (S 수트 · P 하의 · V 조끼 · C 코트 · J 자켓 추가)</label>
+          <label class="f-label" style="margin-bottom:9px">주문 수량 — S 수트(상+하 세트) · J 상의만 · P 하의만 · V 조끼 · C 코트</label>
           <div class="qty-grid">
             <div class="qty-cell"><div class="qty-cell-label">S · 수트</div><div class="qty-cell-sub">SUIT</div><input id="qty-s" type="number" min="0" max="9" value="1" oninput="onQtyChange()"></div>
-            <div class="qty-cell"><div class="qty-cell-label">P · 하의</div><div class="qty-cell-sub">PANTS</div><input id="qty-p" type="number" min="0" max="9" value="1" oninput="onQtyChange()"></div>
+            <div class="qty-cell"><div class="qty-cell-label">P · 하의</div><div class="qty-cell-sub">PANTS</div><input id="qty-p" type="number" min="0" max="9" value="0" oninput="onQtyChange()"></div>
             <div class="qty-cell"><div class="qty-cell-label">V · 조끼</div><div class="qty-cell-sub">VEST</div><input id="qty-v" type="number" min="0" max="9" value="0" oninput="onQtyChange()"></div>
             <div class="qty-cell"><div class="qty-cell-label">C · 코트</div><div class="qty-cell-sub">COAT</div><input id="qty-c" type="number" min="0" max="9" value="0" oninput="onQtyChange()"></div>
             <div class="qty-cell"><div class="qty-cell-label">J · 자켓</div><div class="qty-cell-sub">JACKET</div><input id="qty-j" type="number" min="0" max="9" value="0" oninput="onQtyChange()"></div>
@@ -3520,6 +3549,7 @@ body.dk{ --t3:#9b9994; }
       <div class="page-content">
         <div class="tabs">
           <button class="tab active" id="tab-inv-fab" onclick="invTab('fab')"><i class="ti ti-needle"></i>원단</button>
+          <button class="action-btn" style="margin-left:auto" onclick="openFabRegModal()"><i class="ti ti-plus"></i>원단 등록</button>
           <button class="tab" id="tab-inv-lin" onclick="invTab('lin')"><i class="ti ti-layers-subtract"></i>안감</button>
           <button class="tab" id="tab-inv-btn" onclick="invTab('btn')"><i class="ti ti-circle-dot"></i>단추</button>
         </div>
@@ -4462,7 +4492,7 @@ const state = {
   detCust: null,
   opt: {
     // 일정/수량
-    fitYn:'N', qty:{s:1,p:1,v:0,c:0,j:0},
+    fitYn:'N', qty:{s:1,p:0,v:0,c:0,j:0},
     // 상의 16종
     bond:'반접착', design:'싱글', btnN:'2',
     lapel:'노치드', lapelDet:'없음',
@@ -4992,7 +5022,7 @@ function go(view, fromPop){
   if (view==='list')      renderCustList();
   if (view==='reg')       { initRegForm(); resetReg(); }
   if (view==='studio') { if (typeof renderStudio==='function') renderStudio(); }
-  if (view==='mtm-suit')  { initSuitForm(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); if (typeof suitDraftCheck==='function') suitDraftCheck(); if (typeof showMeasureHint==='function') showMeasureHint(null); if (typeof applyFitYnDates==='function') applyFitYnDates(state.opt&&state.opt.fitYn==='Y'?'Y':'N'); }
+  if (view==='mtm-suit')  { initSuitForm(); if (typeof injectQtySteppers==='function') injectQtySteppers(); switchTab(1); if (typeof injectStepNav==='function') injectStepNav(); if (typeof injectStepBar==='function') injectStepBar(); if (typeof suitDraftCheck==='function') suitDraftCheck(); if (typeof showMeasureHint==='function') showMeasureHint(null); if (typeof applyFitYnDates==='function') applyFitYnDates(state.opt&&state.opt.fitYn==='Y'?'Y':'N'); }
   if (view==='fab')       renderFabList();
   if (view==='sales-day') { $('#sd-date').value = dStr(today()); renderSalesDay(); }
   if (view==='sales-period'){
@@ -5966,7 +5996,7 @@ function renderFabCards(){
     <div class="pick-card" data-v="${f.no}" onclick="pickFab('${f.no}', this)">
       ${f.photo?`<div class="pc-swatch" style="background-image:url(${f.photo})"></div>`:''}
       <div class="pc-title">${f.no}</div>
-      <div class="pc-sub">${f.vendor} · ${f.color}</div>
+      <div class="pc-sub"><b style="color:var(--it)">${f.vendor}</b> · ${f.color}</div>
       <span class="pc-tag">${f.yard} Y</span>
     </div>`).join('') || pickEmpty('등록된 원단이 없습니다','재고 현황에서 원단을 등록하면 여기 선택지로 나타납니다');
 }
@@ -6118,7 +6148,7 @@ function suitStepDone(tab){
     if (tab===2) return !!($('#o-pTop')?.value) && !!($('#o-sTop')?.value);
     if (tab===3) return (state._suitVisited||new Set()).has(3) && !!($('#o-sTop')?.value);
     if (tab===5){
-      const p = parseInt($('#qty-p')?.value)||0, v = parseInt($('#qty-v')?.value)||0;
+      const p = (parseInt($('#qty-p')?.value)||0) + (parseInt($('#qty-s')?.value)||0), v = parseInt($('#qty-v')?.value)||0;
       const vis = (state._suitVisited||new Set()).has(5);
       if (!p && !v) return vis;
       const okP = !p || (!!($('#o-pBot')?.value) && !!($('#o-sBot')?.value));
@@ -6274,6 +6304,27 @@ function onShipDtChange(){
   const ship=$('#o-shipDt'); if(!ship) return;
   if (v==='Y'){ const f=$('#o-fitDt'); if(f) f.value=ship.value; const d=$('#o-doneDt'); if(d) d.value=''; }
   else { const d=$('#o-doneDt'); if(d) d.value=ship.value; const f=$('#o-fitDt'); if(f) f.value=''; }
+}
+// 실효 하의 수량 — 수트(S)는 상+하 세트이므로 하의에 포함
+function qtyBot(q){ q=q||{}; return (q.s||0)+(q.p||0); }
+function qtyStep(id, d){
+  const el = document.getElementById(id); if(!el) return;
+  let v = (parseInt(el.value)||0) + d;
+  v = Math.max(0, Math.min(9, v));
+  el.value = v;
+  onQtyChange();
+}
+function injectQtySteppers(){
+  document.querySelectorAll('.qty-cell').forEach(cell=>{
+    if (cell.querySelector('.qty-step')) return;
+    const inp = cell.querySelector('input[type=number]'); if(!inp) return;
+    const wrap = document.createElement('div'); wrap.className='qty-step-wrap';
+    inp.parentElement.insertBefore(wrap, inp);
+    const minus = document.createElement('button'); minus.type='button'; minus.className='qty-step'; minus.innerHTML='<i class="ti ti-minus"></i>'; minus.onclick=()=>qtyStep(inp.id,-1);
+    const plus  = document.createElement('button'); plus.type='button';  plus.className='qty-step';  plus.innerHTML='<i class="ti ti-plus"></i>';  plus.onclick=()=>qtyStep(inp.id,1);
+    wrap.appendChild(minus); wrap.appendChild(inp); wrap.appendChild(plus);
+    inp.addEventListener('focus', function(){ try{ this.select(); }catch(e){} });
+  });
 }
 function onQtyChange(){
   const s = parseInt($('#qty-s').value)||0;
@@ -6447,10 +6498,10 @@ function toggleSidebar(){
 
 function computePrice(){
   const o = state.opt;
-  const q = o.qty || {s:1,p:1,v:0,c:0,j:0};
+  const q = o.qty || {s:1,p:0,v:0,c:0,j:0};
 
   const baseTop  = (q.s + q.j) * (LABOR_BASE.top[o.bond] || 0);
-  const baseBot  = q.p * (LABOR_BASE.bot['기본'] || 0);
+  const baseBot  = qtyBot(q) * (LABOR_BASE.bot['기본'] || 0);
   const vestKey  = o.vest==='라펠조끼' ? '라펠조끼' : (o.vest==='없음'?'없음':'조끼');
   const baseVest = q.v * (LABOR_BASE.vest[vestKey] || 0);
   const baseCoat = q.c * (LABOR_BASE.coat['코트'] || 0);
@@ -6459,7 +6510,7 @@ function computePrice(){
   // 중가봉
   if (o.fitYn==='Y'){
     if (q.s||q.j) opt += LABOR_OPTIONS.fit_top * (q.s+q.j);
-    if (q.p)      opt += LABOR_OPTIONS.fit_bot * q.p;
+    if (qtyBot(q)) opt += LABOR_OPTIONS.fit_bot * qtyBot(q);
     if (q.v)      opt += LABOR_OPTIONS.fit_vest * q.v;
     if (q.c)      opt += LABOR_OPTIONS.fit_coat * q.c;
   }
@@ -6474,11 +6525,11 @@ function computePrice(){
   if (o.btnext==='리얼버튼') opt += LABOR_OPTIONS.real_btn * (q.s+q.j);
   if (o.btnext==='카마치아') opt += LABOR_OPTIONS.camicia * (q.s+q.j);
   // 하의 옵션
-  if (o.botFrontP==='아웃포켓' || o.botBackP==='양쪽-단추') opt += LABOR_OPTIONS.bot_outpocket * q.p;
-  if (o.sas==='있음') opt += LABOR_OPTIONS.side_adjust * q.p;
+  if (o.botFrontP==='아웃포켓' || o.botBackP==='양쪽-단추') opt += LABOR_OPTIONS.bot_outpocket * qtyBot(q);
+  if (o.sas==='있음') opt += LABOR_OPTIONS.side_adjust * qtyBot(q);
   if (o.beltLoop==='있음' && o.botSew==='프리미엄') opt += 0; // 기본 포함
-  if (o.taping==='있음') opt += LABOR_OPTIONS.bijou * q.p;
-  if (o.vCut==='있음') opt += LABOR_OPTIONS.bot_v_open * q.p;
+  if (o.taping==='있음') opt += LABOR_OPTIONS.bijou * qtyBot(q);
+  if (o.vCut==='있음') opt += LABOR_OPTIONS.bot_v_open * qtyBot(q);
   // 상의 부가
   if (o.sweatPad==='있음') opt += LABOR_OPTIONS.sweat_pad * (q.s+q.j+q.p);
   if (o.ticketP==='유') opt += LABOR_OPTIONS.watch_pocket * (q.s+q.j);
@@ -6502,7 +6553,7 @@ function computePrice(){
 function resetSuit(){
   ['o-nm','o-ph','o-shipDt','o-fitDt','o-doneDt','o-memo','o-yard','o-fabFeat','o-swatch','o-patMemo','o-lapelSize'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
   ['o-cust','o-pTop','o-sTop','o-pBot','o-sBot','o-pVest','o-sVest','o-pCoat','o-sCoat','o-fabNo','o-lin','o-btn'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
-  $('#qty-s').value=1; $('#qty-p').value=1; $('#qty-v').value=0; $('#qty-c').value=0; $('#qty-j').value=0;
+  $('#qty-s').value=1; $('#qty-p').value = 0; $('#qty-v').value=0; $('#qty-c').value=0; $('#qty-j').value=0;
   $('#o-padL').value=2; $('#o-padR').value=2;
   $('#o-lapelSize').value=8.5;
   // 모든 카드 그리드 active 해제
@@ -6679,7 +6730,7 @@ function populatePrintArea(){
   $('#prn-staff').textContent = u.name;
   $('#prn-store').textContent = u.store || '가산 본점';
   // 수량
-  const q = state.opt.qty || {s:1,p:1,v:0,c:0,j:0};
+  const q = state.opt.qty || {s:1,p:0,v:0,c:0,j:0};
   const qstr = [
     q.s?`상의 ${q.s}`:null, q.p?`하의 ${q.p}`:null,
     q.v?`조끼 ${q.v}`:null, q.c?`코트 ${q.c}`:null, q.j?`자켓 ${q.j}`:null
@@ -6823,7 +6874,7 @@ function populatePrintArea(){
         <div class="diag-cap">상의 (싱글 자켓)</div>
       </div>`);
     }
-    if ((q.p||0) > 0){
+    if (qtyBot(q) > 0){
       parts.push(`<div class="prn-diagram diag-pants">
         <img src="data:image/png;base64,${IMGS.pants}" alt="하의">
         <div class="diag-cap">하의</div>
@@ -6876,7 +6927,7 @@ function woQrTag(no){
   }catch(e){ return ''; }
 }
 function buildWorkOrder(){
-  const o = state.opt, q = o.qty||{s:1,p:1,v:0,c:0,j:0};
+  const o = state.opt, q = o.qty||{s:1,p:0,v:0,c:0,j:0};
   const fac = $('#o-fac').textContent.replace('#','');
   const nm  = $('#o-nm').value||'';
   const ph  = $('#o-ph').value||'';
@@ -6910,7 +6961,7 @@ function buildWorkOrder(){
     </tr>
     <tr>
       <th>완성출고</th><td><b>${woDate($('#o-doneDt').value)}</b></td>
-      <th>총 수 량</th><td>상: ${q.s||0} 하: ${q.p||0} 조끼: ${q.v||0} 코트: ${q.c||0}</td>
+      <th>총 수 량</th><td>상: ${(q.s||0)+(q.j||0)} 하: ${qtyBot(q)} 조끼: ${q.v||0} 코트: ${q.c||0}</td>
       <th>원단특징</th><td>${$('#o-fabFeat').value||''}</td>
       <th>단추NO.</th><td>${btn? btn.no : ''}</td>
     </tr>
@@ -6992,7 +7043,7 @@ function buildWorkOrder(){
   if (!((q.s||0)>0 || (q.j||0)>0 || (q.c||0)>0)) page1 = '';
   // ── PAGE 2: 하의 + 조끼 ──
   let page2 = '';
-  if ((q.p||0) > 0 || (q.v||0) > 0){
+  if (qtyBot(q) > 0 || (q.v||0) > 0){
     const botExtra = `오비 ${o.obi} · 앞주머니 ${o.botFrontP} · 뒷주머니 ${o.botBackP} · 밑단 ${o.botHem} · SAS ${o.sas} · 턱시도깡 ${o.taping} · 벨트고리 ${o.beltLoop} · V트임 ${o.vCut}`;
     const sizeBot = `
     <table class="wo-t wo-size">
@@ -7041,17 +7092,17 @@ function buildWorkOrder(){
       if (typeof studioSvg==='function'){
         const woDia = [['lapel','라펠',o.lapel],['vent','뒷트임',o.vent],['lining','안감',o.lining],['hak','학고',o.hak]];
         if ((q.s||0)+(q.j||0) > 0) woDia.forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${v}</div></div>`); } });
-        if ((q.p||0) > 0){ [['botTuck','주름',o.botTuck],['botFrontP','앞주머니',o.botFrontP],['botHem','밑단',o.botHem]].forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${k==='botTuck'?(v==='2'?'2주름':v==='1'?'1주름':'노턱'):v}</div></div>`); } }); }
+        if (qtyBot(q) > 0){ [['botTuck','주름',o.botTuck],['botFrontP','앞주머니',o.botFrontP],['botHem','밑단',o.botHem]].forEach(([k,lb,v])=>{ if(v){ const s=studioSvg(k,v); if(s) ds.push(`<div class="d wo-d-svg">${s}<div class="c">${lb}: ${k==='botTuck'?(v==='2'?'2주름':v==='1'?'1주름':'노턱'):v}</div></div>`); } }); }
       }
-      if ((q.p||0) > 0 && typeof composePants2View==='function'){ const _fp2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composePants2View(o, fabHex(_fp2?_fp2.color:''), _fabPatt(_fp2))}</div>`); if(typeof composePantsSpec==='function'){ const _mp2={w:_woM('bot','w'),in:_woM('bot','in'),bt:_woM('bot','bt')}; const _pvp2={w:_mp2.w-_woFix('bot','w'),in:_mp2.in-_woFix('bot','in'),bt:_mp2.bt-_woFix('bot','bt')}; const _hasFixP=['w','in','bt'].some(k=>_woFix('bot',k)); ds.push(`<div class="d wo-d-spec"><div class="jk3v jk3spec">${composePantsSpec(o,'#e8ebee',_mp2,_pvp2)}</div><span>치수도${_hasFixP?' · <b style="color:#d64545">빨강=수정반영</b>':''}</span></div>`); } } else if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
+      if (qtyBot(q) > 0 && typeof composePants2View==='function'){ const _fp2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composePants2View(o, fabHex(_fp2?_fp2.color:''), _fabPatt(_fp2))}</div>`); if(typeof composePantsSpec==='function'){ const _mp2={w:_woM('bot','w'),in:_woM('bot','in'),bt:_woM('bot','bt')}; const _pvp2={w:_mp2.w-_woFix('bot','w'),in:_mp2.in-_woFix('bot','in'),bt:_mp2.bt-_woFix('bot','bt')}; const _hasFixP=['w','in','bt'].some(k=>_woFix('bot',k)); ds.push(`<div class="d wo-d-spec"><div class="jk3v jk3spec">${composePantsSpec(o,'#e8ebee',_mp2,_pvp2)}</div><span>치수도${_hasFixP?' · <b style="color:#d64545">빨강=수정반영</b>':''}</span></div>`); } } else if ((q.p||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.pants}"><div class="c">하의</div></div>`);
       if ((q.v||0) > 0 && typeof composeVest2View==='function'){ const _fv2=state.fabrics.find(f=>f.no===$('#o-fabNo').value); ds.push(`<div class="d wo-d-3v">${composeVest2View(o, fabHex(_fv2?_fv2.color:''), _fabPatt(_fv2))}</div>`); if(typeof composeVestSpec==='function'){ const _mv2={chest:_woM('vest','chest'),len:_woM('vest','len')}; const _pvv2={chest:_mv2.chest-_woFix('vest','chest'),len:_mv2.len-_woFix('vest','len')}; const _hasFixV=['chest','len'].some(k=>_woFix('vest',k)); ds.push(`<div class="d wo-d-spec"><div class="jk3v jk3spec">${composeVestSpec(o,'#e8ebee',_mv2,_pvv2)}</div><span>치수도${_hasFixV?' · <b style="color:#d64545">빨강=수정반영</b>':''}</span></div>`); } } else if ((q.v||0) > 0) ds.push(`<div class="d"><img src="data:image/png;base64,${IMGS.vest}"><div class="c">조끼</div></div>`);
       if (ds.length) diag = `<div class="wo-diag">${ds.join('')}</div>`;
     }
     page2 = `<div class="wo-sheet">
-      <div class="wo-sec">MTM 정장 작업지시서 — ${[(q.p||0)>0?'하의':'',(q.v||0)>0?'조끼':''].filter(Boolean).join(' · ')}</div>
-      ${head}${(q.p||0)>0 ? optBot+sizeBot : ''}
+      <div class="wo-sec">MTM 정장 작업지시서 — ${[qtyBot(q)>0?'하의':'',(q.v||0)>0?'조끼':''].filter(Boolean).join(' · ')}</div>
+      ${head}${qtyBot(q)>0 ? optBot+sizeBot : ''}
       <div class="wo-memo">
-        <div class="bx"><h5>특  이  사  항</h5><p>${(q.p||0)>0 ? botExtra : '조끼 단독 주문'}</p></div>
+        <div class="bx"><h5>특  이  사  항</h5><p>${qtyBot(q)>0 ? botExtra : '조끼 단독 주문'}</p></div>
         <div class="bx"><h5>스  와  치</h5><p>${$('#o-swatch').value||''}</p></div>
       </div>
       ${vest}${diag}
@@ -7535,10 +7586,10 @@ function invTab(t){
   ['fab','lin','btn'].forEach(k=>{ const el=$('#tab-inv-'+k); if (el) el.classList.toggle('active', k===t); });
   const head = $('#inv-thead'), body = $('#inv-tbody');
   if (t==='fab'){
-    head.innerHTML = '<th style="width:62px">스와치</th><th>원단번호</th><th>거래처</th><th>조성</th><th>컬러</th><th>요척</th><th>단가</th><th>재고</th>';
+    head.innerHTML = '<th style="width:62px">스와치</th><th>원단상</th><th>번호</th><th>조성</th><th>컬러</th><th>요척</th><th>단가</th><th>재고</th><th style="width:52px"></th>';
     body.innerHTML = state.fabrics.map(f=>`<tr><td>${f.photo
         ? `<img class="swatch-th" src="${f.photo}" onclick="openFabSwatch('${f.no}')" title="클릭하여 크게 보기">`
-        : `<label class="swatch-add" title="스와치 사진 등록"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="fabPhotoPick(this,'${f.no}')"></label>`}</td><td><b>${f.no}</b></td><td>${f.vendor}</td><td>${f.comp}</td><td>${f.color}</td><td>${f.yard} Y</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<5?'b-err':f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td></tr>`).join('');
+        : `<label class="swatch-add" title="스와치 사진 등록"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="fabPhotoPick(this,'${f.no}')"></label>`}</td><td>${esc(f.vendor||'-')}</td><td><b>${esc(f.no)}</b></td><td>${f.comp}</td><td>${f.color}</td><td>${f.yard} Y</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<5?'b-err':f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td><td><button class="mini-act" onclick="openFabRegModal('${f.no}')" title="원단 정보 수정"><i class="ti ti-pencil"></i></button></td></tr>`).join('');
   } else if (t==='lin'){
     head.innerHTML = '<th>안감번호</th><th>거래처</th><th>조성</th><th>컬러</th><th>단가</th><th>재고</th>';
     body.innerHTML = state.linings.map(f=>`<tr><td><b>${f.no}</b></td><td>${f.vendor}</td><td>${f.comp}</td><td>${f.color}</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td></tr>`).join('');
@@ -7546,6 +7597,61 @@ function invTab(t){
     head.innerHTML = '<th>단추번호</th><th>거래처</th><th>소재</th><th>컬러</th><th>단가</th><th>재고</th>';
     body.innerHTML = state.buttons.map(f=>`<tr><td><b>${f.no}</b></td><td>${f.vendor}</td><td>${f.mat}</td><td>${f.color}</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<30?'b-warn':'b-ok'}">${f.stock}</span></td></tr>`).join('');
   }
+}
+/* ─── 원단 등록/수정 (원단상 자체 등록 + 번호 분리) ─── */
+function fabVendors(){ return [...new Set(state.fabrics.map(f=>(f.vendor||'').trim()).filter(Boolean))].sort(); }
+function frVendorPick(){
+  const sel=$('#fr-vendor-sel'), inp=$('#fr-vendor');
+  if (!sel || !inp) return;
+  if (sel.value){ inp.value = sel.value; inp.style.display='none'; }
+  else { inp.value=''; inp.style.display=''; inp.focus(); }
+}
+function openFabRegModal(no){
+  state.fabRegTarget = no || null;
+  const f = no ? state.fabrics.find(x=>x.no===no) : null;
+  $('#fr-title').textContent = f ? `원단 수정 — ${f.no}` : '원단 등록';
+  const sel=$('#fr-vendor-sel');
+  sel.innerHTML = '<option value="">— 새 업체 직접 입력 —</option>' + fabVendors().map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  const curV = f ? (f.vendor||'') : '';
+  if (curV && fabVendors().includes(curV)){ sel.value=curV; $('#fr-vendor').value=curV; $('#fr-vendor').style.display='none'; }
+  else { sel.value=''; $('#fr-vendor').value=curV; $('#fr-vendor').style.display=''; }
+  $('#fr-no').value = f ? f.no : '';
+  $('#fr-no').disabled = !!f;   // 번호는 PK — 수정 불가(주문 연결 보호)
+  $('#fr-comp').value = f ? (f.comp||'') : '';
+  $('#fr-color').value = f ? (f.color||'') : '';
+  $('#fr-yard').value = f ? (f.yard||'') : '';
+  $('#fr-price').value = f ? (f.price||'') : '';
+  $('#fr-stock').value = f ? (f.stock||0) : '';
+  $('#fab-reg-modal').classList.add('open');
+}
+function doSaveFabric(){
+  const vendor = ($('#fr-vendor').value||'').trim();
+  const no = ($('#fr-no').value||'').trim();
+  if (!vendor){ toast('원단상(업체)을 선택하거나 입력하세요','warn','원단 등록'); return; }
+  if (!no){ toast('원단 번호를 입력하세요','warn','원단 등록'); return; }
+  const data = {
+    vendor,
+    comp: ($('#fr-comp').value||'').trim(),
+    color: ($('#fr-color').value||'').trim(),
+    yard: parseFloat($('#fr-yard').value)||0,
+    price: parseInt($('#fr-price').value)||0,
+    stock: parseInt($('#fr-stock').value)||0
+  };
+  if (state.fabRegTarget){
+    const f = state.fabrics.find(x=>x.no===state.fabRegTarget);
+    if (f) Object.assign(f, data);
+    toast(`${no} 원단 정보 수정 완료`,'ok','원단');
+  } else {
+    if (state.fabrics.some(f=>f.no===no)){ toast('이미 등록된 원단 번호입니다 — 다른 번호를 쓰거나 목록에서 수정하세요','err','원단 등록'); return; }
+    state.fabrics.unshift(Object.assign({ no, lastOrd:'' }, data));
+    toast(`${vendor} · ${no} 원단 등록 완료`,'ok','원단');
+  }
+  try{ actLog(`원단 ${state.fabRegTarget?'수정':'등록'}: ${vendor} ${no}`, '재고'); }catch(e){}
+  saveDB();
+  $('#fab-reg-modal').classList.remove('open');
+  if (state.view==='inv') invTab('fab');
+  if (typeof renderFabCards==='function') renderFabCards();
+  if (typeof renderFabList==='function') try{ renderFabList(); }catch(e){}
 }
 
 /* ⑧.7 Rental — 예식·이벤트 의류 대여 관리 ───────────────
@@ -8820,7 +8926,7 @@ function buildDiagramSheet(){
   _cmp(_woM('top','shoul'),_ph.shoul,'어깨'); _cmp(_woM('top','chest'),_ph.chest,'가슴'); _cmp(_woM('top','slvL'),_ph.slvL,'소매'); _cmp(_woM('top','len'),_ph.len,'기장');
   _cmp(_woM('bot','w'),_ph.botWaist,'허리'); _cmp(_woM('bot','in'),_ph.inseam,'인심');
   const o=state.opt||{};
-  const q=o.qty||{s:1,p:1,v:0,c:0,j:0};
+  const q=o.qty||{s:1,p:0,v:0,c:0,j:0};
   const fab=(state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
   const hex=fabHex(fab?fab.color:'');
   const patt=_fabPatt(fab);
@@ -8830,7 +8936,7 @@ function buildDiagramSheet(){
     sections.push(`<div class="ds-sec"><div class="ds-t">상의 — 3면도</div><div class="ds-row">${composeJacket3View(o,hex,patt)}</div></div>`);
     sections.push(`<div class="ds-sec"><div class="ds-t">상의 — 치수 도면 (POM)</div><div class="ds-row"><div class="ds-spec">${composeJacketSpec(o,'#eef1f3',mj,_prevJ)}</div></div></div>`);
   }
-  if((q.p||0)>0){
+  if(qtyBot(q)>0){
     const mp={w:_woM('bot','w'),in:_woM('bot','in'),bt:_woM('bot','bt')};
     sections.push(`<div class="ds-sec"><div class="ds-t">하의 — 앞·뒤 + 치수</div><div class="ds-row">${composePants2View(o,hex,patt)}<div class="ds-spec">${composePantsSpec(o,'#eef1f3',mp,_prevP)}</div></div></div>`);
   }
@@ -8874,7 +8980,7 @@ function yardageCalc(){
     const fab=(state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
     const fabName=fab?(fab.color+' '+(fab.comp||'')):'';
     const isStripe=fabName.indexOf('스트라이프')>=0, isCheck=fabName.indexOf('체크')>=0;
-    const q=state.opt.qty||{s:1,p:1,v:0,c:0,j:0};
+    const q=state.opt.qty||{s:1,p:0,v:0,c:0,j:0};
     const dbl=(state.opt.design||'').indexOf('더블')>=0;
     let total=0; const lines=[];
     if((q.s||0)+(q.j||0)>0){
@@ -8887,14 +8993,14 @@ function yardageCalc(){
       y=Math.round(y*10)/10; total+=y*((q.s||0)+(q.j||0)); lines.push('상의 '+y+'y');
     }
     if((q.c||0)>0){ const base=_bracket(YARD_TOP.coat,110); let y=base[0]; if(isStripe)y+=0.1; if(isCheck)y+=0.2; y=Math.round(y*10)/10; total+=y*q.c; lines.push('코트 '+y+'y'); }
-    if((q.p||0)>0){
+    if(qtyBot(q)>0){
       const grp=_patGroup(g('o-pBot'))==='coat'?'classic':_patGroup(g('o-pBot'));
       const spec=(typeof PATTERN_SPEC_BOT!=='undefined'&&PATTERN_SPEC_BOT[g('o-pBot')]||{})[g('o-sBot')]||{};
       const waist=spec.w||86;
       const base=_bracket(YARD_BOT[grp]||YARD_BOT.classic, waist);
       let y=isCheck?base[1]:base[0];
       if(state.opt.botTuck==='1')y+=0.1; if(state.opt.botTuck==='2')y+=0.2;
-      y=Math.round(y*10)/10; total+=y*q.p; lines.push('하의 '+y+'y');
+      y=Math.round(y*10)/10; total+=y*qtyBot(q); lines.push('하의 '+y+'y');
     }
     if((q.v||0)>0){ total+=0.8*q.v; lines.push('조끼 0.8y'); }
     total=Math.round(total*10)/10;
@@ -8911,10 +9017,10 @@ function renderLivePreview(){
   const g = id => (document.getElementById(id)?.value||'');
   const fab = (state.fabrics||[]).find(f=>f.no===g('o-fabNo'));
   const hex = fabHex(fab?fab.color:'');
-  const q = state.opt.qty||{s:1,p:1,v:0,c:0,j:0};
+  const q = state.opt.qty||{s:1,p:0,v:0,c:0,j:0};
   const parts=[];
   const _fp = _fabPatt(fab); if ((q.s||0)+(q.j||0)>0) parts.push(['top','상의',composeJacket(o,hex,_fp)]);
-  if ((q.p||0)>0) parts.push(['bot','하의',composePants(o,hex,_fp)]);
+  if (qtyBot(q)>0) parts.push(['bot','하의',composePants(o,hex,_fp)]);
   if ((q.v||0)>0) parts.push(['vest','조끼',composeVest(o,hex,_fp)]);
   if (!parts.length) parts.push(['top','상의',composeJacket(o,hex,_fp)]);
   box.innerHTML = `<div class="lp-head"><i class="ti ti-eye"></i> 실시간 미리보기 ${fab?`<span class="lp-fab">${fab.no} · ${fab.color}</span>`:''}</div>
@@ -10832,6 +10938,7 @@ function openCustDet(id){
   const _avg = _all.length ? Math.round(_rev/_all.length) : 0;
   const _last = _all.map(o=>o.date).sort().pop() || '-';
   const _measHTML = buildMeasureHistHTML(c);
+  const _fitlogHTML = (typeof buildFitLogHTML==='function') ? buildFitLogHTML(c) : '';
   const _rollup = `
     ${_measHTML}
     <div class="dp-sec">
@@ -10884,6 +10991,7 @@ function openCustDet(id){
       `).join('') : '<div style="color:var(--t3);font-size:12px;padding:8px 4px">대여 이력이 없습니다</div>'}
     </div>
     ${_rollup}
+    ${_fitlogHTML}
     <div class="dp-sec">
       <div class="dp-sec-title"><i class="ti ti-camera"></i>사진 (체형·착장 기록)</div>
       <div class="cust-photos" id="cust-photos">
@@ -10969,6 +11077,64 @@ function buildMeasureHistHTML(c){
   </div>`;
 }
 
+/* ─── 가봉 기록(사진·메모) — 주문 단위, 고객 상세 연동 ─── */
+function fitPhotoPick(inp, no){
+  const file = inp.files && inp.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = ()=>{
+    const MAX = 900;
+    const sc = Math.min(1, MAX/Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    const dataURL = cv.toDataURL('image/jpeg', .8);
+    if (state._fitTmpNo !== String(no)){ state._fitTmp = []; state._fitTmpNo = String(no); }
+    state._fitTmp.push(dataURL);
+    const c = $('#dp-fitlog-cnt'); if (c) c.textContent = state._fitTmp.length + '장 대기';
+    URL.revokeObjectURL(img.src);
+    toast(`사진 ${state._fitTmp.length}장 대기 — '기록 저장'을 누르면 등록됩니다`,'info','가봉 사진');
+  };
+  img.src = URL.createObjectURL(file);
+}
+async function addFitLog(no){
+  const o = state.orders.find(x=>String(x.no)===String(no));
+  if (!o) return;
+  const memo = ($('#dp-fitlog-memo') && $('#dp-fitlog-memo').value || '').trim();
+  const photos = (state._fitTmpNo===String(no) && state._fitTmp) ? state._fitTmp.slice() : [];
+  if (!memo && !photos.length){ toast('사진을 추가하거나 메모를 입력하세요','warn','가봉 기록'); return; }
+  o.fitLog = o.fitLog || [];
+  const entry = { date: dStr(today()), memo, photos };
+  o.fitLog.unshift(entry);
+  state._fitTmp = []; state._fitTmpNo = null;
+  try{ actLog(`#${o.no} ${o.nm} 가봉 기록${photos.length?` (사진 ${photos.length}장)`:''}${memo?' — '+memo.slice(0,40):''}`, '가봉'); }catch(e){}
+  saveDB();
+  toast('가봉 기록 저장 — 고객 조회에도 연동됩니다','ok','가봉 기록');
+  openOrderDet(no);
+  // 스토리지 업로드 후 URL 스왑(용량 절약)
+  for (let i=0;i<photos.length;i++){
+    const url = await uploadPhotoToStorage(photos[i], 'fit/'+no+'-'+Date.now()+'-'+i+'.jpg');
+    if (url){ const idx = entry.photos.indexOf(photos[i]); if (idx>-1){ entry.photos[idx]=url; saveDB(); } }
+  }
+}
+// 고객 상세 — 가봉 기록 취합(주문들의 fitLog)
+function buildFitLogHTML(c){
+  const list = [];
+  state.orders.filter(o=>o.nm===c.nm && o.type==='정장' && o.fitLog && o.fitLog.length).forEach(o=>{
+    o.fitLog.forEach(fl=> list.push({ no:o.no, date:fl.date, memo:fl.memo, photos:fl.photos||[] }));
+  });
+  if (!list.length) return '';
+  list.sort((a,b)=> String(b.date).localeCompare(String(a.date)));
+  return `<div class="dp-sec">
+    <div class="dp-sec-title"><i class="ti ti-needle-thread"></i>가봉 기록 (사진·메모)</div>
+    ${list.slice(0,8).map(fl=>`
+      <div class="dp-f full" style="margin-bottom:7px">
+        <div class="dp-fl">${fl.date} · #${fl.no}</div>
+        <div class="dp-fv" style="font-size:12.5px">${esc(fl.memo||'')}</div>
+        ${fl.photos.length?`<div class="cond-grid" style="margin-top:5px">${fl.photos.map(ph=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openCustPhotoRaw('${ph}')"></div>`).join('')}</div>`:''}
+      </div>`).join('')}
+  </div>`;
+}
 /* ─── 고객 사진 (체형·착장 기록) ─────────── */
 function custPhotoPick(inp){
   const c = state.detCust;
@@ -11144,7 +11310,7 @@ function loadOrderToForm(no, mode){
   // 수량
   const q = o.qty||{};
   set('qty-s', q.s!==undefined?q.s:1);
-  set('qty-p', q.p!==undefined?q.p:1);
+  set('qty-p', q.p!==undefined?q.p:0);
   set('qty-v', q.v||0);
   set('qty-c', q.c||0);
   set('qty-j', q.j||0);
@@ -11246,6 +11412,21 @@ function reorderToForm(no){
 }
 
 /* ─── 주문 상세 컨텍스트 패널 (재무 롤업·가봉·코멘트) ── */
+// 중가봉 완성 출고일 후입력 — 가봉 끝난 뒤 상세에서 지정
+function setDoneDt(no){
+  const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
+  if (!o) return;
+  const v = ($('#dp-doneDt-in') && $('#dp-doneDt-in').value) || '';
+  if (!v){ toast('완성 출고일을 선택하세요','warn','완성 출고'); return; }
+  o.doneDt = v;
+  state.events.push({ date:v, type:'deliver', name:o.nm, sub:`완성 출고 · ${fmt(o.total||0)}`, orderNo:o.no });
+  try{ actLog(`#${o.no} ${o.nm} 완성 출고일 지정 → ${v}`, '완성 출고'); }catch(e){}
+  saveDB();
+  toast(`#${o.no} 완성 출고일 ${v} 지정 — 캘린더에 등록됨`,'ok','완성 출고');
+  openOrderDet(no);
+  if (state.view==='orders') renderOrders();
+  if (typeof renderCal==='function' && state.view==='dash'){ renderCal(); renderEvents(); }
+}
 function openOrderDet(no){
   const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
   if (!o) return;
@@ -11273,7 +11454,7 @@ function openOrderDet(no){
         <div class="dp-f"><div class="dp-fl">패턴 / 호칭</div><div class="dp-fv">${o.pattern?.top||'-'} ${o.size?.top||''}</div></div>
         <div class="dp-f"><div class="dp-fl">수량</div><div class="dp-fv">S${o.qty?.s||0} · P${o.qty?.p||0}${o.qty?.v?' · V'+o.qty.v:''}${o.qty?.c?' · C'+o.qty.c:''}</div></div>
         <div class="dp-f"><div class="dp-fl">가봉 출고</div><div class="dp-fv">${o.fitDt||'직봉'}</div></div>
-        <div class="dp-f"><div class="dp-fl">완성 출고</div><div class="dp-fv"><b>${o.doneDt||'-'}</b></div></div>
+        <div class="dp-f"><div class="dp-fl">완성 출고</div><div class="dp-fv">${o.doneDt?`<b>${o.doneDt}</b>`:(o.status!=='완료'?`<span style="display:inline-flex;gap:6px;align-items:center"><input type="date" id="dp-doneDt-in" class="f-input" style="height:34px;font-size:12.5px;padding:0 8px;width:150px"><button class="action-btn" style="min-height:34px;padding:5px 12px" onclick="setDoneDt('${o.no}')">지정</button></span>`:'<b>-</b>')}</div></div>
       </div>
     </div>
     <div class="dp-sec">
@@ -11290,13 +11471,25 @@ function openOrderDet(no){
       ${facStepperHTML(o)}
     </div>
     <div class="dp-sec">
-      <div class="dp-sec-title"><i class="ti ti-needle-thread"></i>가봉 기록</div>
+      <div class="dp-sec-title"><i class="ti ti-needle-thread"></i>가봉 기록 ${o.fitDt?`<span style="font-weight:600;color:var(--t3);font-size:11px">· 가봉 출고 ${o.fitDt}</span>`:''}</div>
       ${o.fitFix ? `
-        <div class="dp-f full"><div class="dp-fl">기록일 ${o.fitFix.date||''}</div>
+        <div class="dp-f full"><div class="dp-fl">치수 수정 ${o.fitFix.date||''}</div>
         <div class="dp-fv" style="font-size:12px">${(o.fitFix.top||[]).filter(d=>d.fix||d.fin).map(d=>`${d.part} ${d.fix||''} → ${d.fin||''}`).join(' · ')||'수정값 없음'}</div></div>
         <button class="action-btn" style="margin-top:8px" onclick="buildFitSheet(state.orders.find(x=>String(x.no)==='${o.no}'))"><i class="ti ti-printer"></i>가봉지시서 인쇄</button>
-      ` : `<div style="color:var(--t3);font-size:12px;padding:4px 2px">가봉 수정 기록 없음</div>
-        <button class="action-btn" style="margin-top:6px" onclick="closeDet();openFitModal('${o.no}')"><i class="ti ti-plus"></i>가봉 기록 작성</button>`}
+      ` : `<div style="color:var(--t3);font-size:12px;padding:4px 2px">치수 수정 기록 없음</div>
+        <button class="action-btn" style="margin-top:6px" onclick="closeDet();openFitModal('${o.no}')"><i class="ti ti-plus"></i>치수 수정 기록</button>`}
+      ${(o.fitLog||[]).map((fl,fi)=>`
+        <div class="dp-f full" style="margin-top:9px;border-top:1px dashed var(--bd);padding-top:9px">
+          <div class="dp-fl">${fl.date||''} 가봉 메모</div>
+          <div class="dp-fv" style="font-size:12.5px">${esc(fl.memo||'')}</div>
+          ${(fl.photos&&fl.photos.length)?`<div class="cond-grid" style="margin-top:6px">${fl.photos.map(ph=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openCustPhotoRaw('${ph}')"></div>`).join('')}</div>`:''}
+        </div>`).join('')}
+      <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;align-items:center">
+        <label class="mini-act" title="가봉 사진 추가" style="cursor:pointer"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="fitPhotoPick(this,'${o.no}')"></label>
+        <span id="dp-fitlog-cnt" style="font-size:11px;color:var(--t3)">${(state._fitTmp&&state._fitTmpNo===String(o.no))?state._fitTmp.length+'장 대기':''}</span>
+        <input id="dp-fitlog-memo" class="f-input" placeholder="가봉 내용 메모 (예: 소매 -0.5, 허리 여유)" style="flex:1;min-width:150px;height:36px;font-size:12.5px">
+        <button class="action-btn" style="min-height:36px;padding:6px 13px" onclick="addFitLog('${o.no}')"><i class="ti ti-device-floppy"></i>기록 저장</button>
+      </div>
     </div>
     ${o.memo?`<div class="dp-sec"><div class="dp-sec-title"><i class="ti ti-note"></i>특이사항</div><div class="dp-f full"><div class="dp-fv">${o.memo}</div></div></div>`:''}
     ${commentsHTML('order', o.no)}
@@ -11774,7 +11967,7 @@ function injectTestData(){
       no, type:'정장', nm:o.nm, ph:'',
       pattern:{top:o.patTop, bot:o.patBot, vest:''},
       size:{top:o.szTop, bot:o.szBot, vest:''},
-      qty:{s:1,p:1,v:0,c:0,j:0},
+      qty:{s:1,p:0,v:0,c:0,j:0},
       fabNo:'F-24'+String(((i%12)+1)).padStart(2,'0'), lin:'L-031', btn:'B-040',
       opt:{ bond:o.bond, design:o.design, lapel:'노치', vent:'사이드', pad:'기본', amf:'없음', vest:'없음', botopt:'기본', btnext:'기본', fit:o.fitDt?'Y':'N' },
       fitDt:o.fitDt, doneDt:o.doneDt, memo:'',
