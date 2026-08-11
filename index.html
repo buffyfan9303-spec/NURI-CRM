@@ -9755,6 +9755,12 @@ function buildFitSheet(o){
     ${(o.fitFix?.vest||[]).length ? sec('조 끼 가 봉 내 역', o.fitFix.vest) : ''}
     <div class="wo-sec">기타 특이사항 및 요청사항</div>
     <div style="border:1px solid #000;min-height:55px;padding:8px;font-size:10.5px;white-space:pre-wrap">${o.fitFix?.memo||''}</div>
+    ${(o.fitLog&&o.fitLog.some(fl=>fl.photos&&fl.photos.length))?`
+    <div class="wo-sec">가봉 사진</div>
+    <div style="border:1px solid #000;padding:8px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${o.fitLog.flatMap(fl=>(fl.photos||[]).map(ph=>`<img src="${ph}" style="width:118px;height:118px;object-fit:cover;border:1px solid #ccc">`)).join('')}</div>
+      ${o.fitLog.filter(fl=>fl.memo).map(fl=>`<div style="font-size:10px;color:#444;margin-top:4px">${fl.date} — ${esc(fl.memo)}</div>`).join('')}
+    </div>`:''}
     <div class="wo-foot"><span>가봉 기록일 ${o.fitFix?.date||dStr(today())}</span><span class="sign">공장 확인 __________</span><b>${shopName()}</b></div>
   </div>`;
   const tt = $('#prv-title-text'); if (tt) tt.textContent = '가봉 수정 내역서';
