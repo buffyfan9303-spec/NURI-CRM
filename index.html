@@ -2545,6 +2545,8 @@ body.dk{ --t3:#9b9994; }
             <div class="ms-val" id="ms-dep">₩0</div>
             <div class="ms-sub" id="ms-dep-sub">대여중 0건</div>
           </div>
+          <div class="ms-div"></div>
+          <button class="action-btn" style="min-height:42px" onclick="buildMonthlyReport()"><i class="ti ti-report-analytics"></i>월간 리포트</button>
         </div>
 
         <div style="margin-top:16px">
@@ -4717,6 +4719,33 @@ function renderAlertCard(){
         </div>
       </div>
       <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 지연 건수가 많아도 '심각'(${cur}일+)만 진하게 떠서 진짜 급한 건의 우선순위를 가립니다.</div>
+    </div>`;
+}
+function setFitPhotoMax(n){
+  n = Math.max(2, Math.min(12, n));
+  if (!state.shop) loadShop();
+  state.shop.fitPhotoMax = n;
+  saveShop();
+  renderFitPhotoCard();
+  toast(`가봉지시서 인쇄 사진 최대 ${n}장`,'ok','인쇄 설정');
+}
+function renderFitPhotoCard(){
+  let card = $('#set-fitphoto-card');
+  if (!card){ card=document.createElement('div'); card.id='set-fitphoto-card'; const pc=document.querySelector('#view-settings .page-content'); if(pc)pc.appendChild(card); }
+  if (!card) return;
+  const cur = (state.shop && +state.shop.fitPhotoMax) || 6;
+  card.innerHTML = `
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-photo-check"></i> 가봉지시서 사진 매수 (인쇄)</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:13.5px;color:var(--t2)">지시서에 인쇄할 최근 사진 수</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="action-btn" onclick="setFitPhotoMax(${cur-1})" ${cur<=2?'disabled style=opacity:.4':''}><i class="ti ti-minus"></i></button>
+          <b style="min-width:54px;text-align:center;font-size:16px;color:var(--okt)">${cur}장</b>
+          <button class="action-btn" onclick="setFitPhotoMax(${cur+1})"><i class="ti ti-plus"></i></button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:9px"><i class="ti ti-info-circle"></i> 사진이 이보다 많으면 최근 것부터 인쇄되고 '외 N장' 안내가 붙습니다. 인쇄 페이지 폭증 방지용.</div>
     </div>`;
 }
 function setBuffer(n){
@@ -9755,12 +9784,17 @@ function buildFitSheet(o){
     ${(o.fitFix?.vest||[]).length ? sec('조 끼 가 봉 내 역', o.fitFix.vest) : ''}
     <div class="wo-sec">기타 특이사항 및 요청사항</div>
     <div style="border:1px solid #000;min-height:55px;padding:8px;font-size:10.5px;white-space:pre-wrap">${o.fitFix?.memo||''}</div>
-    ${(o.fitLog&&o.fitLog.some(fl=>fl.photos&&fl.photos.length))?`
-    <div class="wo-sec">가봉 사진</div>
+    ${(o.fitLog&&o.fitLog.some(fl=>fl.photos&&fl.photos.length))?(()=>{
+      const _cap = (state.shop && +state.shop.fitPhotoMax) || 6;
+      const _all = o.fitLog.flatMap(fl=>fl.photos||[]);
+      const _show = _all.slice(0, _cap);
+      return `
+    <div class="wo-sec">가봉 사진${_all.length>_cap?` (최근 ${_cap}장 / 총 ${_all.length}장)`:''}</div>
     <div style="border:1px solid #000;padding:8px">
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${o.fitLog.flatMap(fl=>(fl.photos||[]).map(ph=>`<img src="${ph}" style="width:118px;height:118px;object-fit:cover;border:1px solid #ccc">`)).join('')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${_show.map(ph=>`<img src="${ph}" style="width:118px;height:118px;object-fit:cover;border:1px solid #ccc">`).join('')}</div>
+      ${_all.length>_cap?`<div style="font-size:10px;color:#888;margin-top:4px">외 ${_all.length-_cap}장은 화면(주문 상세)에서 확인</div>`:''}
       ${o.fitLog.filter(fl=>fl.memo).map(fl=>`<div style="font-size:10px;color:#444;margin-top:4px">${fl.date} — ${esc(fl.memo)}</div>`).join('')}
-    </div>`:''}
+    </div>`; })():''}
     <div class="wo-foot"><span>가봉 기록일 ${o.fitFix?.date||dStr(today())}</span><span class="sign">공장 확인 __________</span><b>${shopName()}</b></div>
   </div>`;
   const tt = $('#prv-title-text'); if (tt) tt.textContent = '가봉 수정 내역서';
@@ -9917,6 +9951,68 @@ function copyDailyClose(){
   const txt = `[${shopName()}] ${tStr} 마감 요약\n· 신규 주문 ${newN}건\n· 가봉 ${fitN}건\n· 완성 출고 ${doneN}건\n· 오늘 매출 ${fmt(sales)}\n· 내일 예정: 가봉 ${tmFit}건 · 완성 ${tmDone}건`;
   if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('마감 요약 복사 — 카톡에 붙여넣으세요','ok','일일 마감')).catch(()=>uiCopy(txt,'일일 마감 요약'));
   else uiCopy(txt,'일일 마감 요약');
+}
+// 월간 운영 리포트 — 월말 요약 인쇄(신규/완성/가봉/매출/인기 품목)
+function buildMonthlyReport(){
+  const t = new Date(today());
+  const y = t.getFullYear(), m = t.getMonth();
+  const mS = `${y}-${pad(m+1)}-01`, mE = dStr(new Date(y, m+1, 0));
+  const pY = m===0 ? y-1 : y, pM = m===0 ? 12 : m;
+  const pS = `${pY}-${pad(pM)}-01`, pE = dStr(new Date(y, m, 0));
+  const ords = state.orders.filter(brMatch);
+  const cur = ords.filter(o=>o.date>=mS && o.date<=mE);
+  const prev = ords.filter(o=>o.date>=pS && o.date<=pE);
+  const sum = a=>a.reduce((s,o)=>s+(o.total||0), 0);
+  const curT=sum(cur), prevT=sum(prev);
+  const curM=sum(cur.filter(o=>o.type==='정장')), curR=curT-curM;
+  const doneN = ords.filter(o=>o.type==='정장' && o.doneDt && o.doneDt>=mS && o.doneDt<=mE).length;
+  const fitN  = ords.filter(o=>o.type==='정장' && o.fitDt && o.fitDt>=mS && o.fitDt<=mE).length;
+  const newCust = state.customers.filter(c=>c.created && c.created>=mS && c.created<=mE).length;
+  const mom = prevT ? Math.round((curT-prevT)/prevT*100) : null;
+  // 주차별 매출
+  const wk=[0,0,0,0,0,0];
+  cur.forEach(o=>{ const d=parseInt(o.date.slice(8,10),10); wk[Math.min(5,Math.ceil(d/7))-0]||0; wk[Math.min(5,Math.max(1,Math.ceil(d/7)))-1]+=(o.total||0); });
+  // 인기 패턴/원단 TOP3
+  const top=(arr,key)=>{ const c={}; arr.forEach(o=>{ const k=key(o); if(k) c[k]=(c[k]||0)+1; }); return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,3); };
+  const topPat = top(cur.filter(o=>o.type==='정장'), o=>(o.pattern&&o.pattern.top)||'');
+  const topFab = top(cur.filter(o=>o.type==='정장'), o=>o.fabNo||'');
+  const cell=(l,v,s)=>`<div style="flex:1;min-width:110px;border:1px solid #ddd;border-radius:8px;padding:11px;text-align:center"><div style="font-size:10.5px;color:#888">${l}</div><div style="font-size:19px;font-weight:900;margin-top:2px">${v}</div>${s?`<div style="font-size:10px;color:#666;margin-top:2px">${s}</div>`:''}</div>`;
+  const html = `<div class="wo-sheet">
+    ${(typeof printLogoBar==='function')?printLogoBar():''}
+    <div style="text-align:center;border-bottom:3px solid #0c1f35;padding-bottom:10px;margin-bottom:14px">
+      <div style="font-size:12.5px;color:#666">${shopName()}</div>
+      <div style="font-size:22px;font-weight:900">${y}년 ${m+1}월 운영 리포트</div>
+      <div style="font-size:11.5px;color:#888;margin-top:3px">${mS} ~ ${mE} · 발행 ${dStr(today())}</div>
+    </div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px">
+      ${cell('신규 주문', cur.length+'건')}
+      ${cell('완성 출고', doneN+'건')}
+      ${cell('가봉 진행', fitN+'건')}
+      ${cell('신규 고객', newCust+'명')}
+      ${cell('월 매출', fmt(curT), mom===null?'전월 데이터 없음':(mom>=0?'▲ ':'▼ ')+Math.abs(mom)+'% 전월 대비')}
+    </div>
+    <div class="wo-sec">매출 구성</div>
+    <table class="wo-t" style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px">
+      <tr><th style="border:1px solid #ddd;padding:6px;background:#f4f4f4;width:25%">MTM 정장</th><td style="border:1px solid #ddd;padding:6px">${fmt(curM)}</td>
+          <th style="border:1px solid #ddd;padding:6px;background:#f4f4f4;width:25%">렌탈·기타</th><td style="border:1px solid #ddd;padding:6px">${fmt(curR)}</td></tr>
+    </table>
+    <div class="wo-sec">주차별 매출</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:10px"><tr>
+      ${wk.slice(0,5).map((v,i)=>`<td style="border:1px solid #ddd;padding:7px;text-align:center"><b>${i+1}주</b><br>${fmt(v)}</td>`).join('')}
+    </tr></table>
+    <div style="display:flex;gap:12px">
+      <div style="flex:1"><div class="wo-sec">인기 패턴 TOP3</div>
+        ${topPat.length?topPat.map(([k,n],i)=>`<div style="font-size:12px;padding:4px 2px">${i+1}. ${esc(k)} — ${n}건</div>`).join(''):'<div style="font-size:11px;color:#888;padding:4px 2px">데이터 없음</div>'}</div>
+      <div style="flex:1"><div class="wo-sec">인기 원단 TOP3</div>
+        ${topFab.length?topFab.map(([k,n],i)=>{ const f=state.fabrics.find(x=>x.no===k); return `<div style="font-size:12px;padding:4px 2px">${i+1}. ${esc(k)}${f?` (${esc(f.vendor||'')})`:''} — ${n}건</div>`; }).join(''):'<div style="font-size:11px;color:#888;padding:4px 2px">데이터 없음</div>'}</div>
+    </div>
+    <div class="wo-foot"><span>NURI CRM 월간 리포트</span><span class="sign">확인 __________</span><b>${shopName()}</b></div>
+  </div>`;
+  $('#print-area').innerHTML = html;
+  try{ window.__pdfName = `월간리포트_${y}-${pad(m+1)}_${shopName()}`; }catch(e){}
+  const tt=$('#prv-title-text'); if(tt) tt.textContent = `${m+1}월 운영 리포트`;
+  const ts=$('#prv-sub-text'); if(ts) ts.textContent = `${mS} ~ ${mE} · A4`;
+  $('#prv-modal').classList.add('open');
 }
 function renderMonthlySettle(){
   const t = new Date(today());
@@ -10626,6 +10722,7 @@ function renderSettings(){
   renderPermCard();
   renderStaffCard();
   renderMenuVisCard();
+  renderFitPhotoCard();
   renderBufferCard();
   renderShopBakNote();
   renderPrintLogoCard();
