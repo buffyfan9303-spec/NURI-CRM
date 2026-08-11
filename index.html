@@ -1658,6 +1658,16 @@ select.f-input,select{min-height:44px}
 .toast-undo{display:flex;align-items:center}
 .toast-undo-btn{margin-left:10px;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:#1ab394;color:#fff;border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
 .toast-undo-btn:hover{background:#16a085}
+/* ════ 95차 — 사진 뷰어 + 탭 하이라이트 ════ */
+.pv-wrap{position:relative;touch-action:pan-y;user-select:none}
+.pv-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.pv-nav:hover{background:rgba(0,0,0,.65)}
+.pv-nav .ti{font-size:22px}
+.pv-prev{left:10px} .pv-next{right:10px}
+.pv-cnt{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px}
+.tab{position:relative}
+.tab.active{color:#1ab394!important;font-weight:800}
+.tab.active::after{content:'';position:absolute;left:12%;right:12%;bottom:-2px;height:3px;background:#1ab394;border-radius:3px}
 /* ════ 93차 — 수량 스테퍼 ════ */
 .qty-step-wrap{display:flex;align-items:center;gap:5px;justify-content:center}
 .qty-step{width:38px;height:38px;border:1px solid var(--bd2);border-radius:9px;background:var(--sf);color:var(--t2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -3549,7 +3559,8 @@ body.dk{ --t3:#9b9994; }
       <div class="page-content">
         <div class="tabs">
           <button class="tab active" id="tab-inv-fab" onclick="invTab('fab')"><i class="ti ti-needle"></i>원단</button>
-          <button class="action-btn" style="margin-left:auto" onclick="openFabRegModal()"><i class="ti ti-plus"></i>원단 등록</button>
+          <select id="inv-fab-vf" class="f-input" style="margin-left:auto;width:150px;height:38px;font-size:12.5px" onchange="invTab('fab')"><option value="">전체 원단상</option></select>
+          <button class="action-btn" style="margin-left:8px" onclick="openFabRegModal()"><i class="ti ti-plus"></i>원단 등록</button>
           <button class="tab" id="tab-inv-lin" onclick="invTab('lin')"><i class="ti ti-layers-subtract"></i>안감</button>
           <button class="tab" id="tab-inv-btn" onclick="invTab('btn')"><i class="ti ti-circle-dot"></i>단추</button>
         </div>
@@ -5992,13 +6003,23 @@ function pickEmpty(title, sub){
 function renderFabCards(){
   const box = $('#pick-fab');
   if (!box) return;
-  box.innerHTML = state.fabrics.map(f=>`
+  // 원단상(업체) 필터 칩
+  let vfBar = document.getElementById('fab-vf-bar');
+  if (!vfBar && box.parentElement){ vfBar=document.createElement('div'); vfBar.id='fab-vf-bar'; vfBar.className='ord-filters'; vfBar.style.marginBottom='8px'; box.parentElement.insertBefore(vfBar, box); }
+  const cur = state.fabVendorF||'';
+  if (vfBar){
+    const vs = (typeof fabVendors==='function') ? fabVendors() : [];
+    vfBar.innerHTML = `<button class="ord-chip ${!cur?'active':''}" onclick="state.fabVendorF='';renderFabCards()">전체</button>` +
+      vs.map(v=>`<button class="ord-chip ${cur===v?'active':''}" onclick="state.fabVendorF='${esc(v)}';renderFabCards()">${esc(v)}</button>`).join('');
+  }
+  const list = state.fabrics.filter(f=>!cur || (f.vendor||'')===cur);
+  box.innerHTML = list.map(f=>`
     <div class="pick-card" data-v="${f.no}" onclick="pickFab('${f.no}', this)">
       ${f.photo?`<div class="pc-swatch" style="background-image:url(${f.photo})"></div>`:''}
       <div class="pc-title">${f.no}</div>
       <div class="pc-sub"><b style="color:var(--it)">${f.vendor}</b> · ${f.color}</div>
       <span class="pc-tag">${f.yard} Y</span>
-    </div>`).join('') || pickEmpty('등록된 원단이 없습니다','재고 현황에서 원단을 등록하면 여기 선택지로 나타납니다');
+    </div>`).join('') || pickEmpty(cur?`'${cur}' 원단이 없습니다`:'등록된 원단이 없습니다', cur?'다른 원단상을 선택해 보세요':'재고 현황에서 원단을 등록하면 여기 선택지로 나타납니다');
 }
 function pickFab(no, el){
   $$('#pick-fab .pick-card').forEach(c=>c.classList.remove('active'));
@@ -7587,7 +7608,10 @@ function invTab(t){
   const head = $('#inv-thead'), body = $('#inv-tbody');
   if (t==='fab'){
     head.innerHTML = '<th style="width:62px">스와치</th><th>원단상</th><th>번호</th><th>조성</th><th>컬러</th><th>요척</th><th>단가</th><th>재고</th><th style="width:52px"></th>';
-    body.innerHTML = state.fabrics.map(f=>`<tr><td>${f.photo
+    const _vfSel = $('#inv-fab-vf');
+    if (_vfSel){ const _keep=_vfSel.value; _vfSel.innerHTML='<option value="">전체 원단상</option>'+fabVendors().map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join(''); _vfSel.value=_keep; }
+    const _vf = (_vfSel && _vfSel.value) || '';
+    body.innerHTML = state.fabrics.filter(f=>!_vf || (f.vendor||'')===_vf).map(f=>`<tr><td>${f.photo
         ? `<img class="swatch-th" src="${f.photo}" onclick="openFabSwatch('${f.no}')" title="클릭하여 크게 보기">`
         : `<label class="swatch-add" title="스와치 사진 등록"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="fabPhotoPick(this,'${f.no}')"></label>`}</td><td>${esc(f.vendor||'-')}</td><td><b>${esc(f.no)}</b></td><td>${f.comp}</td><td>${f.color}</td><td>${f.yard} Y</td><td>${fmt(f.price)}</td><td><span class="badge ${f.stock<5?'b-err':f.stock<10?'b-warn':'b-ok'}">${f.stock}</span></td><td><button class="mini-act" onclick="openFabRegModal('${f.no}')" title="원단 정보 수정"><i class="ti ti-pencil"></i></button></td></tr>`).join('');
   } else if (t==='lin'){
@@ -10937,6 +10961,7 @@ function openCustDet(id){
   const _rev = _all.reduce((s,o)=>s+(o.total||0),0);
   const _avg = _all.length ? Math.round(_rev/_all.length) : 0;
   const _last = _all.map(o=>o.date).sort().pop() || '-';
+  _photoSets.length = 0;
   const _measHTML = buildMeasureHistHTML(c);
   const _fitlogHTML = (typeof buildFitLogHTML==='function') ? buildFitLogHTML(c) : '';
   const _rollup = `
@@ -11077,6 +11102,32 @@ function buildMeasureHistHTML(c){
   </div>`;
 }
 
+/* ─── 사진 세트 뷰어 — 여러 장 좌우 넘기기(버튼+스와이프) ─── */
+var _photoSets = [];
+function _regPhotoSet(arr){ _photoSets.push(arr||[]); return _photoSets.length-1; }
+function openPhotoSet(si, i){
+  const arr = _photoSets[si]||[];
+  if (!arr.length) return;
+  state._pv = { si: si, i: Math.max(0, Math.min(i||0, arr.length-1)) };
+  renderPhotoSet();
+  $('#cat-light').classList.add('open');
+}
+function renderPhotoSet(){
+  const pv = state._pv || {si:0,i:0};
+  const arr = _photoSets[pv.si]||[];
+  $('#cat-light-card').innerHTML = `
+    <div class="pv-wrap" onpointerdown="pvDown(event)" onpointerup="pvUp(event)">
+      <img class="cl-ph" src="${arr[pv.i]}" style="width:100%;min-height:300px;max-height:72vh;object-fit:contain;background:#111" draggable="false">
+      ${arr.length>1 ? `
+        <button class="pv-nav pv-prev" onclick="pvMove(-1)"><i class="ti ti-chevron-left"></i></button>
+        <button class="pv-nav pv-next" onclick="pvMove(1)"><i class="ti ti-chevron-right"></i></button>
+        <div class="pv-cnt">${pv.i+1} / ${arr.length}</div>` : ''}
+    </div>`;
+}
+function pvMove(d){ const pv=state._pv; if(!pv) return; const arr=_photoSets[pv.si]||[]; if(!arr.length) return; pv.i=(pv.i+d+arr.length)%arr.length; renderPhotoSet(); }
+function pvDown(e){ state._pvX = e.clientX; }
+function pvUp(e){ const dx = e.clientX - (state._pvX||e.clientX); if (Math.abs(dx)>40) pvMove(dx<0?1:-1); }
+
 /* ─── 가봉 기록(사진·메모) — 주문 단위, 고객 상세 연동 ─── */
 function fitPhotoPick(inp, no){
   const file = inp.files && inp.files[0];
@@ -11131,7 +11182,7 @@ function buildFitLogHTML(c){
       <div class="dp-f full" style="margin-bottom:7px">
         <div class="dp-fl">${fl.date} · #${fl.no}</div>
         <div class="dp-fv" style="font-size:12.5px">${esc(fl.memo||'')}</div>
-        ${fl.photos.length?`<div class="cond-grid" style="margin-top:5px">${fl.photos.map(ph=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openCustPhotoRaw('${ph}')"></div>`).join('')}</div>`:''}
+        ${fl.photos.length?(()=>{const _si=_regPhotoSet(fl.photos);return `<div class="cond-grid" style="margin-top:5px">${fl.photos.map((ph,pi)=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openPhotoSet(${_si},${pi})"></div>`).join('')}</div>`;})():''}
       </div>`).join('')}
   </div>`;
 }
@@ -11430,6 +11481,7 @@ function setDoneDt(no){
 function openOrderDet(no){
   const o = state.orders.find(x=>String(x.no)===String(no) && x.type==='정장');
   if (!o) return;
+  _photoSets.length = 0;
   $('#dp-av').className = 'dp-av av-c1';
   $('#dp-av').textContent = '#';
   $('#dp-nm').textContent = `주문 #${o.no} · ${o.nm}`;
@@ -11482,7 +11534,7 @@ function openOrderDet(no){
         <div class="dp-f full" style="margin-top:9px;border-top:1px dashed var(--bd);padding-top:9px">
           <div class="dp-fl">${fl.date||''} 가봉 메모</div>
           <div class="dp-fv" style="font-size:12.5px">${esc(fl.memo||'')}</div>
-          ${(fl.photos&&fl.photos.length)?`<div class="cond-grid" style="margin-top:6px">${fl.photos.map(ph=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openCustPhotoRaw('${ph}')"></div>`).join('')}</div>`:''}
+          ${(fl.photos&&fl.photos.length)?(()=>{const _si=_regPhotoSet(fl.photos);return `<div class="cond-grid" style="margin-top:6px">${fl.photos.map((ph,pi)=>`<div class="cond-th" style="background-image:url(${ph})" onclick="openPhotoSet(${_si},${pi})"></div>`).join('')}</div>`;})():''}
         </div>`).join('')}
       <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;align-items:center">
         <label class="mini-act" title="가봉 사진 추가" style="cursor:pointer"><i class="ti ti-camera-plus"></i><input type="file" accept="image/*" hidden onchange="fitPhotoPick(this,'${o.no}')"></label>
