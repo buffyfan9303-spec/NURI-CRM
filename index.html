@@ -4655,6 +4655,115 @@ function renderBufferCard(){
       <div style="font-size:11.5px;color:var(--t3);margin-top:9px;line-height:1.6">렌탈 개체는 "수량"이 아니라 "개체별 타임라인"입니다. 착용 기간 + 세탁 회전 버퍼가 점유로 잡혀 그 사이 재대여·재예약이 자동 차단됩니다. 간트에 회색 빗금(세탁)으로 표시됩니다.</div>
     </div>`;
 }
+/* ─── 가봉 사진 자동 정리 — 저장 공간(localStorage ~5MB) 보호 ─── */
+function _pcCfg(){
+  const c = (state.shop && state.shop.photoClean) || {};
+  return { on: c.on !== false, months: Math.max(1, Math.min(24, +c.months || 6)), lastRun: c.lastRun || '', lastN: c.lastN || 0, lastKB: c.lastKB || 0 };
+}
+function _pcCut(months){ const t = new Date(today()); t.setMonth(t.getMonth() - months); return dStr(t); }
+// 대상: 완료 주문 + 완료일(없으면 주문일)이 컷오프 이전 + data: 원본(60KB 이상 = 미축소본)
+function _pcTargets(){
+  const cfg = _pcCfg(), cut = _pcCut(cfg.months), list = [];
+  (state.orders || []).forEach(o => {
+    if (o.type !== '정장' || o.status !== '완료' || !o.fitLog) return;
+    const anchor = o.doneDt || o.date || '';
+    if (!anchor || anchor > cut) return;
+    o.fitLog.forEach(fl => (fl.photos || []).forEach((p, i) => {
+      if (typeof p === 'string' && p.slice(0, 5) === 'data:' && p.length >= 60000) list.push({ arr: fl.photos, i, len: p.length });
+    }));
+  });
+  return list;
+}
+function _pcShrink(durl){
+  return new Promise(res => {
+    try{
+      const img = new Image();
+      img.onload = () => {
+        try{
+          const MAX = 400, r = Math.min(1, MAX / Math.max(img.width || 1, img.height || 1));
+          const cv = document.createElement('canvas');
+          cv.width = Math.max(1, Math.round(img.width * r));
+          cv.height = Math.max(1, Math.round(img.height * r));
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          const out = cv.toDataURL('image/jpeg', .55);
+          res(out.length < durl.length ? out : null);
+        }catch(e){ res(null); }
+      };
+      img.onerror = () => res(null);
+      img.src = durl;
+    }catch(e){ res(null); }
+  });
+}
+async function runPhotoClean(manual){
+  const cfg = _pcCfg();
+  if (!manual && !cfg.on) return;
+  if (state._pcBusy) return;
+  state._pcBusy = true;
+  try{
+    const targets = _pcTargets();
+    let n = 0, saved = 0;
+    for (const t of targets){
+      const out = await _pcShrink(t.arr[t.i]);
+      if (out){ saved += t.arr[t.i].length - out.length; t.arr[t.i] = out; n++; }
+    }
+    if (n){
+      if (!state.shop) loadShop();
+      state.shop.photoClean = Object.assign({}, state.shop.photoClean, { on: cfg.on, months: cfg.months, lastRun: dStr(today()), lastN: n, lastKB: Math.round(saved / 1024) });
+      saveDB();
+      saveShop();
+      toast(`가봉 사진 정리 — ${n}장을 조회용 화질로 축소, 약 ${Math.round(saved/1024)}KB 확보`, 'ok', '저장 공간');
+    } else if (manual){
+      toast(`정리할 사진이 없습니다 — 완료 후 ${cfg.months}개월 지난 주문의 원본 사진이 대상입니다`, 'info', '저장 공간');
+    }
+    if (state.view === 'settings' && typeof renderPhotoCleanCard === 'function') renderPhotoCleanCard();
+  } finally { state._pcBusy = false; }
+}
+function setPhotoCleanOn(v){
+  if (!state.shop) loadShop();
+  state.shop.photoClean = Object.assign({}, state.shop.photoClean, { on: !!v, months: _pcCfg().months });
+  saveShop();
+  renderPhotoCleanCard();
+  toast(v ? '가봉 사진 자동 정리 사용 — 매일 1회 자동 실행됩니다' : '가봉 사진 자동 정리 해제', v ? 'ok' : 'info', '저장 공간');
+}
+function setPhotoCleanMonths(n){
+  n = Math.max(1, Math.min(24, n));
+  if (!state.shop) loadShop();
+  state.shop.photoClean = Object.assign({}, state.shop.photoClean, { on: _pcCfg().on, months: n });
+  saveShop();
+  renderPhotoCleanCard();
+  toast(`완료 후 ${n}개월 지난 주문의 사진을 정리합니다`, 'ok', '저장 공간');
+}
+function renderPhotoCleanCard(){
+  let card = $('#set-photoclean-card');
+  if (!card){ card = document.createElement('div'); card.id = 'set-photoclean-card'; const pc = document.querySelector('#view-settings .page-content'); if (pc) pc.appendChild(card); }
+  if (!card) return;
+  const cfg = _pcCfg();
+  const targets = _pcTargets();
+  const targetKB = Math.round(targets.reduce((s, t) => s + t.len, 0) / 1024);
+  let usedMB = '?';
+  try{ usedMB = (JSON.stringify(dbPayload()).length / 1048576).toFixed(2); }catch(e){}
+  card.innerHTML = `
+    <div class="form-card" style="margin-top:18px;padding:16px 18px">
+      <div class="form-card-title" style="padding-bottom:11px;margin-bottom:12px"><i class="ti ti-photo-down"></i> 가봉 사진 자동 정리 (저장 공간 보호)</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="action-btn" style="min-height:40px;${cfg.on?'background:var(--acc-soft);color:#1ab394;border-color:#1ab394;font-weight:800':''}" onclick="setPhotoCleanOn(${cfg.on?'false':'true'})"><i class="ti ${cfg.on?'ti-toggle-right':'ti-toggle-left'}"></i>${cfg.on?'사용 중':'꺼짐'}</button>
+        <span style="font-size:13px;color:var(--t2)">완료 후</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="action-btn" onclick="setPhotoCleanMonths(${cfg.months-1})" ${cfg.months<=1?'disabled style=opacity:.4':''}><i class="ti ti-minus"></i></button>
+          <b style="min-width:58px;text-align:center;font-size:16px;color:var(--okt)">${cfg.months}개월</b>
+          <button class="action-btn" onclick="setPhotoCleanMonths(${cfg.months+1})"><i class="ti ti-plus"></i></button>
+        </div>
+        <span style="font-size:13px;color:var(--t2)">지난 주문의 원본 사진을 조회용(400px)으로 축소</span>
+        <button class="action-btn" style="min-height:40px;margin-left:auto" onclick="runPhotoClean(true)"><i class="ti ti-wand"></i>지금 정리</button>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--t3);margin-top:11px">
+        <span><i class="ti ti-database"></i> 현재 데이터 ${usedMB}MB / 기기 한도 약 5MB</span>
+        <span><i class="ti ti-photo"></i> 지금 정리 대상 ${targets.length}장 (${targetKB}KB)</span>
+        ${cfg.lastRun?`<span><i class="ti ti-history"></i> 마지막 정리 ${cfg.lastRun} — ${cfg.lastN}장·${cfg.lastKB}KB 확보</span>`:''}
+      </div>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:8px"><i class="ti ti-info-circle"></i> 사진을 지우지 않고 화질만 줄입니다(주문 상세·지시서 인쇄에는 그대로 표시). 클라우드에 업로드된 사진(링크형)은 대상이 아닙니다.</div>
+    </div>`;
+}
 function setFitPhotoMax(n){
   n = Math.max(2, Math.min(12, n));
   if (!state.shop) loadShop();
@@ -10623,6 +10732,7 @@ function renderSettings(){
   renderStaffCard();
   renderMenuVisCard();
   renderFitPhotoCard();
+  renderPhotoCleanCard();
   renderBufferCard();
   renderShopBakNote();
   renderPrintLogoCard();
@@ -11832,6 +11942,15 @@ async function enterApp(){
   }
   try{ history.replaceState({ view:'dash' }, '', '#dash'); }catch(e){}
   go('dash', true);
+  // 가봉 사진 자동 정리 — 하루 1회, 부팅 6초 후 백그라운드 실행
+  try{
+    const _pcDay = localStorage.getItem('nuri_photoclean_day');
+    const _tD = dStr(today());
+    if (_pcDay !== _tD){
+      localStorage.setItem('nuri_photoclean_day', _tD);
+      setTimeout(()=>{ try{ runPhotoClean(false); }catch(e){} }, 6000);
+    }
+  }catch(e){}
   try{
     const _fac = new URLSearchParams(location.search).get('fac');
     if (_fac){
