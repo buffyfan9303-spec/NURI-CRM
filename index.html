@@ -1939,14 +1939,15 @@ body.dk{ --t3:#9b9994; }
         <div class="lg-sub">MTM 통합 관리 시스템</div>
         <div class="lg-line"></div>
       </div>
-      <div class="form-group"><label>아이디 (이메일)</label><input id="lg-id" type="text" value="" placeholder="이메일 (관리자 계정)" autocomplete="username"></div>
+      <div class="form-group"><label>아이디 (이메일)</label><input id="lg-id" type="text" value="" placeholder="이메일 (관리자 계정)" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('lg-pw').focus()"></div>
       <div class="form-group"><label>비밀번호</label><input id="lg-pw" type="password" value="" placeholder="비밀번호" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="lg-rememberbar">
-        <span style="color:var(--t3);display:inline-flex;align-items:center;gap:5px;font-size:11.5px"><i class="ti ti-shield-lock"></i>보안 — 매번 로그인 필요</span>
+        <span class="lg-link" onclick="doResetPw()">비밀번호 찾기</span>
         <span class="lg-link" onclick="openSignup()">회원가입</span>
       </div>
-      <button class="login-btn" onclick="doLogin()">매장 시스템 진입 →</button>
-      <div class="lg-hint">관리자에게 받은 계정으로 로그인하세요</div>
+      <button class="login-btn" id="lg-btn" onclick="doLogin()">매장 시스템 진입 →</button>
+      <div id="lg-notice" style="display:none"></div>
+      <div class="lg-hint"><i class="ti ti-shield-lock"></i> 보안상 접속할 때마다 로그인이 필요합니다</div>
     </div>
   </div>
 </div>
@@ -1963,7 +1964,7 @@ body.dk{ --t3:#9b9994; }
     <div class="signup-form">
       <div class="form-group">
         <label>이름 <span class="rq">*</span></label>
-        <input id="sg-name" placeholder="홍길동">
+        <input id="sg-name" placeholder="홍길동" onkeydown="if(event.key==='Enter')document.getElementById('sg-id').focus()">
       </div>
       <div class="form-group">
         <label>매장명</label>
@@ -1971,19 +1972,20 @@ body.dk{ --t3:#9b9994; }
       </div>
       <div class="form-group">
         <label>아이디 (이메일) <span class="rq">*</span></label>
-        <input id="sg-id" placeholder="staff@nuri.kr">
+        <input id="sg-id" placeholder="staff@nuri.kr" onkeydown="if(event.key==='Enter')document.getElementById('sg-pw').focus()">
       </div>
       <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group" style="margin-bottom:0">
           <label>비밀번호 <span class="rq">*</span></label>
-          <input id="sg-pw" type="password" placeholder="4자 이상">
+          <input id="sg-pw" type="password" placeholder="영문+숫자 8자 이상" onkeydown="if(event.key==='Enter')document.getElementById('sg-pw2').focus()">
         </div>
         <div class="form-group" style="margin-bottom:0">
           <label>비밀번호 확인 <span class="rq">*</span></label>
           <input id="sg-pw2" type="password" onkeydown="if(event.key==='Enter')doSignup()">
         </div>
       </div>
-      <button class="login-btn" style="margin-top:20px" onclick="doSignup()">계정 만들기</button>
+      <div style="font-size:11.5px;color:var(--t3);margin-top:10px;line-height:1.55"><i class="ti ti-info-circle"></i> 비밀번호는 <b>영문과 숫자를 모두 포함해 8자 이상</b>이어야 합니다.<br>신청 후 <b>관리자 승인</b>이 완료되면 이 계정으로 로그인할 수 있습니다.</div>
+      <button class="login-btn" id="sg-btn" style="margin-top:16px" onclick="doSignup()">가입 신청하기</button>
     </div>
   </div>
 </div>
@@ -2347,6 +2349,7 @@ body.dk{ --t3:#9b9994; }
         <span id="brand-date">관리자 · 2026.05.22</span>
       </div>
       <div style="display:flex;gap:6px">
+        <div class="sb-logout" onclick="changeMyPw()" title="내 계정 비밀번호 변경">비밀번호</div>
         <div class="sb-logout" onclick="resetDB()" title="저장 데이터를 비우고 데모로 복원">초기화</div>
         <div class="sb-logout" onclick="logout()">로그아웃</div>
       </div>
@@ -2378,6 +2381,7 @@ body.dk{ --t3:#9b9994; }
           </div>
         </div>
         <span id="cloud-badge" title="클라우드 동기화 작동 중 — 저장 시 자동 업로드" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--okt);background:var(--okb);padding:6px 11px;border-radius:999px;opacity:.55;transition:opacity .3s"><i class="ti ti-cloud-check"></i>동기화</span>
+        <span id="local-badge" title="이 기기에만 저장됩니다 — 다른 기기·클라우드로 자동 전송되지 않습니다" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--wt);background:var(--wb);padding:6px 11px;border-radius:999px"><i class="ti ti-cloud-off"></i>로컬 모드</span>
         <div class="noti-wrap">
           <button class="noti-bell" onclick="toggleNoti(event)" title="알림 센터"><i class="ti ti-bell"></i><span class="noti-badge" id="noti-badge" style="display:none">0</span></button>
           <div class="noti-panel" id="noti-panel">
@@ -4848,20 +4852,40 @@ async function loadStaffList(){
   try{
     const { data, error } = await sb.from('crm_staff').select('email,name,role');
     if(error){ box.innerHTML='<span style="color:var(--wt)"><i class="ti ti-alert-triangle"></i> 직원 목록 조회 불가 (Supabase RLS에서 admin 읽기 허용 필요)</span>'; return; }
-    box.innerHTML = (data&&data.length) ? data.map(s=>`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--bd)"><b>${esc(s.name||(s.email||'').split('@')[0])}</b><span style="color:var(--t3);font-size:11.5px">${esc(s.email)}</span><span class="badge ${s.role==='admin'?'b-warn':'b-info'}" style="margin-left:auto">${esc(s.role||'staff')}</span></div>`).join('') : '<span style="color:var(--t3)">아직 등록된 직원이 없습니다</span>';
+    const _me = String((state.user&&state.user.id)||'').toLowerCase();
+    box.innerHTML = (data&&data.length) ? data.map(s=>{
+      const em = s.email||'', self = em.toLowerCase()===_me;
+      return `<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--bd)">
+        <b style="flex-shrink:0">${esc(s.name||em.split('@')[0])}</b>
+        <span style="color:var(--t3);font-size:11.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(em)}${self?' · 나':''}</span>
+        <select class="f-input" style="flex:0 0 92px;height:30px;font-size:11.5px;padding:0 6px" onchange="setStaffRole('${escJs(em)}',this.value)"${self?' disabled title="본인 권한은 변경할 수 없습니다"':''}><option value="staff"${s.role!=='admin'?' selected':''}>직원</option><option value="admin"${s.role==='admin'?' selected':''}>관리자</option></select>
+        ${self?'':`<button class="mini-act" title="접속 권한 해제" onclick="removeStaff('${escJs(em)}','${escJs(s.name||'')}')"><i class="ti ti-user-x"></i></button>`}
+      </div>`;
+    }).join('') : '<span style="color:var(--t3)">아직 등록된 직원이 없습니다</span>';
     // 승인 대기(가입 신청 + 미승인 로그인 시도, 최근 30일) — 원클릭 승인
     try{
       const _since = new Date(Date.now()-30*86400000).toISOString();
-      const { data: reqs } = await sb.from('crm_login_log').select('email,reason,ua,ts').in('reason',['signup-request','not-staff']).gte('ts',_since).order('ts',{ascending:false}).limit(60);
+      const { data: reqs } = await sb.from('crm_login_log').select('email,reason,ua,ts').in('reason',['signup-request','not-staff']).gte('ts',_since).order('ts',{ascending:false}).limit(400);
       if (reqs && reqs.length){
         const staffSet = {}; (data||[]).forEach(s=>{ staffSet[(s.email||'').toLowerCase()]=1; });
-        const seen = {}; const pend = [];
-        reqs.forEach(q=>{ const em=(q.email||'').toLowerCase(); if(!em||seen[em]||staffSet[em]) return; seen[em]=1; pend.push(q); });
+        const revoked = {}; ((state.shop&&state.shop.revoked)||[]).forEach(e=>{ revoked[String(e).toLowerCase()]=1; });
+        // 이메일당 1건 — 이름·매장이 담긴 signup-request 행을 우선 채택(반복 로그인 시도 행이 이름을 덮지 않도록)
+        const byEmail = {}; const order = [];
+        reqs.forEach(q=>{
+          const em=(q.email||'').toLowerCase();
+          if(!em||staffSet[em]||revoked[em]) return;
+          const prev = byEmail[em];
+          if (!prev){ byEmail[em]=q; order.push(em); return; }
+          if (prev.reason!=='signup-request' && q.reason==='signup-request') byEmail[em]=q;
+        });
+        const pend = order.map(em=>byEmail[em]);
         if (pend.length){
           box.innerHTML += `<div style="margin-top:13px;font-size:12px;font-weight:800;color:var(--wt)"><i class="ti ti-user-question"></i> 승인 대기 ${pend.length}명 — 승인하면 바로 로그인됩니다</div>` +
             pend.map(q=>{
-              const nm = (q.reason==='signup-request' && q.ua && q.ua.indexOf(' / ')>0) ? q.ua.split(' / ')[0] : '';
-              return `<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--bd)"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${nm?`<b>${esc(nm)}</b> `:''}${esc(q.email)}</span><span style="font-size:10.5px;color:var(--t3);flex-shrink:0">${(q.ts||'').slice(5,10)}</span><button class="action-btn" style="min-height:32px;padding:5px 13px;flex-shrink:0" onclick="approveStaff('${escJs(q.email)}','${escJs(nm)}')"><i class="ti ti-user-check"></i>승인</button></div>`;
+              const _parts = (q.reason==='signup-request' && q.ua && q.ua.indexOf(' / ')>0) ? q.ua.split(' / ') : [];
+              const nm = _parts[0] || '';
+              const st = _parts[1] || '';
+              return `<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--bd)"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${nm?`<b>${esc(nm)}</b> `:''}${esc(q.email)}${st?` <span style="color:var(--t3)">· ${esc(st)}</span>`:''}</span><span style="font-size:10.5px;color:var(--t3);flex-shrink:0">${(q.ts||'').slice(5,10)}</span><button class="action-btn" style="min-height:32px;padding:5px 13px;flex-shrink:0" onclick="approveStaff('${escJs(q.email)}','${escJs(nm)}')"><i class="ti ti-user-check"></i>승인</button></div>`;
             }).join('');
         }
       }
@@ -4870,7 +4894,8 @@ async function loadStaffList(){
 }
 function approveStaff(email, name){
   const ei=$('#stf-email'); if(ei) ei.value=email;
-  const ni=$('#stf-name'); if(ni) ni.value = name || (ni.value || String(email||'').split('@')[0]);
+  // 신청자 이름이 없으면 이메일 앞부분을 쓴다 — 입력칸에 남아있던 다른 사람 이름을 재사용하지 않도록
+  const ni=$('#stf-name'); if(ni) ni.value = name || String(email||'').split('@')[0];
   const ri=$('#stf-role'); if(ri) ri.value='staff';
   addStaff();
 }
@@ -4883,12 +4908,41 @@ async function addStaff(){
   try{
     const { error } = await sb.from('crm_staff').upsert({ email, name:name||email.split('@')[0], role });
     if(error){ toast('등록 실패: '+error.message+' — Supabase RLS에서 admin write 허용 필요','err','직원 등록'); return; }
+    try{ if (state.shop && Array.isArray(state.shop.revoked)){ state.shop.revoked = state.shop.revoked.filter(e=>String(e).toLowerCase()!==email); saveShop(); } }catch(e){}
     toast(`${name||email} 직원 승인 완료`,'ok','직원 등록');
     try{ actLog(`직원 승인: ${esc(name||email)} (${role})`, '계정 관리'); }catch(e){}
     if($('#stf-email')) $('#stf-email').value='';
     if($('#stf-name')) $('#stf-name').value='';
     loadStaffList();
   }catch(e){ toast('등록 오류','err'); }
+}
+async function setStaffRole(email, role){
+  if (typeof sb==='undefined' || !sb){ toast('클라우드 미연결','warn','직원 관리'); return; }
+  const em = String(email||'').toLowerCase();
+  if (em === String((state.user&&state.user.id)||'').toLowerCase()){ toast('본인 계정의 권한은 변경할 수 없습니다','warn','직원 관리'); loadStaffList(); return; }
+  try{
+    const { error } = await sb.from('crm_staff').update({ role }).eq('email', em);
+    if (error){ toast('권한 변경 실패: '+error.message+' — Supabase RLS에서 admin update 허용 필요','err','직원 관리'); loadStaffList(); return; }
+    toast(`${em} → ${role==='admin'?'관리자':'직원'} 권한으로 변경`,'ok','직원 관리');
+    try{ actLog(`직원 권한 변경: ${esc(em)} → ${role}`, '계정 관리'); }catch(e){}
+    loadStaffList();
+  }catch(e){ toast('권한 변경 오류','err','직원 관리'); loadStaffList(); }
+}
+async function removeStaff(email, name){
+  if (typeof sb==='undefined' || !sb){ toast('클라우드 미연결','warn','직원 관리'); return; }
+  const em = String(email||'').toLowerCase();
+  if (em === String((state.user&&state.user.id)||'').toLowerCase()){ toast('본인 계정은 해제할 수 없습니다','warn','직원 관리'); return; }
+  if (!await uiConfirm(`${name||em} 님의 접속 권한을 해제할까요?\n해제하면 이 계정으로 더 이상 로그인할 수 없습니다.\n(주문·고객 데이터는 삭제되지 않습니다)`, { okLabel:'권한 해제', danger:true })) return;
+  try{
+    const { error } = await sb.from('crm_staff').delete().eq('email', em);
+    if (error){ toast('해제 실패: '+error.message+' — Supabase RLS에서 admin delete 허용 필요','err','직원 관리'); return; }
+    if (!state.shop) loadShop();
+    state.shop.revoked = Array.from(new Set([...((state.shop.revoked)||[]), em]));
+    saveShop();
+    toast(`${name||em} 접속 권한을 해제했습니다`,'ok','직원 관리');
+    try{ actLog(`직원 접속 해제: ${esc(name||em)}`, '계정 관리'); }catch(e){}
+    loadStaffList();
+  }catch(e){ toast('해제 오류','err','직원 관리'); }
 }
 function renderPermCard(){
   if (!isAdmin()) return;
@@ -4971,7 +5025,7 @@ function uiPrompt(msg, opts){
     _uiDlgResolve=resolve; _uiDlgMode='prompt';
     $('#uid-msg').innerHTML=String(msg).replace(/\n/g,'<br>');
     $('#uid-input-wrap').style.display='';
-    const inp=$('#uid-input'); inp.value=opts.value||''; inp.placeholder=opts.placeholder||'';
+    const inp=$('#uid-input'); inp.value=opts.value||''; inp.placeholder=opts.placeholder||''; inp.type = opts.password ? 'password' : 'text';
     const ok=$('#uid-ok'); ok.textContent=opts.okLabel||'확인'; ok.className='uid-ok';
     $('#uid-cancel').style.display='';
     $('#ui-dialog').classList.add('open');
@@ -11583,13 +11637,6 @@ const SB_KEY = 'sb_publishable_ZiQjd-f2c4FcUpFwscMIBQ_v02XIegq';
 let sb = null;
 try{ if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); }catch(e){ sb = null; }
 
-async function cloudSession(){
-  if (!sb) return null;
-  try{
-    const { data } = await sb.auth.getSession();
-    return (data && data.session) || null;
-  }catch(e){ return null; }
-}
 // 클라우드 → 로컬 (로그인 직후 1회)
 async function pullCloud(){
   if (!sb) return false;
@@ -11669,85 +11716,192 @@ function _flushLoginFails(){
     localStorage.removeItem('nuri_login_fail');
   }catch(e){}
 }
+/* ─── 인증 공통 UI 헬퍼 ─── */
+function _authBtn(id, on, label){
+  const b = document.getElementById(id);
+  if (!b) return;
+  if (on){
+    if (!b.dataset.orig) b.dataset.orig = b.textContent;
+    b.textContent = label || '처리 중…'; b.disabled = true;
+    b.style.opacity = '.6'; b.style.cursor = 'wait';
+  } else {
+    if (b.dataset.orig) b.textContent = b.dataset.orig;
+    b.disabled = false; b.style.opacity = ''; b.style.cursor = '';
+  }
+}
+// 로그인 화면 상시 안내(토스트와 달리 사라지지 않음) — kind: ok|warn|err
+function _lgNotice(html, kind){
+  const el = document.getElementById('lg-notice');
+  if (!el) return;
+  if (!html){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  const map = { ok:['var(--acc-soft)','var(--okt)'], err:['var(--eb)','var(--et)'], warn:['var(--wb)','var(--wt)'] };
+  const c = map[kind] || map.warn;
+  el.style.cssText = `display:block;margin-top:14px;padding:11px 13px;border-radius:8px;font-size:12.5px;line-height:1.6;background:${c[0]};color:${c[1]};border:1px solid ${c[1]}`;
+  el.innerHTML = html;
+}
+
 async function doLogin(){
+  if (state._authBusy) return;
   ensureDefaultAccount();
   const id = ($('#lg-id')?.value || '').trim().toLowerCase();
   const pw = $('#lg-pw')?.value || '';
   if (!id || !pw){ toast('아이디와 비밀번호를 입력하세요','warn'); return; }
-  try{ const _rf=(JSON.parse(localStorage.getItem('nuri_login_fail')||'[]')).filter(f=>{ try{ return Date.now()-new Date(f.at).getTime()<60000; }catch(e){ return false; } }); if(_rf.length>=5){ toast('로그인 시도가 너무 많습니다 — 1분 후 다시 시도하세요','err','보안 잠금'); return; } }catch(e){}
+  try{ const _rf=(JSON.parse(localStorage.getItem('nuri_login_fail')||'[]')).filter(f=>{ try{ return Date.now()-new Date(f.at).getTime()<60000; }catch(e){ return false; } }); if(_rf.length>=5){ toast('로그인 시도가 너무 많습니다 — 1분 후 다시 시도하세요','err','보안 잠금'); _lgNotice('로그인 시도가 1분 내 5회를 넘었습니다 — 잠시 후 다시 시도하세요.','err'); return; } }catch(e){}
   window.__authErr = '';
-  if (id==='admin@nuri.kr'){ _logLoginFail(id,'폐기된 계정'); toast('이 계정은 폐기되었습니다 — 새 관리자 계정으로 로그인하세요','err','계정 폐기'); return; }
+  if (id==='admin@nuri.kr'){ _logLoginFail(id,'폐기된 계정'); toast('이 계정은 폐기되었습니다 — 새 관리자 계정으로 로그인하세요','err','계정 폐기'); _lgNotice('이 계정은 폐기되었습니다. 관리자에게 새 계정을 요청하세요.','err'); return; }
 
-  // ① 클라우드 로그인 (Supabase Auth) — 어느 PC에서나 같은 데이터
-  if (sb){
-    try{
-      const { data, error } = await sb.auth.signInWithPassword({ email:id, password:pw });
-      if (error) window.__authErr = String(error.message||'');
-      if (!error && data && data.session){
-        // CRM 직원 명단(crm_staff) 검사 — 미등록 계정은 접근 차단
-        let staffRow = null, staffErr = null;
-        try{
-          const { data: st, error: se } = await sb.from('crm_staff').select('role,name').eq('email', id).maybeSingle();
-          staffRow = st; staffErr = se;
-        }catch(e){ staffErr = e; }
-        if (staffErr){
-          try{ await sb.auth.signOut(); }catch(e){}
-          toast('클라우드 직원 명단 확인 불가 — 로컬 모드로 진행합니다','warn','클라우드 보류');
-          throw staffErr; // 바깥 catch → 로컬 계정 폴백
-        }
-        if (!staffRow){
-          try{ await sb.auth.signOut(); }catch(e){}
-          _logLoginFail(id, 'CRM 직원 미등록'); _srvLoginLog(id,false,'not-staff');
-          toast('가입 승인 대기 중입니다 — 관리자가 설정 → 직원 계정 관리에서 승인하면 바로 로그인됩니다','warn','승인 대기');
+  state._authBusy = true;
+  _authBtn('lg-btn', true, '로그인 중…');
+  _lgNotice('');
+  try{
+    // ① 클라우드 로그인 (Supabase Auth) — 어느 PC에서나 같은 데이터
+    if (sb){
+      try{
+        const { data, error } = await sb.auth.signInWithPassword({ email:id, password:pw });
+        if (error) window.__authErr = String(error.message||'');
+        if (!error && data && data.session){
+          // CRM 직원 명단(crm_staff) 검사 — 미등록 계정은 접근 차단
+          let staffRow = null, staffErr = null;
+          try{
+            const { data: st, error: se } = await sb.from('crm_staff').select('role,name').eq('email', id).maybeSingle();
+            staffRow = st; staffErr = se;
+          }catch(e){ staffErr = e; }
+          if (staffErr){
+            try{ await sb.auth.signOut(); }catch(e){}
+            toast('클라우드 직원 명단 확인 불가 — 로컬 모드로 진행합니다','warn','클라우드 보류');
+            throw staffErr; // 바깥 catch → 로컬 계정 폴백
+          }
+          if (!staffRow){
+            try{ await sb.auth.signOut(); }catch(e){}
+            _logLoginFail(id, 'CRM 직원 미등록'); _srvLoginLog(id,false,'not-staff');
+            toast('가입 승인 대기 중입니다','warn','승인 대기');
+            _lgNotice('계정은 만들어졌지만 <b>아직 승인되지 않았습니다.</b><br>관리자가 <b>설정 → 직원 계정 관리</b>의 「승인 대기」에서 승인하면 바로 로그인됩니다.','warn');
+            return;
+          }
+          const meta = (data.user && data.user.user_metadata) || {};
+          const localAcc = loadAccounts().find(a=>a.id.toLowerCase()===id);
+          state.user = {
+            id,
+            name: staffRow.name || meta.name || (localAcc && localAcc.name) || id.split('@')[0],
+            store: meta.store || (localAcc && localAcc.store) || '본점',
+            role: staffRow.role || 'staff'
+          };
+          state._cloud = true;
+          if ($('#lg-pw')) $('#lg-pw').value = '';
+          await enterApp();
+          try{ actLog(`${state.user.name} 로그인 — 클라우드 동기화 (${(state.user.role||'staff')})`, '접속'); }catch(e){}
+          _srvLoginLog(id,true,'cloud');
+          _flushLoginFails();
+          toast(`${state.user.name} 님 — 클라우드 동기화 활성`,'ok','클라우드 로그인');
           return;
         }
-        const meta = (data.user && data.user.user_metadata) || {};
-        const localAcc = loadAccounts().find(a=>a.id.toLowerCase()===id);
-        state.user = {
-          id,
-          name: staffRow.name || meta.name || (localAcc && localAcc.name) || id.split('@')[0],
-          store: meta.store || (localAcc && localAcc.store) || '본점',
-          role: staffRow.role || 'staff'
-        };
-        state._cloud = true;
-        if ($('#lg-remember')?.checked) localStorage.setItem(SESSION_KEY, JSON.stringify({ id, t: Date.now() }));
-        await enterApp();
-        try{ actLog(`${state.user.name} 로그인 — 클라우드 동기화 (${(state.user.role||'staff')})`, '접속'); }catch(e){}
-        _srvLoginLog(id,true,'cloud');
-        _flushLoginFails();
-        toast(`${state.user.name} 님 — 클라우드 동기화 활성`,'ok','클라우드 로그인');
-        return;
-      }
-    }catch(e){ /* 네트워크 오류 → 로컬 폴백 */ }
-  }
+      }catch(e){ /* 네트워크 오류·명단 조회 실패 → 로컬 폴백 */ }
+    }
 
-  // ② 로컬 계정 폴백 (오프라인에서도 동작)
-  const acc = loadAccounts().find(a=>a.id.toLowerCase()===id && a.pw===pw);
-  if (!acc){
-    let _msg = '아이디 또는 비밀번호가 일치하지 않습니다';
-    const _ae = window.__authErr || '';
-    if (/email not confirmed/i.test(_ae)) _msg = '이메일 인증이 완료되지 않았습니다 — 가입 메일함의 인증 링크를 누르거나, 관리자에게 문의하세요';
-    else if (/invalid login credentials/i.test(_ae)) _msg = '아이디 또는 비밀번호가 일치하지 않습니다';
-    _logLoginFail(id, '비밀번호 불일치'); _srvLoginLog(id,false,'bad-pw');
-    toast(_msg,'err','로그인 실패'); return; }
-  state.user = acc;
-  state._cloud = false;
-  if ($('#lg-remember')?.checked){
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ id: acc.id, t: Date.now() }));
-  } else {
-    localStorage.removeItem(SESSION_KEY);
+    // ② 로컬 계정 폴백 (오프라인에서도 동작)
+    const acc = loadAccounts().find(a=>a.id.toLowerCase()===id && a.pw===pw);
+    if (!acc){
+      let _msg = '아이디 또는 비밀번호가 일치하지 않습니다';
+      let _note = '';
+      const _ae = window.__authErr || '';
+      if (/email not confirmed/i.test(_ae)){
+        _msg = '이메일 인증이 완료되지 않았습니다';
+        _note = '가입 시 받은 메일의 <b>인증 링크</b>를 먼저 눌러주세요. 메일이 없으면 관리자에게 문의하세요.';
+      } else if (/invalid login credentials/i.test(_ae)){
+        _note = '비밀번호가 기억나지 않으면 아래 <b>비밀번호 찾기</b>를 눌러 재설정 메일을 받으세요.';
+      } else if (!sb){
+        _note = '인터넷에 연결되어 있지 않아 이 기기에 저장된 계정으로만 로그인할 수 있습니다.';
+      }
+      _logLoginFail(id, '비밀번호 불일치'); _srvLoginLog(id,false,'bad-pw');
+      toast(_msg,'err','로그인 실패');
+      _lgNotice(_msg + (_note?'<br>'+_note:''), 'err');
+      return;
+    }
+    state.user = acc;
+    state._cloud = false;
+    if ($('#lg-pw')) $('#lg-pw').value = '';
+    await enterApp();
+    try{ actLog(`${acc.name} 로그인 — 로컬 모드`, '접속'); }catch(e){}
+    _srvLoginLog(acc.id,true,'local');
+    _flushLoginFails();
+    toast(`${acc.name} 님, 환영합니다 (로컬 모드)`,'ok','로그인 완료');
+  } finally {
+    state._authBusy = false;
+    _authBtn('lg-btn', false);
   }
-  await enterApp();
-  try{ actLog(`${acc.name} 로그인 — 로컬 모드`, '접속'); }catch(e){}
-  _srvLoginLog(acc.id,true,'local');
-  _flushLoginFails();
-  toast(`${acc.name} 님, 환영합니다 (로컬 모드)`,'ok','로그인 완료');
+}
+
+/* ─── 비밀번호 찾기(재설정 메일) ─── */
+async function doResetPw(){
+  if (!sb){ toast('인터넷 연결이 필요합니다 — 비밀번호 재설정은 클라우드 계정만 가능합니다','warn','비밀번호 찾기'); return; }
+  const pre = ($('#lg-id')?.value || '').trim();
+  const em = String(await uiPrompt('가입한 이메일 주소를 입력하세요.\n재설정 링크를 메일로 보내드립니다.', { value:pre, placeholder:'staff@nuri.kr', okLabel:'메일 보내기' }) || '').trim().toLowerCase();
+  if (!em) return;
+  if (!em.includes('@')){ toast('올바른 이메일 형식이 아닙니다','warn','비밀번호 찾기'); return; }
+  try{
+    const { error } = await sb.auth.resetPasswordForEmail(em, { redirectTo: location.origin + location.pathname });
+    if (error){ toast('메일 발송 실패: '+error.message,'err','비밀번호 찾기'); return; }
+    toast('재설정 메일을 발송했습니다','ok','비밀번호 찾기');
+    _lgNotice(`<b>${esc(em)}</b> 로 비밀번호 재설정 메일을 보냈습니다.<br>메일의 링크를 누르면 이 화면으로 돌아와 새 비밀번호를 정할 수 있습니다. (메일이 보이지 않으면 스팸함을 확인하세요)`, 'ok');
+  }catch(e){ toast('네트워크 오류 — 잠시 후 다시 시도하세요','err','비밀번호 찾기'); }
+}
+// 재설정 메일 링크로 돌아왔을 때 — 새 비밀번호 설정
+async function handlePwRecovery(){
+  try{
+    _lgNotice('비밀번호 재설정 링크로 접속했습니다 — 새 비밀번호를 입력하세요.','warn');
+    const p1 = await uiPrompt('새 비밀번호를 입력하세요.\n(영문과 숫자를 모두 포함해 8자 이상)', { password:true, okLabel:'다음' });
+    if (!p1){ _lgNotice('비밀번호 재설정이 취소되었습니다. 링크를 다시 눌러 진행하세요.','warn'); return; }
+    if (String(p1).length < 8 || !/[A-Za-z]/.test(p1) || !/[0-9]/.test(p1)){
+      toast('비밀번호는 영문+숫자 포함 8자 이상이어야 합니다','warn','비밀번호 재설정');
+      return handlePwRecovery();
+    }
+    const p2 = await uiPrompt('확인을 위해 새 비밀번호를 한 번 더 입력하세요.', { password:true, okLabel:'변경하기' });
+    if (p1 !== p2){ toast('비밀번호 확인이 일치하지 않습니다','err','비밀번호 재설정'); return handlePwRecovery(); }
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error){ toast('변경 실패: '+error.message,'err','비밀번호 재설정'); _lgNotice('비밀번호 변경에 실패했습니다: '+esc(error.message)+'<br>링크가 만료되었을 수 있습니다 — 다시 「비밀번호 찾기」를 진행하세요.','err'); return; }
+    try{ await sb.auth.signOut(); }catch(e){}
+    try{ history.replaceState({}, '', location.pathname); }catch(e){}
+    toast('비밀번호가 변경되었습니다','ok','비밀번호 재설정');
+    _lgNotice('비밀번호가 변경되었습니다 — 새 비밀번호로 로그인하세요.','ok');
+  }catch(e){}
+}
+/* ─── 내 비밀번호 변경 (로그인 상태) ─── */
+async function changeMyPw(){
+  if (!state.user){ toast('로그인 후 이용하세요','warn'); return; }
+  const cloud = !!state._cloud;
+  if (!cloud){
+    const cur = await uiPrompt('현재 비밀번호를 입력하세요.', { password:true, okLabel:'다음' });
+    if (cur === null || cur === undefined) return;
+    const accs = loadAccounts();
+    const me = accs.find(a=>a.id.toLowerCase()===String(state.user.id||'').toLowerCase());
+    if (!me || me.pw !== cur){ toast('현재 비밀번호가 일치하지 않습니다','err','비밀번호 변경'); return; }
+  }
+  const p1 = await uiPrompt('새 비밀번호를 입력하세요.\n(영문과 숫자를 모두 포함해 8자 이상)', { password:true, okLabel:'다음' });
+  if (!p1) return;
+  if (String(p1).length < 8 || !/[A-Za-z]/.test(p1) || !/[0-9]/.test(p1)){ toast('비밀번호는 영문+숫자 포함 8자 이상이어야 합니다','warn','비밀번호 변경'); return; }
+  const p2 = await uiPrompt('확인을 위해 한 번 더 입력하세요.', { password:true, okLabel:'변경하기' });
+  if (p1 !== p2){ toast('비밀번호 확인이 일치하지 않습니다','err','비밀번호 변경'); return; }
+  if (cloud){
+    try{
+      const { error } = await sb.auth.updateUser({ password: p1 });
+      if (error){ toast('변경 실패: '+error.message,'err','비밀번호 변경'); return; }
+    }catch(e){ toast('네트워크 오류 — 잠시 후 다시 시도하세요','err','비밀번호 변경'); return; }
+    toast('비밀번호가 변경되었습니다 — 다음 로그인부터 적용됩니다','ok','비밀번호 변경');
+  } else {
+    const accs = loadAccounts();
+    const me = accs.find(a=>a.id.toLowerCase()===String(state.user.id||'').toLowerCase());
+    if (!me){ toast('이 기기에 저장된 계정을 찾을 수 없습니다','err','비밀번호 변경'); return; }
+    me.pw = p1; saveAccounts(accs); state.user.pw = p1;
+    toast('이 기기의 계정 비밀번호가 변경되었습니다','ok','비밀번호 변경');
+  }
+  try{ actLog(`${state.user.name||state.user.id} 비밀번호 변경`, '계정 관리'); }catch(e){}
 }
 
 // 회원가입 모달
 function openSignup(){
   ['sg-name','sg-id','sg-pw','sg-pw2'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
   $('#sg-store').value = '가산 본점';
+  _lgNotice('');
   $('#signup-modal').classList.add('open');
   setTimeout(()=>$('#sg-name')?.focus(), 80);
 }
@@ -11756,85 +11910,57 @@ function closeSignup(e){
   $('#signup-modal').classList.remove('open');
 }
 async function doSignup(){
+  if (state._authBusy) return;
   const name = $('#sg-name').value.trim();
   const store= $('#sg-store').value.trim() || '본점';
   const id   = $('#sg-id').value.trim().toLowerCase();
   const pw   = $('#sg-pw').value;
   const pw2  = $('#sg-pw2').value;
 
-  if (!name){ toast('이름을 입력하세요','warn'); return; }
-  if (!id || !id.includes('@')){ toast('올바른 이메일 형식을 입력하세요','warn'); return; }
-  if (!pw || pw.length < 8 || !/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)){ toast('비밀번호는 영문+숫자 포함 8자 이상이어야 합니다','warn'); return; }
-  if (pw !== pw2){ toast('비밀번호 확인이 일치하지 않습니다','err'); return; }
+  if (!name){ toast('이름을 입력하세요','warn','회원가입'); $('#sg-name')?.focus(); return; }
+  if (!id || !id.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)){ toast('올바른 이메일 형식을 입력하세요','warn','회원가입'); $('#sg-id')?.focus(); return; }
+  if (!pw || pw.length < 8 || !/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)){ toast('비밀번호는 영문+숫자 포함 8자 이상이어야 합니다','warn','회원가입'); $('#sg-pw')?.focus(); return; }
+  if (pw !== pw2){ toast('비밀번호 확인이 일치하지 않습니다','err','회원가입'); $('#sg-pw2')?.focus(); return; }
 
   ensureDefaultAccount();
-  const accs = loadAccounts();
-  if (accs.find(a=>a.id.toLowerCase()===id)){ toast('이미 등록된 아이디입니다','err'); return; }
+  if (loadAccounts().find(a=>a.id.toLowerCase()===id)){ toast('이미 이 기기에 등록된 아이디입니다 — 바로 로그인하세요','err','회원가입'); return; }
+  // 클라우드 미연결이면 가입 신청을 보낼 수 없음 — 접수된 척하지 않는다
+  if (!sb){ toast('인터넷에 연결되어 있지 않아 가입 신청을 보낼 수 없습니다 — 연결 후 다시 시도하세요','err','회원가입'); return; }
 
-  // 클라우드 계정 생성 (Supabase Auth) — 실패 시 여기서 중단(정직한 안내)
-  if (sb){
-    try{
-      const { error } = await sb.auth.signUp({
-        email: id, password: pw,
-        options: { data: { name, store, role: 'user' } }
-      });
-      if (error){
-        const m = String(error.message||'');
-        if (/already|registered|exists/i.test(m)) toast('이미 가입된 이메일입니다 — 바로 로그인해 보시고, 안 되면 관리자에게 승인 요청하세요','warn','회원가입');
-        else toast('가입 실패: '+m,'err','회원가입');
-        return;
-      }
-      // 승인 대기 요청 기록 → 관리자 '직원 계정 관리' 카드에 자동 표시
-      try{ await sb.from('crm_login_log').insert({ email:id, success:false, reason:'signup-request', ua:(name+' / '+store).slice(0,200) }); }catch(e){}
-    }catch(e){ toast('네트워크 오류 — 잠시 후 다시 시도하세요','err','회원가입'); return; }
-  }
-
-  // 승인형: 로컬 계정 미생성(우회 차단). 관리자가 설정→직원 관리에서 승인하면 로그인 가능.
-  toast(`${name} 님, 가입 신청이 접수되었습니다 — 관리자가 승인하면 바로 로그인할 수 있습니다`,'ok','가입 신청');
-  $('#signup-modal').classList.remove('open');
-}
-
-// 자동 로그인 시도 — 클라우드 세션 우선, 로컬 세션 폴백
-async function tryAutoLogin(){
-  ensureDefaultAccount();
-  // ① Supabase 세션
-  const ses = await cloudSession();
-  if (ses && ses.user){
-    const email = (ses.user.email || '').toLowerCase();
-    // CRM 직원 명단 검사
-    let staffRow = null;
-    try{
-      const { data: st } = await sb.from('crm_staff').select('role,name').eq('email', email).maybeSingle();
-      staffRow = st;
-    }catch(e){}
-    if (staffRow){
-      const meta = ses.user.user_metadata || {};
-      const localAcc = loadAccounts().find(a=>a.id.toLowerCase()===email);
-      state.user = {
-        id: email,
-        name: staffRow.name || meta.name || (localAcc && localAcc.name) || email.split('@')[0],
-        store: meta.store || '본점',
-        role: staffRow.role || 'staff'
-      };
-      state._cloud = true;
-      await enterApp();
-      return true;
-    }
-    // 명단 미등록 — 세션 정리 후 로컬 폴백
-    try{ await sb.auth.signOut(); }catch(e){}
-  }
-  // ② 로컬 세션
+  state._authBusy = true;
+  _authBtn('sg-btn', true, '신청 중…');
   try{
-    const sess = JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
-    if (!sess) return false;
-    if (Date.now() - sess.t > 30*86400*1000) return false;
-    const acc = loadAccounts().find(a=>a.id===sess.id);
-    if (!acc) return false;
-    state.user = acc;
-    state._cloud = false;
-    await enterApp();
-    return true;
-  } catch(e){ return false; }
+    const { error } = await sb.auth.signUp({
+      email: id, password: pw,
+      options: { data: { name, store, role: 'user' } }
+    });
+    if (error){
+      const m = String(error.message||'');
+      if (/already|registered|exists/i.test(m)){
+        toast('이미 가입된 이메일입니다','warn','회원가입');
+        $('#signup-modal').classList.remove('open');
+        if ($('#lg-id')) $('#lg-id').value = id;
+        _lgNotice('이미 가입된 이메일입니다.<br>로그인이 안 되면 아직 <b>승인 대기</b> 상태일 수 있습니다 — 관리자에게 승인을 요청하거나 <b>비밀번호 찾기</b>를 이용하세요.','warn');
+      } else {
+        toast('가입 실패: '+m,'err','회원가입');
+      }
+      return;
+    }
+    // 승인 대기 요청 기록 → 관리자 '직원 계정 관리' 카드에 자동 표시
+    try{ await sb.from('crm_login_log').insert({ email:id, success:false, reason:'signup-request', ua:(String(name).replace(/ \/ /g,' ')+' / '+store).slice(0,200) }); }catch(e){}
+    // 승인 전에는 어떤 세션도 갖지 않도록 즉시 종료(Confirm email 꺼진 프로젝트에서 signUp이 바로 세션을 발급함)
+    try{ await sb.auth.signOut(); }catch(e){}
+    // 승인형: 로컬 계정 미생성(우회 차단). 관리자가 설정→직원 관리에서 승인하면 로그인 가능.
+    $('#signup-modal').classList.remove('open');
+    if ($('#lg-id')) $('#lg-id').value = id;
+    toast(`${name} 님, 가입 신청이 접수되었습니다`,'ok','가입 신청');
+    _lgNotice(`<b>${esc(name)}</b> 님, 가입 신청이 접수되었습니다.<br>관리자가 <b>설정 → 직원 계정 관리</b>에서 승인하면 이 계정으로 바로 로그인할 수 있습니다.`, 'ok');
+  }catch(e){
+    toast('네트워크 오류 — 잠시 후 다시 시도하세요','err','회원가입');
+  } finally {
+    state._authBusy = false;
+    _authBtn('sg-btn', false);
+  }
 }
 
 /* ─── 데이터 영구 저장 (localStorage) ─────────────── */
@@ -11891,7 +12017,14 @@ function loadDB(){
   }catch(e){ return false; }
 }
 async function resetDB(){
-  if (!await uiConfirm('저장된 모든 데이터(고객·주문·렌탈·재고)를 지우고 데모 데이터로 되돌립니다. 계속할까요?')) return;
+  if (!isAdmin()){ toast('관리자만 사용할 수 있습니다','warn','초기화'); return; }
+  if (state._cloud){
+    // 클라우드 사용 중 초기화는 되돌리기 어려운 동작 — 문구 입력으로 한 번 더 확인
+    const t = await uiPrompt('클라우드 동기화 중입니다.\n이 기기의 저장 데이터를 지우고 데모 데이터로 되돌립니다.\n\n계속하려면 아래에 「초기화」라고 입력하세요.', { placeholder:'초기화', okLabel:'초기화 실행' });
+    if (String(t||'').trim() !== '초기화'){ toast('초기화가 취소되었습니다','info','초기화'); return; }
+  } else {
+    if (!await uiConfirm('저장된 모든 데이터(고객·주문·렌탈·재고)를 지우고 데모 데이터로 되돌립니다. 계속할까요?', { danger:true, okLabel:'초기화' })) return;
+  }
   localStorage.removeItem(DB_KEY);
   location.reload();
 }
@@ -11922,9 +12055,21 @@ async function enterApp(){
 
   applyRole();
 
-  // 클라우드 동기화 배지
+  // 클라우드 / 로컬 모드 배지
   const cb = document.getElementById('cloud-badge');
   if (cb) cb.style.display = state._cloud ? 'inline-flex' : 'none';
+  const lb = document.getElementById('local-badge');
+  if (lb) lb.style.display = state._cloud ? 'none' : 'inline-flex';
+  if (!state._cloud){
+    setTimeout(()=>{ try{ toast('로컬 모드입니다 — 작업 내용이 이 기기에만 저장되고 다른 기기와 공유되지 않습니다','warn','저장 위치'); }catch(e){} }, 1200);
+  }
+  // 기본 비밀번호 경고 — 배포본에 공개된 초기 비밀번호를 그대로 쓰고 있으면 변경 안내
+  try{
+    const _def = loadAccounts().find(a=>a.id==='admin@nuricrm.com' && a.pw==='12345678');
+    if (_def && state.user && String(state.user.id).toLowerCase()==='admin@nuricrm.com'){
+      setTimeout(()=>{ try{ toast('기본 비밀번호를 사용 중입니다 — 왼쪽 아래 「비밀번호」에서 변경하세요','warn','보안 권고'); }catch(e){} }, 3200);
+    }
+  }catch(e){}
 
   let loaded = false;
   if (state._cloud){
@@ -11964,14 +12109,29 @@ async function enterApp(){
   }catch(e){}
 }
 
-function logout(){
-  if (sb){ try{ sb.auth.signOut(); }catch(e){} }
-  localStorage.removeItem(SESSION_KEY);
-  state.user = null;
-  state._cloud = false;
-  $('#pg-app').style.display='none';
-  $('#pg-login').style.display='block';
-  toast('로그아웃 되었습니다','info');
+// 디바운스 대기 중인 클라우드 푸시를 즉시 반영(로그아웃 직전 변경분 유실 방지)
+async function flushCloud(){
+  if (!sb || !state._cloud) return;
+  try{ clearTimeout(_pushT); }catch(e){}
+  try{
+    const payload = JSON.parse(JSON.stringify(dbPayload()));
+    await sb.from('app_state').upsert({ id:'main', data: payload, updated_at: new Date().toISOString() });
+  }catch(e){}
+}
+async function logout(){
+  if (state._authBusy) return;
+  state._authBusy = true;
+  try{
+    try{ saveDB(); }catch(e){}          // ① 이 기기에 먼저 저장
+    await flushCloud();                  // ② 서버에 즉시 반영(세션 종료 전에)
+    if (sb && sb.auth){ try{ await sb.auth.signOut(); }catch(e){} }  // ③ await — 다음 로그인과 경쟁 방지
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+    try{ if (window._pushIv){ clearInterval(window._pushIv); window._pushIv = null; } }catch(e){}
+    try{ sessionStorage.setItem('nuri_logout_msg','1'); }catch(e){}
+  }catch(e){}
+  // ④ 메모리·화면 완전 초기화 — 이전 계정의 데이터·모달이 다음 사용자에게 남지 않도록
+  state.user = null; state._cloud = false;
+  location.reload();
 }
 function toggleDark(){
   document.body.classList.toggle('dk');
@@ -12128,10 +12288,16 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   window.addEventListener('resize', ()=>{ if (state.view==='dash') renderSalesChart(); });
   // 자동 로그인 제거 — 저장된 세션(로컬+클라우드)을 전부 무효화하고 매번 로그인 요구.
   // 로그인돼 있던 기기도 다음 접속 시 로그인 화면으로 차단됨.
+  // 단, 비밀번호 재설정 메일 링크로 들어온 경우엔 그 세션이 있어야 새 비밀번호를 정할 수 있으므로 예외.
+  const _recovery = /type=recovery/.test(location.hash||'') || /type=recovery/.test(location.search||'');
   try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
-  try{ if (typeof sb!=='undefined' && sb && sb.auth) await sb.auth.signOut(); }catch(e){}
+  if (!_recovery){
+    try{ if (typeof sb!=='undefined' && sb && sb.auth) await sb.auth.signOut(); }catch(e){}
+  }
   state.user = null; state._cloud = false;
   { const lg = document.getElementById('pg-login'); if (lg) lg.style.display='block'; }
+  try{ if (sessionStorage.getItem('nuri_logout_msg')){ sessionStorage.removeItem('nuri_logout_msg'); toast('로그아웃 되었습니다','info','로그아웃'); } }catch(e){}
+  if (_recovery){ setTimeout(async ()=>{ try{ if (sb && sb.auth) await sb.auth.getSession(); }catch(e){} try{ handlePwRecovery(); }catch(e){} }, 700); }
 });
 </script>
 
