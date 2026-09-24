@@ -1,5 +1,6 @@
 /**
- * 인증 화면 우측 브랜드 아트 패널 — reference-03 의 §9.2 레이어를 순서대로 쌓는다.
+ * 인증 화면 브랜드 아트 — reference-03 의 §9.2 레이어 구조(형태·좌표)는 그대로, 색만 2026-09-25 사용자 지시로
+ * 보라 → 청록·남색으로 바꿨다(업무 화면 청록 강조와 통일). 아래 주석의 보라 실측값은 원본 참고용 기록이다.
  *
  *   1 바탕/광원 → 2 입체 리본 → 3 가는 격자 → 4 꺾임 선 → 5 하단 scrim → 6 실제 HTML 문구
  *   (7 프레임 밖 후광은 패널이 아니라 AuthShell 이 그린다)
@@ -52,7 +53,7 @@ const LIGHT_LAYERS = [
   // 왼쪽까지 같이 눌려 전체가 나빠졌다 — 오른쪽 가장자리에만 듣는 어두운 층을 맨 위에 얹는다.
   "radial-gradient(40% 34% at 100% 34%, rgba(30,31,35,.5) 0%, rgba(30,31,35,0) 100%)",
   "radial-gradient(72% 58% at 78% 12%, var(--auth-teal) 0%, rgba(13,226,212,.94) 28%, rgba(16,186,208,.44) 62%, rgba(14,242,229,0) 100%)",
-  "radial-gradient(66% 54% at 0% 10%, rgba(132,86,246,.95) 0%, rgba(120,84,236,.36) 52%, rgba(124,77,238,0) 100%)",
+  "radial-gradient(66% 54% at 0% 10%, rgba(30,64,175,.95) 0%, rgba(29,78,160,.38) 52%, rgba(30,64,175,0) 100%)",
   "radial-gradient(80% 62% at 40% 2%, rgba(62,152,240,.85) 0%, rgba(56,140,236,.18) 60%, rgba(48,140,236,0) 82%)",
   "linear-gradient(179deg, rgba(30,31,35,0) 40%, rgba(30,31,35,.5) 58%, rgba(30,31,35,.9) 68%, var(--auth-art) 75%)",
 ];
@@ -101,49 +102,49 @@ export function AuthArt({ headline, description, compact = false, strip = false,
               x250 #2d46b4 · x300 #1a5cb2 · 실루엣 끝 x320 #164f9f(어두운 테). 즉 **가로 방향**으로 보라→남색이고
               세로 변화는 작다. 좌표를 고정(userSpaceOnUse)해 경로를 고쳐도 색 위치가 흔들리지 않게 한다. */}
           <linearGradient id={`${uid}rbBody`} gradientUnits="userSpaceOnUse" x1="0" y1="90" x2="328" y2="150">
-            <stop offset="0%" stopColor="#7a46dc" />
-            <stop offset="18%" stopColor="#713fd6" />
-            <stop offset="37%" stopColor="#6038cc" />
-            <stop offset="55%" stopColor="#4c3ac4" />
-            <stop offset="73%" stopColor="#2e43b5" />
-            <stop offset="88%" stopColor="#1d55b0" />
-            <stop offset="100%" stopColor="#164c9c" />
+            <stop offset="0%" stopColor="#14b8a6" />
+            <stop offset="18%" stopColor="#10a39a" />
+            <stop offset="37%" stopColor="#0e8a88" />
+            <stop offset="55%" stopColor="#0f6f7e" />
+            <stop offset="73%" stopColor="#12557a" />
+            <stop offset="88%" stopColor="#15406f" />
+            <stop offset="100%" stopColor="#13335e" />
           </linearGradient>
 
           {/* 안쪽 벽(고리 속면) — 가로 그라데이션. 원본: x0 #ab88f8 · x45 #c2a6fe(최고 명도) · x100 #8c60fa · x130 #6a40d8 ·
               오른쪽 끝(y90 이후 구멍이 끝난 자리) #4f2cbf. 가장 어두운 구멍은 아래 rbCavity 초승달이 따로 맡는다. */}
           <linearGradient id={`${uid}rbRim`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="194" y2="0">
-            <stop offset="0%" stopColor="#ab88f8" />
-            <stop offset="22%" stopColor="#c2a6fe" />
-            <stop offset="50%" stopColor="#8e62f8" />
-            <stop offset="66%" stopColor="#6a40d8" />
-            <stop offset="78%" stopColor="#4322b4" />
-            <stop offset="100%" stopColor="#3d22b0" />
+            <stop offset="0%" stopColor="#7ee8dc" />
+            <stop offset="22%" stopColor="#a7f3ea" />
+            <stop offset="50%" stopColor="#4fd1c5" />
+            <stop offset="66%" stopColor="#1f9e9a" />
+            <stop offset="78%" stopColor="#11667a" />
+            <stop offset="100%" stopColor="#0f5470" />
           </linearGradient>
 
           {/* 구멍(속 공동) 채움 — 왼쪽 경계가 (172,8)→(138,88) 로 기울어 있어 그 방향과 직각인 축으로 알파를 뺀다
               (축 (0.92,0.39): 두 점 모두 t≈161 에 놓인다). 원본 (176,20) #150071 · (160,20) #27079b. */}
           <linearGradient id={`${uid}rbCavity`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="184" y2="78">
-            <stop offset="68%" stopColor="#10006c" stopOpacity="0" />
-            <stop offset="76%" stopColor="#12006e" stopOpacity="0.62" />
-            <stop offset="83%" stopColor="#12006e" stopOpacity="1" />
-            <stop offset="100%" stopColor="#0f007c" stopOpacity="1" />
+            <stop offset="68%" stopColor="#04223a" stopOpacity="0" />
+            <stop offset="76%" stopColor="#05253f" stopOpacity="0.62" />
+            <stop offset="83%" stopColor="#05253f" stopOpacity="1" />
+            <stop offset="100%" stopColor="#062a4a" stopOpacity="1" />
           </linearGradient>
 
           {/* 벽 위쪽의 얕은 그늘 — 원본은 y0–24 가 y40–104 보다 한 단계 어둡다(x32: #8857ef vs #bfa1fe).
               채도를 지키려고 회색이 아닌 짙은 보라를 섞는다(회색을 섞으면 #896bd5 처럼 탁해진다 — 실측). */}
           <linearGradient id={`${uid}rbShade`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="44">
-            <stop offset="0%" stopColor="#4a1ad8" stopOpacity="0.55" />
-            <stop offset="100%" stopColor="#4a1ad8" stopOpacity="0" />
+            <stop offset="0%" stopColor="#0b3b5c" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#0b3b5c" stopOpacity="0" />
           </linearGradient>
 
           {/* 몸통 상단이 청록 광원을 받아 살짝 밝아지는 층 — (230,40) #4a50c9 가 아래 (240,140) #2e42b5 보다 밝다.
               위/아래 두 층: 위는 옅은 반사, 아래(y150→213)는 원본처럼 조금 어두워진다(x0: y116 #7342d6 → y180 #663dbe). */}
           <linearGradient id={`${uid}rbRoll`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="213">
-            <stop offset="0%" stopColor="#7c8cf0" stopOpacity="0.18" />
-            <stop offset="40%" stopColor="#7c8cf0" stopOpacity="0" />
-            <stop offset="70%" stopColor="#2a1080" stopOpacity="0" />
-            <stop offset="100%" stopColor="#2a1080" stopOpacity="0.28" />
+            <stop offset="0%" stopColor="#9ff5ea" stopOpacity="0.18" />
+            <stop offset="40%" stopColor="#9ff5ea" stopOpacity="0" />
+            <stop offset="70%" stopColor="#0a2540" stopOpacity="0" />
+            <stop offset="100%" stopColor="#0a2540" stopOpacity="0.28" />
           </linearGradient>
 
           {/* 본체의 아주 옅은 사선 결. 원본에도 45° 방향의 미세한 줄이 있다. */}
@@ -208,15 +209,15 @@ export function AuthArt({ headline, description, compact = false, strip = false,
       >
         <defs>
           <linearGradient id={`${uid}bendA`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#c9b2ff" stopOpacity="0" />
-            <stop offset="34%" stopColor="#b07dff" stopOpacity="0.95" />
-            <stop offset="72%" stopColor="#e2b9ff" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#e2b9ff" stopOpacity="0" />
+            <stop offset="0%" stopColor="#99f6e4" stopOpacity="0" />
+            <stop offset="34%" stopColor="#2dd4bf" stopOpacity="0.95" />
+            <stop offset="72%" stopColor="#a5f3fc" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#a5f3fc" stopOpacity="0" />
           </linearGradient>
           <linearGradient id={`${uid}bendB`} x1="0" y1="0" x2="0.2" y2="1">
-            <stop offset="0%" stopColor="#c79bff" stopOpacity="0" />
-            <stop offset="40%" stopColor="#a06bff" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#7a4bf0" stopOpacity="0" />
+            <stop offset="0%" stopColor="#5eead4" stopOpacity="0" />
+            <stop offset="40%" stopColor="#14b8a6" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#0e7490" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path d="M 486 192 H 584 V 96 H 666" fill="none" stroke={`url(#${uid}bendA)`} strokeWidth="2.5" strokeLinecap="round" />

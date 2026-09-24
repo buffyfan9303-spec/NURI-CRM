@@ -52,7 +52,7 @@ export const RESERVATION_STATUS_LABEL: Record<ReservationStatus, string> = {
 /** Badge kind — ReservationList.tsx와 고객 상세 예약 이력(CustomerDetail.tsx)이 공유한다. */
 export const RESERVATION_STATUS_BADGE: Record<ReservationStatus, "success" | "warning" | "info" | "error"> = {
   draft: "info",
-  confirmed: "info",
+  confirmed: "success", // 확정은 완료 계열(청록) — 2026-09-25 사용자 지시
   out: "warning",
   partial_return: "warning",
   returned: "success",

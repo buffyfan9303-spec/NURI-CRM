@@ -33,7 +33,7 @@ import { PayModal, type PayTarget } from "./PayModal";
 interface CustomerOption { id: string; name: string; phone?: string | null }
 
 export const SALON_STATUS_KIND: Record<string, BadgeKind> = {
-  완료: "success", 예약: "info", 확정: "info", 대기: "info", 진행중: "warning", 취소: "error", 노쇼: "error",
+  완료: "success", 예약: "info", 확정: "success", 대기: "info", 진행중: "warning", 취소: "error", 노쇼: "error",
 };
 const TERMINAL = new Set(["완료", "취소", "노쇼"]);
 
