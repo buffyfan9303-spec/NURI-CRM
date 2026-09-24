@@ -75,13 +75,16 @@ export interface AuthArtProps {
   compact?: boolean;
   /** 휴대폰 상단의 얇은 브랜드 띠 — 문구 없이 리본·광원·격자만. 아트를 통째로 생략하는 대신 쓰는 최소 형태. */
   strip?: boolean;
+  /** 넷플릭스형 로그인의 전면 배경 — 모서리 없음·문구 없음. headline/description 은 무시한다. */
+  backdrop?: boolean;
 }
 
-export function AuthArt({ headline, description, compact = false, strip = false }: AuthArtProps) {
+export function AuthArt({ headline, description, compact = false, strip = false, backdrop = false }: AuthArtProps) {
   // 휴대폰 띠(strip)와 PC 아트가 한 문서에 함께 렌더되므로 SVG id 를 변형별로 분리한다 — 같으면 url(#id) 가 display:none 쪽 정의를 가리켜 리본이 사라진다.
-  const uid = strip ? "s-" : compact ? "c-" : "f-";
+  const uid = backdrop ? "b-" : strip ? "s-" : compact ? "c-" : "f-";
+  const radius = backdrop ? "" : strip ? "rounded-[16px]" : "rounded-[32px]";
   return (
-    <div className={strip ? "relative h-full w-full overflow-hidden rounded-[16px] bg-auth-art" : "relative h-full w-full overflow-hidden rounded-[32px] bg-auth-art"}>
+    <div className={`relative h-full w-full overflow-hidden bg-auth-art ${radius}`}>
       {/* 1. 바탕/광원 */}
       <div className="absolute inset-0" style={{ background: strip ? STRIP_SOURCES : LIGHT_SOURCES }} aria-hidden />
 
@@ -220,7 +223,7 @@ export function AuthArt({ headline, description, compact = false, strip = false 
         <path d="M 296 288 V 336 H 340 V 444" fill="none" stroke={`url(#${uid}bendB)`} strokeWidth="2.5" strokeLinecap="round" />
       </svg>
 
-      {strip ? null : (
+      {strip || backdrop ? null : (
       <>
       {/* 5. 하단 가독성 scrim — 별도 텍스트 카드를 만들지 않고 면만 눌러 준다(§9.2-6). */}
       <div

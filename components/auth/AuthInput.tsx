@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
-import { AuthField } from "./AuthField";
+import { AuthField, FloatLabel } from "./AuthField";
 
 export interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -22,14 +22,14 @@ export interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputEleme
  * 경계 3:1 을 못 맞춘다(§9.1 이 허용한 "조금 선명하게 보정"). 계산값: Dark 3.65:1 / Light 3.41:1.
  */
 export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
-  ({ label, hint, error, required, id, className, icon: Icon, ...rest }, ref) => {
+  ({ label, hint, error, required, id, className, icon: Icon, placeholder: _placeholder, ...rest }, ref) => {
     const autoId = React.useId();
     const inputId = id ?? autoId;
     const hintId = hint ? `${inputId}-hint` : undefined;
     const errorId = error ? `${inputId}-error` : undefined;
 
     return (
-      <AuthField label={label} htmlFor={inputId} required={required} hint={hint} hintId={hintId} error={error} errorId={errorId}>
+      <AuthField floating label={label} htmlFor={inputId} required={required} hint={hint} hintId={hintId} error={error} errorId={errorId}>
         <div className="relative">
           {Icon && (
             <Icon size={18} className="pointer-events-none absolute left-[14px] top-1/2 -translate-y-1/2 text-auth-tx2" />
@@ -40,10 +40,12 @@ export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
             required={required}
             aria-invalid={!!error || undefined}
             aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
+            // 넷플릭스형: 떠오르는 라벨 자리를 위해 위쪽 여백을 크게, placeholder 는 공백 하나(라벨 판정용).
+            placeholder=" "
             className={cn(
-              "h-[52px] w-full rounded-[8px] border bg-auth-field pr-4 text-[16px] text-auth-tx outline-none lg:text-[15px]",
+              "peer h-[56px] w-full rounded-[4px] border bg-auth-field pb-[6px] pr-4 pt-[22px] text-[16px] text-auth-tx outline-none lg:text-[15px]",
               Icon ? "pl-[42px]" : "pl-[14px]",
-              "placeholder:text-auth-tx2 transition-colors",
+              "transition-colors",
               // 잠겼으면 잠긴 것처럼 보여야 한다(QA R4: disabled 인데 평소와 똑같아 보였다).
               "disabled:cursor-not-allowed disabled:opacity-55",
               "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-accent)]",
@@ -52,6 +54,7 @@ export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
             )}
             {...rest}
           />
+          <FloatLabel htmlFor={inputId} label={label} required={required} inset={Icon ? 42 : 14} />
         </div>
       </AuthField>
     );

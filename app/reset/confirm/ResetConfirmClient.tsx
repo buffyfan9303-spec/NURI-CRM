@@ -112,10 +112,10 @@ export function ResetConfirmClient({ code }: { code: string | null }) {
 
   return (
     <AuthShell>
-      <h1 className="text-left text-[26px] font-bold leading-tight tracking-tight text-auth-tx lg:text-center lg:text-[32px]">
+      <h1 className="text-left text-[28px] font-bold leading-tight tracking-tight text-auth-tx sm:text-[32px]">
         새 비밀번호 설정
       </h1>
-      <p className="mb-6 mt-1.5 text-left text-[13px] text-auth-tx2 lg:mb-8 lg:mt-2 lg:text-center">새로 사용할 비밀번호를 입력하세요.</p>
+      <p className="mb-6 mt-1.5 text-left text-[13px] text-auth-tx2 sm:mb-7 sm:mt-2">새로 사용할 비밀번호를 입력하세요.</p>
       <div className="w-full">
         <form onSubmit={handleSubmit} noValidate>
           <AuthPasswordInput

@@ -64,7 +64,7 @@ export function CreateBusinessForm() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[520px] text-left lg:text-center">
+    <div className="mx-auto w-full max-w-[520px] text-left">
       <h1 className="text-[24px] font-bold leading-tight tracking-tight text-auth-tx lg:text-[26px]">아직 소속된 사업장이 없습니다</h1>
       <p className="mb-6 mt-1.5 max-w-[380px] text-[13px] leading-relaxed text-auth-tx2 lg:mx-auto lg:mb-7">
         새 사업장을 만들거나, 기존 사업장 관리자에게 초대를 요청하세요.

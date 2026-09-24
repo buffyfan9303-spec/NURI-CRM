@@ -56,10 +56,10 @@ export function ResetPasswordCard({
 
   return (
     <div>
-      <h1 className="text-left text-[26px] font-bold leading-tight tracking-tight text-auth-tx lg:text-center lg:text-[32px]">
+      <h1 className="text-left text-[28px] font-bold leading-tight tracking-tight text-auth-tx sm:text-[32px]">
         비밀번호 재설정
       </h1>
-      <p className="mb-6 mt-1.5 text-left text-[13px] leading-relaxed text-auth-tx2 lg:mb-8 lg:mt-2 lg:text-center">
+      <p className="mb-6 mt-1.5 text-left text-[13px] leading-relaxed text-auth-tx2 sm:mb-7 sm:mt-2">
         가입한 이메일을 입력하면 재설정 링크를 보내드립니다.
       </p>
 

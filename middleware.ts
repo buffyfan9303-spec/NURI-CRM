@@ -107,6 +107,6 @@ function redirectToLogin(req: NextRequest, reason: string) {
 }
 
 export const config = {
-  // 정적 자산과 이미지 최적화는 제외. 그 외 모든 경로에서 세션을 갱신한다.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon-.*\\.svg|manifest.webmanifest).*)"],
+  // 정적 자산·이미지 최적화·크롤러 안내 파일(robots.txt, llms.txt)은 제외. 그 외 모든 경로에서 세션을 갱신한다.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon-.*\\.svg|manifest.webmanifest|robots.txt|llms.txt).*)"],
 };

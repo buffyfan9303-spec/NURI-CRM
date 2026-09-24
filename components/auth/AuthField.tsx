@@ -16,6 +16,7 @@ export function AuthField({
   errorId,
   children,
   className,
+  floating = false,
 }: {
   label: string;
   htmlFor: string;
@@ -26,18 +27,22 @@ export function AuthField({
   errorId?: string;
   children: React.ReactNode;
   className?: string;
+  /** true 면 라벨을 그리지 않는다 — 입력 안의 떠오르는 라벨(FloatLabel)이 대신한다. */
+  floating?: boolean;
 }) {
   return (
     <div className={cn("mb-3.5", className)}>
-      <label htmlFor={htmlFor} className="mb-1.5 block text-[13px] font-medium text-auth-tx2">
-        {label}
-        {required && (
-          <span className="ml-0.5 text-[var(--auth-accent)]" aria-hidden>
-            *
-          </span>
-        )}
-        {required && <span className="sr-only"> (필수)</span>}
-      </label>
+      {!floating && (
+        <label htmlFor={htmlFor} className="mb-1.5 block text-[13px] font-medium text-auth-tx2">
+          {label}
+          {required && (
+            <span className="ml-0.5 text-[var(--auth-accent)]" aria-hidden>
+              *
+            </span>
+          )}
+          {required && <span className="sr-only"> (필수)</span>}
+        </label>
+      )}
       {children}
       {hint && (
         <p id={hintId} className="mt-1.5 text-[11.5px] leading-snug text-auth-tx2">
@@ -51,5 +56,43 @@ export function AuthField({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * 넷플릭스형 떠오르는 라벨. 반드시 입력(`peer`, placeholder=" ") **뒤에** 둔다 —
+ * 비어 있으면 입력 가운데, 값이 있거나 초점·자동완성이면 위로 작게 올라간다.
+ */
+export function FloatLabel({
+  htmlFor,
+  label,
+  required,
+  inset = 14,
+}: {
+  htmlFor: string;
+  label: string;
+  required?: boolean;
+  /** 왼쪽 여백(px). 좌측 아이콘이 있으면 42. */
+  inset?: number;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      style={{ left: inset }}
+      className={cn(
+        "pointer-events-none absolute top-[8px] translate-y-0 text-[11.5px] font-medium leading-none text-auth-tx2 transition-all duration-150",
+        "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-[15px] peer-placeholder-shown:font-normal",
+        "peer-focus:top-[8px] peer-focus:translate-y-0 peer-focus:text-[11.5px] peer-focus:font-medium",
+        "peer-autofill:top-[8px] peer-autofill:translate-y-0 peer-autofill:text-[11.5px]"
+      )}
+    >
+      {label}
+      {required && (
+        <span className="ml-0.5 text-[var(--auth-accent)]" aria-hidden>
+          *
+        </span>
+      )}
+      {required && <span className="sr-only"> (필수)</span>}
+    </label>
   );
 }

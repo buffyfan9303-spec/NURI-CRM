@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Eye, EyeOff } from "@/lib/icons";
 import { cn } from "@/lib/utils/cn";
-import { AuthField } from "./AuthField";
+import { AuthField, FloatLabel } from "./AuthField";
 
 export interface AuthPasswordInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -17,7 +17,7 @@ export interface AuthPasswordInputProps
  * 원본도 비밀번호 행 오른쪽에 눈 아이콘 하나만 둔다 — 좌측 자물쇠 아이콘은 없다.
  */
 export const AuthPasswordInput = React.forwardRef<HTMLInputElement, AuthPasswordInputProps>(
-  ({ label, hint, error, required, id, className, ...rest }, ref) => {
+  ({ label, hint, error, required, id, className, placeholder: _placeholder, ...rest }, ref) => {
     const autoId = React.useId();
     const inputId = id ?? autoId;
     const hintId = hint ? `${inputId}-hint` : undefined;
@@ -25,7 +25,7 @@ export const AuthPasswordInput = React.forwardRef<HTMLInputElement, AuthPassword
     const [visible, setVisible] = React.useState(false);
 
     return (
-      <AuthField label={label} htmlFor={inputId} required={required} hint={hint} hintId={hintId} error={error} errorId={errorId}>
+      <AuthField floating label={label} htmlFor={inputId} required={required} hint={hint} hintId={hintId} error={error} errorId={errorId}>
         <div className="relative">
           <input
             ref={ref}
@@ -34,9 +34,10 @@ export const AuthPasswordInput = React.forwardRef<HTMLInputElement, AuthPassword
             required={required}
             aria-invalid={!!error || undefined}
             aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
+            placeholder=" "
             className={cn(
-              "h-[52px] w-full rounded-[8px] border bg-auth-field pl-[14px] pr-12 text-[16px] text-auth-tx outline-none lg:text-[15px]",
-              "placeholder:text-auth-tx2 transition-colors",
+              "peer h-[56px] w-full rounded-[4px] border bg-auth-field pb-[6px] pl-[14px] pr-12 pt-[22px] text-[16px] text-auth-tx outline-none lg:text-[15px]",
+              "transition-colors",
               "disabled:cursor-not-allowed disabled:opacity-55",
               "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-accent)]",
               error ? "border-[var(--auth-accent)]" : "border-auth-input-bd focus:border-[var(--auth-accent)]",
@@ -44,6 +45,7 @@ export const AuthPasswordInput = React.forwardRef<HTMLInputElement, AuthPassword
             )}
             {...rest}
           />
+          <FloatLabel htmlFor={inputId} label={label} required={required} />
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}

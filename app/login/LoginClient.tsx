@@ -5,8 +5,8 @@
  * 업종 선택(진입 의도, 세션스토리지 힌트일 뿐 — 권한 근거 아님) + 실제 로그인.
  * 실패 사유별로 문구를 구분한다(계약 §5-5 정신: 실패를 성공처럼 보이지 않는다).
  *
- * 레이아웃은 §8·§10: 카드 없는 중앙 폼, 로그인이 주 목적이라 업종 선택은
- * 폼 아래 접이식 보조 섹션으로 둔다(2열 좌측 패널은 사라졌다).
+ * 레이아웃은 넷플릭스형 셸(AuthShell). 로그인이 주 목적이라 업종 선택은
+ * 카드 맨 아래 접이식 보조 섹션으로 둔다.
  */
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -77,7 +77,7 @@ export function LoginClient() {
         onSignup={() => router.push("/signup")}
       />
 
-      <div className="mt-2 w-full lg:mt-8">
+      <div className="mt-4 w-full border-t border-auth-field-bd pt-3">
         <button
           type="button"
           onClick={() => setIndustryOpen((v) => !v)}
