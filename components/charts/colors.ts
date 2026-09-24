@@ -1,5 +1,6 @@
 /**
  * 차트 계열 고정 팔레트 — app/globals.css --ch-1..5 (dataviz 검증기 7/7 통과, 절대 변경 금지).
+ *   예외: 공장 외 업종은 [data-accent="teal"] 범위에서 --ch-1 만 청록으로 덮는다(2026-09-25, ΔE 재검증 기록은 globals.css).
  * 순환 배정 금지: 호출부가 이미 고정 순서로 정렬한 배열의 인덱스를 그대로 넘긴다
  * (lib/domain/home-charts.ts의 foldTopN 참고) — 필터로 계열이 줄어도 같은 인덱스는 같은 색.
  */

@@ -51,7 +51,7 @@ export default async function KioskAttendancePage({ params }: { params: { busine
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-col items-center justify-center bg-bg px-4 py-6">
+    <div data-accent="teal" className="relative flex min-h-dvh flex-col items-center justify-center bg-bg px-4 py-6">
       <KioskExit businessId={access.businessId} />
       <CheckinKiosk businessId={access.businessId} businessName={access.businessName} />
     </div>

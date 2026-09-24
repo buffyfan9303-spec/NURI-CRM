@@ -266,8 +266,19 @@ export function WorkspaceShell({
     window.location.assign(`/w/${id}`);
   };
 
+  // 공장 제외 업종은 청록 강조(globals.css [data-accent="teal"]). 모달은 body 포털이라 <html> 에도 건다.
+  const accent = industry === "factory" ? undefined : "teal";
+  React.useEffect(() => {
+    const root = document.documentElement;
+    if (accent) root.dataset.accent = accent;
+    else delete root.dataset.accent;
+    return () => {
+      delete root.dataset.accent;
+    };
+  }, [accent]);
+
   return (
-    <div className="flex h-screen overflow-hidden bg-bg">
+    <div data-accent={accent} className="flex h-screen overflow-hidden bg-bg">
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/45 min-[960px]:hidden"
