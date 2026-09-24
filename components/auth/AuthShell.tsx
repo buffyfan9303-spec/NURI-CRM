@@ -18,7 +18,7 @@ import { AuthArt } from "@/components/auth/AuthArt";
  *   <sm      : 배경 아트·카드를 걷어낸 전폭 단일 화면(넷플릭스 모바일과 같음).
  *              헤더 → 폼(좌우 20px) → 경계선 위 하단 문구.
  *
- * 색은 넷플릭스의 빨강이 아니라 NURI 의 보라 CTA 를 유지한다(브랜드 모방 금지).
+ * 색은 넷플릭스의 빨강이 아니라 청록 CTA 를 쓴다(브랜드 모방 금지 · 2026-09-25 보라 → 청록).
  * Light 는 흰 카드, Dark 는 검정 반투명 카드 — 레이아웃은 두 테마가 같다.
  * 라우팅·데이터 페칭 없음. 테마 토글만 기존 themeStore 를 읽는다.
  */
@@ -64,7 +64,7 @@ export function AuthShell({
   width?: "narrow" | "wide";
 }) {
   return (
-    /* [--acc:…]: globals.css 의 :focus-visible 링이 업무 녹색(--acc)을 쓴다. 인증 세계는 보라라 여기서만 덮는다. */
+    /* [--acc:…]: globals.css 의 :focus-visible 링이 업무 녹색(--acc)을 쓴다. 인증 화면은 청록 강조색으로 여기서만 덮는다. */
     <div className="relative flex min-h-dvh w-full flex-col bg-auth-frame [--acc:var(--auth-accent)] sm:bg-auth-art">
       {/* 전면 배경 아트 + 막 — sm+ 에서만. 휴대폰은 넷플릭스처럼 단색 면이다. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 hidden sm:block">
@@ -72,26 +72,36 @@ export function AuthShell({
         <div className="absolute inset-0" style={{ background: SCRIM }} />
       </div>
 
+      {/* 휴대폰 전용 은은한 청록 빛 — 단색 면이 밋밋하지 않게 위쪽에만 얹는다(아트는 sm+ 전용). */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] sm:hidden"
+        style={{
+          background:
+            "radial-gradient(90% 60% at 100% 0%, rgba(20,184,166,.22) 0%, rgba(20,184,166,0) 70%), radial-gradient(70% 45% at 0% 8%, rgba(56,140,236,.12) 0%, rgba(56,140,236,0) 70%)",
+        }}
+      />
+
       {/* 헤더 — 넷플릭스처럼 좌상단 로고. 좌우 여백은 폭에 비례(3~9%). */}
       <header className="relative z-10 flex shrink-0 items-center justify-between px-5 pt-[max(12px,env(safe-area-inset-top))] sm:px-[clamp(24px,6vw,148px)] sm:pt-6">
         <Link
           href="/login"
           className="flex min-h-[44px] items-center rounded text-[24px] font-extrabold leading-none tracking-tight text-auth-tx focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--auth-accent)] sm:text-[30px] sm:text-white"
         >
-          NURI&nbsp;<span className="text-[var(--auth-accent)] sm:text-[#c4a3ff]">CRM</span>
+          NURI&nbsp;<span className="text-[var(--auth-accent)] sm:text-[#5eead4]">CRM</span>
         </Link>
         <AuthThemeToggle />
       </header>
 
       {/* 본문 — <main> 랜드마크(Lighthouse: 로그인 화면에 main 없음 지적). */}
-      <main className="relative z-10 flex flex-1 justify-center px-5 pb-8 pt-6 sm:items-start sm:px-6 sm:pb-16 sm:pt-[clamp(8px,4vh,40px)]">
+      {/* 2026-09-25 사용자 지시: 폼을 위에 붙이지 않고 남는 높이의 세로 가운데에 둔다(휴대폰·PC 공통). */}
+      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-10 sm:px-6 sm:py-12">
         <div
           className={cn(
             "w-full [word-break:keep-all] sm:rounded-[6px] sm:bg-[var(--auth-card)] sm:shadow-[0_24px_64px_-24px_rgba(0,0,0,.6)] sm:backdrop-blur-[2px]",
             width === "wide"
               ? "max-w-[620px] sm:max-w-[720px] sm:px-[clamp(28px,5vw,56px)] sm:py-12"
               : "max-w-[480px] sm:max-w-[450px] sm:px-[clamp(28px,5vw,68px)] sm:py-12",
-            "sm:min-h-[560px]"
           )}
         >
           {children}
@@ -99,8 +109,17 @@ export function AuthShell({
       </main>
 
       {/* 하단 띠 — sm+ 는 넷플릭스처럼 테마와 무관한 검정 반투명 띠(아트 위라 항상 어둡다). 넷플릭스는 문의·링크 모음이지만 이 앱에는 해당 문서 라우트가 없다.
-          없는 링크를 만들지 않고 사실만 적는다. 약관/개인정보 페이지가 생기면 여기에 <Link> 를 추가한다. */}
-      <footer className="relative z-10 shrink-0 border-t border-auth-field-bd px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-6 sm:border-t-0 sm:bg-black/75 sm:px-[clamp(24px,6vw,148px)] sm:py-8">
+          여기에는 실제로 있는 약관·개인정보처리방침 두 링크만 둔다. */}
+      <footer className="relative z-10 shrink-0 border-t border-auth-field-bd px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-4 sm:border-t-0 sm:bg-black/75 sm:px-[clamp(24px,6vw,148px)] sm:py-6">
+        <nav aria-label="약관" className="-ml-1 mb-2 flex flex-wrap gap-x-4">
+          {/* 개인정보처리방침은 이용자가 쉽게 찾도록 굵게 표시한다(개인정보 보호법 관행). */}
+          <Link href="/privacy" className="inline-flex min-h-[44px] items-center rounded px-1 text-[13px] font-bold text-auth-tx underline-offset-4 hover:underline sm:text-white">
+            개인정보처리방침
+          </Link>
+          <Link href="/terms" className="inline-flex min-h-[44px] items-center rounded px-1 text-[13px] text-auth-tx2 underline-offset-4 hover:underline sm:text-white/80">
+            이용약관
+          </Link>
+        </nav>
         <p className="text-[12.5px] text-auth-tx2 sm:text-white/75">사내 업무 시스템 · 승인된 직원만 이용합니다</p>
         <p className="mt-2 text-[12px] text-auth-tx2 sm:text-white/75">© NURI CRM</p>
       </footer>

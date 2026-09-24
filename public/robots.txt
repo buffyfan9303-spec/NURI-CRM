@@ -2,4 +2,6 @@
 User-agent: *
 Allow: /login
 Allow: /llms.txt
+Allow: /privacy
+Allow: /terms
 Disallow: /

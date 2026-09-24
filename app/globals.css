@@ -91,10 +91,11 @@
   --auth-field: #f7f8fc;     /* 입력 면 */
   --auth-field-bd: #dee2ea;  /* 장식 경계 — 조작 경계와 구별 */
   --auth-input-bd: #7d8799;  /* 필수 조작 경계: #f7f8fc 위 3.41:1 (계산 확인) */
-  --auth-cta: #7543e6;       /* 흰 글자 5.52:1 */
-  --auth-cta-hover: #6535d4;
+  /* 2026-09-25 사용자 지시: 보라 → 청록. 배경 아트의 청록 광원과 같은 계열. */
+  --auth-cta: #0f766e;       /* 흰 글자 5.47:1 */
+  --auth-cta-hover: #115e59;
   --auth-cta-tx: #ffffff;
-  --auth-accent: #7343de;    /* 링크/초점 — 오류색과 구별 */
+  --auth-accent: #0f766e;    /* 링크/초점 — 흰 면 위 5.47:1, 오류색과 구별 */
   --auth-disabled: #e4e7ee;
 
   /* 우측 브랜드 아트: Light 에서도 깊은 어두운 면을 유지한다(§9.4 허용).
@@ -217,10 +218,10 @@ body.dk,
   --auth-field: #13171c;     /* 원본도 입력 면이 프레임과 같고 경계로만 읽힌다 */
   --auth-field-bd: #2d343e;
   --auth-input-bd: #667184;  /* #13171c 위 3.65:1 */
-  --auth-cta: #8950fc;       /* 원본 (800,2780) 실측 · 흰 글자 4.55:1 */
-  --auth-cta-hover: #7a3df0;
-  --auth-cta-tx: #ffffff;
-  --auth-accent: #b58cff;
+  --auth-cta: #2dd4bf;       /* 짙은 글자 #042f2e 대비 9.9:1 */
+  --auth-cta-hover: #5eead4;
+  --auth-cta-tx: #042f2e;
+  --auth-accent: #5eead4;    /* #13171c 위 12:1 */
   --auth-disabled: #3b404c;
   --auth-glow-op: 0.42;
   --auth-error: #ff8095;      /* #13171c 위 7.52:1 */

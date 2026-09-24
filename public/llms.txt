@@ -9,6 +9,8 @@
 - [로그인](https://www.nuricrm.co.kr/login): NURI CRM 계정으로 로그인
 - [가입 신청](https://www.nuricrm.co.kr/signup): 직원 계정 가입 신청(사업장 관리자 승인 후 이용)
 - [비밀번호 재설정](https://www.nuricrm.co.kr/reset): 가입한 이메일로 재설정 링크 받기
+- [개인정보처리방침](https://www.nuricrm.co.kr/privacy)
+- [이용약관](https://www.nuricrm.co.kr/terms)
 
 ## 지원 업종
 

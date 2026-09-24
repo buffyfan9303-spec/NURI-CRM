@@ -17,6 +17,9 @@ const PUBLIC_PREFIXES = [
   "/signup",
   "/reset",
   "/auth",
+  // 약관·개인정보처리방침 — 로그인 전에도 읽을 수 있어야 한다.
+  "/privacy",
+  "/terms",
   // 개발·검증용 페이지. 사업장 데이터를 전혀 읽지 않으므로 인증 없이 연다.
   "/ui-preview",
   "/scan-selftest",
