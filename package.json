@@ -1,0 +1,50 @@
+{
+  "name": "nuri-crm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NURI CRM — 맞춤양복 통합 관리 시스템 (Next.js)",
+  "scripts": {
+    "dev": "next dev -p 3001 -H 0.0.0.0",
+    "dev:https": "next dev -p 3001 -H 0.0.0.0 --experimental-https",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "tunnel": "cloudflared tunnel --url http://localhost:3001",
+    "test:scan": "node scripts/test-scan.mjs",
+    "test:messages": "node scripts/test-messages.mjs",
+    "verify:mutations": "node scripts/verify-mutation-affected.mjs",
+    "verify:server-exports": "node scripts/verify-use-server-exports.mjs"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
+    "@tabler/icons-react": "^3.19.0",
+    "@yudiel/react-qr-scanner": "^2.0.4",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^1.45.0",
+    "next": "14.2.15",
+    "qrcode.react": "^4.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.0",
+    "react-to-print": "^2.15.1",
+    "tailwind-merge": "^2.5.2",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.15",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.2",
+    "zxing-wasm": "^3.0.3"
+  }
+}

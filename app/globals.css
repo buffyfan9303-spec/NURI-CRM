@@ -1,0 +1,429 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────
+   NURI CRM — 디자인 토큰 (기존 NURI-CRM.html 에서 이식)
+   토큰 변경 시 tailwind.config.ts 의 colors 도 동기화할 것.
+   ────────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  /* ── 레퍼런스 §7 업무 화면 토큰 (Light) ────────────────────
+     기준: docs/design-references/reference-01-crm-dashboard.png
+     검정 사이드바 · 옅은 회색 바탕 · 흰 카드 · 녹색 주요 동작.
+     이전 인디고 팔레트를 이 기준으로 대체했다(명세 §7).
+     HEX는 시작값이고 scripts/contrast-check.mjs 실측이 최종 판정이다. */
+  --bg: #f7f8fa;
+  --nav: #090909;          /* 사이드바는 라이트에서도 검정 */
+  --nav-bd: #242424;
+  --nav-active: #181818;
+  --topbar: #f8f9fb;
+  --sf: #ffffff;
+  --sf2: #f3f5f6;
+  --sf3: #eef2f0;
+  --sel: #e8f3ed;
+
+  --bd: #e3e6e8;           /* 카드 경계 */
+  --bd2: #7b858d;          /* 입력 경계(비텍스트 3:1) */
+
+  --t: #111315;
+  --t2: #5d646b;
+  /* 명세 §7 시작값 #687078 은 선택 행(#e8f3ed) 위에서 4.42:1 로 미달이라 한 단계 보정.
+     §7이 "실제 대비 검사 후 필요한 값만 보정한다"고 지시한 그대로다. */
+  --t3: #646c74;
+
+  /* 브랜드: 업무 화면의 주요 동작은 녹색 */
+  --accent: #087d43;
+  --accent-strong: #087d43;
+  --accent-hover: #066a39;
+  --accent-contrast: #ffffff;
+  --accent-ink: #087443;
+  --accent-soft: #e8f3ed;
+  --acc: var(--accent-strong);
+  --focus: #0a7b48;
+
+  /* ── 데이터 시각화 (범주형 5색) ───────────────────────────
+     명세 §7의 시작값은 dataviz 검증기에서 **실패**했다:
+       #098658(녹색) ↔ #0b9599(청록) 정상시각 ΔE 9.7 < 기준 15
+       → 색맹이 아니어도 도넛 조각을 구분하기 어렵다.
+     청록을 주황으로 교체해 통과시켰다(§7 "부족하면 보정" 지시대로).
+     검증: node <dataviz>/scripts/validate_palette.js "..." --mode light|dark
+     ⚠ 순서를 바꾸거나 색을 추가하면 반드시 재검증할 것. 9번째 계열은 만들지 않는다. */
+  --ch-1: #098658; /* 녹색 */
+  --ch-2: #2584c7; /* 파랑 */
+  --ch-3: #be8b12; /* 황토 — 흰 면 대비 2.97:1 이라 직접 라벨 필수 */
+  --ch-4: #a85ebb; /* 보라 */
+  --ch-5: #c2410c; /* 주황 */
+
+  /* 상태 */
+  --okb: #e8f3ed;
+  --okt: #0a5c36;
+  --wb: #fdf3e0;
+  --wt: #7a4e07;
+  --eb: #fdecec;
+  --et: #a02537;
+  --ib: #e7f1fb;
+  --it: #1b5f97;
+
+  /* 사이드바 파생(검정 위) */
+  --sbg: var(--nav);
+  --sbt: #f3f5f6;
+  --sbt2: #9aa3ab;         /* 검정 위 메타 — 별도 밝은 회색으로 대비 확보 */
+  --sbsec: #9aa3ab;
+  --sbh: #141414;
+  --sba: var(--nav-active);
+  --sbbd: var(--nav-bd);
+  --sbact: #3bd48b;        /* 검정 위 활성 표시는 밝은 녹색 */
+
+  /* ── 인증 화면 (레퍼런스 §8·§9) ───────────────────────────
+     기준: reference-03-auth-split-purple-teal.png (4800×3600).
+     좌폼42%·우아트58%의 큰 프레임 하나. **업무 화면에 전파하지 않는다.**
+     여기는 Light 값이다 — §9.1 "Light 시작값" 열.
+
+     ⚠ 이전 기준(reference-02, 주황 웜톤)의 --auth-bar/g1/g2/l1~l4 는 제거했다.
+       이미지02 는 사용자가 중단시킨 방향이라 남겨 두면 두 디자인이 경쟁한다. */
+  --auth-page: #eef0f6;      /* 프레임 바깥 바탕 — 프레임과 구별돼야 한다 */
+  --auth-frame: #ffffff;     /* 큰 프레임 = 좌측 폼 면. 반투명 중첩 없음 */
+  --auth-tx: #191d28;
+  --auth-tx2: #5a6373;       /* 원본의 흐린 placeholder 를 그대로 복제하지 않는다(§9.1) */
+  --auth-field: #f7f8fc;     /* 입력 면 */
+  --auth-field-bd: #dee2ea;  /* 장식 경계 — 조작 경계와 구별 */
+  --auth-input-bd: #7d8799;  /* 필수 조작 경계: #f7f8fc 위 3.41:1 (계산 확인) */
+  --auth-cta: #7543e6;       /* 흰 글자 5.52:1 */
+  --auth-cta-hover: #6535d4;
+  --auth-cta-tx: #ffffff;
+  --auth-accent: #7343de;    /* 링크/초점 — 오류색과 구별 */
+  --auth-disabled: #e4e7ee;
+
+  /* 우측 브랜드 아트: Light 에서도 깊은 어두운 면을 유지한다(§9.4 허용).
+     그래서 테마와 무관한 고정값이다 — 두 모드가 다른 레이아웃처럼 보이면 실패다. */
+  --auth-art: #1e1f23;       /* 우측 하단 수렴색 (원본 3600,3140 실측) */
+  --auth-teal: #0ef2e5;      /* 청록 광원 (원본 3950,370 실측) */
+  /* 리본의 전면/안쪽/하이라이트 색은 토큰으로 두지 않는다 — 한 면당 4~5개 정지점이라
+     이름 붙은 토큰 3개로는 표현이 안 된다. components/auth/AuthArt.tsx 의 rbBody/rbRim/rbCavity
+     그라데이션에 원본 확대 실측값과 함께 들어 있다. 여기 중복으로 적어 두면 둘이 어긋난다. */
+  --auth-art-tx: #ffffff;      /* 아트 위 큰 제목 */
+  --auth-art-tx2: rgba(255, 255, 255, 0.82); /* 아트 위 설명 */
+  /* 프레임 밖 후광 세기. 밝은 바탕에서는 같은 알파가 탁하게 보여 한 단계 낮춘다. */
+  --auth-glow-op: 0.2;
+  --auth-error: #c02b3d;      /* 흰 면 위 5.74:1 · 보라 강조와 명확히 구별(§9.1) */
+
+  /* 레거시 전용: 구 시제품 app/(app)/** 만 참조 */
+  --gold: #8a6520;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  /* ── 레이아웃/치수 토큰 (2026-09 개편 1단계) ──────────────────
+     html{font-size:14px} 때문에 rem 유틸이 ×0.875 로 줄어든다. 치수는 전부 px 다.
+     셸·페이지 헤더·프리미티브가 같은 숫자를 공유하도록 이름을 붙였다. */
+  --touch: 44px;            /* 터치 최소 hit area. 폰/태블릿의 모든 조작 요소 */
+  --ctl: 36px;              /* PC 상단바 아이콘 버튼·검색 높이(§4.2 34~36px) */
+  --topbar-h: 56px;         /* 상단바(§4.2). 모바일도 같다 */
+  --sidebar-w: 216px;       /* 펼친 사이드바(§3) */
+  --rail-w: 72px;           /* 접힌 rail(§5.2) */
+  --drawer-w: min(300px, 85vw); /* 모바일 드로어 */
+  --page-x: 20px;           /* 본문 좌우 여백. 태블릿 세로 16px 은 페이지가 미디어쿼리로 줄인다 */
+  --page-y: 20px;
+  --form-w: 444px;          /* 인증 폼 폭(§8.1) */
+
+  /* ── 타이포 위계(업무 화면). 페이지 제목 22 / 카드 제목 15 / 본문 13.5 / 메타 12 / 라벨 11 ── */
+  --fs-page: 22px;
+  --fs-card: 15px;
+  --fs-body: 13.5px;
+  --fs-meta: 12px;
+  --fs-label: 11px;
+
+  /* 레퍼런스 §7: 낮은 그림자 + 1px 경계로 면을 구분. 광택/유리 blur 금지 */
+  --sh-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 0 0 1px rgba(16, 24, 40, 0.02);
+  --sh-pop: 0 16px 40px -16px rgba(16, 24, 40, 0.28);
+  --sh-modal: 0 24px 64px -12px rgba(16, 24, 40, 0.32), 0 0 0 1px rgba(16, 24, 40, 0.04);
+}
+
+/* body.dk는 기존 컴포넌트 회귀 방지를 위한 레거시 셀렉터.
+   신규 코드는 :root[data-theme="dark"] 를 기준으로 삼는다. */
+body.dk,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* 다크는 첨부에 없다 — 명세 §7의 파생안(같은 위계 유지) */
+  --bg: #111315;
+  --nav: #090909;
+  --nav-bd: #242424;
+  --nav-active: #181818;
+  --topbar: #141719;
+  --sf: #1a1d20;
+  --sf2: #22272b;
+  --sf3: #29312d;
+  --sel: #173a2b;
+
+  --bd: #343b40;
+  --bd2: #78858e;
+
+  --t: #f3f5f6;
+  --t2: #bdc5cb;
+  --t3: #a8b2ba;
+
+  --accent: #3bd48b;
+  --accent-strong: #3bd48b;
+  --accent-hover: #56e0a0;
+  --accent-contrast: #082419;
+  --accent-ink: #70e4a7;
+  --accent-soft: #173a2b;
+  --acc: var(--accent-strong);
+  --focus: #86efac;
+
+  /* 다크 차트색: 명세 §7 값은 명도 밴드(L 0.48~0.67)를 벗어나 실패했다.
+     밴드 안으로 내려 재검증 → 전 항목 PASS. 라이트와 같은 색상 순서를 유지한다. */
+  --ch-1: #2a9d6e;
+  --ch-2: #4188c4;
+  --ch-3: #b08a2e;
+  --ch-4: #9a63ad;
+  --ch-5: #c46a2c;
+
+  --okb: #173a2b;
+  --okt: #7ae0b1;
+  --wb: #41321a;
+  --wt: #f5cf7d;
+  --eb: #44232b;
+  --et: #ffacb8;
+  --ib: #1b3251;
+  --it: #a9cdff;
+
+  --sbg: var(--nav);
+  --sbt: #f3f5f6;
+  --sbt2: #9aa3ab;
+  --sbsec: #9aa3ab;
+  --sbh: #141414;
+  --sba: var(--nav-active);
+  --sbbd: var(--nav-bd);
+  --sbact: #3bd48b;
+
+  /* 인증 다크 = 원본 이미지03 그 자체. §9.1 "Dark 시작값" 열의 실측 픽셀이다.
+     레이아웃·비율·리본/격자/타이포는 Light 와 완전히 같고 색면만 바뀐다(§9.4). */
+  --auth-page: #252c35;      /* 원본 (4500,100) 실측 */
+  --auth-frame: #13171c;     /* 원본 (750,900) 실측 */
+  --auth-tx: #f1f1f4;
+  --auth-tx2: #c1c7ce;       /* #13171c 위 10.56:1 */
+  --auth-field: #13171c;     /* 원본도 입력 면이 프레임과 같고 경계로만 읽힌다 */
+  --auth-field-bd: #2d343e;
+  --auth-input-bd: #667184;  /* #13171c 위 3.65:1 */
+  --auth-cta: #8950fc;       /* 원본 (800,2780) 실측 · 흰 글자 4.55:1 */
+  --auth-cta-hover: #7a3df0;
+  --auth-cta-tx: #ffffff;
+  --auth-accent: #b58cff;
+  --auth-disabled: #3b404c;
+  --auth-glow-op: 0.42;
+  --auth-error: #ff8095;      /* #13171c 위 7.52:1 */
+  /* --auth-art / --auth-teal 은 :root 고정값을 그대로 쓴다(§9.4) — 아트는 두 테마가 같다. */
+
+  --gold: #d4a055;
+
+  --sh-card: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --sh-pop: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+  --sh-modal: 0 24px 64px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   글로벌 리셋 + 폰트
+   ────────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+/* placeholder — Tailwind Preflight 기본(#9ca3af)은 흰 면에서 2.5:1 이라 전 목록 검색창이 미달이었다.
+   토큰 --t3 로 통일: 라이트 #646c74 = 흰 면 5.3:1 / --sf2 4.8:1 · 다크 #a8b2ba = --sf 7.9:1 / --sf2 7.2:1.
+   인증 입력의 placeholder:text-auth-tx2 유틸은 이 base 규칙보다 우선하므로 그대로 둔다. */
+@layer base {
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--t3);
+    opacity: 1;
+  }
+}
+
+html,
+body {
+  height: 100%;
+  /* 한글 폰트를 명시한다(§9.3 "기존 한국어 폰트를 우선"). 예전 스택에는 한글 글꼴이 하나도 없어
+     Windows 에서 조용히 맑은고딕으로 떨어졌다 — 결과가 OS 마다 달라진다.
+     새 웹폰트를 내려받지는 않는다(외부 의존 추가는 사용자 결정 사항). */
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Segoe UI", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", system-ui,
+    sans-serif;
+  /* ⚠ 이 14px 이 **모든 Tailwind rem 유틸의 기준**이다. h-11 은 44px 이 아니라 38.5px,
+       h-9 는 31.5px 다. 터치 타깃·아이콘 크기는 rem 유틸 말고 px 로 적어라(QA F1 로 실제 결함이 났다).
+       이 값을 16px 로 올리면 앱 전체 치수가 한꺼번에 커진다 — 바꾸려면 전 화면 재검증이 필요하다. */
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* QA F5 — prefers-reduced-motion 규칙이 하나도 없었다(§11).
+   배경은 원래 정적이고, 유일한 연속 애니메이션인 CTA 스피너는 멈춘다 —
+   진행 상태는 버튼 문구("로그인 중…")와 aria-busy 가 이미 전달한다. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--t);
+  transition: background 0.2s, color 0.2s;
+  /* 모바일 앱 느낌의 기본기: 탭 하이라이트 제거, 가로 흔들림 금지, iOS 고무줄 최소화 */
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+/* 이미지·SVG 가 부모 폭을 넘겨 가로 스크롤을 만드는 걸 전역에서 막는다. */
+img,
+svg,
+video {
+  max-width: 100%;
+}
+
+/* ── 드로어/모달 진입 (사용자 동작에 대한 응답이라 reduced-motion 이 아니면 짧게 보인다) ── */
+@keyframes sheetUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   스크롤바 (전역)
+   ────────────────────────────────────────────────────────────── */
+
+.scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bd2) transparent;
+}
+.scrollable::-webkit-scrollbar {
+  width: 5px;
+  height: 6px;
+}
+.scrollable::-webkit-scrollbar-thumb {
+  background: var(--bd2);
+  border-radius: 3px;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   토스트 애니메이션 (기존 보존)
+   ────────────────────────────────────────────────────────────── */
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   포커스 가시성 — 키보드 접근성 (마우스 클릭에는 영향 X)
+   ────────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none; /* input은 border + box-shadow 로 처리됨 */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   재사용 배지·태그 (기존 .b-*, .tg-* 클래스 그대로 이식)
+   다크모드는 body.dk 의 CSS 변수가 자동 대응하지만,
+   tg-prod 만 별도 색상이므로 명시.
+   ────────────────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+.b-ok   { background: var(--okb); color: var(--okt); }
+.b-warn { background: var(--wb);  color: var(--wt);  }
+.b-info { background: var(--ib);  color: var(--it);  }
+.b-err  { background: var(--eb);  color: var(--et);  }
+
+.ev-tag {
+  display: flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.tg-del  { background: #fdf1dd; color: #865510; }
+.tg-ord  { background: #e2edfc; color: #1840a0; }
+.tg-ok   { background: #e4f3eb; color: #16603a; }
+.tg-prod { background: #ede8fc; color: #5820b0; }
+
+body.dk .tg-del  { background: #362000; color: #f0b855; }
+body.dk .tg-ord  { background: #0c2348; color: #82b4f8; }
+body.dk .tg-ok   { background: #0d3020; color: #5ed48a; }
+body.dk .tg-prod { background: #1e0d3a; color: #c088f8; }
+
+/* ──────────────────────────────────────────────────────────────
+   인쇄 (MTM 카드 출력 — 기존 보존)
+   ────────────────────────────────────────────────────────────── */
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #print-area,
+  #print-area * {
+    visibility: visible !important;
+  }
+  #print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px;
+    display: block !important;
+  }
+}
