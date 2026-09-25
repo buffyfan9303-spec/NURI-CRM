@@ -10,7 +10,7 @@ import { AreaChartCard, type AreaSeries } from "@/components/charts/AreaChartCar
 import { DonutChart } from "@/components/charts/DonutChart";
 import { HorizontalBarChart } from "@/components/charts/HorizontalBarChart";
 import { RetryButton, CardHead, ViewAll } from "@/components/rental/listkit";
-import { getChecklistStatus, type UnmannedToday } from "@/lib/domain/unmanned";
+import type { UnmannedToday } from "@/lib/domain/unmanned";
 import type { HomeMetric } from "@/lib/domain/home";
 import { todayRangeISO } from "@/lib/domain/home";
 import { trendDelta } from "@/lib/domain/home-charts";
@@ -28,7 +28,6 @@ const MOVEMENT_LABEL: Record<string, string> = {
 const TOUCH_WRAP =
   "[@media(pointer:coarse)]:[&_button]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:flex [@media(pointer:coarse)]:[&_a]:items-center [@media(pointer:coarse)]:[&_summary]:min-h-[44px] [@media(pointer:coarse)]:[&_summary]:flex [@media(pointer:coarse)]:[&_summary]:items-center";
 const KPI_CELL = "h-full [&>*]:h-full [&>*>*]:h-full";
-const businessId = (base: string) => base.replace(/^\/w\//, "");
 
 export async function UnmannedHome({
   result,
@@ -50,8 +49,6 @@ export async function UnmannedHome({
   const { startISO, todayKey } = todayRangeISO(tz);
   const todayLabel = formatInTz(startISO, tz, "M월 d일 EEE");
   // 홈 배지(0023 U1): 오늘 점검표가 없거나 100% 미만이면 경고. page.tsx(공용)를 건드리지 않으려고 여기서 직접 읽는다.
-  const checklist = result.ok ? await getChecklistStatus(businessId(base), todayKey) : null;
-  const checklistWarn = checklist?.ok ? checklist.data.warn : false;
 
   // 상단바 CTA(재고 등록 → 재고·실사)와 겹치지 않는 동작만: 입고(상품 화면)·점검 목록·설정.
   const actions = (
@@ -75,20 +72,9 @@ export async function UnmannedHome({
       title={businessName}
       description="부족 재고·점검 마감·실사 차이와 최근 6개월 판매 추이"
       meta={
-        <>
-          <span className="inline-flex items-center gap-1 rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium text-t2">
-            <CalendarDays size={12} aria-hidden />{todayLabel}
-          </span>
-          {checklist?.ok && (
-            <Link
-              href={`${base}/tasks`}
-              className={"inline-flex h-[28px] items-center gap-1 rounded-full px-2.5 text-[12px] font-semibold tabular-nums [@media(pointer:coarse)]:h-[44px] " + (checklistWarn ? "bg-wb text-wt" : "bg-okb text-okt")}
-            >
-              <ClipboardCheck size={12} aria-hidden />
-              {!checklist.data.exists ? "오늘 점검표 없음" : checklistWarn ? `점검 ${checklist.data.done}/${checklist.data.total}` : "점검 완료"}
-            </Link>
-          )}
-        </>
+        <span className="inline-flex items-center gap-1 rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium text-t2">
+          <CalendarDays size={12} aria-hidden />{todayLabel}
+        </span>
       }
       actions={actions}
     />
