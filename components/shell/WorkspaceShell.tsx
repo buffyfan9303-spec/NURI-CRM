@@ -266,8 +266,10 @@ export function WorkspaceShell({
     window.location.assign(`/w/${id}`);
   };
 
-  // 공장 제외 업종은 청록 강조(globals.css [data-accent="teal"]). 모달은 body 포털이라 <html> 에도 건다.
-  const accent = industry === "factory" ? undefined : "teal";
+  // 전 업종 청록 강조(globals.css [data-accent="teal"]). 모달은 body 포털이라 <html> 에도 건다.
+  // 2026-09-25 사용자 지시로 공장도 포함 — 색 토큰만 바꾸고 공장/MTM 레이아웃·기능은 건드리지 않는다.
+  // 공장만 녹색으로 되돌리려면: industry === "factory" ? undefined : "teal"
+  const accent: string | undefined = "teal";
   React.useEffect(() => {
     const root = document.documentElement;
     if (accent) root.dataset.accent = accent;

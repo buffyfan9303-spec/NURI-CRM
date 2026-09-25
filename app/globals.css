@@ -237,7 +237,7 @@ body.dk,
 }
 
 /* ── 청록 강조(2026-09-25 사용자 지시: 로그인 색을 업무 화면에도) ─────────────
-   공장(factory) 사업장은 녹색 그대로 둔다(공장 디자인 동결). 적용 범위는 data-accent="teal":
+   2026-09-25 후속 지시로 공장까지 전 업종 적용(색 토큰만). 적용 범위는 data-accent="teal":
    WorkspaceShell 루트(SSR 즉시) + <html>(모달 포털용, WorkspaceShell 이 마운트 동안 설정),
    그리고 셸이 없는 학원 키오스크. 성공 상태색(--okb/--okt)과 차트 1번도 청록(사용자 지시). 경고·오류·정보 상태색과 차트 2~5번은 그대로.
    대비: Light #0f766e 흰 면 5.47:1 · #e6f4f2 위 4.9:1 / Dark #2dd4bf 위 #042f2e 9.9:1. */
@@ -456,6 +456,11 @@ body.dk .tg-del  { background: #362000; color: #f0b855; }
 body.dk .tg-ord  { background: #0c2348; color: #82b4f8; }
 body.dk .tg-ok   { background: #0d3020; color: #5ed48a; }
 body.dk .tg-prod { background: #1e0d3a; color: #c088f8; }
+
+/* 청록 강조 범위에서는 캘린더 "완료/확정" 계열 태그(tg-ok)도 청록(2026-09-25 사용자 지시). 대비 6.7:1 / 9.6:1 */
+[data-accent="teal"] .tg-ok { background: #e6f4f2; color: #0b5e57; }
+body.dk [data-accent="teal"] .tg-ok,
+:root[data-theme="dark"][data-accent="teal"] .tg-ok { background: #123a37; color: #7ee0d3; }
 
 /* ──────────────────────────────────────────────────────────────
    인쇄 (MTM 카드 출력 — 기존 보존)

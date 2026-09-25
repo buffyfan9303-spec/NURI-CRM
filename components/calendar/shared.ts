@@ -31,7 +31,12 @@ export function kindLabel(kind: string, eventKinds: { kind: string; label: strin
   return eventKinds.find((k) => k.kind === kind)?.label ?? kind;
 }
 
-export function statusBadgeKind(status: string): BadgeKind {
+/** DB 계약은 planned/done/canceled 인데, 렌탈 시드 일정 30건이 한글("예정")로 저장돼 있다(2026-09-25 확인).
+ *  운영 데이터는 여기서 고치지 않고(crm-data-security 소관) 표시만 같은 뜻으로 읽는다. */
+const STATUS_ALIAS: Record<string, string> = { 예정: "planned", 완료: "done", 취소: "canceled" };
+
+export function statusBadgeKind(raw: string): BadgeKind {
+  const status = STATUS_ALIAS[raw] ?? raw;
   if (status === "done") return "success";
   if (status === "canceled") return "error";
   if (status === "planned") return "info";

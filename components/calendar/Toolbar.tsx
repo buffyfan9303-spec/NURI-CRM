@@ -191,7 +191,7 @@ export function Toolbar({
                 aria-pressed={active}
                 className={cn(
                   // 시각적 칩 크기는 그대로 두고, coarse 포인터에서만 44px 터치 영역을 가상 영역(::before)으로 넓힌다.
-                  "ev-tag relative transition-opacity [@media(pointer:coarse)]:before:absolute [@media(pointer:coarse)]:before:left-1/2 [@media(pointer:coarse)]:before:top-1/2 [@media(pointer:coarse)]:before:h-11 [@media(pointer:coarse)]:before:w-11 [@media(pointer:coarse)]:before:-translate-x-1/2 [@media(pointer:coarse)]:before:-translate-y-1/2 [@media(pointer:coarse)]:before:content-['']",
+                  "ev-tag relative justify-center transition-opacity [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:before:absolute [@media(pointer:coarse)]:before:left-1/2 [@media(pointer:coarse)]:before:top-1/2 [@media(pointer:coarse)]:before:h-[44px] [@media(pointer:coarse)]:before:w-full [@media(pointer:coarse)]:before:-translate-x-1/2 [@media(pointer:coarse)]:before:-translate-y-1/2 [@media(pointer:coarse)]:before:content-['']",
                   kindTagClass(k.kind, eventKinds),
                   !active && "opacity-40 hover:opacity-70"
                 )}
