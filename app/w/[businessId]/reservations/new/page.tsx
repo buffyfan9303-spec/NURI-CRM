@@ -49,9 +49,8 @@ export default async function NewReservationPage({
     );
   }
 
-  // 결함 D7 §3: 고객 상세에서 "새 예약"으로 오면 그 고객이 미리 선택되게 한다. create_reservation
-  // RPC가 customer_ref 파라미터를 받지 않아(0003_rental.sql, 스키마 담당 소관) 이름/전화 스냅샷만
-  // 선입력한다 — 실제 customer_ref 연결까지 하려면 RPC 시그니처 변경이 필요하다(미해결 사항 참고).
+  // 결함 D7 §3: 고객 상세에서 "새 예약"으로 오면 그 고객이 미리 선택되게 한다.
+  // 0027 부터 create_reservation 이 customer_id 를 받아 customer_ref 로 연결한다(이름/전화 스냅샷은 그대로).
   const preselectedCustomer = searchParams.customerId
     ? customersRes.ok
       ? customersRes.data.find((c) => c.id === searchParams.customerId)
@@ -69,6 +68,7 @@ export default async function NewReservationPage({
         businessId={access.businessId}
         products={productsRes.data}
         customers={customersRes.ok ? customersRes.data : []}
+        initialCustomerId={preselectedCustomer?.id}
         initialCustomerName={preselectedCustomer?.name}
         initialCustomerPhone={preselectedCustomer?.phone}
       />

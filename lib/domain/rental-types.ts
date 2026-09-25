@@ -60,12 +60,14 @@ export const RESERVATION_STATUS_BADGE: Record<ReservationStatus, "success" | "wa
   cancelled: "error",
 };
 
-export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded";
+/** 0027: written_off = 수납 없이 대손으로만 미수가 0 이 된 상태. */
+export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded" | "written_off";
 export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
   unpaid: "미수납",
   partial: "부분수납",
   paid: "수납완료",
   refunded: "환불됨",
+  written_off: "대손처리",
 };
 
 export type ItemStatus =
@@ -166,6 +168,10 @@ export interface ReservationRow {
   fittingAt: string | null;
   notes: string | null;
   createdAt: string;
+  /** 0027: 확정 시각(트리거 스탬프). 구 DB·확정 전에는 null. */
+  confirmedAt: string | null;
+  /** 0027: 확정 시점 상품 보증금 합 스냅샷(원). 구 DB·확정 전에는 null. */
+  depositRequired: number | null;
   items: ReservationItemRow[];
 }
 
@@ -179,6 +185,14 @@ export interface ReservationBalance {
   outstanding: number;
   /** 0009_rental_hardening 이후 컬럼이 아니라 원장에서 도출한 값 — v_reservation_balance/reservation_balance만이 출처다. */
   paymentStatus: PaymentStatus;
+  /** 0027 추가 열(구 DB 에서는 0). 몰수된 보증금 — 수익 항목이지만 rental_revenue 에 섞지 않는다. */
+  depositForfeited: number;
+  /** 0027: 대손 처리액(미수 감소, 매출 아님). */
+  writtenOff: number;
+  /** 0027: 취소 위약금 수익. */
+  cancelPenalty: number;
+  /** 0027: 사업자 귀책 취소 배상 지출. */
+  compensation: number;
 }
 
 export interface CareJobRow {
@@ -223,7 +237,7 @@ export interface CustomerMeasurementRow {
   note: string | null;
 }
 
-export type ReadResult<T> = { ok: true; data: T } | { ok: false; message: string };
+export type ReadResult<T> = { ok: true; data: T } | { ok: false; message: string; hint?: string };
 
 export interface ReservationFilters {
   status?: ReservationStatus[];
@@ -319,4 +333,10 @@ export interface LedgerEntryRow {
   method: string | null;
   reason: string | null;
   occurredAt: string;
+  /** 0027: 수납 단계(contract/balance/collection/deposit/other). 구 행은 null. */
+  stage?: string | null;
+  approvalNo?: string | null;
+  cashReceipt?: boolean | null;
+  /** 0027: 이 행이 정정(상계)하는 원본 행 id. */
+  reversesId?: string | null;
 }

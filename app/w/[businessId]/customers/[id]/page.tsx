@@ -13,7 +13,8 @@ import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { accessMessage } from "@/lib/auth/access";
-import { getCustomer, listCustomerMeasurements, listReservations } from "@/lib/domain/rental";
+import { getCustomer, listCustomerMeasurements, listReservations, getReservationBalance } from "@/lib/domain/rental";
+import { getCustomerMoneySummary } from "@/lib/domain/rental-money";
 import type { ReservationRow } from "@/lib/domain/rental-types";
 import { listAppointmentsForCustomer, getAppointmentBalance, listStaffProfiles, listResources, listTreatmentHistory } from "@/lib/domain/salon";
 import type { SalonAppointment } from "@/lib/domain/salon";
@@ -95,6 +96,7 @@ export default async function CustomerDetailPage({
           measurements={measurements && measurements.ok ? measurements.data : []}
           measurementsError={measurements && !measurements.ok ? measurements.message : null}
           reservationHistory={[]}
+          money={null}
         />
         <Card className="mt-4 p-5">
           <h2 className="mb-3 text-[14px] font-semibold text-t">주문 이력</h2>
@@ -200,12 +202,24 @@ export default async function CustomerDetailPage({
   // 결함 D7: 고객 상세에 예약 이력을 연결한다. confirmed=customer_ref가 이 고객으로 확정된
   // 예약. guessed=customer_ref가 비어있는 레거시 예약 중 이름이 정확히 일치하는 것만
   // "추정 연결"로 같이 보여준다(전화번호는 pii.read 없으면 안 보여서 이름만으로 판단).
-  const [confirmedRes, nameMatchRes] = await Promise.all([
+  const [confirmedRes, nameMatchRes, moneyRes] = await Promise.all([
     listReservations(access.businessId, { customerRef: params.id }),
     listReservations(access.businessId, { customer: custResult.data.name }),
+    // 0027: 고객별 미수·보관 보증금 요약(회원이면 호출, revenue.read 없으면 여부만). 구 DB 에서는 실패 → null.
+    getCustomerMoneySummary(params.id),
   ]);
 
+  // 예약별 잔액 — revenue.read 있을 때만, 고객 1명 범위라 건수가 작다(미용실 분기와 같은 관례).
+  const balanceById = new Map<string, { outstanding: number; depositBalance: number }>();
+  if (canRevenue) {
+    const all = [...(confirmedRes.ok ? confirmedRes.data : []), ...(nameMatchRes.ok ? nameMatchRes.data : [])];
+    const uniq = [...new Map(all.map((r) => [r.id, r])).values()].filter((r) => r.status !== "draft");
+    const bals = await Promise.all(uniq.map((r) => getReservationBalance(r.id)));
+    uniq.forEach((r, i) => { const b = bals[i]; if (b.ok && !("masked" in b.data)) balanceById.set(r.id, { outstanding: b.data.outstanding, depositBalance: b.data.depositBalance }); });
+  }
+
   function toHistoryRow(r: ReservationRow, linkKind: "confirmed" | "guessed"): ReservationHistoryRow {
+    const b = balanceById.get(r.id);
     return {
       id: r.id,
       reservationNo: reservationNo(r.id),
@@ -213,6 +227,8 @@ export default async function CustomerDetailPage({
       periodEnd: r.periodEnd,
       status: r.status,
       amount: canRevenue ? r.items.reduce((sum, i) => sum + i.fee - i.discount, 0) : null,
+      outstanding: canRevenue && b ? b.outstanding : null,
+      depositBalance: canRevenue && b ? b.depositBalance : null,
       linkKind,
     };
   }
@@ -236,6 +252,7 @@ export default async function CustomerDetailPage({
         measurements={measurements && measurements.ok ? measurements.data : []}
         measurementsError={measurements && !measurements.ok ? measurements.message : null}
         reservationHistory={reservationHistory}
+        money={moneyRes.ok ? moneyRes.data : null}
       />
     </PageBody>
   );

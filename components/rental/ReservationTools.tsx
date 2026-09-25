@@ -160,26 +160,30 @@ export function ReturnInspectionPanel({
     if (!r.ok) { setError(r.message); return; }
     key.current = crypto.randomUUID();
     setResult(r.data);
-    onDone();
   };
+  // 결함 D5 와 같은 결: 서버 액션의 revalidatePath 로 전부 반납된 데이터가 곧바로 내려와 이 패널이 null 이 되면(returnable 0)
+  // 정산 결과 요약이 사라진다 — 결과를 들고 있는 동안은 패널을 유지하고(트리거는 숨김), 닫을 때 새로고침한다.
+  const close = () => { setOpen(false); if (result) { setResult(null); onDone(); } };
 
-  if (returnable.length === 0) return null;
+  if (returnable.length === 0 && !result) return null;
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
-        <ClipboardCheck size={15} aria-hidden />반납 검수
-      </Button>
+      {!result && (
+        <Button onClick={() => setOpen(true)}>
+          <ClipboardCheck size={15} aria-hidden />반납 검수
+        </Button>
+      )}
       <Modal
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={close}
         title="반납 검수 · 청구 · 보증금 정산"
         className="sm:max-w-[640px]"
         footer={
           result ? (
-            <Button onClick={() => setOpen(false)}>닫기</Button>
+            <Button onClick={close}>닫기</Button>
           ) : (
             <>
-              <Button variant="secondary" onClick={() => setOpen(false)} disabled={busy}>취소</Button>
+              <Button variant="secondary" onClick={close} disabled={busy}>취소</Button>
               <Button onClick={submit} loading={busy}>{busy ? "처리 중…" : "검수 완료·정산"}</Button>
             </>
           )
@@ -486,7 +490,7 @@ export function ClaimsCard({
       ) : (
         /* relative: 마지막 열의 sr-only(absolute) 제목이 static 래퍼 밖(뷰포트)을 기준으로 잡혀
            360px 에서 문서를 140px 넓히던 결함. 스크롤 래퍼를 containing block 으로 만든다. */
-        <div className="relative -mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
+        <div className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:-mx-5 sm:px-5" tabIndex={0} role="region" aria-label="손상·분실 청구 표(가로 스크롤)">
           <table className={`${TABLE} min-w-[560px]`}>
             <thead>
               <tr className={THEAD}>

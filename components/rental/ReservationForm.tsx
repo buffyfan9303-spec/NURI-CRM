@@ -2,13 +2,16 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "@/lib/icons";
+import { Plus, Trash2, X, Search } from "@/lib/icons";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { formatKRW, parseKRW, sumItemFees } from "@/lib/domain/money";
 import { UNIT_BLOCKED, UNIT_STATUS_LABEL, type ProductWithChildren, type CustomerRow } from "@/lib/domain/rental-types";
 import { createReservationDraft, checkAvailabilityAction } from "@/lib/domain/rental-actions";
+import { getCustomerMoneySummaryAction } from "@/lib/domain/rental-money-queries";
+import type { CustomerMoneySummary } from "@/lib/domain/rental-money-types";
 import { CardHead, Alert, CONTROL } from "./listkit";
 
 interface Row {
@@ -35,13 +38,15 @@ export function ReservationForm({
   businessId,
   products,
   customers,
+  initialCustomerId,
   initialCustomerName,
   initialCustomerPhone,
 }: {
   businessId: string;
   products: ProductWithChildren[];
   customers: CustomerRow[];
-  /** 고객 상세 "새 예약"에서 넘어왔을 때 미리 채워둔다(결함 D7 §3). */
+  /** 고객 상세 "새 예약"에서 넘어왔을 때 미리 채워둔다(결함 D7 §3). 0027: id 도 같이 넘겨 customer_ref 로 연결. */
+  initialCustomerId?: string;
   initialCustomerName?: string;
   initialCustomerPhone?: string;
 }) {
@@ -52,8 +57,29 @@ export function ReservationForm({
   const defaultStart = new Date(now.getTime() + 24 * 3600000);
   const defaultEnd = new Date(now.getTime() + 72 * 3600000);
 
+  const [customerId, setCustomerId] = React.useState<string | null>(initialCustomerId ?? null);
   const [customerName, setCustomerName] = React.useState(initialCustomerName ?? "");
   const [customerPhone, setCustomerPhone] = React.useState(initialCustomerPhone ?? "");
+  const [customerQ, setCustomerQ] = React.useState("");
+  const [money, setMoney] = React.useState<CustomerMoneySummary | null>(null);
+
+  // 고객을 고르면 미수·보관 보증금 요약을 받아 경고한다(권한 없으면 여부만 온다). 구 DB 면 실패 → 조용히 무표시.
+  React.useEffect(() => {
+    if (!customerId) { setMoney(null); return; }
+    let live = true;
+    getCustomerMoneySummaryAction(businessId, customerId).then((r) => { if (live) setMoney(r.ok ? r.data : null); });
+    return () => { live = false; };
+  }, [businessId, customerId]);
+
+  const customerMatches = React.useMemo(() => {
+    const q = customerQ.trim();
+    if (!q) return [];
+    return customers.filter((c) => c.name.includes(q) || (c.phone ?? "").replace(/-/g, "").includes(q.replace(/-/g, ""))).slice(0, 8);
+  }, [customers, customerQ]);
+  const pickCustomer = (c: CustomerRow) => {
+    setCustomerId(c.id); setCustomerName(c.name); if (c.phone) setCustomerPhone(c.phone); setCustomerQ("");
+  };
+  const clearCustomer = () => { setCustomerId(null); setMoney(null); };
   const [start, setStart] = React.useState(toLocalInput(defaultStart));
   const [end, setEnd] = React.useState(toLocalInput(defaultEnd));
   const [fittingAt, setFittingAt] = React.useState("");
@@ -106,6 +132,7 @@ export function ReservationForm({
       fittingAt: fittingAt ? new Date(fittingAt).toISOString() : undefined,
       customerName: customerName || undefined,
       customerPhone: customerPhone || undefined,
+      customerId: customerId ?? undefined,
       notes: notes || undefined,
       idempotencyKey,
       items: items.map((r) => ({
@@ -130,16 +157,43 @@ export function ReservationForm({
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="flex flex-col gap-4">
       <Card className="p-4 sm:p-5">
-        <CardHead title="고객" description="목록에 없는 이름을 입력하면 새 고객으로 취급됩니다(예약에는 이름/전화 스냅샷만 저장)." />
+        <CardHead title="고객" description="기존 고객을 검색해 고르면 예약이 그 고객에 연결됩니다. 고르지 않으면 이름/전화 스냅샷만 저장됩니다." />
+        {customerId ? (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-2 text-[13px]">
+            <span className="font-medium text-[var(--accent-ink)]">선택된 고객: {customerName}</span>
+            {money && (money.masked
+              ? (money.hasOutstanding ? <Badge kind="warning">미수 있음</Badge> : <Badge kind="success">미수 없음</Badge>)
+              : (money.hasOutstanding
+                ? <Badge kind="warning">미수 {formatKRW(money.outstandingTotal)} · {money.reservationsWithOutstanding}건</Badge>
+                : <Badge kind="success">미수 없음</Badge>))}
+            {money?.hasDeposit && <Badge kind="info">보증금 보관 중{!money.masked && money.depositHeldTotal != null ? ` ${formatKRW(money.depositHeldTotal)}` : ""}</Badge>}
+            <button type="button" onClick={clearCustomer} className="ml-auto inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] text-t2 hover:bg-sf [@media(pointer:coarse)]:h-[44px]" aria-label="고객 선택 해제">
+              <X size={13} aria-hidden />해제
+            </button>
+          </div>
+        ) : (
+          <div className="relative mb-3">
+            <Search size={15} className="pointer-events-none absolute left-3 top-[12px] text-t3 [@media(pointer:coarse)]:top-[14px]" aria-hidden />
+            <input value={customerQ} onChange={(e) => setCustomerQ(e.target.value)} placeholder="기존 고객 검색(이름·전화)" aria-label="기존 고객 검색" className={CONTROL + " pl-9"} />
+            {customerMatches.length > 0 && (
+              <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-[var(--r-md)] border border-[var(--bd)] bg-sf shadow-modal" role="listbox">
+                {customerMatches.map((c) => (
+                  <li key={c.id}>
+                    <button type="button" role="option" aria-selected={false} onClick={() => pickCustomer(c)} className="flex min-h-[40px] w-full items-center justify-between gap-2 px-3 text-left text-[13px] hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]">
+                      <span className="truncate font-medium text-t">{c.name}</span>
+                      <span className="shrink-0 tabular-nums text-t3">{c.phone ?? (c.hasPhone ? "전화 비공개" : "")}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {customerQ.trim() && customerMatches.length === 0 && <p className="mt-1 text-[11.5px] text-t3">일치하는 고객이 없습니다. 아래에 이름/전화를 직접 입력하면 새 고객으로 취급됩니다.</p>}
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-2">
-          <Input label="고객 이름" value={customerName} onChange={(e) => setCustomerName(e.target.value)} list="customer-names" wrapperClassName="mb-3 sm:mb-0" />
+          <Input label="고객 이름" value={customerName} onChange={(e) => { setCustomerName(e.target.value); if (customerId) clearCustomer(); }} wrapperClassName="mb-3 sm:mb-0" />
           <Input label="전화번호" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="010-0000-0000" inputMode="tel" wrapperClassName="mb-0" />
         </div>
-        <datalist id="customer-names">
-          {customers.map((c) => (
-            <option key={c.id} value={c.name} />
-          ))}
-        </datalist>
       </Card>
 
       <Card className="p-4 sm:p-5">

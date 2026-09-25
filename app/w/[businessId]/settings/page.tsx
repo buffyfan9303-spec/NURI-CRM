@@ -10,6 +10,8 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { accessMessage, CAP_LABEL } from "@/lib/auth/access";
 import { INDUSTRY_DEFS, resolveFeatures, type IndustryFeatures } from "@/lib/industry/config";
 import { FeatureToggle } from "@/components/settings/FeatureToggle";
+import { RentalMoneySettings } from "@/components/rental/RentalMoneySettings";
+import { getFeePolicy, getCancelPolicy } from "@/lib/domain/rental-money";
 import { getAccess } from "../access";
 
 const FEATURE_LABEL: Record<keyof IndustryFeatures, string> = {
@@ -44,6 +46,10 @@ export default async function SettingsPage({ params }: { params: { businessId: s
 
   const def = INDUSTRY_DEFS[access.industry];
   const features = resolveFeatures(access.industry, access.settings);
+  // 렌탈만: 연체료 기준·취소 위약금 단계표(0027). 다른 업종은 조회하지 않는다.
+  const [feeRes, cancelRes] = access.industry === "rental"
+    ? await Promise.all([getFeePolicy(access.businessId), getCancelPolicy(access.businessId)])
+    : [null, null];
 
   return (
     <div className="mx-auto flex max-w-[760px] flex-col gap-4 p-4 md:p-6">
@@ -108,6 +114,14 @@ export default async function SettingsPage({ params }: { params: { businessId: s
           })}
         </ul>
       </Card>
+
+      {access.industry === "rental" && (
+        <RentalMoneySettings
+          businessId={access.businessId}
+          feePolicy={feeRes && feeRes.ok ? feeRes.data : null}
+          cancelPolicy={cancelRes && cancelRes.ok ? cancelRes.data : null}
+        />
+      )}
     </div>
   );
 }

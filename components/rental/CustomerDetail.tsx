@@ -22,6 +22,7 @@ import { RESERVATION_STATUS_LABEL, RESERVATION_STATUS_BADGE } from "@/lib/domain
 import { addCustomerMeasurement } from "@/lib/domain/rental-actions";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
 import { formatKRW } from "@/lib/domain/money";
+import type { CustomerMoneySummary } from "@/lib/domain/rental-money-types";
 
 /** 결함 D7: 고객 상세에 예약 이력을 연결한다. confirmed=customer_ref로 확정 연결된 예약,
  *  guessed=customer_ref가 없는 레거시 예약 중 이름이 일치해 추정으로만 보여주는 예약
@@ -34,6 +35,9 @@ export interface ReservationHistoryRow {
   status: ReservationStatus;
   /** revenue.read 없으면 null(0원이 아니라 아예 표시하지 않음). */
   amount: number | null;
+  /** 0027: 예약별 잔액(revenue.read 없으면 null). */
+  outstanding: number | null;
+  depositBalance: number | null;
   linkKind: "confirmed" | "guessed";
 }
 
@@ -54,6 +58,7 @@ export function CustomerDetail({
   measurements,
   measurementsError,
   reservationHistory,
+  money = null,
 }: {
   businessId: string;
   customer: CustomerRow;
@@ -62,6 +67,8 @@ export function CustomerDetail({
   measurements: CustomerMeasurementRow[];
   measurementsError: string | null;
   reservationHistory: ReservationHistoryRow[];
+  /** 0027: 미수·보관 보증금 요약(렌탈만). revenue.read 없으면 masked 로 여부만 온다. */
+  money?: CustomerMoneySummary | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -102,14 +109,16 @@ export function CustomerDetail({
             }
           />
         ) : (
-          <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
-            <table className={`${TABLE} min-w-[520px]`}>
+          <div className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:-mx-5 sm:px-5" tabIndex={0} role="region" aria-label="예약 이력 표(가로 스크롤)">
+            <table className={`${TABLE} min-w-[720px]`}>
               <thead>
                 <tr className={THEAD}>
                   <th className={TH}>예약번호</th>
                   <th className={TH}>대여기간</th>
                   <th className={TH}>상태</th>
                   <th className={`${TH} text-right`}>금액</th>
+                  <th className={`${TH} text-right`}>잔액(미수)</th>
+                  <th className={`${TH} text-right`}>보관 보증금</th>
                 </tr>
               </thead>
               <tbody>
@@ -135,6 +144,12 @@ export function CustomerDetail({
                     </td>
                     <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>
                       {r.amount === null ? <span className="text-t3">-</span> : formatKRW(r.amount)}
+                    </td>
+                    <td className={`${TD} whitespace-nowrap text-right tabular-nums ` + ((r.outstanding ?? 0) > 0 ? "font-semibold text-et" : "text-t2")}>
+                      {r.outstanding === null ? <span className="text-t3">-</span> : formatKRW(r.outstanding)}
+                    </td>
+                    <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t2`}>
+                      {r.depositBalance === null ? <span className="text-t3">-</span> : formatKRW(r.depositBalance)}
                     </td>
                   </tr>
                 ))}
@@ -173,7 +188,7 @@ export function CustomerDetail({
               </div>
 
               {measurements.length > 1 && (
-                <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
+                <div className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:-mx-5 sm:px-5" tabIndex={0} role="region" aria-label="측정 기록 표(가로 스크롤)">
                   <table className={`${TABLE} min-w-[480px]`}>
                     <thead>
                       <tr className={THEAD}>
@@ -207,6 +222,32 @@ export function CustomerDetail({
     </div>
 
     <div className="flex flex-col gap-4 lg:col-span-4">
+      {money && (
+        <Card className={"p-4 sm:p-5 " + (money.hasOutstanding ? "border-[var(--et)]" : "")}>
+          <CardHead title="미수·보증금" description={money.masked ? "금액은 매출·정산 조회 권한이 있어야 보입니다." : `진행 중 예약 ${money.openReservations}건`} />
+          {money.masked ? (
+            <div className="flex flex-wrap gap-1.5">
+              {money.hasOutstanding ? <Badge kind="warning">미수 있음</Badge> : <Badge kind="success">미수 없음</Badge>}
+              {money.hasDeposit && <Badge kind="info">보증금 보관 중</Badge>}
+            </div>
+          ) : (
+            <dl className="grid grid-cols-2 gap-3 text-[13px]">
+              <div>
+                <dt className="text-[11.5px] text-t3">미수금 합계</dt>
+                <dd className={"mt-0.5 text-[16px] font-semibold tabular-nums " + (money.hasOutstanding ? "text-et" : "text-t")}>{formatKRW(money.outstandingTotal)}</dd>
+                <dd className="text-[11px] text-t3">{money.reservationsWithOutstanding}건</dd>
+              </div>
+              <div>
+                <dt className="text-[11.5px] text-t3">보관 보증금</dt>
+                <dd className="mt-0.5 text-[16px] font-semibold tabular-nums text-t">{formatKRW(money.depositHeldTotal)}</dd>
+              </div>
+            </dl>
+          )}
+          {money.hasOutstanding && (
+            <Link href={`/w/${businessId}/receivables`} className="mt-2 inline-flex h-[32px] items-center text-[12.5px] font-medium text-[var(--accent-ink)] hover:underline [@media(pointer:coarse)]:h-[44px]">미수금 보드에서 독촉·수납 →</Link>
+          )}
+        </Card>
+      )}
       <Card className="p-4 sm:p-5">
         <CardHead title="기본 정보" />
         <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2 lg:grid-cols-1">

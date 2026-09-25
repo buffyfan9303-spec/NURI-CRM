@@ -85,6 +85,8 @@ function toReservation(row: Record<string, unknown>): ReservationRow {
     fittingAt: (row.fitting_at as string) ?? null,
     notes: (row.notes as string) ?? null,
     createdAt: row.created_at as string,
+    confirmedAt: (row.confirmed_at as string) ?? null,
+    depositRequired: row.deposit_required == null ? null : Number(row.deposit_required),
     items,
   };
 }
@@ -179,6 +181,10 @@ export async function getReservationBalance(
       discount: b.discount as number,
       outstanding: b.outstanding as number,
       paymentStatus: b.payment_status as PaymentStatus,
+      depositForfeited: Number(b.deposit_forfeited ?? 0),
+      writtenOff: Number(b.written_off ?? 0),
+      cancelPenalty: Number(b.cancel_penalty ?? 0),
+      compensation: Number(b.compensation ?? 0),
     },
   };
 }
@@ -698,12 +704,14 @@ export async function listDamageClaims(businessId: string, reservationId: string
 export async function listSettlementHistory(businessId: string, reservationId: string): Promise<ReadResult<{ masked: boolean; entries: LedgerEntryRow[] }>> {
   const sb = getServerSupabase();
   const { data, error } = await sb.schema("crm").from("ledger_entries")
-    .select("id,entry_type,amount,direction,method,reason,occurred_at")
+    .select("*") // 0027 열(stage 등)은 있으면 매핑 — 열 이름을 고정하면 DB 보다 앱이 먼저 나갈 때 깨진다
     .eq("business_id", businessId).eq("reservation_id", reservationId).order("occurred_at");
   if (error) return { ok: false, message: error.message };
   const entries = (data ?? []).map((r) => ({
     id: r.id as string, entryType: r.entry_type as string, amount: r.amount as number, direction: r.direction as "in" | "out",
     method: (r.method as string) ?? null, reason: (r.reason as string) ?? null, occurredAt: r.occurred_at as string,
+    stage: (r.stage as string) ?? null, approvalNo: (r.approval_no as string) ?? null,
+    cashReceipt: (r.cash_receipt as boolean | null) ?? null, reversesId: (r.reverses_id as string) ?? null,
   }));
   return { ok: true, data: { masked: entries.length === 0 && (await ledgerMasked(businessId)), entries } };
 }

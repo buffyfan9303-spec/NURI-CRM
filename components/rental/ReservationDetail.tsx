@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Wrench, Repeat } from "@/lib/icons";
+import { CalendarClock, Wrench, Repeat, Printer, Lock } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -23,7 +23,6 @@ import {
   type LedgerEntryRow,
 } from "@/lib/domain/rental-types";
 import {
-  confirmReservationAction,
   cancelReservationDraft,
   markItemsOutAction,
   markItemsReturnedAction,
@@ -38,7 +37,10 @@ import { UNIT_STATUS_LABEL } from "@/lib/domain/rental-types";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { SettlementPanel } from "./SettlementPanel";
-import { ReturnInspectionPanel, CancelConfirmedButton, NoticeButton, ClaimsCard } from "./ReservationTools";
+import { CancelPenaltyButton } from "./CancelPenaltyButton";
+import { ReturnInspectionPanel, NoticeButton, ClaimsCard } from "./ReservationTools";
+import { confirmAndChargeAction } from "@/lib/domain/rental-money-actions";
+import type { CancelPolicy } from "@/lib/domain/rental-money-types";
 import { CardHead, Alert, BackLink, SelectField, CONTROL, TABLE, THEAD, TH, TR, TD } from "./listkit";
 
 /** 개체 교환이 허용되는 예약 상태(crm.swap_reservation_unit의 상태 검사와 동일). */
@@ -67,6 +69,8 @@ export function ReservationDetail({
   canWrite,
   canRefund,
   canRevenueRead,
+  role = "viewer",
+  cancelPolicy = null,
 }: {
   businessId: string;
   businessName: string;
@@ -78,6 +82,10 @@ export function ReservationDetail({
   canWrite: boolean;
   canRefund: boolean;
   canRevenueRead: boolean;
+  /** memberships.role — 정정·몰수(owner/manager), 대손(owner) 폼 노출용. 서버가 다시 판정한다. */
+  role?: string;
+  /** 취소 위약금 단계표(확정 예약일 때만 서버가 넘긴다). */
+  cancelPolicy?: CancelPolicy | null;
 }) {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
@@ -85,6 +93,8 @@ export function ReservationDetail({
   const [busy, setBusy] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [periodOpen, setPeriodOpen] = React.useState(false);
+  // 결함 D5: 취소 액션의 revalidatePath 로 상태가 '취소'로 바뀌어도 결과 요약(모달)을 닫기 전까지 유지한다.
+  const [keepCancel, setKeepCancel] = React.useState(false);
 
   const refresh = () => { setNotice(null); router.refresh(); };
   const run = async (fn: () => Promise<{ ok: boolean; message?: string }>, successMsg?: string) => {
@@ -115,6 +125,9 @@ export function ReservationDetail({
   const flatBalance = balance && !("masked" in balance) ? balance : null;
   // 반납 검수 한 화면은 write+revenue.read+refund 가 모두 있어야 서버가 롤백 없이 끝난다.
   const canInspect = canWrite && canRevenueRead && canRefund;
+  const canManage = role === "owner" || role === "manager";
+  // 출고 전 보증금 미수령 경고(막지는 않는다 — 계약 §2: 보증금은 안내값).
+  const depositShort = flatBalance && reservation.depositRequired != null ? Math.max(0, reservation.depositRequired - flatBalance.depositBalance) : 0;
 
   // 표와 카드가 같은 값·같은 동작을 쓰도록 한 곳에서 계산한다.
   const itemView = (i: ReservationItemRow) => {
@@ -221,19 +234,25 @@ export function ReservationDetail({
                 >
                   취소
                 </Button>
-                <Button onClick={() => run(() => confirmReservationAction(businessId, reservation.id), "예약이 확정되었습니다.")} loading={busy}>
-                  예약 확정
+                <Button
+                  loading={busy}
+                  onClick={() => run(async () => {
+                    const r = await confirmAndChargeAction(businessId, reservation.id);
+                    if (r.ok) setNotice(`예약이 확정되었습니다. 대여료 ${formatKRW(r.data.chargedFee - r.data.chargedDiscount)}을 청구했습니다${r.data.depositRequired ? ` · 보증금 필요액 ${formatKRW(r.data.depositRequired)}` : ""}.`);
+                    return r;
+                  })}
+                >
+                  확정 + 대여료 청구
                 </Button>
               </>
             )}
-            {canWrite && reservation.status === "confirmed" && (
-              <CancelConfirmedButton
-                businessId={businessId}
-                reservationId={reservation.id}
-                hasMoney={flatBalance ? flatBalance.cashReceived > 0 || flatBalance.depositBalance > 0 : true}
-                canRefund={canRefund}
-                onDone={refresh}
-              />
+            {canWrite && (reservation.status === "confirmed" || keepCancel) && (
+              <CancelPenaltyButton businessId={businessId} reservationId={reservation.id} policy={cancelPolicy} canRefund={canRefund} isOwner={role === "owner"} onResult={() => setKeepCancel(true)} onDone={() => { setKeepCancel(false); refresh(); }} />
+            )}
+            {canRevenueRead && !["draft"].includes(reservation.status) && (
+              <Link href={`/w/${businessId}/reservations/${reservation.id}/statement/print`} className="inline-flex">
+                <Button variant="secondary" className="w-full"><Printer size={15} aria-hidden />거래명세서</Button>
+              </Link>
             )}
             {canInspect && <ReturnInspectionPanel businessId={businessId} reservation={reservation} balance={flatBalance} onDone={refresh} />}
           </>
@@ -259,6 +278,11 @@ export function ReservationDetail({
                 action={
                   canWrite && (outable.length > 0 || returnable.length > 0) ? (
                     <>
+                      {outable.length > 0 && depositShort > 0 && (
+                        <span title={`보증금 필요 ${formatKRW(reservation.depositRequired ?? 0)} · 보관 ${formatKRW(flatBalance?.depositBalance ?? 0)}`}>
+                          <Badge kind="warning">보증금 {formatKRW(depositShort)} 미수령</Badge>
+                        </span>
+                      )}
                       {outable.length > 0 && (
                         <Button
                           size="sm"
@@ -297,7 +321,7 @@ export function ReservationDetail({
                 rows={reservation.items}
                 keyOf={(i) => i.id}
                 table={
-                  <div className="relative -mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
+                  <div className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:-mx-5 sm:px-5" tabIndex={0} role="region" aria-label="구성 항목 표(가로 스크롤)">
                     <table className={`${TABLE} min-w-[880px]`}>
                       <thead>
                         <tr className={THEAD}>
@@ -361,16 +385,27 @@ export function ReservationDetail({
               />
             </Card>
 
+            {!canRevenueRead && (
+              <Card className="scroll-mt-4 p-4 sm:p-5" id="settlement">
+                <CardHead title="정산" />
+                <p className="flex items-start gap-1.5 text-[12.5px] text-t2">
+                  <Lock size={14} className="mt-[2px] shrink-0 text-t3" aria-hidden />
+                  금액·정산은 매출 조회 권한이 있는 직원만 볼 수 있습니다. 수납·환불이 필요하면 관리자에게 요청하세요.
+                </p>
+              </Card>
+            )}
             {canRevenueRead && (
-              <Card className="p-4 sm:p-5">
-                <CardHead title="정산" description="대여매출·연체료·보증금·수납은 항목별로 분리해 표시합니다." />
+              <Card className="scroll-mt-4 p-4 sm:p-5" id="settlement">
+                <CardHead title="정산" description="청구·수납·잔금·보증금을 분리해 보여줍니다. 보증금은 대여 매출에 합산하지 않습니다." />
                 <SettlementPanel
                   businessId={businessId}
-                  reservationId={reservation.id}
+                  reservation={reservation}
                   balance={balance}
                   history={history}
                   canWrite={canWrite}
                   canRefund={canRefund}
+                  canManage={canManage}
+                  isOwner={role === "owner"}
                   onChanged={refresh}
                 />
               </Card>
@@ -422,9 +457,9 @@ export function ReservationDetail({
               <dl className="flex flex-col gap-3 text-[13px]">
                 <div>
                   <dt className="text-[11.5px] text-t3">고객</dt>
-                  <dd className="mt-0.5 text-t">
+                  <dd className="mt-0.5 flex flex-wrap items-center text-t">
                     {reservation.customerRef ? (
-                      <Link href={`/w/${businessId}/customers/${reservation.customerRef}`} className="font-medium text-[var(--accent-ink)] hover:underline">
+                      <Link href={`/w/${businessId}/customers/${reservation.customerRef}`} className="inline-flex min-h-[32px] items-center font-medium text-[var(--accent-ink)] hover:underline [@media(pointer:coarse)]:min-h-[44px]">
                         {reservation.customerName ?? "고객 미지정"}
                       </Link>
                     ) : (

@@ -127,6 +127,8 @@ export const INDUSTRY_DEFS: Record<Industry, IndustryDef> = {
       { key: "care", path: "care", label: "세탁·수선", cap: "view" },
       { key: "scan", path: "scan", label: "스캔", cap: "write" },
       { key: "settlement", path: "settlement", label: "정산", cap: "revenue.read" },
+      // 0027: 미수 연령·독촉·대손 + 보관 보증금 현황. 페이지도 revenue.read 로 연다(권한 없으면 안내).
+      { key: "receivables", path: "receivables", label: "미수금", cap: "revenue.read" },
       { key: "staff", path: "staff", label: "직원·권한", cap: "staff.manage" },
     ],
     eventKinds: [

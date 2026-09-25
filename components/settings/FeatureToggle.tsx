@@ -51,7 +51,7 @@ export function FeatureToggle({
           aria-checked={on}
           disabled={busy}
           onClick={toggle}
-          className="min-h-[28px] min-w-[44px] rounded-full disabled:opacity-60"
+          className="inline-flex min-h-[28px] min-w-[44px] items-center justify-center rounded-full disabled:opacity-60 [@media(pointer:coarse)]:min-h-[44px]"
         >
           <Badge kind={on ? "success" : "info"}>{busy ? "저장 중…" : on ? "사용" : "미사용"}</Badge>
         </button>

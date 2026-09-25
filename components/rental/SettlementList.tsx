@@ -26,6 +26,7 @@ export function SettlementList({
   canWrite,
   canRefund,
   canExport,
+  role = "viewer",
 }: {
   businessId: string;
   reservations: ReservationRow[];
@@ -33,10 +34,14 @@ export function SettlementList({
   /** CLICK-PATH-218: write 없이는 SettlementPanel의 수납·연체료·환불 폼을 숨긴다. */
   canWrite: boolean;
   canRefund: boolean;
+  /** memberships.role — 정정·몰수(owner/manager)·대손(owner) 폼 노출용. */
+  role?: string;
   /** CLICK-PATH-222: export cap을 서버가 강제하는 CSV만 쓴다(브라우저에서 직접 만들지 않는다). */
   canExport: boolean;
 }) {
   const router = useRouter();
+  const canManage = role === "owner" || role === "manager";
+  const isOwner = role === "owner";
   const [openId, setOpenId] = React.useState<string | null>(null);
   const [q, setQ] = React.useState("");
   const [exportError, setExportError] = React.useState<string | null>(null);
@@ -53,15 +58,17 @@ export function SettlementList({
 
   // 상단 요약 — 목록에 이미 내려온 잔액만 더한다(새 조회 없음). 보증금은 매출과 섞지 않는다(계약 §3).
   const totals = React.useMemo(() => {
-    let outstanding = 0, deposit = 0, outstandingCount = 0;
-    for (const b of balances) {
-      if (!b || "masked" in b) continue;
+    let outstanding = 0, deposit = 0, outstandingCount = 0, depositAfterReturn = 0;
+    balances.forEach((b, i) => {
+      if (!b || "masked" in b) return;
       outstanding += b.outstanding;
       deposit += b.depositBalance;
       if (b.outstanding > 0) outstandingCount += 1;
-    }
-    return { outstanding, deposit, outstandingCount };
-  }, [balances]);
+      // 반납이 끝났는데 아직 돌려주지 않은 보증금 — 미수금 화면의 '보관 보증금' 탭과 같은 기준.
+      if (b.depositBalance > 0 && ["returned", "closed"].includes(reservations[i]?.status)) depositAfterReturn += 1;
+    });
+    return { outstanding, deposit, outstandingCount, depositAfterReturn };
+  }, [balances, reservations]);
 
   // 표와 카드가 같은 값·같은 동작(행 펼치기)을 쓰도록 한 곳에서 계산한다.
   const toggle = (id: string) => setOpenId(openId === id ? null : id);
@@ -104,7 +111,7 @@ export function SettlementList({
     <>
       <PageHeader
         title="정산"
-        description="확정·출고·반납된 예약의 대여매출·연체료·보증금·수납을 항목별로 분리해 보여줍니다. 행을 펼치면 수납·환불을 처리합니다."
+        description="확정·출고·반납된 예약의 대여매출·연체료·보증금·수납을 항목별로 분리해 보여줍니다. 행을 펼치면 수납·환불을 처리합니다. 연령별 미수와 보관 보증금은 '미수금' 화면에서 봅니다."
         meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">{reservations.length}건</span>}
         actions={
           canExport ? (
@@ -118,12 +125,13 @@ export function SettlementList({
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <SummaryTile label="미수금 합계" value={formatKRW(totals.outstanding)} tone={totals.outstanding > 0 ? "alert" : "neutral"} sub={`${totals.outstandingCount}건 미수`} />
-            <SummaryTile label="보증금 보유 잔액" value={formatKRW(totals.deposit)} sub="대여매출과 별도 관리" />
+            <SummaryTile label="보증금 보유 잔액" value={formatKRW(totals.deposit)} sub={`대여매출과 별도 관리 · ${totals.depositAfterReturn}건은 반납 후 미반환`} />
             <SummaryTile label="정산 대상" value={`${reservations.length}건`} sub="확정~종결 예약" className="col-span-2 sm:col-span-1" />
           </div>
           <FilterRow>
             <SearchBox value={q} onChange={setQ} placeholder="고객 이름/전화번호 검색" />
             {needle && <TextAction onClick={() => setQ("")}>검색 지우기</TextAction>}
+            <Link href={`/w/${businessId}/receivables`} className="inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">미수금·보관 보증금 보드 →</Link>
           </FilterRow>
           {exportError && <Alert>{exportError}</Alert>}
         </div>
@@ -143,7 +151,7 @@ export function SettlementList({
             rows={pageRows}
             keyOf={({ r }) => r.id}
             table={
-              <Card className="overflow-x-auto">
+              <Card className="relative overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]" tabIndex={0} role="region" aria-label="정산 목록 표(가로 스크롤)">
                 <table className={`${TABLE} min-w-[1040px]`}>
                   <thead>
                     <tr className={THEAD}>
@@ -183,7 +191,7 @@ export function SettlementList({
                           {v.open && (
                             <tr className="border-b border-[var(--bd)] bg-sf2/40 last:border-b-0">
                               <td colSpan={10} className="px-5 py-4">
-                                <SettlementPanel businessId={businessId} reservationId={r.id} balance={bal} canWrite={canWrite} canRefund={canRefund} onChanged={() => router.refresh()} />
+                                <SettlementPanel businessId={businessId} reservation={r} balance={bal} canWrite={canWrite} canRefund={canRefund} canManage={canManage} isOwner={isOwner} onChanged={() => router.refresh()} />
                               </td>
                             </tr>
                           )}
@@ -216,7 +224,7 @@ export function SettlementList({
                     </>
                   }
                 >
-                  {v.open && <SettlementPanel businessId={businessId} reservationId={r.id} balance={bal} canWrite={canWrite} canRefund={canRefund} onChanged={() => router.refresh()} />}
+                  {v.open && <SettlementPanel businessId={businessId} reservation={r} balance={bal} canWrite={canWrite} canRefund={canRefund} canManage={canManage} isOwner={isOwner} onChanged={() => router.refresh()} />}
                 </MobileCard>
               );
             }}

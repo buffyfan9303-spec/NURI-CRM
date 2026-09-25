@@ -5,6 +5,7 @@ import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { accessMessage } from "@/lib/auth/access";
 import { getReservation, getReservationBalance, listDamageClaims, listSettlementHistory } from "@/lib/domain/rental";
+import { getCancelPolicy } from "@/lib/domain/rental-money";
 import { getAccess } from "../../access";
 import { ReservationDetail } from "@/components/rental/ReservationDetail";
 
@@ -55,6 +56,10 @@ export default async function ReservationDetailPage({
     ? resResult.data
     : { ...resResult.data, items: resResult.data.items.map((i) => ({ ...i, fee: 0, discount: 0 })) };
 
+  // 취소 단계표는 확정 예약을 취소할 수 있는 사용자에게만 필요하다(다른 상태에서는 조회하지 않는다).
+  const canWrite = access.caps.includes("write");
+  const policyRes = canWrite && reservation.status === "confirmed" ? await getCancelPolicy(access.businessId) : null;
+
   return (
     <PageBody>
       <ReservationDetail
@@ -65,9 +70,11 @@ export default async function ReservationDetailPage({
         balance={balResult.ok ? balResult.data : null}
         claims={claimsResult.ok ? claimsResult.data.map((c) => (canRevenueRead ? c : { ...c, amount: null })) : []}
         history={historyResult && historyResult.ok ? historyResult.data : null}
-        canWrite={access.caps.includes("write")}
+        canWrite={canWrite}
         canRefund={access.caps.includes("refund")}
         canRevenueRead={canRevenueRead}
+        role={access.role}
+        cancelPolicy={policyRes && policyRes.ok ? policyRes.data : null}
       />
     </PageBody>
   );

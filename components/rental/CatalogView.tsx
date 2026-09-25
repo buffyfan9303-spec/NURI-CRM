@@ -208,7 +208,7 @@ export function CatalogView({
                 rows={pageRows}
                 keyOf={(f) => f.unit.id}
                 table={
-                  <Card className="overflow-x-auto">
+                  <Card className="relative overflow-x-auto">
                     <table className={`${TABLE} min-w-[980px]`}>
                       <thead>
                         <tr className={THEAD}>

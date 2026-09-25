@@ -133,6 +133,8 @@ import { ChatTextIcon as MessageSquare } from "@phosphor-icons/react/dist/ssr/Ch
 import { PhoneIcon as Phone } from "@phosphor-icons/react/dist/ssr/Phone";
 import { PaperPlaneTiltIcon as Send } from "@phosphor-icons/react/dist/ssr/PaperPlaneTilt";
 import { BackspaceIcon as Delete } from "@phosphor-icons/react/dist/ssr/Backspace";
+// 렌탈 돈 흐름(0027): 미수금 메뉴
+import { HandCoinsIcon as HandCoins } from "@phosphor-icons/react/dist/ssr/HandCoins";
 
 export {
   LayoutDashboard,
@@ -242,6 +244,7 @@ export {
   Phone,
   Send,
   Delete,
+  HandCoins,
 };
 
 /** 업종 → 아이콘. `lib/industry/config.ts` 의 `icon` 문자열이 Tabler 이름이라 여기서 변환한다. */
@@ -273,6 +276,7 @@ export const NAV_ICON: Record<string, typeof LayoutDashboard> = {
   care: Wrench,
   scan: ScanLine,
   settlement: Receipt,
+  receivables: HandCoins,
   staff: UserCog,
   products: Package,
   stock: Boxes,

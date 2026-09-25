@@ -154,6 +154,7 @@ export default async function SettlementPage({ params }: { params: { businessId:
         canWrite={access.caps.includes("write")}
         canRefund={access.caps.includes("refund")}
         canExport={access.caps.includes("export")}
+        role={access.role}
       />
     </PageBody>
   );
