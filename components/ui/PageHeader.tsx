@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
+import { PageActions, SettingsIconLink } from "@/components/ui/PageActions";
 
 /**
  * 페이지 헤더 공통 패턴(레퍼런스01 상단: 제목 22px + 한 줄 설명 + 우측 동작).
@@ -7,8 +8,8 @@ import { cn } from "@/lib/utils/cn";
  *   <PageHeader title="예약" description="오늘 처리할 예약과 대여 일정" actions={<Button>새 예약</Button>} />
  *
  * - 제목은 페이지의 유일한 <h1>. 상단바가 이미 사업장/현재 위치를 보여주므로 여기서 사업장명을 반복하지 않는다.
- * - actions 는 오른쪽 정렬. 휴대폰(<640)에서는 제목 아래로 내려가 가로로 늘어난다 — 버튼이 2개를 넘으면
- *   호출부에서 보조 동작을 메뉴로 접는다(헤더에 버튼을 나열해 두 줄로 흘리지 않는다).
+ * - actions 는 PC 오른쪽 정렬, 휴대폰(<640)은 제목 아래 같은 폭 2열 그리드(PageActions). 버튼이 2개를 넘으면
+ *   호출부에서 보조 동작을 메뉴로 접는다. "설정"은 actions 에 넣지 말고 settingsHref 로 넘긴다.
  * - 상단바의 업종 CTA(WorkspaceShell)와 같은 동작이면 여기서 다시 그리지 않는다. 한 화면에 같은 버튼 두 개 금지.
  * - meta: 제목 오른쪽의 작은 배지/카운트(예: 상태 뱃지). children: 헤더 아래 탭/필터 행.
  */
@@ -17,6 +18,7 @@ export function PageHeader({
   description,
   meta,
   actions,
+  settingsHref,
   children,
   className,
 }: {
@@ -24,24 +26,25 @@ export function PageHeader({
   description?: string;
   meta?: React.ReactNode;
   actions?: React.ReactNode;
+  /** 설정 화면 링크. 휴대폰은 제목 옆 아이콘, PC 는 동작 줄 끝 텍스트 버튼(PageActions). */
+  settingsHref?: string;
   children?: React.ReactNode;
   className?: string;
 }) {
   return (
     <header className={cn("mb-4 sm:mb-5", className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-[20px] font-bold leading-tight tracking-tight text-t sm:text-[var(--fs-page)]">{title}</h1>
-            {meta}
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-[20px] font-bold leading-tight tracking-tight text-t sm:text-[var(--fs-page)]">{title}</h1>
+              {meta}
+            </div>
+            {description && <p className="mt-1 text-[13px] leading-snug text-t2">{description}</p>}
           </div>
-          {description && <p className="mt-1 text-[13px] leading-snug text-t2">{description}</p>}
+          {settingsHref && <SettingsIconLink href={settingsHref} />}
         </div>
-        {actions && (
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end [&>*]:flex-1 sm:[&>*]:flex-none">
-            {actions}
-          </div>
-        )}
+        {(actions || settingsHref) && <PageActions settingsHref={settingsHref}>{actions}</PageActions>}
       </div>
       {children && <div className="mt-3">{children}</div>}
     </header>

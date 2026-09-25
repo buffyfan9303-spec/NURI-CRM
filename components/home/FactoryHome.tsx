@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ClipboardPlus, ListChecks, Settings, ClipboardList, TriangleAlert, Truck, CalendarRange } from "@/lib/icons";
+import { ClipboardPlus, ListChecks, ClipboardList, TriangleAlert, Truck, CalendarRange } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { HomeLayout, HomeEmpty } from "./HomeLayout";
+import { PageActions } from "@/components/ui/PageActions";
 import { WorkList, type WorkRow } from "./WorkList";
 import { WorkTable, type WorkTableRow } from "./WorkTable";
 import { KpiRow, KpiCard } from "@/components/charts/KpiCard";
@@ -65,13 +66,6 @@ export function FactoryHome({
           <ListChecks size={15} aria-hidden />작업지시 확인
         </Button>
       </Link>
-      {canManage && (
-        <Link href={`${base}/settings`}>
-          <Button size="sm" variant="ghost">
-            <Settings size={15} aria-hidden />설정
-          </Button>
-        </Link>
-      )}
     </>
   );
 
@@ -81,7 +75,7 @@ export function FactoryHome({
       <div className="flex flex-col gap-4 p-4 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-[19px] font-semibold text-t">{businessName}</h1>
-          <div className="flex gap-2">{actions}</div>
+          <PageActions settingsHref={canManage ? `${base}/settings` : undefined}>{actions}</PageActions>
         </div>
         <Card className="px-2 py-2">
           <ErrorState title="오늘 현황을 불러오지 못했습니다." description={message} />
@@ -101,7 +95,7 @@ export function FactoryHome({
   const totalWork = activeProcesses.length + d.lowStockMaterials.length;
   if (totalWork === 0) {
     return (
-      <HomeEmpty
+      <HomeEmpty settingsHref={canManage ? `${base}/settings` : undefined}
         title={businessName}
         metricLabels={["진행 수주", "오늘 납기", "지연 공정", "출고 대기"]}
         structureHint="수주가 생기면 여기에 공정별 작업 목록과 담당자·납기가 표시됩니다."
@@ -184,7 +178,7 @@ export function FactoryHome({
   ];
 
   return (
-    <HomeLayout
+    <HomeLayout settingsHref={canManage ? `${base}/settings` : undefined}
       title={businessName}
       actions={actions}
       metrics={

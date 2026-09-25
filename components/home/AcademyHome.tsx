@@ -4,7 +4,7 @@
  * 겹치는 버튼은 헤더에 두지 않는다.
  */
 import Link from "next/link";
-import { ClipboardCheck, Search, Settings, CalendarCheck2, TriangleAlert, CalendarRange, QrCode } from "@/lib/icons";
+import { ClipboardCheck, Search, CalendarCheck2, TriangleAlert, CalendarRange, QrCode } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -64,20 +64,13 @@ export function AcademyHome({
           </Button>
         </Link>
       )}
-      {canManage && (
-        <Link href={`${base}/settings`}>
-          <Button size="sm" variant="ghost">
-            <Settings size={15} aria-hidden />설정
-          </Button>
-        </Link>
-      )}
     </>
   );
 
   if (!result.ok) {
     return (
       <PageBody>
-        <PageHeader title={businessName} description="오늘 수업·출결·수강료 현황" actions={actions} />
+        <PageHeader settingsHref={canManage ? `${base}/settings` : undefined} title={businessName} description="오늘 수업·출결·수강료 현황" actions={actions} />
         <Card>
           <ErrorState title="오늘 현황을 불러오지 못했습니다." description={result.message} />
           <div className="flex justify-center pb-6"><RetryButton /></div>
@@ -158,7 +151,7 @@ export function AcademyHome({
 
   return (
     <PageBody>
-      <PageHeader title={businessName} description={`${d.todayKey} · 오늘 수업·출결·수강료 현황`} actions={actions} />
+      <PageHeader settingsHref={canManage ? `${base}/settings` : undefined} title={businessName} description={`${d.todayKey} · 오늘 수업·출결·수강료 현황`} actions={actions} />
 
       <div className="flex flex-col gap-4">
         <div className={KPI_GRID}>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PackagePlus, ClipboardCheck, Settings, TriangleAlert, ClipboardList, CalendarDays } from "@/lib/icons";
+import { PackagePlus, ClipboardCheck, TriangleAlert, ClipboardList, CalendarDays } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -58,27 +58,20 @@ export async function UnmannedHome({
     <>
       {canWrite && (
         <Link href={`${base}/products`} className="min-w-0">
-          <Button className="w-full">
+          <Button size="sm">
             <PackagePlus size={15} aria-hidden />입고 등록
           </Button>
         </Link>
       )}
       <Link href={`${base}/tasks?due=today`} className="min-w-0">
-        <Button variant="secondary" className="w-full">
+        <Button size="sm" variant="secondary">
           <ClipboardCheck size={15} aria-hidden />오늘 점검
         </Button>
       </Link>
-      {canManage && (
-        <Link href={`${base}/settings`} className="min-w-0">
-          <Button variant="ghost" className="w-full">
-            <Settings size={15} aria-hidden />설정
-          </Button>
-        </Link>
-      )}
     </>
   );
   const header = (
-    <PageHeader
+    <PageHeader settingsHref={canManage ? `${base}/settings` : undefined}
       title={businessName}
       description="부족 재고·점검 마감·실사 차이와 최근 6개월 판매 추이"
       meta={

@@ -7,7 +7,7 @@
  */
 import * as React from "react";
 import Link from "next/link";
-import { Banknote, Settings, CalendarCheck2, Clock4, TriangleAlert, CircleUserRound, RotateCcw, Package } from "@/lib/icons";
+import { Banknote, CalendarCheck2, Clock4, TriangleAlert, CircleUserRound, RotateCcw, Package } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -67,20 +67,13 @@ export function SalonHome({
           </Button>
         </Link>
       )}
-      {canManage && (
-        <Link href={`${base}/settings`}>
-          <Button size="sm" variant="ghost">
-            <Settings size={15} aria-hidden />설정
-          </Button>
-        </Link>
-      )}
     </>
   );
 
   if (!result.ok) {
     return (
       <PageBody>
-        <PageHeader title={businessName} description="오늘 예약·시술·수납 현황" actions={actions} />
+        <PageHeader settingsHref={canManage ? `${base}/settings` : undefined} title={businessName} description="오늘 예약·시술·수납 현황" actions={actions} />
         <Card>
           <ErrorState title="오늘 현황을 불러오지 못했습니다." description={result.message} />
           <div className="flex justify-center pb-6"><RetryButton /></div>
@@ -156,7 +149,7 @@ export function SalonHome({
 
   return (
     <PageBody>
-      <PageHeader title={businessName} description={`${d.todayKey} · 오늘 예약·시술·수납 현황`} actions={actions} />
+      <PageHeader settingsHref={canManage ? `${base}/settings` : undefined} title={businessName} description={`${d.todayKey} · 오늘 예약·시술·수납 현황`} actions={actions} />
 
       <div className="flex flex-col gap-4">
         <div className={KPI_GRID}>

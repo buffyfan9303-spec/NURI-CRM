@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   CalendarPlus,
   ScanLine,
-  Settings,
   Scissors,
   Truck,
   Undo2,
@@ -67,27 +66,20 @@ export function RentalHome({
     <>
       {canWrite && (
         <Link href={`${base}/reservations/new`} className="min-w-0">
-          <Button className="w-full">
+          <Button size="sm">
             <CalendarPlus size={15} aria-hidden />예약 등록
           </Button>
         </Link>
       )}
       <Link href={`${base}/scan`} className="min-w-0">
-        <Button variant="secondary" className="w-full">
+        <Button size="sm" variant="secondary">
           <ScanLine size={15} aria-hidden />스캔
         </Button>
       </Link>
-      {canManage && (
-        <Link href={`${base}/settings`} className="min-w-0">
-          <Button variant="ghost" className="w-full">
-            <Settings size={15} aria-hidden />설정
-          </Button>
-        </Link>
-      )}
     </>
   );
   const header = (
-    <PageHeader
+    <PageHeader settingsHref={canManage ? `${base}/settings` : undefined}
       title={businessName}
       description="오늘 처리할 피팅·출고·반납과 최근 6개월 추이"
       meta={

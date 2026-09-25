@@ -4,11 +4,13 @@
  */
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/Card";
+import { PageActions, SettingsIconLink } from "@/components/ui/PageActions";
 
 export function HomeLayout({
   title,
   subtitle,
   actions,
+  settingsHref,
   metrics,
   primaryTitle,
   primary,
@@ -17,6 +19,7 @@ export function HomeLayout({
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  settingsHref?: string;
   metrics?: ReactNode;
   primaryTitle: string;
   primary: ReactNode;
@@ -24,12 +27,15 @@ export function HomeLayout({
 }) {
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-[19px] font-semibold text-t">{title}</h1>
-          {subtitle && <p className="mt-0.5 text-[12.5px] text-t3">{subtitle}</p>}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h1 className="text-[19px] font-semibold text-t">{title}</h1>
+            {subtitle && <p className="mt-0.5 text-[12.5px] text-t3">{subtitle}</p>}
+          </div>
+          {settingsHref && <SettingsIconLink href={settingsHref} />}
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+        <PageActions settingsHref={settingsHref}>{actions}</PageActions>
       </div>
 
       {metrics}
@@ -65,6 +71,7 @@ export function HomeEmpty({
   message,
   description,
   actions,
+  settingsHref,
   metricLabels,
   metrics,
   structureHint,
@@ -73,6 +80,7 @@ export function HomeEmpty({
   message: string;
   description?: string;
   actions?: ReactNode;
+  settingsHref?: string;
   /** KPI 자리에 보여줄 지표 이름들. 값은 0으로 표시된다. */
   metricLabels?: string[];
   /** 이미 만들어진 KPI 노드가 있으면 그대로 쓴다(0 값이어도 구조가 남는다). */
@@ -82,9 +90,12 @@ export function HomeEmpty({
 }) {
   return (
     <div className="flex flex-col gap-5 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[22px] font-bold leading-tight text-t">{title}</h1>
-        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <h1 className="text-[22px] font-bold leading-tight text-t">{title}</h1>
+          {settingsHref && <SettingsIconLink href={settingsHref} />}
+        </div>
+        <PageActions settingsHref={settingsHref}>{actions}</PageActions>
       </div>
 
       {/* KPI 구조 유지 — 값은 0. 가짜 수치가 아니라 "아직 없음"을 정확히 말한다. */}
