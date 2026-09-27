@@ -12,8 +12,7 @@ import { GarmentPreview } from "@/components/garment/GarmentStage";
 import { OrderQRCode } from "@/components/order/OrderQRCode";
 import { defaultFactoryOptions } from "@/lib/domain/factory-options";
 import { selectedSchematics, JACKET_SCHEMATIC_KEYS, PANTS_SCHEMATIC_KEYS, VEST_SCHEMATIC_KEYS } from "@/lib/garment/schematics";
-
-const TYPE_LABEL: Record<string, string> = { suit: "정장", shirt: "셔츠", shoe: "구두" };
+import { TYPE_LABEL, simpleOrderQty } from "./labels";
 
 /**
  * 작업지시서(작지서) A4 인쇄 1건 — 기준본 populatePrintArea()의 항목 구성을 따른다.
@@ -48,7 +47,12 @@ export function WorkOrderSheet({ order, businessName }: { order: FactoryOrderRow
           <Row label="납기" value={order.dueDate ?? "-"} label2="출고일" value2={order.deliveredDate ?? "-"} />
           <Row
             label="수량"
-            value={FACTORY_QTY_FIELDS.map((f) => `${f.label} ${order.qty[f.key] ?? f.default}`).join(" / ")}
+            value={
+              // F26: 셔츠·구두는 자기 수량만 찍는다(예전엔 "수트(자켓) 수량 1 / 바지 0 …" 로 잘못 인쇄).
+              order.type === "suit"
+                ? FACTORY_QTY_FIELDS.map((f) => `${f.label} ${order.qty[f.key] ?? f.default}`).join(" / ")
+                : `${TYPE_LABEL[order.type]} ${simpleOrderQty(order.type, order.qty)}`
+            }
             label2="합계금액"
             value2={formatKRW(order.total)}
           />

@@ -101,7 +101,8 @@ export function DonutChart({
                   {s.href ? (
                     <Link
                       href={s.href}
-                      className="block hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                      // F19: 범례 행 ~22px — 터치 화면에서만 44px 로(PC 배치는 그대로).
+                      className="block hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [@media(pointer:coarse)]:py-[11px]"
                     >
                       {row}
                     </Link>

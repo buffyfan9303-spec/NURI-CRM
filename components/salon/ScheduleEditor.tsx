@@ -6,6 +6,7 @@
  *
  * 레퍼런스: Square Appointments 의 직원별 근무시간(Side-by-side) — 직원 한 줄에 요일 칩을 나열한다.
  */
+import { ROLE_LABEL } from "@/lib/auth/roles";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Plus, CalendarRange, CalendarClock } from "@/lib/icons";
@@ -27,7 +28,7 @@ export function ScheduleEditor({
 }: {
   businessId: string;
   canManage: boolean;
-  memberships: { id: string; userId: string }[];
+  memberships: { id: string; userId: string; displayName?: string; role?: string }[];
   profiles: SalonStaffProfile[];
   schedules: SalonSchedule[];
   timeOff: SalonTimeOff[];
@@ -135,9 +136,9 @@ export function ScheduleEditor({
           }}
           className="grid grid-cols-1 items-end gap-x-3 sm:grid-cols-[1fr_1fr_auto]"
         >
-          <SelectField label="소속(직원·권한의 user_id)" value={profileForm.membershipId} onChange={(e) => setProfileForm((f) => ({ ...f, membershipId: e.target.value }))}>
+          <SelectField label="직원" value={profileForm.membershipId} onChange={(e) => setProfileForm((f) => ({ ...f, membershipId: e.target.value }))}>
             <option value="">선택</option>
-            {memberships.map((m) => <option key={m.id} value={m.id}>{m.userId.slice(0, 8)}…</option>)}
+            {memberships.map((m) => <option key={m.id} value={m.id}>{[m.displayName?.trim() && m.displayName !== m.userId.slice(0, 8) ? m.displayName : "이름 미등록 직원", m.role ? ROLE_LABEL[m.role] ?? m.role : null].filter(Boolean).join(" · ")}</option>)}
           </SelectField>
           <Input label="표시 이름" required value={profileForm.displayName} onChange={(e) => setProfileForm((f) => ({ ...f, displayName: e.target.value }))} placeholder="예: 원장 김미영" />
           <Button type="submit" variant="secondary" loading={busy} className="mb-4"><Plus size={14} aria-hidden />프로필 저장</Button>

@@ -1,5 +1,6 @@
 /**
  * 학원 홈 — 레퍼런스01 골격(제목+설명 → KPI 4장 → 추이 8:분포 4 → 업무표 8:보조 4).
+ * 휴대폰(<sm, H0): 제목 → 동작 2개 → 학생 찾기 → KPI 2×2 → 오늘 수업 → 보강·휴강/미납/상담. 추이·분포·반별 출석률 차트는 숨긴다.
  * 빈 사업장도 같은 골격을 유지하고 값만 0/안내로 둔다(§11). 상단바 CTA(수강 등록 → 반·수강등록)와
  * 겹치는 버튼은 헤더에 두지 않는다.
  */
@@ -149,18 +150,31 @@ export function AcademyHome({
     };
   });
 
+  const studentSearch = (
+    <Link
+      href={`${base}/students`}
+      className="flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[13px] text-t2 hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+    >
+      <Search size={15} aria-hidden />
+      학생·보호자 목록에서 검색
+    </Link>
+  );
+
   return (
     <PageBody>
       <PageHeader settingsHref={canManage ? `${base}/settings` : undefined} title={businessName} description={`${d.todayKey} · 오늘 수업·출결·수강료 현황`} actions={actions} />
 
       <div className="flex flex-col gap-4">
+        {/* H0/A1: 휴대폰은 "학생 찾기"를 KPI 위에(홈 맨 끝 y≈2040 → 첫 화면). PC 는 우측 보조 카드 그대로. */}
+        <div className="sm:hidden">{studentSearch}</div>
         <div className={KPI_GRID}>
           {kpis.map((k) => (
             <KpiCard key={k.label} {...k} />
           ))}
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
+        {/* H0: 휴대폰(<sm)은 "KPI → 오늘 수업" — 추이·분포 차트는 PC 분석용이라 숨긴다. */}
+        <div className="grid grid-cols-1 items-start gap-4 max-sm:hidden lg:grid-cols-12">
           <Card className={`p-4 sm:p-5 lg:col-span-8 ${CHART_TOUCH}`}>
             <AreaChartCard title={d.revenueVisible ? "수강료·등록 추이" : "월별 신규 등록"} description="최근 6개월 월별 추이" series={areaSeries} />
           </Card>
@@ -193,7 +207,7 @@ export function AcademyHome({
           </Card>
 
           <div className="flex flex-col gap-4 lg:col-span-4">
-            <Card className={`p-4 sm:p-5 ${CHART_TOUCH}`}>
+            <Card className={`p-4 max-sm:hidden sm:p-5 ${CHART_TOUCH}`}>
               {dash?.attendanceRateBar ? (
                 <HorizontalBarChart title="반별 출석률" description="최근 7일 회차 기준" items={dash.attendanceRateBar.map((b) => ({ ...b, unit: "%", href: `${base}/attendance` }))} unit="%" />
               ) : (
@@ -215,7 +229,7 @@ export function AcademyHome({
                       <Link href={`${base}/attendance?sessionId=${s.id}`} className={`${ROW} hover:bg-sf2`}>
                         <span className="min-w-0">
                           <span className="block truncate font-medium text-t">{className(s.classId)}</span>
-                          <span className="block text-[11.5px] tabular-nums text-t3">{formatInTz(s.startAt, tz, "HH:mm")}</span>
+                          <span className="block text-[12px] tabular-nums text-t3">{formatInTz(s.startAt, tz, "HH:mm")}</span>
                         </span>
                         <span className={`shrink-0 text-[12px] font-medium ${s.sessionKind === "보강" ? "text-it" : "text-et"}`}>{s.sessionKind === "보강" ? "보강" : "휴강"}</span>
                       </Link>
@@ -258,15 +272,9 @@ export function AcademyHome({
               </Card>
             )}
 
-            <Card className="p-4 sm:p-5">
+            <Card className="p-4 max-sm:hidden sm:p-5">
               <CardHead title="학생 찾기" />
-              <Link
-                href={`${base}/students`}
-                className="flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd2)] px-3 text-[13px] text-t2 hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
-              >
-                <Search size={15} aria-hidden />
-                학생·보호자 목록에서 검색
-              </Link>
+              {studentSearch}
             </Card>
           </div>
         </div>

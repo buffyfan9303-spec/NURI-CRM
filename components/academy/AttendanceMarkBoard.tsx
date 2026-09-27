@@ -69,11 +69,13 @@ export function AttendanceMarkBoard({ businessId, businessName, canWrite, sessio
 
   return (
     <Card className="p-4 sm:p-5">
+      {/* A4: 휴대폰(<sm)은 머리를 세로로 — 버튼이 부제목을 눌러 "미/입력"으로 끊기지 않게 제목 아래 전폭. */}
       <CardHead
         title={className}
         description={`${sessionDate}${sessionTime ? ` ${sessionTime}` : ""} · ${students.length}명${uncheckedCount > 0 ? ` · 미입력 ${uncheckedCount}명` : " · 전원 입력 완료"}`}
+        className="max-sm:flex-col max-sm:items-stretch max-sm:gap-2"
         action={canWrite && uncheckedCount > 0 ? (
-          <Button size="sm" variant="secondary" loading={busy === "__all__"} disabled={busy !== null} onClick={markAllPresent}>
+          <Button size="sm" variant="secondary" className="max-sm:min-h-[44px] max-sm:w-full" loading={busy === "__all__"} disabled={busy !== null} onClick={markAllPresent}>
             <ListChecks size={14} aria-hidden />미입력 전원 출석
           </Button>
         ) : undefined}
@@ -93,10 +95,10 @@ export function AttendanceMarkBoard({ businessId, businessName, canWrite, sessio
               return (
                 <li key={s.id} className={cn("flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-5", marked === undefined && "bg-wb/40")}>
                   <span className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sf2 text-[11px] font-semibold text-t2" aria-hidden>{s.name.slice(0, 2)}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sf2 text-[12px] font-semibold text-t2" aria-hidden>{s.name.slice(0, 2)}</span>
                     <span className="min-w-0">
                       <span className="block truncate text-[13.5px] font-medium text-t">{s.name}</span>
-                      <span className="block text-[11.5px] text-t3">{marked === undefined ? "미입력" : [s.grade, s.school].filter(Boolean).join(" · ") || "입력됨"}</span>
+                      <span className="block text-[12px] text-t3">{marked === undefined ? "미입력" : [s.grade, s.school].filter(Boolean).join(" · ") || "입력됨"}</span>
                     </span>
                   </span>
                   <span className="flex items-center gap-1.5">

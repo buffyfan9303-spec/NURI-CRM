@@ -21,13 +21,18 @@ import {
 } from "@/lib/domain/factory-actions";
 import type { MaterialOption } from "@/lib/domain/factory-types";
 import type { FactoryOrderRow, FactoryProcessRow, FittingLogRow } from "@/lib/domain/factory";
+import type { MemberOption } from "@/lib/domain/calendar-shared";
 import { GarmentWorkspace } from "@/components/garment/GarmentWorkspace";
 import { OptionsSummary } from "./OptionsSummary";
+import { PROCESS_STATUS_LABEL, TYPE_LABEL, assigneeLabel, simpleOrderQty } from "./labels";
 
-const TYPE_LABEL: Record<string, string> = { suit: "정장", shirt: "셔츠", shoe: "구두" };
-
+// F19: html{font-size:14px} 라 h-11 은 38.5px 였다 — px 로 못 박고 터치 화면은 44px.
 const selectClass =
-  "h-11 w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)]";
+  "h-[40px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[16px] text-t outline-none focus:border-[var(--accent)] sm:text-sm [@media(pointer:coarse)]:h-[44px]";
+
+/** 터치 화면에서 44px 높이를 갖는 인라인 텍스트 링크(F19 — "캘린더 보기 →" 17px 등). */
+const inlineLinkClass =
+  "inline-flex min-h-[32px] items-center rounded-[4px] text-[var(--accent-ink)] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [@media(pointer:coarse)]:min-h-[44px]";
 
 export function OrderDetail({
   businessId,
@@ -39,6 +44,7 @@ export function OrderDetail({
   fabrics,
   linings,
   buttons,
+  members = [],
 }: {
   businessId: string;
   order: FactoryOrderRow;
@@ -50,6 +56,8 @@ export function OrderDetail({
   fabrics: MaterialOption[];
   linings: MaterialOption[];
   buttons: MaterialOption[];
+  /** F15: 공정 담당자 uuid 를 이름으로 바꾸기 위한 구성원 목록. */
+  members?: MemberOption[];
 }) {
   const router = useRouter();
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -60,7 +68,10 @@ export function OrderDetail({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-[18px] font-semibold text-t">{order.orderNo} — {order.customerName ?? "고객 미지정"}</h1>
-          <p className="text-[12.5px] text-t2">{TYPE_LABEL[order.type]} · {order.status}</p>
+          <p className="text-[12.5px] text-t2">
+            {TYPE_LABEL[order.type]} · {order.status}
+            {order.type !== "suit" && <> · 수량 {simpleOrderQty(order.type, order.qty)}</>}
+          </p>
         </div>
         <div className="flex gap-2">
           <Link href={`/w/${businessId}/orders/${order.id}/print`}>
@@ -90,7 +101,8 @@ export function OrderDetail({
       {canReadRevenue && (
         <Card className="p-5">
           <h2 className="mb-3 text-[14px] font-semibold text-t">금액 (서버 계산값)</h2>
-          <div className="grid grid-cols-3 gap-4 text-[13px]">
+          {/* F23: 360px 에서 "1,320,000"/"원" 이 갈라졌다 — 항목 단위로만 줄바꿈되게 flex-wrap + nowrap. */}
+          <div className="flex flex-wrap gap-x-8 gap-y-3 text-[13px]">
             <Amount label="공급가" value={order.supply} />
             <Amount label="부가세" value={order.vat} />
             <Amount label="합계" value={order.total} bold />
@@ -98,7 +110,7 @@ export function OrderDetail({
         </Card>
       )}
 
-      <ScheduleCard businessId={businessId} order={order} canWrite={canWrite} onSaved={refresh} />
+      <ScheduleCard businessId={businessId} order={order} processes={processes} canWrite={canWrite} onSaved={refresh} />
 
       {order.type === "suit" && (
         <OptionsCard
@@ -115,7 +127,7 @@ export function OrderDetail({
       <Card className="p-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-[14px] font-semibold text-t">공정</h2>
-          <Link href={`/w/${businessId}/production`} className="text-[12.5px] text-[var(--accent-ink)] hover:underline">
+          <Link href={`/w/${businessId}/production`} className={`${inlineLinkClass} text-[12.5px]`}>
             공정 칸반에서 보기 →
           </Link>
         </div>
@@ -123,11 +135,14 @@ export function OrderDetail({
           <p className="text-[12.5px] text-t3">아직 공정 기록이 없습니다. 공정 칸반에서 "작지"부터 시작하세요.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {processes.map((p) => (
-              <span key={p.id} className="rounded-[6px] border border-[var(--bd)] px-2.5 py-1 text-[11.5px] text-t2">
-                {p.stage}: {p.status}{p.assignee ? ` · 담당 ${p.assignee.slice(0, 8)}` : ""}
-              </span>
-            ))}
+            {processes.map((p) => {
+              const who = assigneeLabel(members, p.assignee);
+              return (
+                <span key={p.id} className="rounded-[6px] border border-[var(--bd)] px-2.5 py-1 text-[12px] text-t2">
+                  {p.stage}: {PROCESS_STATUS_LABEL[p.status] ?? p.status}{who ? ` · 담당 ${who}` : ""}
+                </span>
+              );
+            })}
           </div>
         )}
       </Card>
@@ -141,14 +156,14 @@ function Amount({ label, value, bold }: { label: string; value: number; bold?: b
   return (
     <div>
       <div className="text-[11px] text-t3">{label}</div>
-      <div className={bold ? "text-[16px] font-bold text-t" : "text-[13px] text-t"}>{formatKRW(value)}</div>
+      <div className={`whitespace-nowrap tabular-nums ${bold ? "text-[16px] font-bold text-t" : "text-[13px] text-t"}`}>{formatKRW(value)}</div>
     </div>
   );
 }
 
 function ScheduleCard({
-  businessId, order, canWrite, onSaved,
-}: { businessId: string; order: FactoryOrderRow; canWrite: boolean; onSaved: () => void }) {
+  businessId, order, processes, canWrite, onSaved,
+}: { businessId: string; order: FactoryOrderRow; processes: FactoryProcessRow[]; canWrite: boolean; onSaved: () => void }) {
   const [editing, setEditing] = React.useState(false);
   const [fittingDate, setFittingDate] = React.useState(order.fittingDate ?? "");
   const [dueDate, setDueDate] = React.useState(order.dueDate ?? "");
@@ -157,7 +172,22 @@ function ScheduleCard({
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // F17: 저장 전에 일정 관계를 검사한다 — 서버 오류 원문 대신 사용자 문구로.
+  // 계약 docs/factory-contract-0028.md §1 F04: 출고일은 '출고' 공정이 doing/done 일 때만 입력·정정, 완료 주문의 출고일 비우기는 재개 RPC 로만.
+  const shippedStage = order.status === "완료" || processes.some((p) => p.stage === "출고" && (p.status === "doing" || p.status === "done"));
+  const validate = (): string | null => {
+    if (fittingDate && dueDate && fittingDate > dueDate) return "가봉일은 납기보다 늦을 수 없습니다.";
+    if (fittingDate && fittingDate < order.orderDate) return "가봉일은 주문일보다 앞설 수 없습니다.";
+    if (dueDate && dueDate < order.orderDate) return "납기는 주문일보다 앞설 수 없습니다.";
+    if (deliveredDate && !shippedStage) return "출고일은 공정이 '출고' 단계에 들어간 뒤에만 입력할 수 있습니다.";
+    if (!deliveredDate && order.status === "완료") return "완료된 주문의 출고일은 비울 수 없습니다. 공정 칸반의 '완료 취소(재개)'를 사용하세요.";
+    if (deliveredDate && deliveredDate < order.orderDate) return "출고일은 주문일보다 앞설 수 없습니다.";
+    return null;
+  };
+
   const save = async () => {
+    const v = validate();
+    if (v) { setError(v); return; }
     setBusy(true); setError(null);
     const r = await updateFactoryOrderSchedule(businessId, order.id, {
       fittingDate: fittingDate || null, dueDate: dueDate || null, deliveredDate: deliveredDate || null, memo: memo || null,
@@ -197,9 +227,9 @@ function ScheduleCard({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
-          <Field label="가봉일" htmlFor="fitDate"><input id="fitDate" type="date" className={selectClass} value={fittingDate} onChange={(e) => setFittingDate(e.target.value)} /></Field>
-          <Field label="납기" htmlFor="dueDate"><input id="dueDate" type="date" className={selectClass} value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></Field>
-          <Field label="출고일" htmlFor="delDate"><input id="delDate" type="date" className={selectClass} value={deliveredDate} onChange={(e) => setDeliveredDate(e.target.value)} /></Field>
+          <Field label="가봉일" htmlFor="fitDate"><input id="fitDate" type="date" className={selectClass} value={fittingDate} min={order.orderDate} max={dueDate || undefined} onChange={(e) => setFittingDate(e.target.value)} /></Field>
+          <Field label="납기" htmlFor="dueDate"><input id="dueDate" type="date" className={selectClass} value={dueDate} min={fittingDate || order.orderDate} onChange={(e) => setDueDate(e.target.value)} /></Field>
+          <Field label="출고일" htmlFor="delDate" hint={shippedStage ? (order.status === "완료" ? "완료 주문은 정정만 가능합니다. 비우려면 공정 칸반에서 '완료 취소(재개)'." : undefined) : "'출고' 공정에 들어간 뒤 입력할 수 있습니다."}><input id="delDate" type="date" className={selectClass} value={deliveredDate} min={order.orderDate} disabled={!shippedStage} aria-disabled={!shippedStage || undefined} onChange={(e) => setDeliveredDate(e.target.value)} /></Field>
         </div>
       )}
       {editing && (
@@ -208,10 +238,10 @@ function ScheduleCard({
         </Field>
       )}
       {!editing && order.memo && <p className="mt-2 text-[12.5px] text-t2">메모: {order.memo}</p>}
-      <p className="mt-2 flex items-center gap-1 text-[11.5px] text-t3">
-        <CalendarDays size={13} />
+      <p className="mt-2 flex flex-wrap items-center gap-x-1 text-[12px] text-t3">
+        <CalendarDays size={13} aria-hidden />
         가봉일·납기·출고일이 저장되면 사업장 캘린더에 자동 반영됩니다.
-        <Link href={`/w/${businessId}/calendar`} className="whitespace-nowrap text-[var(--accent-ink)] hover:underline">캘린더 보기 →</Link>
+        <Link href={`/w/${businessId}/calendar`} className={`${inlineLinkClass} whitespace-nowrap`}>캘린더 보기 →</Link>
       </p>
       <FormError message={error ?? undefined} />
       {editing && (
@@ -343,9 +373,10 @@ function FittingLogsCard({
       const sb = getBrowserSupabase();
       const photoPaths: string[] = [];
       for (const file of files) {
-        const path = `${businessId}/factory-orders/${order.id}/fitting/${Date.now()}-${file.name}`;
-        const { error: upErr } = await sb.storage.from("crm-files").upload(path, file, { upsert: false });
-        if (upErr) throw new Error(`사진 업로드 실패(${file.name}): ${upErr.message}`);
+        // F11: 한글 파일명은 Storage 키로 거부된다 — 키는 ASCII(uuid.ext)만 쓰고 원래 이름은 화면 안내에만 쓴다.
+        const path = `${businessId}/fitting/${order.id}/${crypto.randomUUID()}.${fileExt(file)}`;
+        const { error: upErr } = await sb.storage.from("crm-files").upload(path, file, { upsert: false, contentType: file.type || undefined });
+        if (upErr) throw new Error(`"${file.name}" 사진을 올리지 못했습니다. 이미지 파일인지 확인하고 잠시 후 다시 시도하세요.`);
         photoPaths.push(path);
       }
       const r = await addFittingLog(businessId, order.id, { notes: notes || undefined, photoPaths });
@@ -384,7 +415,17 @@ function FittingLogsCard({
             <textarea id="fit-notes" rows={2} className="w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 py-2 text-sm text-t outline-none focus:border-[var(--accent)]" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
           <Field label="사진" htmlFor="fit-photos" hint="Storage(crm-files)에 업로드되고 경로만 저장됩니다(base64 저장 금지).">
-            <input id="fit-photos" type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []))} />
+            <input
+              id="fit-photos"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+              className="block h-[40px] w-full text-[13px] text-t2 file:mr-3 file:h-[40px] file:cursor-pointer file:rounded-[var(--r-md)] file:border file:border-[var(--bd2)] file:bg-sf2 file:px-3 file:text-[13px] file:font-medium file:text-t [@media(pointer:coarse)]:h-[44px] [@media(pointer:coarse)]:file:h-[44px]"
+            />
+            {files.length > 0 && (
+              <p className="mt-1.5 text-[12px] text-t2">선택한 사진 {files.length}장: {files.map((f) => f.name).join(", ")}</p>
+            )}
           </Field>
           <FormError message={error ?? undefined} />
           <div className="mt-2 flex justify-end">
@@ -394,4 +435,12 @@ function FittingLogsCard({
       )}
     </Card>
   );
+}
+
+/** 업로드 키에 쓸 확장자 — 파일명 확장자가 ASCII 영숫자면 그것, 아니면 MIME 에서, 그것도 없으면 bin. */
+function fileExt(file: File): string {
+  const fromName = file.name.includes(".") ? (file.name.split(".").pop() ?? "").toLowerCase() : "";
+  if (/^[a-z0-9]{1,5}$/.test(fromName)) return fromName;
+  const fromMime = file.type.split("/")[1]?.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  return fromMime || "bin";
 }

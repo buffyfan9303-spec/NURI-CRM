@@ -9,7 +9,8 @@ export type ScanOutcome =
   | { type: "loading" }
   | { type: "error"; message: string }
   | { type: "duplicate"; code: string }
-  | { type: "result"; data: StagedScan };
+  /** again: 수동 입력으로 이미 담긴 코드를 다시 보냈다(의도적 추가 — 서버가 수량을 누적했다). */
+  | { type: "result"; data: StagedScan; again?: boolean };
 
 /**
  * 스캔 1건의 결과. "정상 빈 결과(not_found)"·"오류"·"텍스트"·"찾음"을 서로 다른 색·문구로 보여준다
@@ -32,9 +33,9 @@ export function ResultCard({ outcome, mode }: { outcome: ScanOutcome | null; mod
   if (outcome.type === "duplicate") {
     return (
       <div className="flex items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-ib px-3.5 py-2.5 text-[12.5px] text-it">
-        <Badge kind="info">이미 읽음</Badge>
+        <Badge kind="info">이미 담김</Badge>
         <span className="font-mono text-[11.5px]">{outcome.code}</span>
-        <span>방금 스캔한 코드입니다. 잠시 후 다시 스캔하면 새로 처리됩니다.</span>
+        <span>이미 목록에 있는 코드입니다. 수량을 늘리려면 목록의 + 버튼을 누르거나 코드를 직접 입력하세요.</span>
       </div>
     );
   }
@@ -91,7 +92,7 @@ export function ResultCard({ outcome, mode }: { outcome: ScanOutcome | null; mod
   return (
     <div className={`flex flex-col gap-1.5 rounded-[var(--r-md)] border border-[var(--bd)] px-3.5 py-2.5 text-[12.5px] ${warning ? "bg-wb text-wt" : "bg-okb text-okt"}`}>
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge kind={badgeKind}>{r.staged ? "목록에 담김" : KIND_LABEL[r.kind]}</Badge>
+        <Badge kind={badgeKind}>{r.staged ? (outcome.again ? "다시 담음(수량 +1)" : "목록에 담김") : KIND_LABEL[r.kind]}</Badge>
         <span className="font-semibold">{r.label}</span>
         {r.status && <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[11px] text-t2">{r.status}</span>}
       </div>

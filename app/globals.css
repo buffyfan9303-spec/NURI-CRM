@@ -467,6 +467,24 @@ body.dk [data-accent="teal"] .tg-ok,
    ────────────────────────────────────────────────────────────── */
 
 @media print {
+  /* F01: 셸이 h-screen + overflow-hidden 이라 인쇄물이 첫 장에서 잘렸다. 종이에서는 높이·스크롤 제한을 전부 푼다. */
+  html,
+  body,
+  .h-screen,
+  .overflow-hidden,
+  .overflow-y-auto {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  /* 다크 테마 인쇄: 종이 배경·기본 글자색을 항상 흰/검정으로(배경 그래픽 인쇄를 켜도 어두운 테두리가 없다). */
+  html,
+  body,
+  body.dk {
+    background: #fff !important;
+    color: #111 !important;
+    transition: none !important; /* body 의 background 0.2s 전환이 인쇄 시점에 어두운 중간색을 남기지 않게 */
+  }
   body * {
     visibility: hidden !important;
   }

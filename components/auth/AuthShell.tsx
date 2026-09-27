@@ -95,7 +95,8 @@ export function AuthShell({
 
       {/* 본문 — <main> 랜드마크(Lighthouse: 로그인 화면에 main 없음 지적). */}
       {/* 2026-09-25 사용자 지시: 폼을 위에 붙이지 않고 남는 높이의 세로 가운데에 둔다(휴대폰·PC 공통). */}
-      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-10 sm:px-6 sm:py-12">
+      {/* py-8(<sm): 360×740 에서 헤더+폼+하단 띠가 741px 이라 1px 세로 스크롤이 생겼다(AU4). */}
+      <main className="relative z-10 flex flex-1 items-center justify-center px-5 py-8 sm:px-6 sm:py-12">
         <div
           className={cn(
             "w-full [word-break:keep-all] sm:rounded-[6px] sm:bg-[var(--auth-card)] sm:shadow-[0_24px_64px_-24px_rgba(0,0,0,.6)] sm:backdrop-blur-[2px]",

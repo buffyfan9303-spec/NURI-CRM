@@ -15,7 +15,7 @@ import type { LossReport, ReorderSuggestion, UsLot } from "@/lib/domain/unmanned
 import { unmannedExpirySummary } from "@/lib/domain/messages";
 import { formatKRW } from "@/lib/domain/money";
 import { CardHead, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
-import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
+import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 
 const DOW = ["", "월", "화", "수", "목", "금", "토", "일"];
 
@@ -75,7 +75,7 @@ export function LossReportCard({ report, businessName }: { report: LossReport | 
                 <tbody>
                   {report.byProduct.map((p) => (
                     <tr key={p.productId} className={`${TR} h-[44px]`}>
-                      <td className={TD}><CellName max={280}>{p.name}</CellName><span className="font-mono text-[11px] text-t3">{p.sku}</span></td>
+                      <td className={TD}><CellName max={280}>{p.name}</CellName><span className="font-mono text-[12px] text-t3">{p.sku}</span></td>
                       <td className={`${TD} text-right tabular-nums font-semibold text-et`}>{p.lossQty}</td>
                       <td className={`${TD} text-right tabular-nums text-t2`}>{money(p.costAmount)}</td>
                       <td className={`${TD} text-right tabular-nums text-t2`}>{money(p.saleAmount)}</td>
@@ -98,7 +98,7 @@ export function LossReportCard({ report, businessName }: { report: LossReport | 
 export function ReorderCard({ rows, reorderText }: { rows: ReorderSuggestion[] | null; reorderText: string }) {
   if (!rows) return null;
   return (
-    <Card className="p-4 sm:p-5">
+    <Card className={`sm:p-5 ${MOBILE_BARE}`}>
       <CardHead
         title="보충 발주 추천"
         description="최근 14일 판매 속도 × 다음 방문(7일)까지 + 저재고 임계 − 현재고"
@@ -126,7 +126,7 @@ export function ReorderCard({ rows, reorderText }: { rows: ReorderSuggestion[] |
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.productId} className={`${TR} h-[44px]`}>
-                      <td className={TD}><CellName max={240}>{r.name}</CellName><span className="font-mono text-[11px] text-t3">{r.sku}</span></td>
+                      <td className={TD}><CellName max={240}>{r.name}</CellName><span className="font-mono text-[12px] text-t3">{r.sku}</span></td>
                       <td className={`${TD} text-right tabular-nums text-t2`}>{r.onHand}{r.unit}</td>
                       <td className={`${TD} text-right tabular-nums text-t2`}>{r.soldQty}{r.unit}</td>
                       <td className={`${TD} text-right tabular-nums text-t2`}>{r.dailyRate.toFixed(1)}</td>
@@ -171,7 +171,7 @@ export function ExpirySummaryCard({ lots, businessName, todayKey }: { lots: (UsL
         <ul className="flex flex-col divide-y divide-[var(--bd)]">
           {lots.slice(0, 12).map((l) => (
             <li key={l.id} className="flex min-h-[40px] items-center justify-between gap-3 text-[12.5px]">
-              <span className="min-w-0 truncate"><span className="font-medium text-t">{l.productName}</span> <span className="font-mono text-[11px] text-t3">{l.lotNo}</span> · {l.qtyCurrent}개</span>
+              <span className="min-w-0 truncate"><span className="font-medium text-t">{l.productName}</span> <span className="font-mono text-[12px] text-t3">{l.lotNo}</span> · {l.qtyCurrent}개</span>
               <span className="shrink-0 tabular-nums font-medium text-wt">{l.expiryDate?.slice(5).replace("-", ".")}</span>
             </li>
           ))}

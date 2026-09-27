@@ -126,16 +126,32 @@ export function EventFormModal({
     onSaved(result.event);
   }
 
+  // C4: 하단 버튼은 다른 시트처럼 Modal footer(휴대폰 2열 전폭)로 — 폼 밖에 있어도 form 속성으로 제출된다.
+  const formId = "ev-form";
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "일정 수정" : "일정 등록"}>
-      <form onSubmit={handleSubmit} noValidate>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isEdit ? "일정 수정" : "일정 등록"}
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
+            취소
+          </Button>
+          <Button type="submit" form={formId} loading={saving}>
+            {isEdit ? "저장" : "등록"}
+          </Button>
+        </>
+      }
+    >
+      <form id={formId} onSubmit={handleSubmit} noValidate>
         <Field label="종류" htmlFor="ev-kind" required>
           <select
             id="ev-kind"
             value={kind}
             onChange={(e) => setKind(e.target.value)}
             required
-            className="h-11 w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
+            className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
           >
             {eventKinds.map((k) => (
               <option key={k.kind} value={k.kind}>
@@ -153,33 +169,40 @@ export function EventFormModal({
               <input type="checkbox" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} className="h-4 w-4" />
               종일
             </label>
-            <div className="flex flex-wrap gap-2">
+            {/* C4: 휴대폰(<sm)은 2열 그리드 — 날짜 전폭, 시작/종료 나란히(작은 라벨), "–" 는 숨김. PC 는 한 줄 그대로. */}
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
               <input
                 id="ev-date"
                 type="date"
                 value={dateKey}
                 onChange={(e) => setDateKey(e.target.value)}
                 required
-                className="h-11 min-w-[150px] flex-1 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)]"
+                className="col-span-2 h-[44px] min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] sm:min-w-[150px] sm:flex-1"
               />
               {!allDay && (
                 <>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    required
-                    aria-label="시작 시각"
-                    className="h-11 w-[110px] rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)]"
-                  />
-                  <span className="flex items-center text-t3">–</span>
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    aria-label="종료 시각(선택)"
-                    className="h-11 w-[110px] rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)]"
-                  />
+                  <label className="flex min-w-0 flex-col gap-1 text-[11.5px] text-t3 sm:contents">
+                    <span className="sm:hidden">시작</span>
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      required
+                      aria-label="시작 시각"
+                      className="h-[44px] w-full min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] sm:w-[110px]"
+                    />
+                  </label>
+                  <span className="hidden items-center text-t3 sm:flex">–</span>
+                  <label className="flex min-w-0 flex-col gap-1 text-[11.5px] text-t3 sm:contents">
+                    <span className="sm:hidden">종료(선택)</span>
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      aria-label="종료 시각(선택)"
+                      className="h-[44px] w-full min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] sm:w-[110px]"
+                    />
+                  </label>
                 </>
               )}
             </div>
@@ -191,7 +214,7 @@ export function EventFormModal({
             id="ev-assignee"
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
-            className="h-11 w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
+            className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
           >
             <option value="">담당자 미지정</option>
             {members.map((m) => (
@@ -208,7 +231,7 @@ export function EventFormModal({
               id="ev-status"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="h-11 w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
+              className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -231,15 +254,6 @@ export function EventFormModal({
         </Field>
 
         <FormError message={error ?? undefined} />
-
-        <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
-            취소
-          </Button>
-          <Button type="submit" loading={saving}>
-            {isEdit ? "저장" : "등록"}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

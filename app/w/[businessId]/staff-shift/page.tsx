@@ -64,7 +64,7 @@ export default async function StaffShiftPage({ params }: { params: { businessId:
         <ScheduleEditor
           businessId={access.businessId}
           canManage={canManageSchedule}
-          memberships={(staffList.ok && "memberships" in staffList ? staffList.memberships : []).map((m) => ({ id: m.id, userId: m.userId }))}
+          memberships={(staffList.ok && "memberships" in staffList ? staffList.memberships : []).map((m) => ({ id: m.id, userId: m.userId, displayName: m.displayName, role: m.role }))}
           profiles={profiles.ok ? profiles.data : []}
           schedules={schedules.ok ? schedules.data : []}
           timeOff={timeOff.ok ? timeOff.data : []}

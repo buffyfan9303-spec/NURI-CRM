@@ -15,7 +15,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { CellName } from "@/components/ui/ResponsiveTable";
+import { CellName, TableOrCards, MobileCard, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { SelectField, SearchBox, StatusTab, FilterRow, CardHead, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import type { Material } from "@/lib/domain/materials";
 import { createMaterial, recordMaterialMove } from "@/lib/domain/materials-actions";
@@ -64,17 +64,38 @@ export function MaterialsBoard({ businessId, canWrite, canAdjust, canReadCost, m
             <StatusTab active={tab === "all"} onClick={() => setTab("all")} count={materials.length}>전체</StatusTab>
             <StatusTab active={tab === "low"} onClick={() => setTab("low")} count={lowCount}>부족</StatusTab>
           </FilterRow>
-          <SearchBox value={q} onChange={setQ} placeholder="이름·코드 검색" />
+          {/* 휴대폰(<sm)은 검색칸을 탭 위 전폭으로(C2 규칙). */}
+          <SearchBox value={q} onChange={setQ} placeholder="이름·코드 검색" className="max-sm:order-first" />
         </div>
       </PageHeader>
 
-      <Card className="p-4 sm:p-5">
+      {/* C9: 휴대폰은 카드 안의 카드가 되지 않게 바깥 Card 를 없앤다(PC 는 그대로). */}
+      <Card className={`sm:p-5 ${MOBILE_BARE}`}>
         <CardHead title={tab === "low" ? "최소재고 이하" : `${labelKind} 목록`} description={`${rows.length}개`} />
         {materials.length === 0 ? (
           <EmptyState title={`등록된 ${labelKind}가 없습니다.`} description="등록한 뒤 입고를 기록하면 현재고가 계산됩니다." action={canWrite ? <Button size="sm" variant="secondary" onClick={() => setNewOpen(true)}>{labelKind} 등록</Button> : undefined} />
         ) : rows.length === 0 ? (
           <EmptyState title={tab === "low" ? "부족한 항목이 없습니다." : "검색 결과가 없습니다."} />
         ) : (
+          <TableOrCards
+            rows={rows}
+            keyOf={(m) => m.id}
+            card={(m) => {
+              const low = m.stock <= m.minStock;
+              return (
+                <MobileCard
+                  title={m.name}
+                  sub={<><span className="font-mono">{m.code}</span>{industry === "factory" && m.kind && <> · {KIND_LABEL[m.kind] ?? m.kind}</>}</>}
+                  badge={low ? <Badge kind="warning">{m.stock}{m.unit} · 부족</Badge> : <span className="tabular-nums text-[13px] font-medium text-t">{m.stock}{m.unit}</span>}
+                  fields={[
+                    ["최소재고", `${m.minStock}${m.unit}`],
+                    ...(canReadCost ? ([["단가", m.unitCost != null ? `${m.unitCost.toLocaleString("ko-KR")}원` : "—"]] as [string, React.ReactNode][]) : []),
+                  ]}
+                  actions={(canWrite || canAdjust) ? <Button variant="secondary" size="sm" onClick={() => setMoveFor(m)}><PackagePlus size={13} aria-hidden />입출고</Button> : undefined}
+                />
+              );
+            }}
+            table={
           <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
             <table className={`${TABLE} min-w-[560px]`}>
               <thead>
@@ -103,7 +124,7 @@ export function MaterialsBoard({ businessId, canWrite, canAdjust, canReadCost, m
                       </td>
                       <td className={`${TD} whitespace-nowrap text-right`}>
                         {low ? <Badge kind="warning">{m.stock}{m.unit} · 부족</Badge> : <span className="tabular-nums text-t">{m.stock}<span className="ml-0.5 text-[11.5px] text-t3">{m.unit}</span></span>}
-                        <span className="block text-[11px] text-t3">최소 {m.minStock}{m.unit}</span>
+                        <span className="block text-[12px] text-t3">최소 {m.minStock}{m.unit}</span>
                       </td>
                       {canReadCost && <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t2`}>{m.unitCost != null ? `${m.unitCost.toLocaleString("ko-KR")}원` : "—"}</td>}
                       {(canWrite || canAdjust) && (
@@ -117,6 +138,8 @@ export function MaterialsBoard({ businessId, canWrite, canAdjust, canReadCost, m
               </tbody>
             </table>
           </div>
+            }
+          />
         )}
       </Card>
 
@@ -127,7 +150,8 @@ export function MaterialsBoard({ businessId, canWrite, canAdjust, canReadCost, m
 }
 
 function NewMaterialModal({ businessId, open, onClose, onCreated, labelKind, industry }: { businessId: string; open: boolean; onClose: () => void; onCreated: () => void; labelKind: string; industry?: "factory" | "academy" }) {
-  const EMPTY = { kind: "기타", code: "", name: "", unit: "ea", minStock: "0" };
+  // F31: 공장은 "기타"로 등록되면 주문 화면의 원단/안감/단추 목록에 안 나온다 — 기본을 원단으로.
+  const EMPTY = { kind: industry === "factory" ? "fabric" : "기타", code: "", name: "", unit: industry === "factory" ? "m" : "ea", minStock: "0" };
   const [form, setForm] = React.useState(EMPTY);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -175,14 +199,37 @@ function MoveModal({ businessId, material, materials, canAdjust, labelKind, onCl
   const [error, setError] = React.useState<string | null>(null);
   React.useEffect(() => { if (material) { setForm({ materialId: material.id, kind: "in", qty: "1", reason: "" }); setError(null); } }, [material]);
   const target = materials.find((m) => m.id === form.materialId);
+  const qtyNum = Number(form.qty);
+  // F05: 조정은 "실제 수량"을 입력받아 현재고와의 차이(±)를 서버에 보낸다(material_moves.adjust 는 부호 있는 차이값).
+  //      실제 수량은 0 이상 — 결과 재고가 음수가 되는 조정은 막는다. 차이가 음수(재고 줄임)인 조정은 가능하다.
+  // F06: 출고는 현재고를 넘길 수 없다(서버는 insufficient_stock 으로 거부 예정 — 화면에서 먼저 막는다).
+  const adjustDelta = form.kind === "adjust" && target && Number.isFinite(qtyNum) ? qtyNum - target.stock : null;
+  const outOverStock = form.kind === "out" && !!target && Number.isFinite(qtyNum) && qtyNum > target.stock;
 
   const submit = async () => {
-    if (!form.materialId) { setError(`${labelKind}를 선택하세요.`); return; }
-    if (form.kind === "adjust" && !form.reason.trim()) { setError("조정 사유를 입력하세요."); return; }
+    if (!form.materialId || !target) { setError(`${labelKind}를 선택하세요.`); return; }
+    if (!Number.isFinite(qtyNum)) { setError("수량을 숫자로 입력하세요."); return; }
+    if (form.kind === "adjust") {
+      if (!form.reason.trim()) { setError("조정 사유를 입력하세요."); return; }
+      if (qtyNum < 0) { setError("실제 수량은 0 이상이어야 합니다(재고는 음수가 될 수 없습니다)."); return; }
+      if (adjustDelta === 0) { setError(`현재고와 같은 수량입니다(${target.stock}${target.unit}). 조정할 차이가 없습니다.`); return; }
+    } else {
+      if (qtyNum <= 0) { setError("수량은 1 이상이어야 합니다."); return; }
+      if (outOverStock) { setError(`출고 수량(${qtyNum}${target.unit})이 현재고(${target.stock}${target.unit})보다 많습니다. 현재고 이하로 입력하세요.`); return; }
+    }
     setBusy(true); setError(null);
     try {
-      const r = await recordMaterialMove(businessId, { materialId: form.materialId, kind: form.kind, qty: Number(form.qty) || 0, reason: form.reason });
-      if (!r.ok) { setError(r.message ?? "처리하지 못했습니다."); return; }
+      // 계약 docs/factory-contract-0028.md §2: adjust 의 qty 는 "실제 수량"이고 서버(adjust_material_to)가 차이를 계산한다.
+      const r = await recordMaterialMove(businessId, { materialId: form.materialId, kind: form.kind, qty: qtyNum, reason: form.reason });
+      if (!r.ok) {
+        // F06: 서버 hint 로 분기 — 화면 검사 뒤 다른 사용자가 먼저 출고한 경우 등.
+        if (r.hint === "insufficient_stock" || r.hint === "negative_stock") {
+          setError(`재고가 부족합니다. 현재고 ${target.stock}${target.unit}를 넘는 출고는 할 수 없습니다. 화면을 새로고침해 최신 재고를 확인하세요.`);
+        } else {
+          setError(r.message ?? "처리하지 못했습니다.");
+        }
+        return;
+      }
       onDone();
     } catch {
       setError("저장하지 못했습니다. 잠시 후 다시 시도하세요.");
@@ -205,7 +252,23 @@ function MoveModal({ businessId, material, materials, canAdjust, labelKind, onCl
             <option value="out">출고</option>
             {canAdjust && <option value="adjust">조정(실사)</option>}
           </SelectField>
-          <Input label={form.kind === "adjust" ? "실제 수량" : "수량"} type="number" min={0} value={form.qty} onChange={(e) => setForm((f) => ({ ...f, qty: e.target.value }))} />
+          <Input
+            label={form.kind === "adjust" ? "실제 수량(실사)" : "수량"}
+            type="number"
+            min={form.kind === "adjust" ? 0 : 1}
+            max={form.kind === "out" && target ? target.stock : undefined}
+            inputMode="decimal"
+            value={form.qty}
+            onChange={(e) => setForm((f) => ({ ...f, qty: e.target.value }))}
+            error={outOverStock && target ? `현재고 ${target.stock}${target.unit}를 넘을 수 없습니다.` : undefined}
+            hint={
+              form.kind === "adjust" && target
+                ? adjustDelta === null
+                  ? `현재고 ${target.stock}${target.unit}. 실사로 센 실제 수량을 입력하세요.`
+                  : `현재고 ${target.stock}${target.unit} → 실제 ${qtyNum}${target.unit} (차이 ${adjustDelta > 0 ? "+" : ""}${adjustDelta}${target.unit})`
+                : undefined
+            }
+          />
         </div>
         {form.kind === "adjust" && <Input label="조정 사유" required value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} placeholder="예: 분기 실사 차이" wrapperClassName="mb-0" />}
       </form>

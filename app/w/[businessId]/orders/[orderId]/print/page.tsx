@@ -40,7 +40,10 @@ export default async function FactoryOrderPrintPage({ params }: { params: { busi
     <div className="mx-auto max-w-[820px] p-4 md:p-6">
       <PrintStyles />
       <PrintButton label="작지서 인쇄" />
-      <WorkOrderSheet order={result.data.order} businessName={access.businessName} />
+      {/* F01: globals.css @media print 는 #print-area 만 보이게 한다 — id 가 없으면 빈 종이가 나온다. */}
+      <div id="print-area">
+        <WorkOrderSheet order={result.data.order} businessName={access.businessName} />
+      </div>
     </div>
   );
 }

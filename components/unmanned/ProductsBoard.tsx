@@ -120,7 +120,7 @@ export function ProductsBoard({
 
   // 표와 카드가 같은 값·같은 권한 조건·같은 입고 폼을 쓰도록 한 곳에서 계산한다.
   const rowView = (p: UsProduct) => ({
-    expiryBadge: p.expiryTracked ? <span className="inline-block rounded-[5px] bg-sf2 px-1.5 py-px text-[11px] text-t3">유통기한 추적</span> : null,
+    expiryBadge: p.expiryTracked ? <span className="inline-block rounded-[5px] bg-sf2 px-1.5 py-px text-[12px] text-t3">유통기한 추적</span> : null,
     barcode: p.barcode ? <><span className="font-mono tabular-nums">{p.barcode}</span>{p.barcodeType !== "NONE" && <span className="ml-1 text-t3">({p.barcodeType})</span>}</> : <span className="text-t3">-</span>,
     salePrice: `${p.salePrice.toLocaleString()}원`,
     costPrice: p.costPrice == null ? "-" : `${p.costPrice.toLocaleString()}원`,
@@ -128,7 +128,7 @@ export function ProductsBoard({
       <span className={p.lowStock ? "inline-flex items-center gap-1 font-semibold tabular-nums text-et" : "tabular-nums text-t"}>
         {p.lowStock && <TriangleAlert size={12} aria-hidden />}
         {p.onHand}{p.unit}
-        {p.lowStock && <span className="text-[10.5px] font-medium">저재고</span>}
+        {p.lowStock && <span className="text-[12px] font-medium">저재고</span>}
       </span>
     ),
     supplier: canWrite ? (
@@ -269,10 +269,10 @@ export function ProductsBoard({
                 title={p.name}
                 sub={<><span className="font-mono">{p.sku}</span>{v.expiryBadge}</>}
                 badge={v.stock}
+                // U4: 원가는 PC 관리 정보 — 휴대폰 카드에서는 뺀다(표에는 그대로).
                 fields={[
                   ["바코드", v.barcode],
                   ["판매가", v.salePrice],
-                  ...(canReadCost ? ([["원가", v.costPrice]] as [string, React.ReactNode][]) : []),
                   ["도매처 메모", v.supplier],
                 ]}
                 actions={canWrite ? v.inboundButton : undefined}

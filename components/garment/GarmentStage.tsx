@@ -65,6 +65,8 @@ const VIEWS: { key: GarmentView; label: string }[] = [
 /** 뒷면에서만 보이는 변경 — 정면일 때 바꾸면 "후면에서 확인" 배너를 띄운다(요청 §7-5). */
 export const BACK_ONLY_KEYS = new Set(["vent", "vCut", "botBackP", "vestBack"]);
 
+const ZOOM_BTN = "flex h-[44px] w-[44px] items-center justify-center rounded-[6px] text-t3 hover:bg-sf2 hover:text-t";
+
 export function GarmentPreview({
   item, view, jacket, pants, vest, fabric, lining, button, calibrationMm,
 }: {
@@ -134,7 +136,7 @@ export function GarmentStage({
               type="button"
               onClick={() => onViewChange(v.key)}
               className={cn(
-                "min-h-[32px] rounded-[6px] px-2.5 text-[12px] font-medium",
+                "min-h-[44px] min-w-[44px] rounded-[6px] px-2.5 text-[12px] font-medium",
                 view === v.key ? "bg-sf text-t shadow-sm" : "text-t3 hover:text-t2"
               )}
             >
@@ -143,9 +145,9 @@ export function GarmentStage({
           ))}
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" aria-label="축소" onClick={() => setZoom((z) => Math.max(0.7, z - 0.15))} className="rounded-[6px] p-1.5 text-t3 hover:bg-sf2 hover:text-t"><ZoomOut size={15} /></button>
-          <button type="button" aria-label="확대" onClick={() => setZoom((z) => Math.min(1.8, z + 0.15))} className="rounded-[6px] p-1.5 text-t3 hover:bg-sf2 hover:text-t"><ZoomIn size={15} /></button>
-          <button type="button" aria-label="전체 보기로 복귀" onClick={() => setZoom(1)} className="rounded-[6px] p-1.5 text-t3 hover:bg-sf2 hover:text-t"><RotateCcw size={15} /></button>
+          <button type="button" aria-label="축소" onClick={() => setZoom((z) => Math.max(0.7, z - 0.15))} className={ZOOM_BTN}><ZoomOut size={15} /></button>
+          <button type="button" aria-label="확대" onClick={() => setZoom((z) => Math.min(1.8, z + 0.15))} className={ZOOM_BTN}><ZoomIn size={15} /></button>
+          <button type="button" aria-label="전체 보기로 복귀" onClick={() => setZoom(1)} className={ZOOM_BTN}><RotateCcw size={15} /></button>
         </div>
       </div>
 
@@ -153,29 +155,32 @@ export function GarmentStage({
         <div className="mb-2 flex items-center justify-between gap-2 rounded-[var(--r-md)] bg-eb px-3 py-1.5 text-[12px] text-et">
           <span>{backNotice.label}이(가) 변경됐습니다 — 후면에서 확인하세요.</span>
           <div className="flex items-center gap-2">
-            <button type="button" className="font-semibold underline" onClick={() => { onViewChange("back"); onDismissBackNotice(); }}>후면에서 확인</button>
-            <button type="button" aria-label="닫기" onClick={onDismissBackNotice} className="text-et/70">×</button>
+            <button type="button" className="min-h-[44px] font-semibold underline" onClick={() => { onViewChange("back"); onDismissBackNotice(); }}>후면에서 확인</button>
+            <button type="button" aria-label="닫기" onClick={onDismissBackNotice} className="flex h-[44px] w-[44px] items-center justify-center text-et/70">×</button>
           </div>
         </div>
       )}
 
+      {/* 무대 높이는 "열 높이"가 아니라 자기 너비(3:4)와 화면 높이(최대 72vh)로 정한다. 예전 flex-1·h-full 은
+          grid 가 이 열을 옵션 열 높이로 늘리면 2:3 상자가 수천 px 로 커져 옷이 좌우로 잘려 보였다(QA 2026-09-25). */}
       <div
         className={cn(
-          "relative flex min-h-[280px] items-center justify-center overflow-hidden rounded-[var(--r-lg)] border border-[var(--bd)]",
-          compactVh ? "flex-none" : "flex-1"
+          "relative flex min-h-[280px] w-full items-center justify-center overflow-hidden rounded-[var(--r-lg)] border border-[var(--bd)]",
+          compactVh ? "flex-none" : "aspect-[3/4] max-h-[72vh]"
         )}
         style={{ background: "#ECEEF0", height: compactVh ? `${compactVh}vh` : undefined }}
       >
         <div className="relative aspect-[2/3] h-full max-h-full" style={{ transform: `scale(${zoom})`, transition: "transform .15s ease" }}>
           <GarmentPreview item={item} view={view} jacket={jacket} pants={pants} vest={vest} fabric={fabric} lining={lining} button={button} calibrationMm={calibrationMm} />
           {hotspots.map((h) => (
+            // 보이는 점은 24px, 누르는 영역은 44px(before: 가상 요소가 점을 그린다).
             <button
               key={h.key}
               type="button"
               onClick={() => onFocusField(h.key)}
               aria-label={`${h.label} 옵션 편집`}
               title={`${h.label} 편집`}
-              className="absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[var(--accent)]/70 shadow hover:bg-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+              className="absolute h-[44px] w-[44px] -translate-x-1/2 -translate-y-1/2 rounded-full before:absolute before:left-1/2 before:top-1/2 before:h-6 before:w-6 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:border-2 before:border-white before:bg-[var(--accent)]/70 before:shadow hover:before:bg-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
               style={{ left: `${h.x}%`, top: `${h.y}%` }}
             />
           ))}
@@ -195,7 +200,7 @@ export function GarmentStage({
               key={`t-${h.key}`}
               type="button"
               onClick={() => onFocusField(h.key)}
-              className="rounded-[6px] border border-[var(--bd)] px-2 py-1 text-[11.5px] text-t2 hover:border-[var(--accent)] hover:text-t"
+              className="min-h-[44px] rounded-[6px] border border-[var(--bd)] px-2.5 text-[11.5px] text-t2 hover:border-[var(--accent)] hover:text-t"
             >
               {h.label} 편집
             </button>

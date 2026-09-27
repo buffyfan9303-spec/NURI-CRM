@@ -115,7 +115,8 @@ export function SettlementList({
         meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">{reservations.length}건</span>}
         actions={
           canExport ? (
-            <Button variant="secondary" onClick={exportCsv} loading={exporting}>
+            // R4: CSV 는 PC 작업 — 휴대폰(<sm)에서는 첫 동작으로 전폭 버튼이 서지 않게 숨긴다.
+            <Button variant="secondary" onClick={exportCsv} loading={exporting} className="max-sm:hidden">
               <Download size={15} aria-hidden />
               {exporting ? "내보내는 중…" : "CSV 내보내기"}
             </Button>
@@ -128,10 +129,11 @@ export function SettlementList({
             <SummaryTile label="보증금 보유 잔액" value={formatKRW(totals.deposit)} sub={`대여매출과 별도 관리 · ${totals.depositAfterReturn}건은 반납 후 미반환`} />
             <SummaryTile label="정산 대상" value={`${reservations.length}건`} sub="확정~종결 예약" className="col-span-2 sm:col-span-1" />
           </div>
+          {/* R4: 미수금 보드 링크는 검색칸 옆이 아니라 KPI 아래 한 줄로. */}
+          <Link href={`/w/${businessId}/receivables`} className="-my-1 inline-flex h-[32px] w-fit items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">미수금·보관 보증금 보드 →</Link>
           <FilterRow>
             <SearchBox value={q} onChange={setQ} placeholder="고객 이름/전화번호 검색" />
             {needle && <TextAction onClick={() => setQ("")}>검색 지우기</TextAction>}
-            <Link href={`/w/${businessId}/receivables`} className="inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">미수금·보관 보증금 보드 →</Link>
           </FilterRow>
           {exportError && <Alert>{exportError}</Alert>}
         </div>
@@ -175,7 +177,7 @@ export function SettlementList({
                           <tr className={`${TR_CLICK} h-[52px]`} onClick={() => toggle(r.id)} aria-expanded={v.open}>
                             <td className="px-2 py-2.5 text-t3">{v.open ? <ChevronDown size={15} aria-hidden /> : <ChevronRight size={15} aria-hidden />}</td>
                             <td className={TD}>
-                              <Link href={v.href} className="block max-w-[160px] truncate font-medium text-t hover:underline" title={v.customer} onClick={(e) => e.stopPropagation()}>
+                              <Link href={v.href} prefetch={false} className="block max-w-[160px] truncate font-medium text-t hover:underline" title={v.customer} onClick={(e) => e.stopPropagation()}>
                                 {v.customer}
                               </Link>
                             </td>
@@ -219,7 +221,7 @@ export function SettlementList({
                   ]}
                   actions={
                     <>
-                      <Link href={v.href} className="rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2">예약 상세</Link>
+                      <Link href={v.href} prefetch={false} className="rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2">예약 상세</Link>
                       <Button size="sm" variant="secondary" onClick={() => toggle(r.id)}>{v.open ? "접기" : "정산 처리"}</Button>
                     </>
                   }

@@ -83,17 +83,25 @@ export function MonthView({
     }
   }
 
+  // F21(axe aria-required-parent): gridcell 은 row → grid 안에 있어야 한다. CSS grid 배치는 그대로 두고
+  // 주 단위 row 를 display:contents 로 끼운다(시각 변화 없음). 다른 업종 캘린더도 이 컴포넌트를 쓴다.
+  const weeks: string[][] = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="grid grid-cols-7 border-b border-[var(--bd)] text-center text-[11.5px] font-medium text-t3">
+    <div className="flex h-full flex-col" role="grid" aria-label="월간 달력">
+      <div className="grid grid-cols-7 border-b border-[var(--bd)] text-center text-[11.5px] font-medium text-t3" role="row">
         {WEEKDAY_HEADERS.map((w) => (
-          <div key={w} className="py-2">
+          <div key={w} className="py-2" role="columnheader">
             {w}
           </div>
         ))}
       </div>
       <div className="grid flex-1 grid-cols-7 grid-rows-6">
-        {days.map((dateKey, idx) => {
+        {weeks.map((week, wi) => (
+        <div key={wi} role="row" className="contents">
+        {week.map((dateKey, di) => {
+          const idx = wi * 7 + di;
           const inMonth = dateKey.slice(0, 7) === monthKey;
           const isToday = dateKey === todayKey;
           const isWeekend = idx % 7 >= 5; // 헤더 순서가 월..토(5)·일(6)
@@ -109,9 +117,15 @@ export function MonthView({
                 cellRefs.current[idx] = el;
               }}
               role="gridcell"
+              aria-label={`${dateKey}${hasEvents ? ` 일정 ${dayEvents.length}건` : ""}`}
               tabIndex={idx === focusIdx ? 0 : -1}
               onFocus={() => setFocusIdx(idx)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
+              // F21(target-size): 날짜 숫자 버튼은 24px 라 터치 화면에서 작다 — 칸의 빈 곳을 눌러도 같은 동작(일정 칩은 제외).
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("button")) return;
+                activateDay(idx);
+              }}
               onDoubleClick={() => onOpenDay(dateKey)}
               className={cn(
                 "flex min-h-[92px] flex-col gap-1 border-b border-r border-[var(--bd)] p-1.5 outline-none",
@@ -126,7 +140,8 @@ export function MonthView({
                 type="button"
                 onClick={() => activateDay(idx)}
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center self-start rounded-full text-[12px]",
+                  // html{font-size:14px} 라 h-6 은 21px 였다 — px 로 24px(WCAG 2.5.8 최소), 터치 화면은 28px(칸 전체가 같은 동작).
+                  "flex h-[24px] w-[24px] shrink-0 items-center justify-center self-start rounded-full text-[12px] [@media(pointer:coarse)]:h-[28px] [@media(pointer:coarse)]:w-[28px]",
                   isToday ? "bg-[var(--accent-strong)] font-semibold text-[var(--accent-contrast)]" : "text-t2",
                   !inMonth && "text-t3"
                 )}
@@ -149,7 +164,7 @@ export function MonthView({
                   <button
                     type="button"
                     onClick={() => onOpenDay(dateKey)}
-                    className="text-left text-[10.5px] font-medium text-t3 hover:text-t2"
+                    className="min-h-[24px] text-left text-[11px] font-medium text-t3 hover:text-t2"
                   >
                     +{overflow}개 더
                   </button>
@@ -158,6 +173,8 @@ export function MonthView({
             </div>
           );
         })}
+        </div>
+        ))}
       </div>
     </div>
   );

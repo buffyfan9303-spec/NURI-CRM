@@ -31,7 +31,7 @@ export function FabricGrid({
       <div className="mb-1.5 flex items-center justify-between">
         <h4 className="text-[12.5px] font-semibold text-t">{label}</h4>
         {value && (
-          <button type="button" className="text-[11.5px] text-t3 hover:text-t2" onClick={() => onChange("")}>
+          <button type="button" className="min-h-[44px] px-2 text-[11.5px] text-t3 hover:text-t2" onClick={() => onChange("")}>
             선택 해제
           </button>
         )}
@@ -42,7 +42,7 @@ export function FabricGrid({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={`${label} 코드·이름 검색`}
-          className="h-8 w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf pl-7 pr-2 text-[12px] text-t outline-none focus:border-[var(--accent)]"
+          className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf pl-7 pr-2 text-[12px] text-t outline-none focus:border-[var(--accent)]"
         />
       </div>
       {filtered.length === 0 ? (
@@ -79,7 +79,8 @@ export function FabricGrid({
                     </span>
                   )}
                 </span>
-                <span className="w-full truncate text-[11px] font-medium text-t" title={m.name}>{m.name}</span>
+                {/* 한 줄 truncate 는 84px 칸에서 이름 대부분을 잘랐다 — 두 줄까지 보여주고 나머지는 title. */}
+                <span className="line-clamp-2 w-full text-[11px] font-medium leading-tight text-t [overflow-wrap:anywhere]" title={m.name}>{m.name}</span>
                 <span className="w-full truncate text-[10.5px] text-t3" title={m.code}>{m.code}</span>
                 {!swatch.registered && <span className="text-[9.5px] text-t3">사진 미등록</span>}
                 {m.stock <= m.minStock && <span className="text-[9.5px] text-wt">재고부족</span>}

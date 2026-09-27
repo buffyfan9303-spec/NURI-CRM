@@ -33,7 +33,8 @@ export function EventChip({
       onClick={onClick}
       title={`${event.title} — ${event.allDay ? "종일" : formatInTz(event.startsAt as string, tz, "HH:mm")}`}
       className={cn(
-        "ev-tag flex w-full min-w-0 items-center gap-1 truncate text-left",
+        // F21(axe target-size): .ev-tag 는 22px 라 WCAG 2.5.8 최소 24px 에 못 미쳤다(칩이 2px 간격으로 붙어 spacing 예외도 없음).
+        "ev-tag flex min-h-[24px] w-full min-w-0 items-center gap-1 truncate text-left",
         kindTagClass(event.kind, eventKinds),
         selected && "outline outline-2 outline-offset-1 outline-[var(--accent)]"
       )}

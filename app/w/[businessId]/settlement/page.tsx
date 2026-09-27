@@ -44,7 +44,7 @@ function GuideToOtherScreen({ title, description, href, linkLabel }: { title: st
       <Card className="px-2 py-2">
         <EmptyState title={title} description={description} />
         <div className="px-4 pb-4">
-          <Link href={href} className="text-[12.5px] font-medium text-[var(--accent)] underline underline-offset-2">
+          <Link href={href} className="inline-flex min-h-[44px] items-center text-[12.5px] font-medium text-[var(--accent)] underline underline-offset-2">
             {linkLabel} →
           </Link>
         </div>

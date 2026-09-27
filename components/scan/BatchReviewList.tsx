@@ -71,7 +71,7 @@ export function BatchReviewList({
     setCommitting(false);
     setConfirmOpen(false);
     if (!r.ok) return setError(r.message);
-    setReceipt(r.data);
+    setReceipt(r.data.items);
     setHandoff(r.data.handoff);
     onChanged();
   };

@@ -77,7 +77,9 @@ export function LoginClient() {
         onSignup={() => router.push("/signup")}
       />
 
-      <div className="mt-4 w-full border-t border-auth-field-bd pt-3">
+      {/* AU2(2026-09-28): 휴대폰(<640)에서는 숨긴다 — 로그인하려는 사람에게 "업종 선택"은 뜻이 불분명하고 권한과도 무관한
+          진입 힌트일 뿐이다. PC/태블릿은 그대로. 숨겨도 industry 는 null 이라 힌트 저장이 일어나지 않는다. */}
+      <div className="mt-4 hidden w-full border-t border-auth-field-bd pt-3 sm:block">
         <button
           type="button"
           onClick={() => setIndustryOpen((v) => !v)}

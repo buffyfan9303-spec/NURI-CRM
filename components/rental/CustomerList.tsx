@@ -68,7 +68,7 @@ export function CustomerList({
       nextVisit: a?.nextVisit ? formatInTz(a.nextVisit, DEFAULT_TZ, "yyyy.MM.dd") : "-",
       open: a && a.openCount > 0 ? `진행 ${a.openCount}건` : "-",
       createdAt: formatInTz(c.createdAt, DEFAULT_TZ, "yyyy.MM.dd"),
-      tags: c.tags.length > 0 ? c.tags.map((t) => <span key={t} className="rounded-[5px] bg-sf2 px-1.5 py-px text-[11px] text-t2">{t}</span>) : null,
+      tags: c.tags.length > 0 ? c.tags.map((t) => <span key={t} className="rounded-[5px] bg-sf2 px-1.5 py-px text-[12px] text-t2">{t}</span>) : null,
     };
   };
 
@@ -160,18 +160,31 @@ export function CustomerList({
             }
             card={(c) => {
               const v = rowView(c);
+              const a = activity[c.id];
+              // 휴대폰 카드(C8): 이름 + 연락처(탭=전화) 한 줄, 값 있는 다음 방문·진행만. "-"·최근 방문·등록일은 상세에서.
+              const fields: [string, React.ReactNode][] = [];
+              if (a?.nextVisit) fields.push(["다음 방문", v.nextVisit]);
+              if (a && a.openCount > 0) fields.push(["진행 업무", `${a.openCount}건`]);
               return (
                 <MobileCard
                   title={c.name}
                   sub={v.tags ?? undefined}
+                  badge={
+                    c.phone ? (
+                      <a
+                        href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="-my-3 inline-flex min-h-[44px] items-center px-1 text-[12.5px] tabular-nums text-[var(--accent-ink)] underline-offset-2 hover:underline"
+                        aria-label={`${c.name}에게 전화 ${c.phone}`}
+                      >
+                        {c.phone}
+                      </a>
+                    ) : c.hasPhone === true ? (
+                      <span className="inline-flex items-center gap-1 text-[12px] text-t3"><Lock size={11} aria-hidden />비공개</span>
+                    ) : undefined
+                  }
                   onClick={() => openRow(c)}
-                  fields={[
-                    ["연락처", v.phone],
-                    ["최근 방문", v.lastVisit],
-                    ["다음 방문", v.nextVisit],
-                    ["진행 업무", v.open],
-                    ["등록일", v.createdAt],
-                  ]}
+                  fields={fields.length > 0 ? fields : undefined}
                 />
               );
             }}

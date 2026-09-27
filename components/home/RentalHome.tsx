@@ -259,6 +259,16 @@ export function RentalHome({
     daysLate: Math.max(1, Math.floor((nowMs - new Date(r.periodEnd).getTime()) / 86400000)),
   }));
 
+  const emptyTitle = isEmpty ? "오늘 처리할 예약이 없습니다." : "오늘 피팅·출고·반납이 없습니다.";
+  // 배치 방향("오른쪽")을 가리키지 않는다 — PC 는 우측, 휴대폰은 아래에 있다(H0 §4).
+  const emptyDescription = isEmpty ? "새 예약을 등록하거나 상품·개체를 먼저 준비하세요." : "'확인이 필요한 일' 카드에서 이어서 처리하세요.";
+  const emptyAction =
+    canWrite && isEmpty ? (
+      <Link href={`${base}/reservations/new`}>
+        <Button size="sm"><CalendarPlus size={14} aria-hidden />예약 등록</Button>
+      </Link>
+    ) : undefined;
+
   return (
     <PageBody wide>
       {header}
@@ -279,7 +289,8 @@ export function RentalHome({
           ))}
         </KpiRow>
 
-        <div className={`grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12 ${TOUCH_WRAP}`}>
+        {/* H0: 추이·분포 차트는 PC 분석용 — 휴대폰(<sm)에서는 숨겨 KPI 바로 아래에 오늘 할 일이 오게 한다. */}
+        <div className={`grid grid-cols-1 items-stretch gap-4 max-sm:hidden lg:grid-cols-12 ${TOUCH_WRAP}`}>
           <Card className="flex flex-col p-4 sm:p-5 lg:col-span-8">
             {chartError ? (
               <ErrorState title="추이를 불러오지 못했습니다." description={chartError} />
@@ -313,25 +324,24 @@ export function RentalHome({
               description={`피팅 ${d.fittingsToday.length} · 출고 ${d.checkoutsToday.length} · 반납 ${d.returnsToday.length}`}
               action={<ViewAll href={`${base}/reservations?quick=today`} />}
             />
-            <WorkTable
-              rows={tableRows}
-              showAmount={canReadRevenue}
-              emptyTitle={isEmpty ? "오늘 처리할 예약이 없습니다." : "오늘 피팅·출고·반납이 없습니다."}
-              emptyDescription={isEmpty ? "새 예약을 등록하거나 상품·개체를 먼저 준비하세요." : "확인이 필요한 일은 오른쪽에서 이어서 처리하세요."}
-              emptyAction={
-                canWrite && isEmpty ? (
-                  <Link href={`${base}/reservations/new`}>
-                    <Button size="sm"><CalendarPlus size={14} aria-hidden />예약 등록</Button>
-                  </Link>
-                ) : undefined
-              }
-            />
+            {tableRows.length === 0 && (
+              // 휴대폰: 큰 빈 상태(아이콘+py-16) 대신 두 줄 — 홈이 2화면 안에 들어오게(H0 §3·§5).
+              <div className="flex flex-col items-start gap-2 py-2 sm:hidden">
+                <p className="text-[13px] font-medium text-t">{emptyTitle}</p>
+                <p className="text-[12.5px] text-t2">{emptyDescription}</p>
+                {emptyAction}
+              </div>
+            )}
+            <div className={tableRows.length === 0 ? "max-sm:hidden" : undefined}>
+              <WorkTable rows={tableRows} showAmount={canReadRevenue} emptyTitle={emptyTitle} emptyDescription={emptyDescription} emptyAction={emptyAction} />
+            </div>
           </Card>
           <div className="flex flex-col gap-4 lg:col-span-4">
-            <Card className="p-4">
+            <Card className="p-4 max-sm:hidden">
               <HorizontalBarChart title="개체 활용도 상위" description="출고 이력 기준" items={dash?.topUnits.map((u) => ({ ...u, href: `${base}/catalog` })) ?? []} />
             </Card>
-            <Card className="p-4">
+            {/* 오늘 일정은 위 "오늘 처리할 예약"과 같은 건을 시간순으로 다시 보인 것 — 휴대폰에서는 중복이라 숨긴다(H0 §3). */}
+            <Card className="p-4 max-sm:hidden">
               <CardHead title="오늘 일정" description="시간순" action={<ViewAll href={`${base}/calendar`}>캘린더</ViewAll>} />
               {rows.length === 0 ? (
                 <p className="text-[12.5px] text-t3">오늘 일정이 없습니다.</p>

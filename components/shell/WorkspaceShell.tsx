@@ -54,6 +54,10 @@ const INDUSTRY_LABEL: Record<string, string> = {
 
 const SIDEBAR_COLLAPSE_KEY = "nuri_crm_sidebar_collapsed";
 
+/** 사업장 설정(/settings)은 lib/industry/config.ts 의 nav 에 없다(그 파일은 수정 금지). 셸이 staff.manage 캡이
+ *  있을 때만 설정 그룹 끝에 한 줄 덧붙인다(S6) — 서버(settings/page.tsx)도 같은 캡으로 막는다. */
+const SETTINGS_NAV: IndustryNav = { key: "settings", path: "settings", label: "사업장 설정", cap: "staff.manage" };
+
 export interface WorkspaceShellProps {
   businessId: string;
   businessName: string;
@@ -124,7 +128,6 @@ export function WorkspaceShell({
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [acctMenuOpen, setAcctMenuOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [switching, setSwitching] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
@@ -178,12 +181,11 @@ export function WorkspaceShell({
       else if (acctMenuOpen) setAcctMenuOpen(false);
       else if (userMenuOpen) setUserMenuOpen(false);
       else if (switcherOpen) setSwitcherOpen(false);
-      else if (mobileSearchOpen) setMobileSearchOpen(false);
       else if (mobileOpen) setMobileOpen(false);
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [notifOpen, acctMenuOpen, userMenuOpen, switcherOpen, mobileSearchOpen, mobileOpen]);
+  }, [notifOpen, acctMenuOpen, userMenuOpen, switcherOpen, mobileOpen]);
 
   React.useEffect(() => {
     try {
@@ -214,9 +216,13 @@ export function WorkspaceShell({
 
   const Icon = INDUSTRY_ICON[industry] ?? FALLBACK_ICON;
 
+  // nav 는 서버가 caps 로 걸러 보낸 목록이라, staff.manage 항목이 있다는 것 자체가 관리 권한의 근거다.
+  const canManage = nav.some((n) => n.cap === SETTINGS_NAV.cap);
+  const fullNav = React.useMemo(() => (canManage ? [...nav, SETTINGS_NAV] : nav), [nav, canManage]);
+
   const filteredNav = query.trim()
-    ? nav.filter((n) => n.label.toLowerCase().includes(query.trim().toLowerCase()))
-    : nav;
+    ? fullNav.filter((n) => n.label.toLowerCase().includes(query.trim().toLowerCase()))
+    : fullNav;
 
   const groupedNav = React.useMemo(() => {
     const buckets = new Map<string, IndustryNav[]>();
@@ -230,12 +236,14 @@ export function WorkspaceShell({
     );
   }, [filteredNav]);
 
+  // 홈(path "")은 정확히 일치할 때만 잡는다(S2): 예전엔 startsWith(base + "/") 라 nav 에 없는 화면도 "오늘 현황"이 됐다.
   const activeItem = React.useMemo(() => {
     let best: IndustryNav | null = null;
     let bestHref = "";
-    for (const item of nav) {
+    for (const item of fullNav) {
       const href = item.path ? `${base}/${item.path}` : base;
-      if (pathname === href || pathname.startsWith(href + "/")) {
+      const hit = item.path ? pathname === href || pathname.startsWith(href + "/") : pathname === href;
+      if (hit) {
         if (href.length > bestHref.length) {
           bestHref = href;
           best = item;
@@ -243,7 +251,7 @@ export function WorkspaceShell({
       }
     }
     return best;
-  }, [nav, base, pathname]);
+  }, [fullNav, base, pathname]);
 
   // 업종별 주요 CTA(§4.2) — 서버가 이미 권한으로 걸러 보낸 nav에 실제로 있을 때만 그린다.
   const primaryAction = PRIMARY_ACTION[industry];
@@ -279,8 +287,10 @@ export function WorkspaceShell({
     };
   }, [accent]);
 
+  // h-dvh(S4): 100vh 는 모바일 주소창을 뺀 높이보다 커서 iOS Safari 하단이 툴바에 가렸다. 인쇄 규칙(globals.css @media print)은
+  // .overflow-hidden 선택자로도 이 뿌리를 풀기 때문에 .h-screen 이 빠져도 영향 없다.
   return (
-    <div data-accent={accent} className="flex h-screen overflow-hidden bg-bg">
+    <div data-accent={accent} className="flex h-dvh overflow-hidden bg-bg">
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/45 min-[960px]:hidden"
@@ -324,8 +334,10 @@ export function WorkspaceShell({
           </div>
           {!isRail && (
             <div className="min-w-0 leading-tight">
-              <div className="truncate text-[13.5px] font-semibold text-sbt">NURI CRM</div>
-              <div className="truncate text-[10.5px] text-[var(--sbt2)]">
+              {/* S3: 드로어(<960)에서는 현재 사업장명이 첫 줄이다 — 휴대폰엔 사업장명이 달리 없었다. 사이드바(960+)는 제품명. */}
+              <div className="truncate text-[13.5px] font-semibold text-sbt min-[960px]:hidden">{businessName}</div>
+              <div className="hidden truncate text-[13.5px] font-semibold text-sbt min-[960px]:block">NURI CRM</div>
+              <div className="truncate text-[12px] text-[var(--sbt2)]">
                 {INDUSTRY_LABEL[industry] ?? industry}
               </div>
             </div>
@@ -362,7 +374,7 @@ export function WorkspaceShell({
           {groupedNav.map((group, gi) => (
             <div key={group.key} className={cn(gi > 0 && "mt-1")}>
               {!isRail && (
-                <p className="px-4 pb-2 pt-5 text-[10.5px] font-semibold uppercase tracking-wide text-[var(--sbt2)]">
+                <p className="px-4 pb-1 pt-2.5 text-[12px] font-semibold uppercase tracking-wide text-[var(--sbt2)]">
                   {group.label}
                 </p>
               )}
@@ -377,7 +389,8 @@ export function WorkspaceShell({
                     onClick={() => setMobileOpen(false)}
                     title={isRail ? item.label : undefined}
                     className={cn(
-                      "mx-2.5 my-0.5 flex items-center gap-2.5 rounded-[var(--r-sm)] px-3 text-[13.5px] transition-colors",
+                      // 드로어(<960)는 행 간격 0(S5): 360×740 에서 11개 행(설정 포함)이 스크롤 없이 계정 영역 위에 들어가야 한다.
+                      "mx-2.5 my-0.5 flex items-center gap-2.5 rounded-[var(--r-sm)] px-3 text-[13.5px] transition-colors max-[959px]:my-0",
                       rowMinH,
                       isRail && "justify-center px-0",
                       active
@@ -418,7 +431,7 @@ export function WorkspaceShell({
             {!isRail && (
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[12.5px] font-medium text-sbt">{userEmail}</span>
-                <span className="block truncate text-[10.5px] text-[var(--sbt2)]">{roleLabel}</span>
+                <span className="block truncate text-[12px] text-[var(--sbt2)]">{roleLabel}</span>
               </span>
             )}
           </button>
@@ -431,7 +444,7 @@ export function WorkspaceShell({
               )}
             >
               <p className="truncate px-3 pb-0.5 pt-1 text-[12px] text-t3">{userEmail}</p>
-              <p className="truncate px-3 pb-1.5 text-[11px] text-t3">{roleLabel}</p>
+              <p className="truncate px-3 pb-1.5 text-[12px] text-t3">{roleLabel}</p>
               <button
                 type="button"
                 onClick={() => signOut()}
@@ -460,7 +473,7 @@ export function WorkspaceShell({
           </button>
 
           {/* 사업장 전환 */}
-          <div className="relative shrink-0" ref={switcherRef}>
+          <div className="relative min-w-0 shrink" ref={switcherRef}>
             <button
               type="button"
               onClick={() => setSwitcherOpen((v) => !v)}
@@ -468,16 +481,18 @@ export function WorkspaceShell({
               aria-expanded={otherBusinesses.length > 0 ? switcherOpen : undefined}
               aria-label={`현재 사업장 ${businessName}`}
               title={businessName}
-              className="flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] px-1.5 text-left hover:bg-sf2 sm:px-2"
+              className="flex min-h-[44px] min-w-0 max-w-full items-center gap-2 rounded-[var(--r-md)] px-1.5 text-left hover:bg-sf2 sm:px-2"
             >
               <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[var(--r-sm)] bg-[var(--accent-soft)] text-[var(--accent-ink)]">
                 <Icon size={16} aria-hidden />
               </span>
+              {/* S3: 휴대폰(<640)은 짧은 이름 한 줄(max 96px). 검색 버튼(S1)을 없애 생긴 자리다. */}
+              <span className="min-w-0 max-w-[96px] truncate text-[13px] font-medium text-t sm:hidden">{businessName}</span>
               <span className="hidden min-w-0 sm:block">
-                <span className="block max-w-[180px] truncate text-[13.5px] font-medium text-t">
+                <span className="block max-w-[110px] truncate text-[13.5px] font-medium text-t lg:max-w-[180px]">
                   {businessName}
                 </span>
-                <span className="block truncate text-[10.5px] text-t3">
+                <span className="block truncate text-[12px] text-t3">
                   {INDUSTRY_LABEL[industry] ?? industry}
                 </span>
               </span>
@@ -488,7 +503,7 @@ export function WorkspaceShell({
 
             {switcherOpen && otherBusinesses.length > 0 && (
               <div className="absolute left-0 top-full z-50 mt-1 w-[240px] rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-modal">
-                <p className="px-3 pb-1 pt-1 text-[10.5px] font-medium uppercase tracking-wide text-t3">
+                <p className="px-3 pb-1 pt-1 text-[12px] font-medium uppercase tracking-wide text-t3">
                   사업장 전환
                 </p>
                 {myBusinesses.map((b) => (
@@ -507,8 +522,10 @@ export function WorkspaceShell({
           </div>
 
           {/* 현재 위치 — 활성 nav 항목 라벨. 휴대폰(<640)에서는 사업장명이 숨으므로 이게 화면 제목이다. */}
+          {/* 768px 상단바 우측 버튼 잘림: 라벨이 flex-none 무제한 폭이라 우측 클러스터가 뷰포트 밖(right=793)으로 밀렸다.
+              sm 이상은 라벨 폭을 140px 로 묶고(truncate), 남는 공간 조정은 검색칸(min 120·max 200/260)이 맡는다. */}
           {activeItem && (
-            <span className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+            <span className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-[140px] sm:flex-none">
               <span className="hidden text-t3 sm:inline" aria-hidden>
                 /
               </span>
@@ -519,7 +536,7 @@ export function WorkspaceShell({
           <div className={cn("flex-1", activeItem && "hidden sm:block")} />
 
           {/* 검색 — 사이드바 메뉴 필터. 통합검색이 아니라 메뉴 검색임을 정확히 표시한다(§4.2). */}
-          <div className="relative hidden w-full min-w-[140px] max-w-[260px] md:block">
+          <div className="relative hidden w-full min-w-[120px] max-w-[200px] shrink md:block lg:max-w-[260px]">
             <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-t3" aria-hidden />
             <input
               type="text"
@@ -531,16 +548,8 @@ export function WorkspaceShell({
             />
           </div>
 
-          {/* 좁은 화면 — 검색을 버튼+패널로 접는다(§4.2). */}
-          <button
-            type="button"
-            onClick={() => setMobileSearchOpen((v) => !v)}
-            aria-label="메뉴 검색 열기"
-            aria-expanded={mobileSearchOpen}
-            className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[var(--r-md)] text-t2 hover:bg-sf2 md:hidden"
-          >
-            <Search size={20} aria-hidden />
-          </button>
+          {/* <md 에는 메뉴 검색 버튼이 없다(S1, 2026-09-28): 메뉴가 8~11개뿐이라 드로어가 전체 메뉴다. 예전 버튼은
+              닫힌 드로어 안 목록만 걸러 결과가 화면에 보이지 않았다. */}
 
           {/* 우측 클러스터: CTA → 테마 → 알림 → 계정 순(§4.2) */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -596,7 +605,7 @@ export function WorkspaceShell({
               {userMenuOpen && (
                 <div className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-modal">
                   <p className="truncate px-3 pb-0.5 pt-1 text-[12px] text-t3">{userEmail}</p>
-                  <p className="truncate px-3 pb-1.5 text-[11px] text-t3">{roleLabel}</p>
+                  <p className="truncate px-3 pb-1.5 text-[12px] text-t3">{roleLabel}</p>
                   <button
                     type="button"
                     onClick={() => signOut()}
@@ -610,23 +619,6 @@ export function WorkspaceShell({
             </div>
           </div>
 
-          {mobileSearchOpen && (
-            <div className="absolute inset-x-0 top-full z-40 border-b border-[var(--bd)] bg-topbar p-3 md:hidden">
-              <div className="relative">
-                <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-t3" aria-hidden />
-                {/* eslint-disable-next-line jsx-a11y/no-autofocus -- 사용자가 명시적으로 연 검색 패널이라 포커스 이동이 기대된다 */}
-                <input
-                  autoFocus
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="메뉴 검색"
-                  aria-label="메뉴 검색"
-                  className="h-[44px] w-full rounded-full border border-[var(--bd2)] bg-sf pl-8 pr-3 text-[13px] text-t outline-none placeholder:text-t3 focus:border-[var(--accent)]"
-                />
-              </div>
-            </div>
-          )}
         </header>
 
         <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>

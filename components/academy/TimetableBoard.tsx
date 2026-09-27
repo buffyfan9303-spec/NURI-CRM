@@ -104,7 +104,7 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
   const rowActions = (s: AcadSession) => (
     <span className="inline-flex flex-wrap items-center justify-end gap-1">
       {s.status !== "휴강" && (
-        <Link href={`/w/${businessId}/attendance?sessionId=${s.id}`} className="inline-flex h-[32px] items-center gap-1 whitespace-nowrap rounded-[var(--r-md)] px-3 text-[13px] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]">
+        <Link href={`/w/${businessId}/attendance?sessionId=${s.id}`} prefetch={false} className="inline-flex h-[32px] items-center gap-1 whitespace-nowrap rounded-[var(--r-md)] px-3 text-[13px] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]">
           <ClipboardCheck size={13} aria-hidden />출결
         </Link>
       )}
@@ -118,8 +118,9 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
     <>
       <PageHeader
         title="시간표"
-        description="오늘 이후 회차. '이 회차만'은 그 회차 하나, '이후 전체 변경'은 매주 반복 시간표 자체를 바꿉니다."
-        actions={canWrite && classes.length > 0 ? <Button variant="secondary" onClick={() => { setWholeForm({ classId: classes[0].id, fromDate: "", weekday: "1", start: "16:00", end: "17:00" }); setWholeOpen(true); }}><Repeat size={14} aria-hidden />이후 전체 변경</Button> : undefined}
+        description="오늘 이후 회차. 시간 변경은 회차 하나 또는 이후 전체 단위로 합니다."
+        // A5: 회차가 0건이면 바꿀 시간표가 없으니 숨긴다. 휴대폰(<sm)에서는 보조(텍스트) 버튼 — 첫 동작이 아니다.
+        actions={canWrite && classes.length > 0 && sessions.length > 0 ? <Button variant="secondary" className="max-sm:border-transparent max-sm:bg-transparent max-sm:shadow-none" onClick={() => { setWholeForm({ classId: classes[0].id, fromDate: "", weekday: "1", start: "16:00", end: "17:00" }); setWholeOpen(true); }}><Repeat size={14} aria-hidden />이후 전체 변경</Button> : undefined}
       >
         {classes.length > 1 && (
           <FilterRow>

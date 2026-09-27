@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 반·수강등록 — 4열 표(반 / 정원 / 월 수강료 / 동작). 반 개설·강의실 추가·수강등록은 모달.
+ * 반·수강등록 — 4열 표(반 / 정원 / 월 수강료 / 동작). 반 개설·강의실 추가·수강등록은 모달. 휴대폰(<sm)은 카드(정원 막대, 동작 2열).
  */
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -10,15 +10,25 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { CellName } from "@/components/ui/ResponsiveTable";
+import { CellName, TableOrCards, MobileCard, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { SelectField, CardHead, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import type { AcadClass, AcadClassroom, AcadStudent } from "@/lib/domain/academy";
 import { createClassroom, createClass, enrollStudent, generateSessions } from "@/lib/domain/academy-actions";
 import { formatKRW } from "@/lib/domain/money";
 
 const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
+function CapacityBar({ n, pct, full, capacity }: { n: number; pct: number; full: boolean; capacity: number }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="h-1.5 w-[72px] shrink-0 overflow-hidden rounded-full bg-sf2"><span className={`block h-full rounded-full ${full ? "bg-[var(--et)]" : "bg-[var(--accent-strong)]"}`} style={{ width: `${pct}%` }} /></span>
+      <span className={`tabular-nums ${full ? "font-medium text-et" : "text-t2"}`}>{n}/{capacity}</span>
+    </span>
+  );
+}
 
 export function ClassesBoard({ businessId, canWrite, classrooms, classes, students, teachers }: {
   businessId: string; canWrite: boolean; classrooms: AcadClassroom[]; classes: AcadClass[]; students: AcadStudent[]; teachers: { membershipId: string; userId: string }[];
@@ -45,6 +55,17 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
   };
 
   const roomName = (id: string | null) => classrooms.find((c) => c.id === id)?.name;
+  const capacityOf = (c: AcadClass) => {
+    const n = c.enrolledCount ?? 0;
+    return { n, pct: c.capacity > 0 ? Math.min(100, Math.round((n / c.capacity) * 100)) : 0, full: c.capacity > 0 && n >= c.capacity };
+  };
+  // 표 행과 카드가 같은 동작을 쓴다(권한·정원 조건이 갈라지지 않게).
+  const rowActions = (c: AcadClass, full: boolean) => (
+    <>
+      <Button variant="ghost" size="sm" loading={busy === c.id} onClick={async () => { setNotice(null); const ok = await run(c.id, () => generateSessions(businessId, c.id)); if (ok) setNotice(`${c.name}: 이후 8주 회차를 추가 생성했습니다.`); }}><Repeat size={13} aria-hidden />회차 생성</Button>
+      <Button variant="secondary" size="sm" disabled={full} title={full ? "정원이 찼습니다." : undefined} onClick={() => setEnrollFor(c)}><UserPlus size={13} aria-hidden />수강등록</Button>
+    </>
+  );
   const totalEnrolled = classes.reduce((s, c) => s + (c.enrolledCount ?? 0), 0);
 
   return (
@@ -78,11 +99,15 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
         ))}
       </div>
 
-      <Card className="mb-4 p-4 sm:p-5">
+      <Card className={`mb-4 ${MOBILE_BARE} sm:p-5`}>
         <CardHead title="반 목록" description={`${classes.length}개`} />
         {classes.length === 0 ? (
           <EmptyState title="개설된 반이 없습니다." description="반을 개설하면 시간표 회차가 생기고 학생을 수강 등록할 수 있습니다." action={canWrite ? <Button size="sm" variant="secondary" onClick={() => setClassOpen(true)}>반 개설</Button> : undefined} />
         ) : (
+          <TableOrCards
+            rows={classes}
+            keyOf={(c) => c.id}
+            table={
           <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
             <table className={`${TABLE} min-w-[640px]`}>
               <thead>
@@ -95,9 +120,7 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
               </thead>
               <tbody>
                 {classes.map((c) => {
-                  const n = c.enrolledCount ?? 0;
-                  const pct = c.capacity > 0 ? Math.min(100, Math.round((n / c.capacity) * 100)) : 0;
-                  const full = c.capacity > 0 && n >= c.capacity;
+                  const { n, pct, full } = capacityOf(c);
                   return (
                     <tr key={c.id} className={`${TR} h-[56px] hover:bg-sf2`}>
                       <td className={TD}>
@@ -105,18 +128,12 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
                         <span className="block truncate text-[11.5px] text-t3">{[c.subject, roomName(c.defaultClassroomId), `시작 ${c.startDate}`].filter(Boolean).join(" · ")}{!c.active && " · 종료"}</span>
                       </td>
                       <td className={`${TD} whitespace-nowrap`}>
-                        <span className="inline-flex items-center gap-2">
-                          <span className="h-1.5 w-[72px] shrink-0 overflow-hidden rounded-full bg-sf2"><span className={`block h-full rounded-full ${full ? "bg-[var(--et)]" : "bg-[var(--accent-strong)]"}`} style={{ width: `${pct}%` }} /></span>
-                          <span className={`tabular-nums ${full ? "font-medium text-et" : "text-t2"}`}>{n}/{c.capacity}</span>
-                        </span>
+                        <CapacityBar n={n} pct={pct} full={full} capacity={c.capacity} />
                       </td>
                       <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{formatKRW(c.tuitionAmount)}</td>
                       {canWrite && (
                         <td className={`${TD} text-right`}>
-                          <span className="inline-flex flex-wrap items-center justify-end gap-1">
-                            <Button variant="ghost" size="sm" loading={busy === c.id} onClick={async () => { setNotice(null); const ok = await run(c.id, () => generateSessions(businessId, c.id)); if (ok) setNotice(`${c.name}: 이후 8주 회차를 추가 생성했습니다.`); }}><Repeat size={13} aria-hidden />회차 생성</Button>
-                            <Button variant="secondary" size="sm" disabled={full} title={full ? "정원이 찼습니다." : undefined} onClick={() => setEnrollFor(c)}><UserPlus size={13} aria-hidden />수강등록</Button>
-                          </span>
+                          <span className="inline-flex flex-wrap items-center justify-end gap-1">{rowActions(c, full)}</span>
                         </td>
                       )}
                     </tr>
@@ -125,6 +142,23 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
               </tbody>
             </table>
           </div>
+            }
+            card={(c) => {
+              const { n, pct, full } = capacityOf(c);
+              return (
+                <MobileCard
+                  title={c.name}
+                  sub={[c.subject, roomName(c.defaultClassroomId), `시작 ${c.startDate}`].filter(Boolean).join(" · ")}
+                  badge={!c.active ? <Badge kind="warning">종료</Badge> : full ? <Badge kind="error">정원 마감</Badge> : undefined}
+                  fields={[
+                    ["정원", <CapacityBar key="cap" n={n} pct={pct} full={full} capacity={c.capacity} />],
+                    ["월 수강료", formatKRW(c.tuitionAmount)],
+                  ]}
+                  actions={canWrite ? <div className="grid w-full grid-cols-2 gap-1.5">{rowActions(c, full)}</div> : undefined}
+                />
+              );
+            }}
+          />
         )}
       </Card>
 

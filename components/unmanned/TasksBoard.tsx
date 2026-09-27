@@ -15,7 +15,7 @@ import type { UsTask, DailyChecklist } from "@/lib/domain/unmanned";
 import { DailyChecklistCard } from "./DailyChecklistCard";
 import { createTask, updateTaskStatus, generateExpiryTasks } from "@/lib/domain/unmanned-actions";
 import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
-import { StatusTab, FilterRow, SelectField, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
+import { StatusTab, FilterRow, SelectField, TextAction, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 
 const TASK_TYPES = ["보충", "청소", "시설점검", "기한점검", "기타"] as const;
 const EMPTY_FORM = { taskType: "보충" as (typeof TASK_TYPES)[number], title: "", dueDate: "" };
@@ -60,14 +60,21 @@ export function TasksBoard({ businessId, canWrite, tasks, todayKey, dueToday = f
   const filtered = status === "all" ? tasks : tasks.filter((t) => t.status === status);
   const overdueCount = tasks.filter((t) => t.status === "예정" && t.dueDate < todayKey).length;
 
+  const generateExpiry = async () => {
+    setNotice(null);
+    const ok = await run(() => generateExpiryTasks(businessId));
+    if (ok) setNotice("유통기한 임박 품목을 기준으로 점검 업무를 생성했습니다.");
+  };
+
   // 표와 카드가 같은 값·같은 권한 조건을 쓰도록 한 곳에서 계산한다.
   const rowView = (t: UsTask) => {
     const overdue = t.status === "예정" && t.dueDate < todayKey;
     const isToday = t.status === "예정" && t.dueDate === todayKey;
     return {
-      due: <span className={overdue ? "font-medium tabular-nums text-et" : isToday ? "font-medium tabular-nums text-wt" : "tabular-nums text-t2"}>{t.dueDate}{overdue ? " · 기한 지남" : isToday ? " · 오늘" : ""}</span>,
-      badge: <Badge kind={t.status === "완료" ? "success" : t.status === "건너뜀" ? "info" : overdue ? "error" : "warning"}>{t.status}</Badge>,
-      type: <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[11px] text-t2">{t.taskType}</span>,
+      // U5: 기한이 지나면 상태 배지 하나가 "기한 지남"을 말한다 — 날짜 줄에는 되풀이하지 않는다.
+      due: <span className={overdue ? "font-medium tabular-nums text-et" : isToday ? "font-medium tabular-nums text-wt" : "tabular-nums text-t2"}>{t.dueDate}{isToday ? " · 오늘" : ""}</span>,
+      badge: <Badge kind={t.status === "완료" ? "success" : t.status === "건너뜀" ? "info" : overdue ? "error" : "warning"}>{overdue ? "기한 지남" : t.status}</Badge>,
+      type: <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[12px] text-t2">{t.taskType}</span>,
       actions: canWrite && t.status === "예정" ? (
         <div className="flex items-center gap-1.5">
           <Button variant="primary" size="sm" className="min-w-[64px] justify-center" loading={busy} onClick={() => run(() => updateTaskStatus(businessId, t.id, "완료"))}>완료</Button>
@@ -86,15 +93,8 @@ export function TasksBoard({ businessId, canWrite, tasks, todayKey, dueToday = f
         actions={
           canWrite ? (
             <>
-              <Button
-                variant="secondary"
-                loading={busy}
-                onClick={async () => {
-                  setNotice(null);
-                  const ok = await run(() => generateExpiryTasks(businessId));
-                  if (ok) setNotice("유통기한 임박 품목을 기준으로 점검 업무를 생성했습니다.");
-                }}
-              >
+              {/* U5: 드문 관리 동작 — 휴대폰에서는 목록 아래 텍스트 동작으로 내린다. */}
+              <Button variant="secondary" loading={busy} onClick={generateExpiry} className="max-sm:hidden">
                 <RefreshCw size={15} aria-hidden />유통기한 업무 자동 생성
               </Button>
               <Button onClick={() => setNewOpen(true)}>
@@ -111,7 +111,7 @@ export function TasksBoard({ businessId, canWrite, tasks, todayKey, dueToday = f
             <StatusTab active={status === "완료"} onClick={() => setStatus("완료")} count={counts.get("완료") ?? 0}>완료</StatusTab>
             <StatusTab active={status === "건너뜀"} onClick={() => setStatus("건너뜀")} count={counts.get("건너뜀") ?? 0}>건너뜀</StatusTab>
             <span className="mx-1 hidden h-4 w-px bg-[var(--bd)] sm:block" aria-hidden />
-            <Link href={`/w/${businessId}/calendar`} className="inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
+            <Link href={`/w/${businessId}/calendar`} prefetch={false} className="inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
               <CalendarClock size={13} aria-hidden />캘린더에서 보기
             </Link>
           </FilterRow>
@@ -183,6 +183,14 @@ export function TasksBoard({ businessId, canWrite, tasks, todayKey, dueToday = f
               );
             }}
           />
+        )}
+
+        {canWrite && (
+          <div className="flex justify-end sm:hidden">
+            <TextAction onClick={() => { if (!busy) void generateExpiry(); }}>
+              <RefreshCw size={13} aria-hidden />유통기한 업무 자동 생성
+            </TextAction>
+          </div>
         )}
       </div>
 

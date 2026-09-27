@@ -26,6 +26,7 @@ export function OrderQRCode({ orderNo, size = 120, showLabel, className }: Props
         className
       )}
     >
+      {/* F22: svg 에 대체텍스트 — qrcode.react 의 title 은 <title> 로 들어가고 role/aria 는 svg 에 그대로 전달된다. */}
       <QRCodeSVG
         value={payload}
         size={size}
@@ -33,6 +34,9 @@ export function OrderQRCode({ orderNo, size = 120, showLabel, className }: Props
         bgColor="#ffffff"
         fgColor="#0c1f35"
         includeMargin={false}
+        title={`주문번호 ${orderNo} QR 코드`}
+        role="img"
+        aria-label={`주문번호 ${orderNo} QR 코드`}
       />
       {showLabel && (
         <div className="text-[10px] text-t3 font-bold tracking-tight">

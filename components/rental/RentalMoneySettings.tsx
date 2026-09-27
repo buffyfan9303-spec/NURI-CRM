@@ -10,6 +10,7 @@ import { Plus, Trash2 } from "@/lib/icons";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
 import { Alert, CONTROL } from "./listkit";
 import { formatKRW, parseKRW } from "@/lib/domain/money";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
@@ -141,25 +142,30 @@ function CancelPolicyCard({ businessId, initial }: { businessId: string; initial
   );
 }
 
+/** 휴대폰 읽기 요약 한 줄 — "7일 이상 → 30%", "당일 → 100%", "1개월 이상 → 0%". */
+function tierLabel(r: TierDraft): string {
+  if (r.value.trim() === "") return "기간 미입력";
+  if (r.unit === "months") return `${r.value}개월 이상`;
+  return r.value === "0" ? "당일" : `${r.value}일 이상`;
+}
+
 function TierEditor({ title, rows, setRows, onReset }: { title: string; rows: TierDraft[]; setRows: React.Dispatch<React.SetStateAction<TierDraft[]>>; onReset: () => void }) {
+  const [editing, setEditing] = React.useState(false);
   const update = (key: string, patch: Partial<TierDraft>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
-  return (
-    <div className="rounded-[var(--r-md)] border border-[var(--bd)] p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-[12.5px] font-semibold text-t">{title}</h3>
-        <button type="button" onClick={onReset} className="inline-flex h-[32px] items-center rounded-[var(--r-sm)] px-2 text-[12px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">공정위 기본값</button>
-      </div>
-      <div className="mb-1 grid grid-cols-[1fr_84px_1fr_40px] gap-2 text-[11px] text-t3"><span>남은 기간(이상)</span><span>단위</span><span>대여료의 %</span><span /></div>
+  // 표(sm+ 인라인, 휴대폰은 편집 시트 안) — 같은 rows 상태를 쓰므로 어느 쪽에서 고쳐도 요약이 바로 바뀐다.
+  const editor = (
+    <>
+      <div className="mb-1 grid grid-cols-[1fr_84px_1fr_44px] gap-2 text-[12px] text-t3"><span>남은 기간(이상)</span><span>단위</span><span>대여료의 %</span><span /></div>
       <div className="flex flex-col gap-1.5">
         {rows.map((r) => (
-          <div key={r.key} className="grid grid-cols-[1fr_84px_1fr_40px] gap-2">
+          <div key={r.key} className="grid grid-cols-[1fr_84px_1fr_44px] gap-2">
             <input value={r.value} onChange={(e) => update(r.key, { value: e.target.value })} inputMode="numeric" aria-label="남은 기간" placeholder={r.unit === "months" ? "1" : "0=당일"} className={CONTROL} />
             <select value={r.unit} onChange={(e) => update(r.key, { unit: e.target.value as TierDraft["unit"] })} aria-label="단위" className={CONTROL}>
               <option value="days">일</option>
               <option value="months">개월</option>
             </select>
             <input value={r.rate} onChange={(e) => update(r.key, { rate: e.target.value })} inputMode="numeric" aria-label="비율(%)" className={CONTROL} />
-            <button type="button" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} aria-label="단계 삭제" disabled={rows.length <= 1} className="flex h-[40px] items-center justify-center rounded-[var(--r-md)] border border-[var(--bd2)] text-et hover:bg-eb disabled:opacity-40 [@media(pointer:coarse)]:h-[44px]">
+            <button type="button" onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} aria-label="단계 삭제" disabled={rows.length <= 1} className="flex h-[40px] w-[44px] items-center justify-center rounded-[var(--r-md)] border border-[var(--bd2)] text-et hover:bg-eb disabled:opacity-40 [@media(pointer:coarse)]:h-[44px]">
               <Trash2 size={15} aria-hidden />
             </button>
           </div>
@@ -168,6 +174,29 @@ function TierEditor({ title, rows, setRows, onReset }: { title: string; rows: Ti
       <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={() => setRows((rs) => [...rs, { key: crypto.randomUUID(), unit: "days", value: "", rate: "" }])}>
         <Plus size={13} aria-hidden />단계 추가
       </Button>
+    </>
+  );
+  return (
+    <div className="rounded-[var(--r-md)] border border-[var(--bd)] p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-[12.5px] font-semibold text-t">{title}</h3>
+        <button type="button" onClick={onReset} className="inline-flex h-[32px] items-center rounded-[var(--r-sm)] px-2 text-[12px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">공정위 기본값</button>
+      </div>
+      {/* R6 휴대폰: 한 줄에 입력 4개 대신 "N일 이상 → M%" 읽기 요약 + 편집 시트. */}
+      <ul className="flex flex-col divide-y divide-[var(--bd)] text-[13px] sm:hidden" aria-label={`${title} 요약`}>
+        {rows.map((r) => (
+          <li key={r.key} className="flex min-h-[36px] items-center justify-between gap-3 py-1.5">
+            <span className="text-t2">{tierLabel(r)}</span>
+            <span className="font-semibold tabular-nums text-t">{r.rate.trim() === "" ? "미입력" : `${r.rate}%`}</span>
+          </li>
+        ))}
+      </ul>
+      <Button type="button" size="sm" variant="secondary" className="mt-2 w-full sm:hidden" onClick={() => setEditing(true)}>편집</Button>
+      <div className="max-sm:hidden">{editor}</div>
+      <Modal open={editing} onClose={() => setEditing(false)} title={`${title} 편집`} footer={<Button type="button" onClick={() => setEditing(false)}>완료</Button>}>
+        <p className="mb-3 text-[12.5px] text-t2">닫은 뒤 아래 &lsquo;단계표 저장&rsquo;을 눌러야 적용됩니다.</p>
+        {editor}
+      </Modal>
     </div>
   );
 }

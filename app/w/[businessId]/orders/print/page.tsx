@@ -47,7 +47,10 @@ export default async function FactoryOrderBatchPrintPage({ params }: { params: {
       {result.data.length === 0 ? (
         <EmptyState title="작지 대기 중인 정장 주문이 없습니다." description="상태가 '접수'인 정장 주문만 여기 모입니다." />
       ) : (
-        result.data.map((o) => <WorkOrderSheet key={o.id} order={o} businessName={access.businessName} />)
+        // F01: globals.css @media print 는 #print-area 만 보이게 한다 — id 가 없으면 빈 종이가 나온다.
+        <div id="print-area">
+          {result.data.map((o) => <WorkOrderSheet key={o.id} order={o} businessName={access.businessName} />)}
+        </div>
       )}
     </div>
   );

@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import { Plus, CircleAlert, Lock, QrCode, History, Wrench, ChevronDown } from "@/lib/icons";
+import { Plus, CircleAlert, Lock, QrCode, History, Wrench, ChevronDown, Printer } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -144,8 +145,21 @@ export function CatalogView({
       rentals: `${unitRentalCounts[u.id] ?? 0}회`,
       cost: cost == null ? <span className="text-t3">미입력</span> : formatKRW(cost),
       historyLink: (
-        <Link href={`/w/${businessId}/reservations?productId=${p.id}`} className="inline-flex h-[32px] items-center rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
+        <Link href={`/w/${businessId}/reservations?productId=${p.id}`} prefetch={false} className="inline-flex h-[32px] items-center rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
           예약 이력
+        </Link>
+      ),
+      // R3: 휴대폰 카드 우측 상단 아이콘 링크(44px). 카드 onClick(개체 시트)으로 번지지 않게 막는다.
+      historyIcon: (
+        <Link
+          href={`/w/${businessId}/reservations?productId=${p.id}`}
+          prefetch={false}
+          aria-label={`${p.name} 예약 이력`}
+          title="예약 이력"
+          onClick={(e) => e.stopPropagation()}
+          className="-mr-2 -mt-1 inline-flex h-[44px] w-[44px] items-center justify-center rounded-[var(--r-sm)] text-[var(--accent-ink)] hover:bg-sf2"
+        >
+          <History size={16} aria-hidden />
         </Link>
       ),
     };
@@ -250,17 +264,16 @@ export function CatalogView({
                   const { unit: u, product: p } = f;
                   const v = rowView(f);
                   return (
+                    // R3: 취득비용(PC 관리 정보)은 휴대폰 카드에서 빼고, 예약 이력은 우측 상단 아이콘으로.
                     <MobileCard
                       title={p.name}
                       sub={<><span className="font-mono">{p.code}</span><span>· {v.sku}</span><span>· 개체 <span className="font-mono text-t2">{u.unitCode}</span></span></>}
-                      badge={v.badge}
+                      badge={<span className="flex items-center gap-1">{v.badge}{v.historyIcon}</span>}
                       onClick={() => setSelected(f)}
                       fields={[
                         ["위치", v.location],
                         ["대여횟수", v.rentals],
-                        ...(canReadCost ? ([["취득비용", v.cost]] as [string, React.ReactNode][]) : []),
                       ]}
-                      actions={v.historyLink}
                     />
                   );
                 }}
@@ -335,6 +348,7 @@ function UnitDetailModal({
 }) {
   const { unit: u, sku: s, product: p } = flat;
   const [tab, setTab] = React.useState<"info" | "qr" | "availability">("info");
+  const qrValue = u.qrPayload ?? u.unitCode;
   const [location, setLocation] = React.useState(u.location ?? "");
   const [notes, setNotes] = React.useState(u.notes ?? "");
   const [busy, setBusy] = React.useState(false);
@@ -440,13 +454,29 @@ function UnitDetailModal({
       {tab === "qr" && (
         <div className="flex flex-col items-center gap-3 py-2">
           <div className="rounded-[var(--r-lg)] border border-[var(--bd)] bg-white p-3">
-            <QRCodeSVG value={u.qrPayload ?? u.id} size={140} level="M" includeMargin={false} />
+            {/* D8: qr_payload 가 없으면 unit_code — 서버 resolve_scan 은 unit_code/qr_payload 만 찾는다(u.id 는 못 찾는다). */}
+            <QRCodeSVG value={qrValue} size={140} level="M" includeMargin={false} />
           </div>
           <p className="text-center text-[12px] text-t2">
             <QrCode size={13} className="mr-1 inline" />
             {u.unitCode} · {p.code}
           </p>
           <p className="max-w-[320px] text-center text-[11.5px] text-t3">인쇄하면 흰 여백과 검은 코드가 유지됩니다. 스캔 화면에서 이 코드로 개체를 조회할 수 있습니다.</p>
+          <Button size="sm" variant="secondary" onClick={() => window.print()}>
+            <Printer size={14} aria-hidden /> 라벨 인쇄
+          </Button>
+          {/* D7: 모달은 fixed 오버레이 안이라 globals.css 의 @media print(#print-area 만 보임)가 빈 종이를 낸다.
+              라벨만 body 직속 #print-area 로 두고 화면에서는 숨긴다 — 인쇄 미디어에서 globals.css 가 display:block 으로 켠다. */}
+          {createPortal(
+            <div id="print-area" style={{ display: "none", background: "#fff", color: "#000", textAlign: "center", fontFamily: "sans-serif" }}>
+              <div style={{ display: "inline-block", padding: 12, background: "#fff" }}>
+                <QRCodeSVG value={qrValue} size={140} level="M" includeMargin={false} />
+              </div>
+              <p style={{ margin: "8px 0 0", fontSize: 14, fontWeight: 600 }}>{u.unitCode}</p>
+              <p style={{ margin: "2px 0 0", fontSize: 12 }}>{p.name} · {s.color}/{s.size} · {p.code}</p>
+            </div>,
+            document.body
+          )}
         </div>
       )}
 
@@ -493,8 +523,8 @@ function ProductCard({
     return {
       status: (
         <>
-          <span className={cn("rounded-[6px] px-2 py-0.5 text-[11px] font-bold", STATUS_CLASS[u.status])}>{UNIT_STATUS_LABEL[u.status]}</span>
-          {blocked && <span className="ml-1.5 text-[10.5px] text-t3">대여 불가</span>}
+          <span className={cn("rounded-[6px] px-2 py-0.5 text-[12px] font-bold", STATUS_CLASS[u.status])}>{UNIT_STATUS_LABEL[u.status]}</span>
+          {blocked && <span className="ml-1.5 text-[12px] text-t3">대여 불가</span>}
         </>
       ),
       location: u.location ?? "-",
@@ -518,8 +548,8 @@ function ProductCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-[11.5px] text-t3">{product.code}</span>
             <h3 className="text-[14px] font-semibold text-t">{product.name}</h3>
-            <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[10.5px] text-t2">{product.category}</span>
-            {!product.active && <span className="rounded-[6px] bg-sf3 px-1.5 py-0.5 text-[10.5px] text-t3">비활성</span>}
+            <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[12px] text-t2">{product.category}</span>
+            {!product.active && <span className="rounded-[6px] bg-sf3 px-1.5 py-0.5 text-[12px] text-t3">비활성</span>}
           </div>
           <div className="mt-1 flex flex-wrap gap-3 text-[12px] text-t2">
             <span>기본 대여료 {formatKRW(product.baseFee)}</span>
@@ -545,7 +575,7 @@ function ProductCard({
             <span
               key={part.id}
               className={cn(
-                "rounded-[6px] px-2 py-0.5 text-[11px]",
+                "rounded-[6px] px-2 py-0.5 text-[12px]",
                 part.required ? "bg-sf2 text-t2" : "border border-dashed border-[var(--bd2)] text-t3"
               )}
             >
@@ -655,7 +685,6 @@ function UnitCard({ sku, unit: u, view: v, canWrite }: { sku: RentalSku; unit: R
       fields={[
         ["위치", v.location],
         ["대여횟수", v.rentals],
-        ["취득비용", v.cost],
         ["실측", v.measurements],
       ]}
       actions={canWrite ? v.action : undefined}
@@ -684,7 +713,7 @@ function UnitStatusMenu({
     { value: "retired", label: "폐기 처리" },
   ];
   if (status === "care" || status === "repair" || status === "out" || status === "reserved") {
-    return <span className="text-[11px] text-t3">세탁·수선/예약 화면에서 처리</span>;
+    return <span className="text-[12px] text-t3">세탁·수선/예약 화면에서 처리</span>;
   }
   return (
     <div className="flex items-center gap-1">
@@ -714,7 +743,7 @@ function UnitStatusMenu({
           </option>
         ))}
       </select>
-      {error && <span className="text-[10.5px] text-et">{error}</span>}
+      {error && <span className="text-[12px] text-et">{error}</span>}
     </div>
   );
 }

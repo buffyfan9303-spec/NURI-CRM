@@ -179,6 +179,8 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
       {error && <Alert className="mb-4">{error}</Alert>}
       {bulkNotice && <Alert kind="success" className="mb-4">{bulkNotice}</Alert>}
 
+      {/* A6: 청구서가 0건이면 0원 KPI 4장은 정보가 없다 — 숨긴다. */}
+      {invoices.length > 0 && (
       <div className="mb-4 grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-4">
         {[
           ["청구 합계", formatKRW(sum.amount), "text-t"],
@@ -192,14 +194,14 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
           </Card>
         ))}
       </div>
+      )}
 
       <Card className="p-4 sm:p-5">
         <CardHead title={tab === "all" ? "청구·납부 현황" : `${tab} 청구서`} description={`${rows.length}건`} />
         {rows.length === 0 ? (
           <EmptyState
             title={tab === "all" ? "청구서가 없습니다." : `${tab} 상태인 청구서가 없습니다.`}
-            description={tab === "all" && canWrite ? "이번 달 일괄 발행으로 활성 수강 전원의 청구서를 한 번에 만들 수 있습니다." : undefined}
-            action={tab === "all" && canWrite ? <Button size="sm" variant="secondary" onClick={() => setBulkOpen(true)}>이번 달 일괄 발행</Button> : undefined}
+            description={tab === "all" && canWrite ? "위의 '이번 달 일괄 발행'으로 활성 수강 전원의 청구서를 한 번에 만들 수 있습니다." : undefined}
           />
         ) : (
           <TableOrCards
@@ -231,7 +233,7 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
                             <span className="block max-w-[180px] truncate text-[11.5px] text-t3" title={v.cls}>{v.cls}</span>
                           </td>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{inv.period}</td>
-                          <td className={`${TD} whitespace-nowrap tabular-nums ${v.overdue ? "font-medium text-et" : "text-t2"}`}>{inv.dueDate}{v.overdue && <span className="ml-1 text-[11px]">지남</span>}</td>
+                          <td className={`${TD} whitespace-nowrap tabular-nums ${v.overdue ? "font-medium text-et" : "text-t2"}`}>{inv.dueDate}{v.overdue && <span className="ml-1 text-[12px]">지남</span>}</td>
                           <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{formatKRW(inv.amount)}</td>
                           <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t2`}>{formatKRW(inv.paid)}</td>
                           <td className={`${TD} whitespace-nowrap text-right tabular-nums ${v.due ? "font-semibold text-et" : "text-t3"}`}>{formatKRW(inv.outstanding)}</td>

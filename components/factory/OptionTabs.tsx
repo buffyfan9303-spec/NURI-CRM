@@ -10,6 +10,8 @@ import {
 } from "@/lib/domain/factory-options";
 import { OptionField } from "./OptionField";
 
+const GRID = "grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-4";
+
 /**
  * 정장 옵션 41항목 탭 폼 — 일정/수량, 상의16, 패턴수정2, 하의10, 조끼5, 기타4.
  * "일정/수량" 탭은 qty(jsonb)로, 나머지는 options(jsonb)로 저장 대상이 갈린다
@@ -53,8 +55,10 @@ export function OptionTabs({
         ))}
       </div>
 
+      {/* 열 수는 뷰포트(sm/md)가 아니라 이 폼이 놓인 칸 너비로 정한다 — 미리보기 워크스페이스의 280~300px 열 안에서
+          md:grid-cols-3 이 76px짜리 select 세 개를 만들어 값이 "반접" "일반(후" 로 잘렸다(QA 2026-09-25). */}
       {tab === "일정/수량" ? (
-        <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 md:grid-cols-4">
+        <div className={GRID}>
           {FACTORY_QTY_FIELDS.map((f) => (
             <OptionField
               key={f.key}
@@ -65,7 +69,7 @@ export function OptionTabs({
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className={GRID}>
           {fieldsByGroup(tab).map((f) => (
             <OptionField key={f.key} def={f} value={options[f.key]} onChange={onOptionsChange} />
           ))}

@@ -41,15 +41,10 @@ const ERROR_COPY: Record<IScannerError["kind"], { title: string; detail: string 
   unknown: { title: "카메라를 여는 중 알 수 없는 오류가 발생했습니다.", detail: "다시 시도하거나 수동 입력을 이용하세요." },
 };
 
-export function CameraPanel({ onResult, paused }: { onResult: (code: DetectedCode) => void; paused?: boolean }) {
-  const cam = useScanCamera(
-    React.useCallback(
-      (code) => {
-        if (!paused) onResult(code);
-      },
-      [onResult, paused]
-    )
-  );
+export function CameraPanel({ onResult }: { onResult: (code: DetectedCode) => void }) {
+  // D3: 프레임을 여기서 걸러내지 않는다 — 호출부가 "마지막으로 보인 시각"으로 연속 인식을 판단하므로
+  // 처리 중에도 모든 인식을 전달해야 "안 보이다 다시 나타남"을 올바르게 잰다.
+  const cam = useScanCamera(onResult);
 
   const engineLabel =
     cam.detectorInfo?.engine === "native"

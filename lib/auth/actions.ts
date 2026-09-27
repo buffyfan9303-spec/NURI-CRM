@@ -13,6 +13,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/user";
+import { isTransientAuthError } from "@/lib/auth/transient";
 import type { Industry } from "@/lib/industry/config";
 import { isIndustry } from "@/lib/industry/config";
 
@@ -150,15 +152,17 @@ export type MyBusinessesResult =
  * 빈 배열로 오류를 덮지 않는다(계약 §5-5).
  */
 export async function listMyBusinesses(): Promise<MyBusinessesResult> {
-  const sb = getServerSupabase();
-  const { data: auth } = await sb.auth.getUser();
-  if (!auth?.user) return { ok: false, reason: "unauthenticated" };
+  const { sb, user, error: authErr } = await getAuthUser();
+  if (!user) {
+    if (isTransientAuthError(authErr)) return { ok: false, reason: "error", message: authErr!.message };
+    return { ok: false, reason: "unauthenticated" };
+  }
 
   const { data, error } = await sb
     .schema("crm")
     .from("memberships")
     .select("role,status,business:businesses(id,name,industry,active)")
-    .eq("user_id", auth.user.id);
+    .eq("user_id", user.id);
 
   if (error) return { ok: false, reason: "error", message: error.message };
 

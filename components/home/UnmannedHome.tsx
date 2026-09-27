@@ -158,7 +158,8 @@ export async function UnmannedHome({
           ))}
         </KpiRow>
 
-        <div className={`grid grid-cols-1 items-stretch gap-4 lg:grid-cols-12 ${TOUCH_WRAP}`}>
+        {/* H0: 추이·분포 차트는 PC 분석용 — 휴대폰(<sm)에서는 숨기고 오늘 할 일을 첫 화면에 올린다. */}
+        <div className={`grid grid-cols-1 items-stretch gap-4 max-sm:hidden lg:grid-cols-12 ${TOUCH_WRAP}`}>
           <Card className="flex flex-col p-4 sm:p-5 lg:col-span-8">
             {chartError ? (
               <ErrorState title="추이를 불러오지 못했습니다." description={chartError} />
@@ -198,7 +199,7 @@ export async function UnmannedHome({
               showQty={false}
               showAmount={false}
               emptyTitle={isEmpty ? "오늘 처리할 보충·점검 업무가 없습니다." : "오늘 마감인 점검 업무가 없습니다."}
-              emptyDescription={isEmpty ? "상품을 등록하고 입고를 기록하면 재고 현황이 여기에 표시됩니다." : "부족 재고·유통기한 임박 품목은 오른쪽에서 확인하세요."}
+              emptyDescription={isEmpty ? "상품을 등록하고 입고를 기록하면 재고 현황이 여기에 표시됩니다." : "부족 재고는 위 '부족재고' 지표에서, 유통기한 임박 품목은 아래 '유통기한 임박 품목'에서 확인하세요."}
               emptyAction={
                 canWrite && isEmpty ? (
                   <Link href={`${base}/products`}>
@@ -209,7 +210,7 @@ export async function UnmannedHome({
             />
           </Card>
           <div className="flex flex-col gap-4 lg:col-span-4">
-            <Card className="p-4">
+            <Card className="p-4 max-sm:hidden">
               <HorizontalBarChart title="판매 상위 상품" description="누적 판매 수량 기준" items={dash?.topProducts.map((p) => ({ ...p, href: `${base}/sales` })) ?? []} />
             </Card>
             <Card className="p-4">
@@ -220,8 +221,8 @@ export async function UnmannedHome({
                 <ul className="flex flex-col divide-y divide-[var(--bd)]">
                   {d.expiringSoon.slice(0, 6).map((l) => (
                     <li key={l.id}>
-                      <Link href={`${base}/products`} className={row}>
-                        <span className="min-w-0 truncate"><span className="font-medium text-t">{l.productName}</span> · <span className="font-mono text-[11.5px]">{l.lotNo}</span></span>
+                      <Link href={`${base}/products`} prefetch={false} className={row}>
+                        <span className="min-w-0 truncate"><span className="font-medium text-t">{l.productName}</span> · <span className="font-mono text-[12px]">{l.lotNo}</span></span>
                         <span className="shrink-0 tabular-nums font-medium text-wt">{l.expiryDate ? l.expiryDate.slice(5).replace("-", ".") : "-"}</span>
                       </Link>
                     </li>
@@ -229,7 +230,8 @@ export async function UnmannedHome({
                 </ul>
               )}
             </Card>
-            <Card className="p-4">
+            {/* H0-3: 빈 보조 카드는 휴대폰에서 숨긴다(오늘 할 일·임박 품목만 남긴다). */}
+            <Card className={`p-4 ${d.recentMovements.length === 0 ? "max-sm:hidden" : ""}`}>
               <CardHead title="최근 입출고" action={<ViewAll href={`${base}/stock`}>재고</ViewAll>} />
               {d.recentMovements.length === 0 ? (
                 <p className="text-[12.5px] text-t3">최근 입출고 기록이 없습니다.</p>
@@ -237,7 +239,7 @@ export async function UnmannedHome({
                 <ul className="flex flex-col divide-y divide-[var(--bd)]">
                   {d.recentMovements.map((m) => (
                     <li key={m.id} className="flex min-h-[36px] items-center justify-between gap-3 px-1 text-[12.5px] text-t2">
-                      <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[11px] text-t2">{MOVEMENT_LABEL[m.movementType] ?? m.movementType}</span>
+                      <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[12px] text-t2">{MOVEMENT_LABEL[m.movementType] ?? m.movementType}</span>
                       <span className="tabular-nums">
                         <span className={m.qtyDelta > 0 ? "font-medium text-okt" : "font-medium text-t"}>{m.qtyDelta > 0 ? "+" : ""}{m.qtyDelta}</span>
                         <span className="ml-2 text-t3">{formatInTz(m.occurredAt, tz, "M.d HH:mm")}</span>
@@ -247,7 +249,7 @@ export async function UnmannedHome({
                 </ul>
               )}
             </Card>
-            <Card className="p-4">
+            <Card className={`p-4 ${d.upcomingTasks.length === 0 ? "max-sm:hidden" : ""}`}>
               <CardHead title="다가오는 점검 일정" description="7일 이내" action={<ViewAll href={`${base}/calendar`}>캘린더</ViewAll>} />
               {d.upcomingTasks.length === 0 ? (
                 <p className="text-[12.5px] text-t3">7일 이내 예정된 점검이 없습니다.</p>
@@ -255,7 +257,7 @@ export async function UnmannedHome({
                 <ul className="flex flex-col divide-y divide-[var(--bd)]">
                   {d.upcomingTasks.slice(0, 6).map((t) => (
                     <li key={t.id}>
-                      <Link href={`${base}/tasks`} className={row}>
+                      <Link href={`${base}/tasks`} prefetch={false} className={row}>
                         <span className="min-w-0 truncate text-t">{t.title}</span>
                         <span className="shrink-0 tabular-nums text-t3">{t.dueDate.slice(5).replace("-", ".")}</span>
                       </Link>

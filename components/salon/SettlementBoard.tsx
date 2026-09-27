@@ -8,6 +8,7 @@
  * 같은 원칙: 상태와 결제는 별개 축).
  *
  * 레퍼런스: 토스 매출 장부의 "합계 → 목록" 순서. 상단 합계 3칸(예약금액·수납액·미수) 다음 표(PC 7열)/카드.
+ * 휴대폰(<sm, N4): 합계는 미수 잔액 1장(전폭·강조) + 예약금액·수납액 2열 — 세로 3장(450px)이 첫 화면을 먹던 결함.
  */
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
+import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { StatusTab, FilterRow, CardHead, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import { formatKRW } from "@/lib/domain/money";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
@@ -77,20 +78,21 @@ export function SalonSettlementBoard({
         </FilterRow>
       </PageHeader>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5">
         {[
-          ["예약금액 합계", sum.price, "text-t"],
-          ["수납액 합계", sum.paid, "text-okt"],
-          ["미수 잔액", sum.outstanding, sum.outstanding > 0 ? "text-et" : "text-t"],
-        ].map(([label, v, cls]) => (
-          <Card key={label as string} className="px-4 py-3.5 sm:px-5">
+          { label: "예약금액 합계", v: sum.price, cls: "text-t text-[18px] sm:text-[24px]", card: "" },
+          { label: "수납액 합계", v: sum.paid, cls: "text-okt text-[18px] sm:text-[24px]", card: "" },
+          // 휴대폰은 미수 잔액을 맨 위 전폭·24px 로 강조하고 나머지 둘을 2열로(N4).
+          { label: "미수 잔액", v: sum.outstanding, cls: `${sum.outstanding > 0 ? "text-et" : "text-t"} text-[24px]`, card: "max-sm:order-first max-sm:col-span-2" },
+        ].map(({ label, v, cls, card }) => (
+          <Card key={label} className={`px-4 py-3.5 sm:px-5 ${card}`}>
             <p className="text-[12px] text-t2">{label}</p>
-            <p className={`mt-1.5 whitespace-nowrap text-[24px] font-bold leading-none tabular-nums ${cls}`}>{formatKRW(v as number)}</p>
+            <p className={`mt-1.5 whitespace-nowrap font-bold leading-none tabular-nums ${cls}`}>{formatKRW(v)}</p>
           </Card>
         ))}
       </div>
 
-      <Card className="p-4 sm:p-5">
+      <Card className={`sm:p-5 ${MOBILE_BARE}`}>
         <CardHead title={filter === "due" ? "미수 예약" : "정산 대상 예약"} description={`${rows.length}건 · 최근순`} />
         {rows.length === 0 ? (
           <EmptyState title={filter === "due" ? "미수가 없습니다." : "정산 대상 예약이 없습니다."} description={filter === "due" ? "잔액이 남은 예약이 없습니다." : "예약이 생성되면 여기 표시됩니다."} />
@@ -138,7 +140,7 @@ export function SalonSettlementBoard({
               return (
                 <MobileCard
                   title={v.customer}
-                  sub={<><span title={v.service}>{v.service}</span><span>· {v.when}</span></>}
+                  sub={<><span className="mr-1 tabular-nums">{v.when}</span><span className="min-w-0 truncate" title={v.service}>{v.service}</span></>}
                   badge={<Badge kind={SALON_STATUS_KIND[a.status] ?? "info"}>{a.status}</Badge>}
                   fields={[
                     ["예약금액", v.price],

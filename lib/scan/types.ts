@@ -39,6 +39,12 @@ export interface ScanCommitHandoff {
   reservations?: { reservationId: string; itemIds: string[]; unitIds: string[] }[];
 }
 
+/** commitScanBatch 반환(D2): 확정 직전 스냅샷 + 모드별 handoff. 배열에 속성을 붙이면 서버 액션 직렬화에서 사라진다. */
+export interface ScanCommitResult {
+  items: ScanBatchItem[];
+  handoff: ScanCommitHandoff;
+}
+
 /** crm.scan_batch_items 1행. */
 export interface ScanBatchItem {
   id: string;

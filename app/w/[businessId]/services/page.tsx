@@ -10,14 +10,14 @@ import { listCustomers } from "@/lib/domain/rental";
 import { todayKeyInTz } from "@/lib/utils/datetime";
 import { getAccess } from "../access";
 import { ServicesBoard } from "@/components/salon/ServicesBoard";
-import { BookingBoard } from "@/components/salon/BookingBoard";
+import { BookingBoard, type ServicesTab } from "@/components/salon/BookingBoard";
 
 export default async function ServicesPage({
   params,
   searchParams,
 }: {
   params: { businessId: string };
-  searchParams: { date?: string };
+  searchParams: { date?: string; tab?: string };
 }) {
   const access = await getAccess(params.businessId, "view");
   if (!access.ok) {
@@ -29,13 +29,15 @@ export default async function ServicesPage({
   if (access.industry !== "salon") {
     return (
       <PageBody>
-        <PageHeader title="예약·시술" />
+        <PageHeader title="시술·가격" />
         <Card><EmptyState title="이 업종에는 시술·가격 화면이 없습니다." /></Card>
       </PageBody>
     );
   }
 
-  const todayOnly = searchParams.date === "today";
+  // N3: 기본은 오늘 하루(지난 날짜부터 나오던 "전체(최근 100건)"는 ?date=all 로). 홈 지표의 ?date=today 도 그대로 오늘.
+  const todayOnly = searchParams.date !== "all";
+  const mobileTab: ServicesTab = searchParams.tab === "services" ? "services" : "bookings";
   const [services, staff, resources, customers, appointments] = await Promise.all([
     listServices(access.businessId),
     listStaffProfiles(access.businessId),
@@ -48,7 +50,7 @@ export default async function ServicesPage({
     if (!r.ok) {
       return (
         <PageBody>
-          <PageHeader title="예약·시술" />
+          <PageHeader title="시술·가격" />
           <Card><ErrorState title="불러오지 못했습니다." description={r.message} /><div className="flex justify-center pb-6"><RetryButton /></div></Card>
         </PageBody>
       );
@@ -79,8 +81,9 @@ export default async function ServicesPage({
         noShowByCustomer={noShowByCustomer}
         businessName={access.businessName}
         todayOnly={todayOnly}
+        mobileTab={mobileTab}
       />
-      <ServicesBoard businessId={access.businessId} canWrite={canWrite} services={services.ok ? services.data : []} />
+      <ServicesBoard businessId={access.businessId} canWrite={canWrite} services={services.ok ? services.data : []} className={mobileTab === "bookings" ? "max-sm:hidden" : undefined} />
     </PageBody>
   );
 }

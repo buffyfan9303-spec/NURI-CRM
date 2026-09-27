@@ -4,7 +4,7 @@ import * as React from "react";
 import { Undo2, Redo2, Columns2, X } from "@/lib/icons";
 import { cn } from "@/lib/utils/cn";
 import {
-  FACTORY_OPTION_GROUPS, fieldsByGroup, FACTORY_QTY_FIELDS, type OptionValue, type FactoryOptionGroup,
+  FACTORY_OPTION_GROUPS, fieldsByGroup, type OptionValue, type FactoryOptionGroup,
 } from "@/lib/domain/factory-options";
 import type { MaterialOption } from "@/lib/domain/factory-types";
 import { readMaterialSelection, type MaterialSelection } from "@/lib/domain/factory-materials";
@@ -13,6 +13,7 @@ import { GarmentStage, BACK_ONLY_KEYS, type GarmentItem } from "./GarmentStage";
 import type { GarmentView } from "./JacketSvg";
 import { FabricGrid } from "./FabricGrid";
 import { OptionTabs } from "@/components/factory/OptionTabs";
+import { OptionsSummary } from "@/components/factory/OptionsSummary";
 import { schematicFor } from "@/lib/garment/schematics";
 import { lapelPaths, pocketPaths } from "./shapes";
 
@@ -89,7 +90,8 @@ function VisualPicker({
   return (
     <div className="mb-3">
       <div className="mb-1 text-[11px] font-medium text-t3">{label}</div>
-      <div className={withImg ? "grid grid-cols-[repeat(auto-fill,minmax(62px,1fr))] gap-1.5" : "flex flex-wrap gap-1.5"}>
+      {/* 카드 72px: 62px에서는 "큐큐(플라워홀)"·"갈매기반안감" 같은 값이 …로 잘렸다(QA 2026-09-25). 라벨은 자르지 않고 줄바꿈. */}
+      <div className={withImg ? "grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-1.5" : "flex flex-wrap gap-1.5"}>
         {choices.map((c) => {
           const sc = schematicKey ? schematicFor(schematicKey, c, options) : undefined;
           const on = value === c;
@@ -101,7 +103,7 @@ function VisualPicker({
               title={c}
               onClick={() => onChange(c)}
               className={cn(
-                "flex flex-col items-center gap-0.5 rounded-[6px] border-2 text-[10px] leading-tight",
+                "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-[6px] border-2 text-[10px] leading-tight",
                 withImg ? "p-0.5" : "px-1.5 py-1",
                 on ? "border-[var(--accent)] text-t" : "border-[var(--bd)] text-t2 hover:border-[var(--bd2)]"
               )}
@@ -117,7 +119,7 @@ function VisualPicker({
               ) : (
                 icon?.(c)
               )}
-              <span className="w-full truncate px-0.5 text-center">{c}</span>
+              <span className="w-full px-0.5 text-center [word-break:keep-all]">{c}</span>
             </button>
           );
         })}
@@ -161,37 +163,42 @@ export function GarmentWorkspace({
 
   const history = React.useRef<Snapshot[]>([{ options, qty, materials }]);
   const historyIndex = React.useRef(0);
-  const lastPush = React.useRef(Date.now());
-  const applyingHistory = React.useRef(false);
+  // 되돌리기/다시적용 버튼 활성 상태는 ref 만으로는 다시 그려지지 않는다(QA 2026-09-25: 첫 변경 후에도
+  // 되돌리기가 비활성으로 남음). push/undo/redo 때마다 이 state 로 버튼을 다시 그린다.
+  const [histPos, setHistPos] = React.useState({ index: 0, length: 1 });
+  const stateKey = JSON.stringify({ options, qty, materials });
 
   const applySnapshot = React.useCallback((snap: Snapshot) => {
-    applyingHistory.current = true;
     for (const [k, v] of Object.entries(snap.options)) onOptionsChange(k, v);
     for (const [k, v] of Object.entries(snap.qty)) onQtyChange(k, v);
     onMaterialsChange(snap.materials);
   }, [onOptionsChange, onQtyChange, onMaterialsChange]);
 
   React.useEffect(() => {
-    if (applyingHistory.current) { applyingHistory.current = false; return; }
-    const now = Date.now();
-    if (now - lastPush.current < 250) return; // 연속 입력 중 매 렌더 push 방지(적당한 디바운스)
-    lastPush.current = now;
+    // 현재 이력 항목과 같은 상태면 넣지 않는다 — 마운트(StrictMode 2회 포함)와 undo/redo 로 도달한 상태가
+    // 중복 항목이 되는 것을 막는다. "확정본으로"·"B 적용"은 새 항목이 되어 되돌릴 수 있다.
+    if (JSON.stringify(history.current[historyIndex.current]) === stateKey) return;
+    // 변경 하나 = 이력 하나. 예전 250ms 시간 디바운스는 빠른 연속 선택을 이력에서 통째로 빠뜨려
+    // 되돌리기가 서너 단계를 한 번에 건너뛰고 다시적용도 마지막 선택을 복구하지 못했다(QA 2026-09-25).
     const snap: Snapshot = { options, qty, materials };
     const trimmed = history.current.slice(0, historyIndex.current + 1);
     trimmed.push(snap);
     history.current = trimmed.slice(-20); // 상한 20 — "적당한 상한의 로컬 이력"
     historyIndex.current = history.current.length - 1;
+    setHistPos({ index: historyIndex.current, length: history.current.length });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(options), JSON.stringify(qty), JSON.stringify(materials)]);
+  }, [stateKey]);
 
   const undo = () => {
     if (historyIndex.current <= 0) return;
     historyIndex.current -= 1;
+    setHistPos({ index: historyIndex.current, length: history.current.length });
     applySnapshot(history.current[historyIndex.current]);
   };
   const redo = () => {
     if (historyIndex.current >= history.current.length - 1) return;
     historyIndex.current += 1;
+    setHistPos({ index: historyIndex.current, length: history.current.length });
     applySnapshot(history.current[historyIndex.current]);
   };
   const revertToConfirmed = () => {
@@ -272,7 +279,7 @@ export function GarmentWorkspace({
               type="button"
               onClick={() => setItem(t.key)}
               className={cn(
-                "min-h-[36px] rounded-[var(--r-md)] border px-3 text-[12.5px] font-medium",
+                "min-h-[44px] rounded-[var(--r-md)] border px-3 text-[12.5px] font-medium",
                 item === t.key ? "border-[var(--accent)] bg-[var(--accent)]/10 text-t" : "border-[var(--bd)] text-t2"
               )}
             >
@@ -281,23 +288,23 @@ export function GarmentWorkspace({
           ))}
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={undo} disabled={historyIndex.current <= 0} className="flex items-center gap-1 rounded-[6px] px-2 py-1.5 text-[11.5px] text-t2 hover:bg-sf2 disabled:opacity-40">
+          <button type="button" onClick={undo} disabled={histPos.index <= 0} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2 disabled:opacity-40">
             <Undo2 size={14} />되돌리기
           </button>
-          <button type="button" onClick={redo} disabled={historyIndex.current >= history.current.length - 1} className="flex items-center gap-1 rounded-[6px] px-2 py-1.5 text-[11.5px] text-t2 hover:bg-sf2 disabled:opacity-40">
+          <button type="button" onClick={redo} disabled={histPos.index >= histPos.length - 1} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2 disabled:opacity-40">
             <Redo2 size={14} />다시적용
           </button>
           {serverOptions && (
-            <button type="button" onClick={revertToConfirmed} className="rounded-[6px] px-2 py-1.5 text-[11.5px] text-t2 hover:bg-sf2">확정본으로</button>
+            <button type="button" onClick={revertToConfirmed} className="min-h-[44px] rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2">확정본으로</button>
           )}
           {!compareB ? (
-            <button type="button" onClick={compareSnapshot} className="flex items-center gap-1 rounded-[6px] px-2 py-1.5 text-[11.5px] text-t2 hover:bg-sf2">
+            <button type="button" onClick={compareSnapshot} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2">
               <Columns2 size={14} />비교(B) 저장
             </button>
           ) : (
             <>
-              <button type="button" onClick={applyCompareB} className="rounded-[6px] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--accent-ink)] hover:bg-sf2">B 적용</button>
-              <button type="button" onClick={() => setCompareB(null)} aria-label="비교 닫기" className="rounded-[6px] p-1.5 text-t3 hover:bg-sf2"><X size={14} /></button>
+              <button type="button" onClick={applyCompareB} className="min-h-[44px] rounded-[6px] px-2 text-[11.5px] font-semibold text-[var(--accent-ink)] hover:bg-sf2">B 적용</button>
+              <button type="button" onClick={() => setCompareB(null)} aria-label="비교 닫기" className="flex h-[44px] w-[44px] items-center justify-center rounded-[6px] text-t3 hover:bg-sf2"><X size={14} /></button>
             </>
           )}
         </div>
@@ -320,8 +327,10 @@ export function GarmentWorkspace({
           {item === "jacket" && (
             <div className="border-t border-[var(--bd)] pt-3">
               <VisualPicker label="여밈" value={String(options.design ?? "싱글")} choices={["싱글", "더블"]} onChange={(v) => handleOptionChange("design", v)} icon={(c) => <MiniDesignIcon kind={c} />} />
-              {/* 앞단추는 여밈에 맞는 선택지만 보여준다(싱글 1·2·3 / 더블 4·6) — 도식도 여밈과 조합해 정해진다. */}
-              <VisualPicker label="앞단추" value={String(options.btnN ?? "2")} choices={String(options.design ?? "싱글") === "더블" ? ["4", "6"] : ["1", "2", "2/3", "3"]} onChange={(v) => handleOptionChange("btnN", v)} schematicKey="btnN" options={options} />
+              {/* 앞단추는 여밈에 맞는 선택지만 보여준다 — resolveComboCorrections(lib/garment/spec)와 같은 집합
+                  (싱글 1·2·2/3·3 / 더블 2·4·6). 더블에서 "2"를 빼면 기본값 2로 더블을 고른 직후 선택된 카드가
+                  하나도 없어 요약(2)과 카드(4/6)가 어긋났다(QA 2026-09-25). */}
+              <VisualPicker label="앞단추" value={String(options.btnN ?? "2")} choices={String(options.design ?? "싱글") === "더블" ? ["2", "4", "6"] : ["1", "2", "2/3", "3"]} onChange={(v) => handleOptionChange("btnN", v)} schematicKey="btnN" options={options} />
               <VisualPicker label="라펠 모양" value={String(options.lapel ?? "노치드")} choices={["노치드", "피크드", "숄", "기타"]} onChange={(v) => handleOptionChange("lapel", v)} icon={(c) => <MiniLapelIcon kind={c} />} schematicKey="lapel" />
               <VisualPicker label="라펠 디테일" value={String(options.lapelDet ?? "없음")} choices={["없음", "큐큐(플라워홀)", "쎄빠"]} onChange={(v) => handleOptionChange("lapelDet", v)} schematicKey="lapelDet" />
               <VisualPicker label="뒷트임" value={String(options.vent ?? "사이드벤트")} choices={["사이드벤트", "센터벤트", "통막음"]} onChange={(v) => handleOptionChange("vent", v)} icon={(c) => <MiniVentIcon kind={c} />} schematicKey="vent" />
@@ -359,7 +368,9 @@ export function GarmentWorkspace({
           </div>
         </div>
 
-        <div className={cn("rounded-[var(--r-lg)] border border-[var(--bd)] p-3", !threeCol && !twoCol && "order-1")}>
+        {/* 2·3열에서는 미리보기를 sticky 로 붙여 긴 옵션 목록을 내려도 선택 결과가 바로 보인다. self-start 가 없으면
+            grid 가 이 칸을 왼쪽 옵션 열 높이(수천 px)로 늘려 h-full 스테이지가 거대해졌다(QA 2026-09-25). */}
+        <div className={cn("rounded-[var(--r-lg)] border border-[var(--bd)] p-3", !threeCol && !twoCol ? "order-1" : "sticky top-3 self-start")}>
           {compareB ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
@@ -404,24 +415,9 @@ export function GarmentWorkspace({
             <div><span className="text-t3">단추: </span>{materials.buttonLabel ?? <span className="text-wt">미선택</span>}</div>
           </div>
           <details open={threeCol} className="text-[12px]">
-            <summary className="cursor-pointer select-none text-t2">41항목 전체 보기</summary>
-            <div className="mt-2 grid grid-cols-1 gap-y-1">
-              {FACTORY_QTY_FIELDS.map((f) => (
-                <div key={f.key}><span className="text-t3">{f.label}: </span><span className="text-t">{qty[f.key] ?? f.default}</span></div>
-              ))}
-              {FACTORY_OPTION_GROUPS.filter((g) => g !== "일정/수량").map((g) => (
-                <div key={g} className="mt-1">
-                  <div className="text-[10.5px] font-semibold text-t3">{g}</div>
-                  {fieldsByGroup(g).map((f) => {
-                    const v = options[f.key];
-                    const display = f.kind === "pad"
-                      ? `${(v as { L?: number })?.L ?? f.default.L}/${(v as { R?: number })?.R ?? f.default.R}${f.unit}`
-                      : String(v ?? f.default);
-                    return <div key={f.key}><span className="text-t3">{f.label}: </span><span className="text-t">{display}</span></div>;
-                  })}
-                </div>
-              ))}
-            </div>
+            <summary className="flex min-h-[44px] cursor-pointer select-none items-center text-t2">41항목 전체 보기</summary>
+            {/* OrderDetail 읽기 뷰와 같은 컴포넌트 — 두 화면의 값·라벨이 어긋날 여지를 없앤다. */}
+            <div className="mt-1"><OptionsSummary options={options} qty={qty} dense /></div>
           </details>
         </div>
       </div>

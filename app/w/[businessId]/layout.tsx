@@ -12,14 +12,8 @@ import { listMyBusinesses } from "@/lib/auth/actions";
 import { INDUSTRY_DEFS } from "@/lib/industry/config";
 import { WorkspaceShell } from "@/components/shell/WorkspaceShell";
 import { getAccess } from "./access";
+import { ROLE_LABEL } from "@/lib/auth/roles";
 
-const ROLE_LABEL: Record<string, string> = {
-  owner: "대표",
-  manager: "매니저",
-  staff: "직원",
-  accountant: "회계",
-  viewer: "열람",
-};
 
 export default async function WorkspaceLayout({
   children,
@@ -28,7 +22,9 @@ export default async function WorkspaceLayout({
   children: React.ReactNode;
   params: { businessId: string };
 }) {
-  const access = await getAccess(params.businessId, "view");
+  // 접근 판정과 전환용 사업장 목록을 병렬로(둘 다 RLS 아래, getUser 는 요청 캐시 공유). 순차였을 때
+  // Vercel(iad1)↔Supabase 왕복이 2번 더 들었다 — 2026-09-28 실측 클릭당 1.8~2.9초의 일부.
+  const [access, bizList] = await Promise.all([getAccess(params.businessId, "view"), listMyBusinesses()]);
 
   if (!access.ok) {
     if (access.reason === "unauthenticated") {
@@ -81,7 +77,6 @@ export default async function WorkspaceLayout({
   const def = INDUSTRY_DEFS[access.industry];
   const nav = def.nav.filter((item) => access.caps.includes(item.cap as (typeof access.caps)[number]));
 
-  const bizList = await listMyBusinesses();
   const myBusinesses = bizList.ok ? bizList.businesses : [];
 
   return (

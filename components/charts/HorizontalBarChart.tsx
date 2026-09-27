@@ -62,7 +62,8 @@ export function HorizontalBarChart({
                 {it.href ? (
                   <Link
                     href={it.href}
-                    className="block rounded-[6px] hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                    // F19: 행이 20px 라 터치 화면에서 44px 에 못 미쳤다 — 터치에서만 세로 여백을 준다(PC 배치는 그대로).
+                    className="block rounded-[6px] hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [@media(pointer:coarse)]:py-[13px]"
                   >
                     {row}
                   </Link>

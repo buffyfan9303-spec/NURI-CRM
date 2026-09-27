@@ -37,7 +37,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-[6px] px-2 py-0.5 text-[11px] font-bold",
+        "inline-flex items-center gap-1 rounded-[6px] px-2 py-0.5 text-[12px] font-bold",
         KIND_CLASS[kind],
         className
       )}

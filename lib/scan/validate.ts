@@ -42,22 +42,43 @@ export function isPlausibleCode128(raw: string): boolean {
 }
 
 /**
- * 세션 내 중복 스캔 억제(클라이언트). 카메라는 초당 여러 프레임을 읽으므로
- * 같은 코드를 짧은 시간 창 안에서 다시 스캔했으면 서버 호출 자체를 생략한다.
- * (crm.scan_seen_recently RPC로도 같은 판단이 가능하지만, 프레임마다 왕복하는 대신
- *  클라이언트 메모리로 판단해 네트워크 호출 자체를 줄인다 — 0014_scan.sql 주석의 "쓰거나
- *  클라이언트에서 세션키+시간창으로" 중 후자를 택함.)
- *
- * 순수 함수 — Map을 직접 받아 판정만 하고 갱신은 호출부 책임(테스트 용이성).
+ * 카메라 연속 인식 억제(D3·D5). 카메라는 0.2초마다 같은 코드를 다시 내놓으므로 "마지막으로 **보인** 시각"을
+ * 기준으로 판단한다 — 직전에 본 지 gapMs 미만이면 아직 화면에 있는 같은 코드(continuous)라 조용히 무시하고,
+ * gapMs 이상 안 보이다가 다시 나타났으면(reappeared) 의도적 재스캔으로 본다. 처음 보는 코드는 fresh.
+ * 호출할 때마다 lastSeen 을 now 로 갱신한다(처리 중이든 무시하든 "보였다"는 사실은 같다).
  */
-export function isDuplicateWithinWindow(
-  seen: Map<string, number>,
-  code: string,
-  now: number,
-  windowMs = 3000
-): boolean {
-  const last = seen.get(code);
-  return last !== undefined && now - last < windowMs;
+export type CameraSighting = "fresh" | "continuous" | "reappeared";
+export function noteCameraSighting(lastSeen: Map<string, number>, code: string, now: number, gapMs = 1500): CameraSighting {
+  const prev = lastSeen.get(code);
+  lastSeen.set(code, now);
+  if (prev === undefined) return "fresh";
+  return now - prev < gapMs ? "continuous" : "reappeared";
+}
+
+/**
+ * 스캔 코드 정규화(D9). 앞뒤 공백만 벗긴다 — 서버(crm.resolve_scan)는 btrim 후 대소문자 그대로 비교하고
+ * qr_payload 에 소문자 uuid 가 들어 있으므로 대문자화하면 정상 라벨이 깨진다. 접두사(NURI:)도 벗기지 않는다.
+ */
+export function normalizeScanCode(raw: string): string {
+  return raw.trim();
+}
+
+/** 13자리 숫자인데 EAN-13 체크섬이 틀리면 카메라 오독이다 — 서버에 묻기 전에 안내한다. */
+export function isEan13ChecksumError(code: string): boolean {
+  return /^\d{13}$/.test(code) && !isValidEan13(code);
+}
+
+/** 배치 세션 키. http LAN 같은 비보안 컨텍스트에는 crypto.randomUUID 가 없다(D4) — getRandomValues → Math.random 순으로 폴백. */
+export function newSessionKey(): string {
+  const c = typeof crypto !== "undefined" ? crypto : undefined;
+  if (c?.randomUUID) return c.randomUUID();
+  const b = new Uint8Array(16);
+  if (c?.getRandomValues) c.getRandomValues(b);
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
 /**

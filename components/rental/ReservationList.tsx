@@ -98,6 +98,8 @@ export function ReservationList({
       period: `${formatInTz(r.periodStart, DEFAULT_TZ, "yyyy.MM.dd")} ~ ${formatInTz(r.periodEnd, DEFAULT_TZ, "yyyy.MM.dd")}`,
       products: r.items.map((i) => i.productName).filter(Boolean).join(", ") || "-",
       itemsSummary: `${r.items.length}품목 · 개체 ${assignedUnits}/${r.items.length} 배정`,
+      unitsBadge: `개체 ${assignedUnits}/${r.items.length}`,
+      unitsDone: r.items.length > 0 && assignedUnits === r.items.length,
       badge: <Badge kind={STATUS_BADGE[r.status]}>{RESERVATION_STATUS_LABEL[r.status]}</Badge>,
       next: nextEvent(r),
       nextClass: overdue ? "font-medium text-et" : "text-t2",
@@ -227,15 +229,25 @@ export function ReservationList({
             card={(r) => {
               const v = rowView(r);
               return (
+                // R2: 카드 3줄(기간·다음 일정·금액). 상품은 이름 아래 한 줄(말줄임), 개체 배정은 배지.
                 <MobileCard
                   title={v.customer}
-                  sub={<><span className="font-mono">{reservationNo(r.id)}</span>{r.customerPhone && <span>· {r.customerPhone}</span>}</>}
-                  badge={v.badge}
+                  sub={
+                    <>
+                      <span className="font-mono">{reservationNo(r.id)}</span>
+                      {r.customerPhone && <span>· {r.customerPhone}</span>}
+                      <span className="block w-full truncate text-t2" title={v.products}>{v.products}</span>
+                    </>
+                  }
+                  badge={
+                    <span className="flex flex-col items-end gap-1">
+                      {v.badge}
+                      <span className={`rounded-full px-2 py-0.5 text-[12px] tabular-nums ${v.unitsDone ? "bg-okb text-okt" : "bg-sf2 text-t2"}`}>{v.unitsBadge}</span>
+                    </span>
+                  }
                   onClick={() => open(r)}
                   fields={[
-                    ["대여기간", v.period],
-                    ["상품", v.products],
-                    ["개체", v.itemsSummary],
+                    ["기간", v.period],
                     ["다음 일정", <span key="n" className={v.nextClass}>{v.next}</span>],
                     ...(canRevenue ? ([["금액", v.amount]] as [string, React.ReactNode][]) : []),
                   ]}

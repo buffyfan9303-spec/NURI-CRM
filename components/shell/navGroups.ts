@@ -31,8 +31,9 @@ const EXPLICIT_GROUP: Partial<Record<string, NavGroupKey>> = {
   tuition: "ops",
   "staff-shift": "ops",
 
-  // 권한/직원 관리 — 설정.
+  // 권한/직원 관리 — 설정. settings 는 config nav 가 아니라 WorkspaceShell 이 덧붙이는 "사업장 설정"(S6).
   staff: "settings",
+  settings: "settings",
 };
 
 export function navGroupFor(key: string): NavGroupKey {

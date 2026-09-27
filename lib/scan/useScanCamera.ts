@@ -58,7 +58,10 @@ export function useScanCamera(onResult: (code: DetectedCode) => void, opts?: Use
   const [detectorInfo, setDetectorInfo] = useState<DetectorInfo | null>(null);
 
   const devices = useDevices();
-  const secureContext = typeof window === "undefined" ? true : window.isSecureContext;
+  // D4: SSR 은 항상 "보안"으로 그리고 마운트 후 실제 값으로 바꾼다 — 렌더 중에 window 를 읽으면
+  // http LAN 에서 서버 HTML(안내 없음)과 클라이언트(안내 있음)가 달라 하이드레이션 오류가 난다.
+  const [secureContext, setSecureContext] = useState(true);
+  useEffect(() => setSecureContext(window.isSecureContext), []);
 
   const stop = useCallback(() => {
     engineRef.current?.stop();

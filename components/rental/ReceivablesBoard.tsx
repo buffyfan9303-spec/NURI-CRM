@@ -129,11 +129,12 @@ export function ReceivablesBoard({
           </div>
           <FilterRow>
             <StatusTab active={tab === "all"} onClick={() => setTab("all")} count={report.count}>전체</StatusTab>
-            {AGING_BUCKET_ORDER.map((b) => (
+            {/* R5: 미수 0건이면 연령 구간 칩(7개, 가로 스크롤)은 의미가 없어 숨긴다 — 보관 보증금 탭은 남긴다. */}
+            {report.count > 0 && AGING_BUCKET_ORDER.map((b) => (
               <StatusTab key={b} active={tab === b} onClick={() => setTab(b)} count={report.byBucket[b]?.count ?? 0}>{AGING_BUCKET_LABEL[b]}</StatusTab>
             ))}
             <StatusTab active={tab === "deposits"} onClick={() => setTab("deposits")} count={deposits.count}>보관 보증금</StatusTab>
-            {tab !== "deposits" && (
+            {tab !== "deposits" && report.count > 0 && (
               <label className="ml-auto flex min-h-[32px] shrink-0 items-center gap-1.5 text-[12.5px] text-t2 [@media(pointer:coarse)]:min-h-[44px]">
                 <input type="checkbox" checked={byCustomer} onChange={(e) => setByCustomer(e.target.checked)} className="h-[16px] w-[16px] accent-[var(--accent-strong)]" />
                 고객별 보기
@@ -170,7 +171,7 @@ export function ReceivablesBoard({
                   return (
                     <li key={r.reservationId} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[12.5px]">
                       <span className="min-w-0">
-                        <Link href={v.href} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link>
+                        <Link href={v.href} prefetch={false} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link>
                         <span className="ml-2 text-t3">{v.status} · 만기 {v.due} · {v.days}</span>
                       </span>
                       <span className="flex items-center gap-2">
@@ -213,13 +214,13 @@ export function ReceivablesBoard({
                         </td>
                         <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.phone}</td>
                         <td className={`${TD} whitespace-nowrap`}>
-                          <Link href={v.href} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link>
+                          <Link href={v.href} prefetch={false} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link>
                           <span className="ml-1.5 text-[11.5px] text-t3">{v.status}</span>
                         </td>
                         <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.due}</td>
                         <td className={`${TD} whitespace-nowrap`}><Badge kind={bucketKind(r.bucket)}>{v.days}</Badge></td>
                         <td className={`${TD} whitespace-nowrap text-right font-semibold tabular-nums text-et`}>{formatKRW(r.outstanding)}</td>
-                        <td className={`${TD} whitespace-nowrap text-t2`}>{v.lastContact}{v.promised && <span className="block text-[11px] text-t3">{v.promised}</span>}</td>
+                        <td className={`${TD} whitespace-nowrap text-t2`}>{v.lastContact}{v.promised && <span className="block text-[12px] text-t3">{v.promised}</span>}</td>
                         <td className={`${TD} text-right`}>{v.actions}</td>
                       </tr>
                     );
@@ -236,7 +237,7 @@ export function ReceivablesBoard({
                 sub={<span className="tabular-nums">{v.phone}</span>}
                 badge={<Badge kind={bucketKind(r.bucket)}>{v.days}</Badge>}
                 fields={[
-                  ["예약", <Link key="l" href={v.href} className="inline-flex min-h-[44px] items-center text-[var(--accent-ink)] underline underline-offset-2">{v.period} · {v.status}</Link>],
+                  ["예약", <Link key="l" href={v.href} prefetch={false} className="inline-flex min-h-[44px] items-center text-[var(--accent-ink)] underline underline-offset-2">{v.period} · {v.status}</Link>],
                   ["만기", v.due],
                   ["미수금", <span key="o" className="font-semibold text-et">{formatKRW(r.outstanding)}</span>],
                   ["마지막 독촉", v.promised ? `${v.lastContact} · ${v.promised}` : v.lastContact],
@@ -318,16 +319,16 @@ function DepositsTable({ businessId, tz, rows }: { businessId: string; tz: strin
                 return (
                   <tr key={r.reservationId} className={cn(TR, "h-[52px]", v.returned && "bg-wb/40")}>
                     <td className={TD}>{r.customerRef ? <Link href={`/w/${businessId}/customers/${r.customerRef}`} className="font-medium text-t hover:underline">{v.customer}</Link> : <span className="font-medium text-t">{v.customer}</span>}</td>
-                    <td className={`${TD} whitespace-nowrap`}><Link href={v.href} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link></td>
+                    <td className={`${TD} whitespace-nowrap`}><Link href={v.href} prefetch={false} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link></td>
                     <td className={TD}>
                       <Badge kind={RESERVATION_STATUS_BADGE[v.status] ?? "info"}>{RESERVATION_STATUS_LABEL[v.status] ?? r.status}</Badge>
-                      {v.returned && <span className="ml-1.5 text-[11px] font-medium text-wt">반환 필요</span>}
+                      {v.returned && <span className="ml-1.5 text-[12px] font-medium text-wt">반환 필요</span>}
                     </td>
                     <td className={`${TD} text-right font-semibold tabular-nums text-t`}>{formatKRW(r.depositBalance)}</td>
                     <td className={`${TD} text-right tabular-nums text-t2`}>{formatKRW(r.depositRequired)}</td>
                     <td className={cn(TD, "text-right tabular-nums", r.outstanding > 0 ? "font-semibold text-et" : "text-t2")}>{formatKRW(r.outstanding)}</td>
                     <td className={`${TD} text-right`}>
-                      <Link href={`${v.href}#settlement`} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">{v.returned ? "반환 처리" : "예약 상세"}</Link>
+                      <Link href={`${v.href}#settlement`} prefetch={false} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">{v.returned ? "반환 처리" : "예약 상세"}</Link>
                     </td>
                   </tr>
                 );
@@ -344,7 +345,7 @@ function DepositsTable({ businessId, tz, rows }: { businessId: string; tz: strin
             sub={<span>{v.period}</span>}
             badge={v.returned ? <Badge kind="warning">반환 필요</Badge> : <Badge kind={RESERVATION_STATUS_BADGE[v.status] ?? "info"}>{RESERVATION_STATUS_LABEL[v.status] ?? r.status}</Badge>}
             fields={[["보관 보증금", <span key="d" className="font-semibold">{formatKRW(r.depositBalance)}</span>], ["필요액", formatKRW(r.depositRequired)], ["미수금", formatKRW(r.outstanding)]]}
-            actions={<Link href={`${v.href}#settlement`} className="inline-flex min-h-[44px] items-center rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2">{v.returned ? "반환 처리" : "예약 상세"}</Link>}
+            actions={<Link href={`${v.href}#settlement`} prefetch={false} className="inline-flex min-h-[44px] items-center rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2">{v.returned ? "반환 처리" : "예약 상세"}</Link>}
           />
         );
       }}

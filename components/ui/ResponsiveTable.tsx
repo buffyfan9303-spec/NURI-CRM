@@ -10,6 +10,13 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
+/**
+ * 목록을 감싼 바깥 `<Card>` 에 붙이면 휴대폰(<sm)에서 카드 안의 카드(이중 여백)가 안 생긴다(C9).
+ *   <Card className={MOBILE_BARE}> <TableOrCards … /> </Card>
+ * PC 는 그대로. Card 안의 padding 은 호출부가 `sm:p-4` 처럼 sm 이상에만 주면 된다.
+ */
+export const MOBILE_BARE = "max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:p-0 max-sm:shadow-none";
+
 export function TableOrCards<T>({
   rows,
   keyOf,
@@ -80,7 +87,7 @@ export function MobileCard({
           : undefined
       }
       className={cn(
-        "rounded-[var(--r-md)] border border-[var(--bd)] bg-sf px-3 py-2.5 text-[12.5px]",
+        "min-h-[44px] rounded-[var(--r-md)] border border-[var(--bd)] bg-sf px-3 py-2.5 text-[12.5px]",
         clickable && "cursor-pointer hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]",
         className
       )}
@@ -90,16 +97,17 @@ export function MobileCard({
           <div className="truncate font-medium text-t" title={title}>
             {title}
           </div>
-          {sub && <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[11px] text-t3">{sub}</div>}
+          {sub && <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] text-t3">{sub}</div>}
         </div>
         {badge && <div className="shrink-0">{badge}</div>}
       </div>
       {fields && fields.length > 0 && (
-        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12px]">
+        <dl className="mt-2 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1 text-[12px]">
           {fields.map(([label, value]) => (
             <React.Fragment key={label}>
               <dt className="whitespace-nowrap text-t3">{label}</dt>
-              <dd className="min-w-0 truncate text-right tabular-nums text-t" title={typeof value === "string" ? value : undefined}>{value}</dd>
+              {/* 값이 버튼/링크여도 라벨과 같은 줄 우측에(C10): 행 세로 가운데 + 인라인 요소 중앙 정렬. */}
+              <dd className="min-w-0 truncate text-right tabular-nums text-t [&>*]:align-middle" title={typeof value === "string" ? value : undefined}>{value}</dd>
             </React.Fragment>
           ))}
         </dl>

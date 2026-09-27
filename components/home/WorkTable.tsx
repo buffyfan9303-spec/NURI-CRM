@@ -111,7 +111,7 @@ export function WorkTable({
                 >
                   <td className="py-1.5 tabular-nums text-t3">{i + 1}</td>
                   <td className="min-w-0 py-1.5">
-                    <Link
+                    <Link prefetch={false}
                       href={r.href}
                       onClick={(e) => e.stopPropagation()}
                       className="flex min-h-[44px] items-center gap-2.5 rounded-[var(--r-sm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"

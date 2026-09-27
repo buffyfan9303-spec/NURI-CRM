@@ -40,7 +40,7 @@ export function ListView({
                   type="button"
                   onClick={() => onSelectEvent(ev.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf px-3 py-2 text-left hover:bg-sf2",
+                    "flex w-full items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf px-3 py-2 text-left hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]",
                     ev.id === selectedId && "border-[var(--accent)]"
                   )}
                 >

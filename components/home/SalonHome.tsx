@@ -2,12 +2,14 @@
 
 /**
  * 미용실 홈 — 레퍼런스01 골격(제목+설명 → KPI 4장 → 추이 8:분포 4 → 업무표 8:보조 4).
- * 빈 사업장도 같은 골격을 유지하고 값만 0/안내로 둔다(§11). 상단바 CTA(새 예약 → 캘린더)와
- * 겹치는 버튼은 헤더에 두지 않는다.
+ * 빈 사업장도 같은 골격을 유지하고 값만 0/안내로 둔다(§11). 상단바 CTA(새 예약 → 캘린더)는 <640 에서
+ * 숨겨지므로 휴대폰에만 헤더에 "예약 등록"(services 의 예약 모달)을 둔다 — PC 는 상단바 CTA 하나(N1/H0).
+ * 휴대폰(<sm) 순서: 제목 → 동작 2개 → KPI 2×2 → 오늘 예약 타임라인 → 예외 목록. 추이·분포·상위N 차트와
+ * 빈 보조 카드는 <sm 에서 숨긴다(H0 규칙 2·3).
  */
 import * as React from "react";
 import Link from "next/link";
-import { Banknote, CalendarCheck2, Clock4, TriangleAlert, CircleUserRound, RotateCcw, Package } from "@/lib/icons";
+import { Banknote, CalendarCheck2, CalendarPlus, Clock4, TriangleAlert, CircleUserRound, RotateCcw, Package } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -30,6 +32,8 @@ import { MessageActions } from "@/components/common/MessageActions";
 const KPI_GRID = "grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-4 [&>a]:h-full [&>a>div]:h-full [&>div]:h-full";
 /** 차트 부품(components/charts, 다른 소유) 안의 토글·범례·표 보기가 터치 화면에서 44px 미만이라 감싸는 쪽에서 승격한다(1단계 검토 홈 부품 지적). */
 const CHART_TOUCH = "[@media(pointer:coarse)]:[&_button]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:inline-flex [@media(pointer:coarse)]:[&_a]:items-center [@media(pointer:coarse)]:[&_summary]:flex [@media(pointer:coarse)]:[&_summary]:min-h-[44px] [@media(pointer:coarse)]:[&_summary]:items-center";
+/** 보조 카드 — 0건이면 휴대폰에서 카드 자체를 숨긴다(H0 규칙 3: 오늘 할 일 카드 하나만 빈 상태를 크게). */
+const sideCard = (empty: boolean) => `p-4 sm:p-5${empty ? " max-sm:hidden" : ""}`;
 const ROW = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-2 text-[13px] [@media(pointer:coarse)]:min-h-[44px]";
 
 const tone = (status: string): WorkTableRow["statusTone"] =>
@@ -60,6 +64,13 @@ export function SalonHome({
 
   const actions = (
     <>
+      {canWrite && (
+        <Link href={`${base}/services?new=1`} className="sm:hidden">
+          <Button size="sm">
+            <CalendarPlus size={15} aria-hidden />예약 등록
+          </Button>
+        </Link>
+      )}
       {revenueVisible && (
         <Link href={`${base}/settlement`}>
           <Button size="sm" variant="secondary">
@@ -158,7 +169,7 @@ export function SalonHome({
           ))}
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
+        <div className="grid grid-cols-1 items-start gap-4 max-sm:hidden lg:grid-cols-12">
           <Card className={`p-4 sm:p-5 lg:col-span-8 ${CHART_TOUCH}`}>
             <AreaChartCard title={d.revenueVisible ? "수납·예약 추이" : "월별 예약 건수"} description="최근 6개월 월별 추이" series={areaSeries} />
           </Card>
@@ -182,7 +193,7 @@ export function SalonHome({
               emptyDescription="예약이 등록되면 담당 직원별 오늘 일정이 여기에 표시됩니다."
               emptyAction={
                 canWrite ? (
-                  <Link href={`${base}/services`}>
+                  <Link href={`${base}/services?new=1`}>
                     <Button size="sm" variant="secondary">예약 등록</Button>
                   </Link>
                 ) : undefined
@@ -191,11 +202,11 @@ export function SalonHome({
           </Card>
 
           <div className="flex flex-col gap-4 lg:col-span-4">
-            <Card className={`p-4 sm:p-5 ${CHART_TOUCH}`}>
+            <Card className={`p-4 max-sm:hidden sm:p-5 ${CHART_TOUCH}`}>
               <HorizontalBarChart title="직원별 예약 상위" description="취소·노쇼 제외" items={dash?.topStaff.map((s) => ({ ...s, href: `${base}/services?date=today` })) ?? []} />
             </Card>
 
-            <Card className="p-4 sm:p-5">
+            <Card className={sideCard(revisitDue.length === 0)}>
               <CardHead title="다시 올 때 된 고객" description="시술별 재방문 주기 기준" />
               {revisitDue.length === 0 ? (
                 <p className="text-[12.5px] text-t3">주기가 지난 고객이 없습니다.</p>
@@ -205,7 +216,7 @@ export function SalonHome({
                     <li key={`${r.customerId}-${r.serviceId}`} className={ROW}>
                       <span className="min-w-0">
                         <span className="block truncate font-medium text-t">{r.customerName}</span>
-                        <span className="block truncate text-[11.5px] text-t3">{r.serviceName} · {r.daysOverdue}일 지남</span>
+                        <span className="block truncate text-[12px] text-t3">{r.serviceName} · {r.daysOverdue}일 지남</span>
                       </span>
                       <Button size="sm" variant="secondary" onClick={() => setRevisitTarget(r)}>안내 문구</Button>
                     </li>
@@ -215,7 +226,7 @@ export function SalonHome({
             </Card>
 
             {d.revenueVisible && (
-              <Card className="p-4 sm:p-5">
+              <Card className={sideCard(d.outstanding.length === 0)}>
                 <CardHead title="미수 확인" description="완료됐지만 잔액이 남은 예약" action={d.outstanding.length > 0 ? <ViewAll href={`${base}/settlement`}>정산</ViewAll> : undefined} />
                 {d.outstanding.length === 0 ? (
                   <p className="text-[12.5px] text-t3">미수가 없습니다.</p>
@@ -234,7 +245,7 @@ export function SalonHome({
               </Card>
             )}
 
-            <Card className="p-4 sm:p-5">
+            <Card className={sideCard(d.lowStockRetail.length === 0)}>
               <CardHead title="재고 주의" description="기준 수량 이하 소모품" action={d.lowStockRetail.length > 0 ? <ViewAll href={`${base}/stock`}>재고</ViewAll> : undefined} />
               {d.lowStockRetail.length === 0 ? (
                 <p className="text-[12.5px] text-t3">부족한 소모품이 없습니다.</p>
@@ -252,7 +263,7 @@ export function SalonHome({
               )}
             </Card>
 
-            <Card className="p-4 sm:p-5">
+            <Card className={sideCard(d.timeOffToday.length === 0)}>
               <CardHead title="휴무·휴게" description="오늘" action={canManage ? <ViewAll href={`${base}/staff-shift`}>근무표</ViewAll> : undefined} />
               {d.timeOffToday.length === 0 ? (
                 <p className="text-[12.5px] text-t3">오늘 등록된 휴무·휴게가 없습니다.</p>

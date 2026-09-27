@@ -10,6 +10,7 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { isTransientAuthError } from "@/lib/auth/transient";
 
 /** 인증 없이 열려야 하는 경로. */
 const PUBLIC_PREFIXES = [
@@ -87,9 +88,15 @@ export async function middleware(req: NextRequest) {
 
   // getUser() 는 토큰을 서버에서 검증하고 필요하면 갱신한다. getSession() 과 달리
   // 쿠키에 든 값을 그대로 믿지 않으므로 여기서는 반드시 getUser() 를 쓴다.
-  const { data } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
 
   if (!data?.user && !isPublic(req.nextUrl.pathname)) {
+    // 일시 장애(네트워크/5xx/429)는 세션 부재가 아니다. 여기서 로그인으로 보내면 (1) 멀쩡한 세션의
+    // 사용자가 갑자기 /login 으로 튕기고 (2) 그 응답이 <Link> prefetch 였다면 Next 라우터 캐시에
+    // "/login" 이 canonicalUrl 로 박혀 장애가 끝난 뒤 클릭해도 로그인으로 간다(fetch-server-response.js
+    // res.redirected → canonicalUrl). 통과시키면 서버 화면(layout)이 ErrorState 를 그린다 — 권한 판정은
+    // 어차피 서버가 다시 한다(이 파일 머리말 2번). 2026-09-28 신고 "자동으로 페이지가 이동" 대응.
+    if (isTransientAuthError(error)) return res;
     return redirectToLogin(req, "signin");
   }
   return res;

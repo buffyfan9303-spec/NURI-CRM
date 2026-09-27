@@ -46,7 +46,7 @@ export function WorkList({
     <ul className="flex flex-col divide-y divide-[var(--bd)]">
       {rows.map((r) => (
         <li key={r.id}>
-          <Link
+          <Link prefetch={false}
             href={r.href}
             className="flex min-h-[52px] items-center gap-3 px-1 py-2 text-[13px] hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent)]"
           >

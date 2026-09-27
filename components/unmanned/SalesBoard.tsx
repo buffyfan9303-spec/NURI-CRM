@@ -142,7 +142,8 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
         actions={
           canWrite ? (
             <>
-              <Button variant="secondary" onClick={() => setCsvOpen(true)}>
+              {/* U3: CSV 파일 가져오기는 PC 작업 — 휴대폰 첫 동작은 "판매 기록" 하나. */}
+              <Button variant="secondary" onClick={() => setCsvOpen(true)} className="max-sm:hidden">
                 <Upload size={15} aria-hidden />CSV 가져오기
               </Button>
               <Button onClick={() => setSaleOpen(true)}>
@@ -186,8 +187,7 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
           ) : records.length === 0 ? (
             <EmptyState
               title="매출 기록이 없습니다."
-              description="판매 기록 버튼으로 직접 입력하거나 키오스크 CSV를 가져오세요."
-              action={canWrite && <Button size="sm" onClick={() => setSaleOpen(true)}><Plus size={14} aria-hidden />판매 기록</Button>}
+              description={canWrite ? "위 '판매 기록' 버튼으로 직접 입력하거나, PC에서 키오스크 CSV를 가져오세요." : "판매 기록이 등록되면 여기에 표시됩니다."}
             />
           ) : (
             <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
@@ -209,14 +209,14 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
                         <span className="block max-w-[260px] truncate text-t" title={r.productId ? productName.get(r.productId) : r.rawSku ?? undefined}>
                           {(r.productId && productName.get(r.productId)) || r.rawSku || <span className="text-t3">미매칭</span>}
                         </span>
-                        {r.rawSku && r.productId && <span className="font-mono text-[11px] text-t3">{r.rawSku}</span>}
+                        {r.rawSku && r.productId && <span className="font-mono text-[12px] text-t3">{r.rawSku}</span>}
                       </td>
                       <td className={`${TD} text-right tabular-nums text-t2`}>{r.qty}</td>
                       <td className={`${TD} text-right tabular-nums font-medium text-t`}>{r.amount.toLocaleString()}원</td>
                       <td className={`${TD} whitespace-nowrap`}>
                         <span className="inline-flex items-center gap-1.5">
                           <Badge kind={r.source === "manual" ? "success" : "warning"}>{r.source === "manual" ? "직접 입력" : "CSV 가져오기"}</Badge>
-                          {r.source === "csv_import" && !r.reconciled && <span className="text-[11.5px] text-t3">대사 대기</span>}
+                          {r.source === "csv_import" && !r.reconciled && <span className="text-[12px] text-t3">대사 대기</span>}
                         </span>
                       </td>
                     </tr>

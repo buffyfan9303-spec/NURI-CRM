@@ -3,7 +3,7 @@
 /**
  * 학생·보호자. pii.read가 없으면 연락처 입력 폼 자체를 렌더링하지 않는다
  * (요청조차 하지 않는다 — 명세 §3-7 "권한이 없으면 화면에서 필드 자체를 숨긴다").
- * 4열 표(이름 / 학교·학년 / 보호자 / 동작) — 등록·보호자 추가는 모달.
+ * 4열 표(이름 / 학교·학년 / 보호자 / 동작) — 등록·보호자 추가는 모달. 휴대폰(<sm)은 카드(이름·학교학년·보호자 연락처·"보호자 추가").
  */
 import * as React from "react";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { CellName } from "@/components/ui/ResponsiveTable";
+import { CellName, TableOrCards, MobileCard, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { SearchBox, StatusTab, FilterRow, CardHead, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import type { AcadStudent, AcadGuardian } from "@/lib/domain/academy";
 import { createStudent, addGuardian } from "@/lib/domain/academy-actions";
@@ -58,13 +58,17 @@ export function StudentsBoard({ businessId, canWrite, canReadPii, students, guar
         </div>
       </PageHeader>
 
-      <Card className="p-4 sm:p-5">
+      <Card className={`${MOBILE_BARE} sm:p-5`}>
         <CardHead title="학생 목록" description={`${rows.length}명`} />
         {students.length === 0 ? (
           <EmptyState title="등록된 학생이 없습니다." description="학생을 등록하고 반에 수강 등록하면 출결과 수강료가 이어집니다." action={canWrite ? <Button size="sm" variant="secondary" onClick={() => setNewOpen(true)}>학생 등록</Button> : undefined} />
         ) : rows.length === 0 ? (
           <EmptyState title="검색 결과가 없습니다." description={needle ? `"${q}" 에 해당하는 학생이 없습니다.` : "재원 중인 학생이 없습니다."} />
         ) : (
+          <TableOrCards
+            rows={rows}
+            keyOf={(s) => s.id}
+            table={
           <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
             <table className={`${TABLE} min-w-[520px]`}>
               <thead>
@@ -81,11 +85,11 @@ export function StudentsBoard({ businessId, canWrite, canReadPii, students, guar
                   return (
                     <tr key={s.id} className={`${TR} h-[52px] hover:bg-sf2`}>
                       <td className={TD}>
-                        <Link href={`/w/${businessId}/students/${s.id}`} className="flex min-h-[36px] items-center gap-2.5 rounded-[var(--r-sm)] [@media(pointer:coarse)]:min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sf2 text-[11px] font-semibold text-t2" aria-hidden>{initials(s.name)}</span>
+                        <Link href={`/w/${businessId}/students/${s.id}`} prefetch={false} className="flex min-h-[36px] items-center gap-2.5 rounded-[var(--r-sm)] [@media(pointer:coarse)]:min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sf2 text-[12px] font-semibold text-t2" aria-hidden>{initials(s.name)}</span>
                           <span className="min-w-0">
                             <CellName max={180} className="hover:underline">{s.name}</CellName>
-                            {!s.active && <span className="block text-[11px] text-t3">퇴원</span>}
+                            {!s.active && <span className="block text-[12px] text-t3">퇴원</span>}
                           </span>
                         </Link>
                       </td>
@@ -113,6 +117,31 @@ export function StudentsBoard({ businessId, canWrite, canReadPii, students, guar
               </tbody>
             </table>
           </div>
+            }
+            card={(s) => {
+              const gs = byStudent.get(s.id) ?? [];
+              const canAdd = canWrite && canReadPii;
+              // 보호자 0명: "보호자 추가" 버튼이 있으면 그것이 곧 안내라 "없음" 행을 빼 카드를 한 줄 줄인다.
+              const guardianFields: [string, React.ReactNode][] = canReadPii
+                ? gs.length === 0
+                  ? canAdd ? [] : [["보호자", <span key="none" className="text-t3">없음</span>]]
+                  : gs.slice(0, 2).map((g) => [
+                      `${g.name}${g.relation ? ` ${g.relation}` : ""}`,
+                      <a key={g.id} href={`tel:${g.phone.replace(/[^0-9+]/g, "")}`} className="tabular-nums text-t underline-offset-2 hover:underline">{g.phone}</a>,
+                    ])
+                : [];
+              return (
+                <MobileCard
+                  title={s.name}
+                  sub={[s.school, s.grade].filter(Boolean).join(" · ") || undefined}
+                  badge={<Badge kind={s.active ? "success" : "error"}>{s.active ? "재원" : "퇴원"}</Badge>}
+                  fields={[...guardianFields, ...(gs.length > 2 ? [["보호자", `외 ${gs.length - 2}명`] as [string, React.ReactNode]] : [])]}
+                  onClick={() => router.push(`/w/${businessId}/students/${s.id}`)}
+                  actions={canAdd ? <Button variant="ghost" size="sm" onClick={() => setGuardianFor(s)}><UserPlus size={13} aria-hidden />보호자 추가</Button> : undefined}
+                />
+              );
+            }}
+          />
         )}
       </Card>
 

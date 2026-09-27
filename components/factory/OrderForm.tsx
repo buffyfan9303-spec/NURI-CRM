@@ -15,6 +15,7 @@ import { EMPTY_MATERIAL_SELECTION, writeMaterialSelection, type MaterialSelectio
 import type { CustomerRow } from "@/lib/domain/rental-types";
 import type { MaterialOption, FactoryOrderType } from "@/lib/domain/factory";
 import { GarmentWorkspace } from "@/components/garment/GarmentWorkspace";
+import { SIMPLE_QTY_KEY } from "./labels";
 
 const TYPE_OPTIONS: { value: FactoryOrderType; label: string }[] = [
   { value: "suit", label: "정장" },
@@ -22,8 +23,9 @@ const TYPE_OPTIONS: { value: FactoryOrderType; label: string }[] = [
   { value: "shoe", label: "구두" },
 ];
 
+// F19: html{font-size:14px} 라 h-11 은 38.5px 였다 — px 로 못 박고 터치 화면은 44px.
 const selectClass =
-  "h-11 w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)]";
+  "h-[40px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[16px] text-t outline-none focus:border-[var(--accent)] sm:text-sm [@media(pointer:coarse)]:h-[44px]";
 
 export function OrderForm({
   businessId,
@@ -33,6 +35,7 @@ export function OrderForm({
   buttons,
   vatRate,
   canAdjustInventory,
+  todayKey,
 }: {
   businessId: string;
   customers: CustomerRow[];
@@ -41,13 +44,15 @@ export function OrderForm({
   buttons: MaterialOption[];
   vatRate: number;
   canAdjustInventory: boolean;
+  /** F18: 사업장 시간대 기준 오늘(YYYY-MM-DD). 브라우저 UTC 날짜를 쓰면 한국 자정~09시에 어제로 잡힌다. */
+  todayKey: string;
 }) {
   const router = useRouter();
 
   const [type, setType] = React.useState<FactoryOrderType>("suit");
   const [customerId, setCustomerId] = React.useState("");
   const [supplyText, setSupplyText] = React.useState("");
-  const [orderDate, setOrderDate] = React.useState(() => new Date().toISOString().slice(0, 10));
+  const [orderDate, setOrderDate] = React.useState(todayKey);
   const [fittingDate, setFittingDate] = React.useState("");
   const [dueDate, setDueDate] = React.useState("");
   const [memo, setMemo] = React.useState("");
@@ -84,6 +89,11 @@ export function OrderForm({
     setMaterialWarnings([]);
     if (!customerId) { setError("고객을 선택하세요."); return; }
     if (supply <= 0) { setError("공급가를 입력하세요."); return; }
+    // F17: 일정 관계 검사 — 서버에 보내기 전에 사용자 문구로 막는다.
+    if (!orderDate) { setError("주문일을 입력하세요."); return; }
+    if (fittingDate && fittingDate < orderDate) { setError("가봉일은 주문일보다 앞설 수 없습니다."); return; }
+    if (dueDate && dueDate < orderDate) { setError("납기는 주문일보다 앞설 수 없습니다."); return; }
+    if (fittingDate && dueDate && fittingDate > dueDate) { setError("가봉일은 납기보다 늦을 수 없습니다."); return; }
 
     setBusy(true);
     // 선택 자재(원단/안감/단추)는 options jsonb의 예약 키(_materials)에 얹어서 저장한다 — 재고
@@ -94,7 +104,8 @@ export function OrderForm({
       type,
       supply,
       options: optionsWithMaterials,
-      qty: type === "suit" ? qty : { ...defaultFactoryQty(), s: simpleQty },
+      // F26: 셔츠·구두는 자기 키로 저장한다 — 's' 로 저장하면 작지에 "수트(자켓) 수량"으로 찍힌다.
+      qty: type === "suit" ? qty : { [SIMPLE_QTY_KEY[type]]: simpleQty },
       orderDate,
       fittingDate: fittingDate || undefined,
       dueDate: dueDate || undefined,
@@ -111,14 +122,16 @@ export function OrderForm({
     // 이 출고는 위 "선택 저장"과 완전히 분리된 별도 단계다 — 권한이 없으면 저장은 되고 출고만 스킵된다.
     if (type === "suit" && canAdjustInventory) {
       const warnings: string[] = [];
+      // F27: 출고 단위는 'ea' 고정이 아니라 자재에 등록된 단위(m, 개 …)를 쓴다.
+      const unitOf = (id: string) => [...fabrics, ...linings, ...buttons].find((m) => m.id === id)?.unit || "ea";
       const consumptions: [string, string, number][] = [
         [materials.fabricId ?? "", "원단", fabricQty],
         [materials.liningId ?? "", "안감", liningQty],
         [materials.buttonId ?? "", "단추", buttonQty],
       ];
       for (const [materialId, label, mQty] of consumptions) {
-        if (!materialId) continue;
-        const r = await consumeMaterial(businessId, result.data.id, materialId, mQty, "ea", "정장 주문 등록");
+        if (!materialId || mQty <= 0) continue;
+        const r = await consumeMaterial(businessId, result.data.id, materialId, mQty, unitOf(materialId), "정장 주문 등록");
         if (!r.ok) warnings.push(`${label} 재고 차감 실패: ${r.message}`);
       }
       if (warnings.length) {
@@ -160,8 +173,8 @@ export function OrderForm({
 
       <div className="mb-4 grid grid-cols-1 gap-x-4 sm:grid-cols-3">
         <Input label="주문일" type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
-        <Input label="가봉일" type="date" value={fittingDate} onChange={(e) => setFittingDate(e.target.value)} />
-        <Input label="납기" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        <Input label="가봉일" type="date" value={fittingDate} min={orderDate || undefined} max={dueDate || undefined} onChange={(e) => setFittingDate(e.target.value)} />
+        <Input label="납기" type="date" value={dueDate} min={fittingDate || orderDate || undefined} onChange={(e) => setDueDate(e.target.value)} />
       </div>
       {dueDate && (
         <p className="mb-4 -mt-2 text-[12px] text-t3">가봉일·납기가 저장되면 사업장 캘린더에 자동 반영됩니다.</p>
@@ -205,9 +218,9 @@ export function OrderForm({
             </p>
             {canAdjustInventory ? (
               <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-3">
-                <ConsumeQtyField label="원단" selectedLabel={materials.fabricLabel} qty={fabricQty} onQtyChange={setFabricQty} />
-                <ConsumeQtyField label="안감" selectedLabel={materials.liningLabel} qty={liningQty} onQtyChange={setLiningQty} />
-                <ConsumeQtyField label="단추" selectedLabel={materials.buttonLabel} qty={buttonQty} onQtyChange={setButtonQty} />
+                <ConsumeQtyField label="원단" unit={fabrics.find((m) => m.id === materials.fabricId)?.unit} selectedLabel={materials.fabricLabel} qty={fabricQty} onQtyChange={setFabricQty} />
+                <ConsumeQtyField label="안감" unit={linings.find((m) => m.id === materials.liningId)?.unit} selectedLabel={materials.liningLabel} qty={liningQty} onQtyChange={setLiningQty} />
+                <ConsumeQtyField label="단추" unit={buttons.find((m) => m.id === materials.buttonId)?.unit} selectedLabel={materials.buttonLabel} qty={buttonQty} onQtyChange={setButtonQty} />
               </div>
             ) : (
               <p className="text-[12px] text-t3">재고 조정 권한이 없어 선택해도 재고는 차감되지 않습니다(선택 자체는 정상 저장됩니다).</p>
@@ -267,16 +280,18 @@ export function OrderForm({
 
 /** 원단/안감/단추 출고 수량 입력 — 선택 자체는 GarmentWorkspace가 담당하고, 여기는 "얼마나 뺄지"만 다룬다. */
 function ConsumeQtyField({
-  label, selectedLabel, qty, onQtyChange,
+  label, unit, selectedLabel, qty, onQtyChange,
 }: {
   label: string;
+  /** 자재 단위(F27) — 선택된 자재가 없으면 생략. */
+  unit?: string;
   selectedLabel: string | null;
   qty: number;
   onQtyChange: (n: number) => void;
 }) {
   return (
     <div className="mb-3.5">
-      <Field label={label} htmlFor={`consume-${label}`} hint={selectedLabel ?? "미선택 — 위에서 먼저 고르세요"}>
+      <Field label={unit ? `${label} (${unit})` : label} htmlFor={`consume-${label}`} hint={selectedLabel ?? "미선택 — 위에서 먼저 고르세요"}>
         <input
           id={`consume-${label}`}
           type="number"
@@ -284,7 +299,7 @@ function ConsumeQtyField({
           className={`${selectClass} w-24`}
           value={qty}
           onChange={(e) => onQtyChange(Number(e.target.value || 0))}
-          aria-label={`${label} 출고 수량`}
+          aria-label={`${label} 출고 수량${unit ? ` (${unit})` : ""}`}
         />
       </Field>
     </div>

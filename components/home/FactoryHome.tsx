@@ -12,19 +12,13 @@ import { AreaChartCard, type AreaSeries } from "@/components/charts/AreaChartCar
 import { DonutChart } from "@/components/charts/DonutChart";
 import { HorizontalBarChart } from "@/components/charts/HorizontalBarChart";
 import { FACTORY_PROCESS_STAGES } from "@/lib/domain/factory-types";
-import type { FactoryTodaySummary, ProcessBoardRow, FactoryProcessStatus } from "@/lib/domain/factory-types";
+import type { FactoryTodaySummary, ProcessBoardRow } from "@/lib/domain/factory-types";
 import type { HomeMetric } from "@/lib/domain/home";
+import type { MemberOption } from "@/lib/domain/calendar-shared";
 import { trendDelta } from "@/lib/domain/home-charts";
 import type { FactoryDashboard } from "@/lib/domain/factory-dashboard";
 import { formatKRW } from "@/lib/domain/money";
-
-const PROCESS_STATUS_LABEL: Record<FactoryProcessStatus, string> = {
-  todo: "예정",
-  doing: "진행중",
-  done: "완료",
-  hold: "보류",
-  skip: "건너뜀",
-};
+import { PROCESS_STATUS_LABEL, assigneeLabel } from "@/components/factory/labels";
 
 export function FactoryHome({
   todayResult,
@@ -37,11 +31,14 @@ export function FactoryHome({
   canManage = false,
   canWrite = false,
   canReadRevenue = false,
+  members = [],
 }: {
   todayResult: { ok: true; data: FactoryTodaySummary } | { ok: false; message: string };
   processBoardResult: { ok: true; data: ProcessBoardRow[] } | { ok: false; message: string };
-  /** 상태 = '진행중'인 주문 수(접수 제외) — listFactoryOrders에서 이미 계산해 넘긴다. */
+  /** F25: 상태 = '접수' 또는 '진행중'인 주문 수 — 접수만 된 주문도 진행 수주로 센다(예전엔 접수가 어디에도 안 보였다). */
   inProgressOrderCount: number;
+  /** F15: 공정 담당자 uuid → 이름. */
+  members?: MemberOption[];
   dashboard: { ok: true; data: FactoryDashboard } | { ok: false; message: string };
   todayKey: string;
   base: string;
@@ -97,7 +94,7 @@ export function FactoryHome({
     return (
       <HomeEmpty settingsHref={canManage ? `${base}/settings` : undefined}
         title={businessName}
-        metricLabels={["진행 수주", "오늘 납기", "지연 공정", "출고 대기"]}
+        metricLabels={["진행 수주(접수 포함)", "오늘 납기", "지연 공정", "출고 대기"]}
         structureHint="수주가 생기면 여기에 공정별 작업 목록과 담당자·납기가 표시됩니다."
         message="진행 중인 수주가 없습니다."
         description="새 수주를 등록하면 공정별 작업지시가 여기에 표시됩니다."
@@ -107,7 +104,7 @@ export function FactoryHome({
   }
 
   const metrics: HomeMetric[] = [
-    { key: "inprogress", label: "진행 수주", count: inProgressOrderCount, href: `${base}/orders?status=진행중` },
+    { key: "inprogress", label: "진행 수주(접수 포함)", count: inProgressOrderCount, href: `${base}/orders` },
     { key: "due-today", label: "오늘 납기", count: dueTodayOrders.length, tone: "warn", href: `${base}/orders?due=${todayKey}` },
     { key: "delayed", label: "지연 공정", count: d.delayedProcesses.length, tone: "alert", href: `${base}/production` },
     { key: "ship-ready", label: "출고 대기", count: shipReady.length, href: `${base}/production` },
@@ -137,7 +134,7 @@ export function FactoryHome({
       href: `${base}/orders/${p.orderId}`,
       time: p.dueDate ? p.dueDate.slice(5).replace("-", ".") : undefined,
       title: `${p.orderNo} · ${p.customerName ?? "고객 미지정"}`,
-      subtitle: p.assignee ? `${p.stage} · ${p.assignee}` : p.stage,
+      subtitle: p.assignee ? `${p.stage} · ${assigneeLabel(members, p.assignee)}` : p.stage,
       statusLabel: PROCESS_STATUS_LABEL[p.status],
       statusTone: p.status === "hold" ? "alert" : p.status === "doing" ? "warn" : "neutral",
       action: "공정 확인",
@@ -153,7 +150,7 @@ export function FactoryHome({
         id: p.id,
         href: `${base}/orders/${p.orderId}`,
         title: `${p.orderNo} · ${p.customerName ?? "고객 미지정"}`,
-        subtitle: p.assignee ? `${p.stage} · ${p.assignee}` : p.stage,
+        subtitle: p.assignee ? `${p.stage} · ${assigneeLabel(members, p.assignee)}` : p.stage,
         progressPct: stageIdx >= 0 ? ((stageIdx + 1) / FACTORY_PROCESS_STAGES.length) * 100 : undefined,
         statusLabel: PROCESS_STATUS_LABEL[p.status],
         statusTone: p.status === "hold" ? ("alert" as const) : p.status === "doing" ? ("warn" as const) : ("neutral" as const),
@@ -196,7 +193,8 @@ export function FactoryHome({
               />
             ))}
           </KpiRow>
-          <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
+          {/* H0: 휴대폰(<sm)은 "KPI → 오늘 할 일" — 추이·분포 차트는 PC 분석용이라 숨긴다. */}
+          <div className="grid grid-cols-1 items-start gap-4 max-sm:hidden lg:grid-cols-12">
             <Card className="p-4 lg:col-span-8">
               <AreaChartCard title="완료 주문 건수" description="최근 6개월 월별 추이" series={areaSeries} />
             </Card>
@@ -215,12 +213,12 @@ export function FactoryHome({
       primary={<WorkTable rows={tableRows} showQty={false} showAmount={false} emptyTitle="진행 중인 공정이 없습니다." />}
       secondary={
         <>
-          <Card className="p-4">
+          <Card className="p-4 max-sm:hidden">
             <HorizontalBarChart title="자재 소비 상위" description="누적 출고 수량 기준" items={dash?.topMaterials.map((m) => ({ ...m, href: `${base}/materials` })) ?? []} />
           </Card>
           <Card className="p-4">
             <h2 className="mb-2 text-[14px] font-semibold text-t">오늘 가봉 · 출고 대기</h2>
-            <WorkList rows={fittingShipRows.slice(0, 8)} emptyTitle="오늘 가봉·출고 대기가 없습니다." />
+            <SideList rows={fittingShipRows.slice(0, 8)} emptyTitle="오늘 가봉·출고 대기가 없습니다." />
           </Card>
           <Card className="p-4">
             <h2 className="mb-2 text-[14px] font-semibold text-t">부족 자재</h2>
@@ -230,7 +228,8 @@ export function FactoryHome({
               <ul className="flex flex-col gap-1.5 text-[12.5px]">
                 {d.lowStockMaterials.slice(0, 6).map((m) => (
                   <li key={m.id}>
-                    <Link href={`${base}/materials`} className="flex items-center justify-between rounded-[6px] px-1 py-1 hover:bg-sf2">
+                    {/* F19: 26px 링크 → 터치 화면 44px */}
+                    <Link href={`${base}/materials`} className="flex min-h-[32px] items-center justify-between rounded-[6px] px-1 py-1 hover:bg-sf2 max-sm:min-h-[44px] [@media(pointer:coarse)]:min-h-[44px]">
                       <span className="truncate text-t2">{m.name}</span>
                       <span className="tabular-nums text-et">
                         {m.stock}/{m.minStock}
@@ -244,7 +243,7 @@ export function FactoryHome({
           </Card>
           <Card className="p-4">
             <h2 className="mb-2 text-[14px] font-semibold text-t">검수 대기</h2>
-            <WorkList
+            <SideList
               rows={inspecting.slice(0, 6).map((p) => ({
                 id: p.id,
                 href: `${base}/orders/${p.orderId}`,
@@ -268,4 +267,19 @@ export function FactoryHome({
       }
     />
   );
+}
+
+/** 보조 카드 목록 — 휴대폰(<sm)에서 0건이면 빈 상태 아이콘(200px) 대신 한 줄 문구(H0 규칙 3). PC 는 그대로. */
+function SideList({ rows, emptyTitle }: { rows: WorkRow[]; emptyTitle: string }) {
+  if (rows.length === 0) {
+    return (
+      <>
+        <p className="text-[12.5px] text-t3 sm:hidden">{emptyTitle}</p>
+        <div className="max-sm:hidden">
+          <WorkList rows={rows} emptyTitle={emptyTitle} />
+        </div>
+      </>
+    );
+  }
+  return <WorkList rows={rows} emptyTitle={emptyTitle} />;
 }

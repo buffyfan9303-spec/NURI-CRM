@@ -41,11 +41,8 @@ export default async function StaffPage({ params }: { params: { businessId: stri
   return (
     <div className="mx-auto max-w-[1180px] p-4 md:p-6">
       <h1 className="mb-1 text-[18px] font-semibold text-t">직원·권한 관리</h1>
-      <p className="mb-4 text-[12.5px] text-t2">
-        역할 변경·승인·해지·개별 권한은 모두 서버에서 재검사됩니다. 이메일 계정을 관리자가
-        직접 초대하려면 Supabase Auth에서 계정을 먼저 만든 뒤 user_id로 소속을 추가해야 합니다
-        (초대 UI는 별도 범위).
-      </p>
+      {/* C6: 개발자 문구(Supabase Auth·user_id) 대신 사용자에게 필요한 한 줄만. */}
+      <p className="mb-4 text-[12.5px] text-t2">역할·권한 변경은 즉시 저장됩니다.</p>
       <StaffTable
         businessId={access.businessId}
         currentUserId={access.userId}

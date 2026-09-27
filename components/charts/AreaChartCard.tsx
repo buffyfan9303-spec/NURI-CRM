@@ -50,6 +50,7 @@ export function AreaChartCard({
   const points = useMemo(() => active?.points ?? [], [active]);
   const hasEnough = points.length >= 2;
 
+  const unit = active?.unit ?? "";
   const geo = useMemo(() => {
     if (!hasEnough) return null;
     const values = points.map((p) => p.value);
@@ -65,9 +66,12 @@ export function AreaChartCard({
     const linePath = xy.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
     const areaPath = `${linePath} L${xy[xy.length - 1].x.toFixed(1)},${VH - PAD_B} L${xy[0].x.toFixed(1)},${VH - PAD_B} Z`;
     const gridYs = [0, 0.5, 1].map((f) => PAD_T + (VH - PAD_T - PAD_B) * f);
-    const gridLabels = [max, (max + min) / 2, min];
+    // F24: 값이 전부 같거나(0건만 6개월) 중간값이 같은 글자로 반올림되면(1건·0.5건→"0건"·0건) 눈금 글자가
+    // 겹쳐 찍혔다 — 표시 문자열이 이전 눈금과 같으면 그 눈금 글자는 생략한다.
+    const gridLabels: (string | null)[] = [max, (max + min) / 2, min].map((v) => formatValue(v, unit));
+    for (let i = gridLabels.length - 1; i > 0; i--) if (gridLabels[i] === gridLabels[i - 1]) gridLabels[i] = null;
     return { xy, linePath, areaPath, gridYs, gridLabels, stepX };
-  }, [points, hasEnough]);
+  }, [points, hasEnough, unit]);
 
   function handleMove(clientX: number) {
     if (!svgRef.current || !geo) return;
@@ -177,15 +181,17 @@ export function AreaChartCard({
                 </>
               )}
             </svg>
-            {geo!.gridLabels.map((v, i) => (
-              <span
-                key={i}
-                className="pointer-events-none absolute left-0 -translate-y-1/2 text-[10px] tabular-nums text-t3"
-                style={{ top: `${(geo!.gridYs[i] / VH) * 100}%` }}
-              >
-                {formatValue(v, active.unit)}
-              </span>
-            ))}
+            {geo!.gridLabels.map((label, i) =>
+              label === null ? null : (
+                <span
+                  key={i}
+                  className="pointer-events-none absolute left-0 -translate-y-1/2 text-[10px] tabular-nums text-t3"
+                  style={{ top: `${(geo!.gridYs[i] / VH) * 100}%` }}
+                >
+                  {label}
+                </span>
+              )
+            )}
             {hover !== null && (
               <div
                 className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-[8px] border border-[var(--bd)] bg-sf px-2.5 py-1.5 text-[11.5px] shadow-card"

@@ -8,6 +8,10 @@
  *
  * 레퍼런스: Fresha 예약 생성 순서(고객 → 서비스 → 담당자/시간)를 폼 순서로, Square 캘린더의
  * "list" 뷰를 모바일 카드로 채택. PC 6열 표, 휴대폰 카드(5열 이상 규칙).
+ *
+ * 휴대폰(<sm, N2·N3): 제목은 메뉴 이름("시술·가격")과 같고, "오늘 예약 / 시술 메뉴" 탭(?tab=)으로 예약 목록과
+ * 시술 표를 나눈다(PC 는 둘 다 세로로). 카드 하단은 주 동작(완료·수납) 2열 전폭, 취소·노쇼·확인 문구는
+ * 카드 우상단 "⋯" 시트로. `?new=1` 이면 예약 등록 모달을 바로 연다(홈 "예약 등록" 경로).
  */
 import * as React from "react";
 import Link from "next/link";
@@ -20,7 +24,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Badge, type BadgeKind } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
+import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { SelectField, StatusTab, FilterRow, CardHead, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import type { SalonService, SalonStaffProfile, SalonResource, SalonAppointment } from "@/lib/domain/salon";
 import { bookAppointment, updateAppointmentStatus, createTreatmentHistory } from "@/lib/domain/salon-actions";
@@ -37,8 +41,10 @@ export const SALON_STATUS_KIND: Record<string, BadgeKind> = {
 };
 const TERMINAL = new Set(["완료", "취소", "노쇼"]);
 
+export type ServicesTab = "bookings" | "services";
+
 export function BookingBoard({
-  businessId, canWrite, canRecordPayment, canRevenue, services, staff, resources, customers, appointments, noShowByCustomer = {}, businessName, todayOnly,
+  businessId, canWrite, canRecordPayment, canRevenue, services, staff, resources, customers, appointments, noShowByCustomer = {}, businessName, todayOnly, mobileTab,
 }: {
   businessId: string;
   canWrite: boolean;
@@ -53,8 +59,10 @@ export function BookingBoard({
   /** S4: 고객별 노쇼 횟수(customerId → count, 0건 고객은 안 들어있음). */
   noShowByCustomer?: Record<string, number>;
   businessName: string;
-  /** ?date=today 로 들어왔는지(홈 "오늘 예약" 지표 경로). */
+  /** 오늘 하루만 보는지(기본). `?date=all` 이면 전체(최근 100건). */
   todayOnly: boolean;
+  /** 휴대폰(<sm) 탭 — "services" 면 예약 목록을 숨기고 시술 표만 보인다. PC 는 무시. */
+  mobileTab: ServicesTab;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,8 +71,10 @@ export function BookingBoard({
   // 고객 상세("예약 등록")에서 넘어오면 그 고객을 미리 선택하고 폼을 바로 연다(?customerId=, 결함 D7과 같은 패턴).
   const prefillCustomerId = searchParams.get("customerId") ?? "";
   const prefillValid = !!prefillCustomerId && customers.some((c) => c.id === prefillCustomerId);
-  const [bookOpen, setBookOpen] = React.useState(prefillValid && canWrite);
+  const [bookOpen, setBookOpen] = React.useState(canWrite && (prefillValid || searchParams.get("new") === "1"));
   const [payTarget, setPayTarget] = React.useState<PayTarget | null>(null);
+  /** 카드 "⋯" 시트(취소·노쇼·확인 문구)가 열린 예약. */
+  const [moreFor, setMoreFor] = React.useState<SalonAppointment | null>(null);
   const [reminderFor, setReminderFor] = React.useState<SalonAppointment | null>(null);
 
   const run = async (id: string, fn: () => Promise<{ ok: boolean; message?: string }>) => {
@@ -72,6 +82,7 @@ export function BookingBoard({
     try {
       const r = await fn();
       if (!r.ok) { setError(r.message ?? "처리하지 못했습니다."); return; }
+      setMoreFor(null);
       router.refresh();
     } catch {
       // QA2-S02: 서버 액션이 throw하면 예외가 조용히 빠져나가 화면이 무반응처럼 보였다 — 반드시 화면에 알린다.
@@ -102,14 +113,24 @@ export function BookingBoard({
     };
   };
 
-  const actionsOf = (a: SalonAppointment, v: ReturnType<typeof rowView>) => {
+  /**
+   * 주 동작(완료·시술 기록·수납)과 보조 동작(취소·노쇼·확인 문구)을 나눈다 — PC 표는 둘을 한 줄에,
+   * 휴대폰 카드는 주 동작을 하단 2열 전폭, 보조 동작을 "⋯" 시트에 둔다(N3: 완료 옆 취소·노쇼 오터치 방지).
+   * `sheet` 는 시트 안 버튼(전폭·44px) 모양.
+   */
+  const actionsOf = (a: SalonAppointment, v: ReturnType<typeof rowView>, sheet = false) => {
     const rowBusy = busy === a.id;
     const nodes: React.ReactNode[] = [];
+    const more: React.ReactNode[] = [];
+    const size = sheet ? "md" : "sm";
+    const ghost = sheet ? "secondary" : "ghost";
     if (v.canStatus) {
       nodes.push(
-        <Button key="done" variant="secondary" size="sm" loading={rowBusy} onClick={() => { if (window.confirm("완료 처리하면 이후 버튼이 사라져 되돌릴 수 없습니다. 계속할까요?")) run(a.id, () => updateAppointmentStatus(businessId, a.id, "완료")); }}>완료</Button>,
-        <Button key="cancel" variant="ghost" size="sm" loading={rowBusy} onClick={() => { if (window.confirm("예약을 취소합니다. 이후 버튼이 사라져 되돌릴 수 없습니다. 계속할까요?")) run(a.id, () => updateAppointmentStatus(businessId, a.id, "취소")); }}>취소</Button>,
-        <Button key="noshow" variant="ghost" size="sm" loading={rowBusy} onClick={() => { if (window.confirm("노쇼로 처리합니다. 이후 버튼이 사라져 되돌릴 수 없습니다. 계속할까요?")) run(a.id, () => updateAppointmentStatus(businessId, a.id, "노쇼")); }}>노쇼</Button>
+        <Button key="done" variant="secondary" size="sm" loading={rowBusy} onClick={() => { if (window.confirm("완료 처리하면 이후 버튼이 사라져 되돌릴 수 없습니다. 계속할까요?")) run(a.id, () => updateAppointmentStatus(businessId, a.id, "완료")); }}>완료</Button>
+      );
+      more.push(
+        <Button key="cancel" variant={ghost} size={size} loading={rowBusy} onClick={() => { if (window.confirm("예약을 취소합니다. 이후 버튼이 사라져 되돌릴 수 없습니다. 계속할까요?")) run(a.id, () => updateAppointmentStatus(businessId, a.id, "취소")); }}>{sheet ? "예약 취소" : "취소"}</Button>,
+        <Button key="noshow" variant={ghost} size={size} loading={rowBusy} onClick={() => { if (window.confirm("노쇼로 처리합니다. 이후 버튼이 사라져 되돌릴 수 없습니다. 계속할까요?")) run(a.id, () => updateAppointmentStatus(businessId, a.id, "노쇼")); }}>{sheet ? "노쇼 처리" : "노쇼"}</Button>
       );
     }
     if (v.canTreat) {
@@ -127,26 +148,30 @@ export function BookingBoard({
       );
     }
     if (v.isTomorrow) {
-      nodes.push(
-        <Button key="remind" variant="ghost" size="sm" onClick={() => setReminderFor(a)} title="내일 예약 확인 문구">
+      more.push(
+        <Button key="remind" variant={ghost} size={size} onClick={() => { setMoreFor(null); setReminderFor(a); }} title="내일 예약 확인 문구">
           <MailCheck size={13} aria-hidden />확인 문구
         </Button>
       );
     }
-    return nodes;
+    return { nodes, more };
   };
 
-  const setDateFilter = (today: boolean) => {
+  const setParam = (key: string, value: string | null) => {
     const sp = new URLSearchParams(searchParams.toString());
-    if (today) sp.set("date", "today"); else sp.delete("date");
-    router.push(`?${sp.toString()}`);
+    sp.delete("new"); // 예약 모달 자동 열기는 첫 진입 한 번만
+    if (value) sp.set(key, value); else sp.delete(key);
+    const q = sp.toString();
+    router.push(q ? `?${q}` : "?");
   };
+  const showList = mobileTab === "bookings";
+  const moreView = moreFor ? rowView(moreFor) : null;
 
   return (
     <>
       <PageHeader
-        title="예약·시술"
-        description="오늘 예약을 처리하고, 수납과 시술 기록을 남깁니다. 시술 메뉴와 재방문 주기는 아래에서 관리합니다."
+        title="시술·가격"
+        description="예약을 처리하고 수납·시술 기록을 남깁니다. 시술 메뉴·가격·재방문 주기도 여기서 관리합니다."
         actions={
           canWrite ? (
             <Button onClick={() => setBookOpen(true)}>
@@ -155,15 +180,20 @@ export function BookingBoard({
           ) : undefined
         }
       >
-        <FilterRow>
-          <StatusTab active={todayOnly} onClick={() => setDateFilter(true)}>오늘</StatusTab>
-          <StatusTab active={!todayOnly} onClick={() => setDateFilter(false)}>전체(최근 100건)</StatusTab>
+        {/* 휴대폰 탭(N2): 예약 목록 ↔ 시술 표. PC 는 두 보드를 모두 보이므로 탭이 없다. */}
+        <div className="mb-2 grid grid-cols-2 gap-1.5 sm:hidden">
+          <StatusTab active={showList} onClick={() => setParam("tab", null)}>오늘 예약</StatusTab>
+          <StatusTab active={!showList} onClick={() => setParam("tab", "services")}>시술 메뉴</StatusTab>
+        </div>
+        <FilterRow className={showList ? undefined : "max-sm:hidden"}>
+          <StatusTab active={todayOnly} onClick={() => setParam("date", null)}>오늘</StatusTab>
+          <StatusTab active={!todayOnly} onClick={() => setParam("date", "all")}>전체(최근 100건)</StatusTab>
         </FilterRow>
       </PageHeader>
 
       {error && <Alert className="mb-4">{error}</Alert>}
 
-      <Card className="mb-4 p-4 sm:p-5">
+      <Card className={`mb-4 sm:p-5 ${MOBILE_BARE} ${showList ? "" : "max-sm:hidden"}`}>
         <CardHead title={todayOnly ? "오늘 예약" : "예약 목록"} description={`${appointments.length}건 · 시간순`} />
         {appointments.length === 0 ? (
           <EmptyState
@@ -191,7 +221,8 @@ export function BookingBoard({
                   <tbody>
                     {appointments.map((a) => {
                       const v = rowView(a);
-                      const acts = actionsOf(a, v);
+                      const { nodes, more } = actionsOf(a, v);
+                      const acts = [...nodes, ...more];
                       return (
                         <tr key={a.id} className={`${TR} h-[52px] hover:bg-sf2`}>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>
@@ -200,8 +231,8 @@ export function BookingBoard({
                           </td>
                           <td className={TD}>
                             <span className="flex items-center gap-1.5">
-                              <Link href={`/w/${businessId}/customers/${a.customerId}`} className="inline-flex min-w-0 items-center hover:underline [@media(pointer:coarse)]:min-h-[44px]"><CellName max={160}>{v.customer}</CellName></Link>
-                              {v.noShow > 0 && <span className="shrink-0 rounded-[6px] bg-eb px-1.5 py-px text-[10.5px] font-bold text-et" title="이 고객의 누적 노쇼 이력">노쇼 {v.noShow}</span>}
+                              <Link href={`/w/${businessId}/customers/${a.customerId}`} prefetch={false} className="inline-flex min-w-0 items-center hover:underline [@media(pointer:coarse)]:min-h-[44px]"><CellName max={160}>{v.customer}</CellName></Link>
+                              {v.noShow > 0 && <span className="shrink-0 rounded-[6px] bg-eb px-1.5 py-px text-[12px] font-bold text-et" title="이 고객의 누적 노쇼 이력">노쇼 {v.noShow}</span>}
                             </span>
                           </td>
                           <td className={`${TD} text-t2`}>
@@ -222,14 +253,29 @@ export function BookingBoard({
             }
             card={(a) => {
               const v = rowView(a);
-              const acts = actionsOf(a, v);
+              const { nodes, more } = actionsOf(a, v);
               return (
                 <MobileCard
                   title={v.customer}
-                  sub={<><span>{v.when}~{v.until}</span><span>· {v.service}</span>{v.noShow > 0 && <span className="rounded-[6px] bg-eb px-1.5 py-px text-[10.5px] font-bold text-et">노쇼 {v.noShow}</span>}</>}
-                  badge={<Badge kind={SALON_STATUS_KIND[a.status] ?? "info"}>{a.status}</Badge>}
+                  sub={<><span className="mr-1 tabular-nums">{v.when}~{v.until}</span>{v.noShow > 0 && <span className="rounded-[6px] bg-eb px-1.5 py-px text-[12px] font-bold text-et">노쇼 {v.noShow}</span>}<span className="min-w-0 truncate">{v.service}</span></>}
+                  badge={
+                    <span className="flex items-center gap-1">
+                      <Badge kind={SALON_STATUS_KIND[a.status] ?? "info"}>{a.status}</Badge>
+                      {more.length > 0 && (
+                        <button
+                          type="button"
+                          aria-label={`${v.customer} 예약 더 보기`}
+                          aria-haspopup="dialog"
+                          onClick={() => setMoreFor(a)}
+                          className="-my-2 -mr-2 flex h-[44px] w-[44px] items-center justify-center rounded-[var(--r-sm)] text-[20px] leading-none text-t2 hover:bg-sf2 hover:text-t"
+                        >
+                          <span aria-hidden>⋯</span>
+                        </button>
+                      )}
+                    </span>
+                  }
                   fields={[["담당", v.staff], ...(canRevenue ? ([["금액", v.price]] as [string, React.ReactNode][]) : [])]}
-                  actions={acts.length > 0 ? acts : undefined}
+                  actions={nodes.length > 0 ? <div className="flex w-full gap-2 [&>button]:flex-1">{nodes}</div> : undefined}
                 />
               );
             }}
@@ -251,6 +297,16 @@ export function BookingBoard({
       />
 
       <PayModal businessId={businessId} target={payTarget} onClose={() => setPayTarget(null)} onDone={() => { setPayTarget(null); router.refresh(); }} />
+
+      {/* 휴대폰 카드 "⋯" 시트 — 되돌릴 수 없는 보조 동작(취소·노쇼)과 확인 문구. 각 버튼은 기존 confirm 을 그대로 거친다. */}
+      <Modal open={!!moreFor} onClose={() => setMoreFor(null)} title={moreView ? `${moreView.customer} · ${moreView.when}` : "예약"}>
+        {moreFor && moreView && (
+          <div className="flex flex-col gap-2 [&>button]:w-full">
+            <p className="mb-1 text-[12.5px] text-t3">{moreView.service} · {moreView.staff}</p>
+            {actionsOf(moreFor, moreView, true).more}
+          </div>
+        )}
+      </Modal>
 
       <Modal open={!!reminderFor} onClose={() => setReminderFor(null)} title="내일 예약 확인 문구">
         {reminderFor && (

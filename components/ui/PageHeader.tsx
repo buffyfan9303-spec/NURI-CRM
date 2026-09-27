@@ -40,7 +40,8 @@ export function PageHeader({
               <h1 className="text-[20px] font-bold leading-tight tracking-tight text-t sm:text-[var(--fs-page)]">{title}</h1>
               {meta}
             </div>
-            {description && <p className="mt-1 text-[13px] leading-snug text-t2">{description}</p>}
+            {/* 휴대폰은 한 줄 말줄임(C1) — 전체 문구는 title 로. */}
+            {description && <p className="mt-1 text-[13px] leading-snug text-t2 max-sm:line-clamp-1" title={description}>{description}</p>}
           </div>
           {settingsHref && <SettingsIconLink href={settingsHref} />}
         </div>

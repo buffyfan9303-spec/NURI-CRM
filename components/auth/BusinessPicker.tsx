@@ -4,7 +4,9 @@ import * as React from "react";
 import { ChevronRight, MailQuestion, Search, TriangleAlert, INDUSTRY_ICON, FALLBACK_ICON } from "@/lib/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { AuthButton } from "@/components/auth/AuthButton";
+import { signOut } from "@/lib/auth/actions";
 import type { Industry } from "@/lib/industry/config";
+import { ROLE_LABEL } from "@/lib/auth/roles";
 
 export interface BusinessOption {
   id: string;
@@ -30,13 +32,6 @@ const INDUSTRY_LABEL: Record<string, string> = {
   academy: "학원",
 };
 
-const ROLE_LABEL: Record<string, string> = {
-  owner: "대표",
-  manager: "매니저",
-  staff: "직원",
-  accountant: "회계",
-  viewer: "열람",
-};
 
 /**
  * 실제 사업장명·업종·내 역할만 보여준다. 가짜 성과 수치·데모 매장 금지.
@@ -48,6 +43,7 @@ const ROLE_LABEL: Record<string, string> = {
  */
 export function BusinessPicker({ businesses, onPick, loading = false, error, onRetry }: BusinessPickerProps) {
   const [query, setQuery] = React.useState("");
+  const [signingOut, setSigningOut] = React.useState(false);
 
   if (loading) {
     return (
@@ -156,6 +152,23 @@ export function BusinessPicker({ businesses, onPick, loading = false, error, onR
           })}
         </ul>
       )}
+
+      {/* AU3(2026-09-28): 다른 계정으로 들어왔을 때 나갈 길. 서버 액션 signOut 이 세션을 지우고 /login 으로 보낸다. */}
+      <div className="mt-6 flex justify-center border-t border-auth-field-bd pt-4">
+        <button
+          type="button"
+          disabled={signingOut}
+          aria-busy={signingOut || undefined}
+          onClick={() => {
+            setSigningOut(true);
+            void signOut().catch(() => setSigningOut(false));
+          }}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded px-3 text-[13.5px] text-auth-tx2 underline-offset-4 hover:text-auth-tx hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-accent)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {signingOut && <Spinner size={14} />}
+          {signingOut ? "로그아웃하는 중…" : "다른 계정으로 로그인"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * 시술 메뉴(서비스) — 4열 표(이름 / 가격 / 소요시간 / 재방문 주기). 등록은 모달, 재방문 주기는 행에서 바로 저장.
+ * 시술 메뉴(서비스) — PC 4열 표(이름 / 가격 / 소요시간 / 재방문 주기), 휴대폰(<sm)은 카드(이름·가격·소요,
+ * 재방문 주기는 카드 안에서 편집 — N2: 4열+입력칸 표가 390px 에서 마지막 열이 잘리던 결함).
+ * 등록은 모달, 재방문 주기는 행/카드에서 바로 저장(blur·Enter).
  */
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -11,18 +13,20 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { CellName } from "@/components/ui/ResponsiveTable";
+import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { CardHead, Alert, TABLE, THEAD, TH, TR, TD, CONTROL_SM } from "@/components/rental/listkit";
+import { cn } from "@/lib/utils/cn";
 import type { SalonService } from "@/lib/domain/salon";
 import { createService, setServiceRevisitDays } from "@/lib/domain/salon-actions";
 import { formatKRW } from "@/lib/domain/money";
 
-export function ServicesBoard({ businessId, canWrite, services }: { businessId: string; canWrite: boolean; services: SalonService[] }) {
+export function ServicesBoard({ businessId, canWrite, services, className }: { businessId: string; canWrite: boolean; services: SalonService[]; className?: string }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const onSaved = () => router.refresh();
 
   return (
-    <Card className="p-4 sm:p-5">
+    <Card className={cn("sm:p-5", MOBILE_BARE, className)}>
       <CardHead
         title="시술 메뉴"
         description={`${services.length}개 · 가격·소요시간·재방문 주기`}
@@ -35,30 +39,58 @@ export function ServicesBoard({ businessId, canWrite, services }: { businessId: 
           action={canWrite ? <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>서비스 등록</Button> : undefined}
         />
       ) : (
-        <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
-          <table className={`${TABLE} min-w-[320px]`}>
-            <thead>
-              <tr className={THEAD}>
-                <th className={TH}>서비스</th>
-                <th className={`${TH} text-right`}>가격</th>
-                <th className={`${TH} hidden text-right sm:table-cell`}>소요</th>
-                <th className={`${TH} text-right`}>재방문 주기</th>
-              </tr>
-            </thead>
-            <tbody>
-              {services.map((s) => (
-                <ServiceRow key={s.id} businessId={businessId} canWrite={canWrite} service={s} onSaved={() => router.refresh()} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TableOrCards
+          rows={services}
+          keyOf={(s) => s.id}
+          table={
+            <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
+              <table className={`${TABLE} min-w-[520px]`}>
+                <thead>
+                  <tr className={THEAD}>
+                    <th className={TH}>서비스</th>
+                    <th className={`${TH} text-right`}>가격</th>
+                    <th className={`${TH} text-right`}>소요</th>
+                    <th className={`${TH} text-right`}>재방문 주기</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {services.map((s) => (
+                    <tr key={s.id} className={`${TR} h-[52px]`}>
+                      <td className={TD}>
+                        <CellName max={260}>{s.name}</CellName>
+                        {s.category && <span className="block text-[11.5px] text-t3">{s.category}</span>}
+                      </td>
+                      <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{formatKRW(s.price)}</td>
+                      <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t2`}>{s.durationMinutes}분</td>
+                      <td className={`${TD} text-right`}>
+                        <RevisitField businessId={businessId} canWrite={canWrite} service={s} onSaved={onSaved} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          }
+          card={(s) => (
+            <MobileCard
+              title={s.name}
+              sub={s.category ?? undefined}
+              fields={[
+                ["가격", formatKRW(s.price)],
+                ["소요", `${s.durationMinutes}분`],
+                ["재방문 주기", <RevisitField key="rv" businessId={businessId} canWrite={canWrite} service={s} onSaved={onSaved} />],
+              ]}
+            />
+          )}
+        />
       )}
       <NewServiceModal businessId={businessId} open={open} onClose={() => setOpen(false)} onCreated={() => { setOpen(false); router.refresh(); }} />
     </Card>
   );
 }
 
-function ServiceRow({ businessId, canWrite, service, onSaved }: { businessId: string; canWrite: boolean; service: SalonService; onSaved: () => void }) {
+/** 재방문 주기(일) 인라인 편집 — 표 셀과 휴대폰 카드가 같은 부품을 쓴다(동시에 렌더되지만 한쪽만 보인다). */
+function RevisitField({ businessId, canWrite, service, onSaved }: { businessId: string; canWrite: boolean; service: SalonService; onSaved: () => void }) {
   const [days, setDays] = React.useState(service.revisitDays != null ? String(service.revisitDays) : "");
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
@@ -79,32 +111,24 @@ function ServiceRow({ businessId, canWrite, service, onSaved }: { businessId: st
   };
 
   return (
-    <tr className={`${TR} h-[52px]`}>
-      <td className={TD}>
-        <CellName max={260}>{service.name}</CellName>
-        {service.category && <span className="block text-[11.5px] text-t3">{service.category}</span>}
-      </td>
-      <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{formatKRW(service.price)}<span className="block text-[11.5px] text-t3 sm:hidden">{service.durationMinutes}분</span></td>
-      <td className={`${TD} hidden whitespace-nowrap text-right tabular-nums text-t2 sm:table-cell`}>{service.durationMinutes}분</td>
-      <td className={`${TD} text-right`}>
-        <label className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap text-[12px] text-t3">
-          <input
-            type="number"
-            min={1}
-            disabled={!canWrite || busy}
-            value={days}
-            onChange={(e) => setDays(e.target.value)}
-            onBlur={save}
-            onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-            placeholder="—"
-            aria-label={`${service.name} 재방문 주기(일)`}
-            className={`${CONTROL_SM} w-[64px] text-right tabular-nums`}
-          />
-          일
-        </label>
-        {err && <span className="block text-[11px] text-et">{err}</span>}
-      </td>
-    </tr>
+    <>
+      <label className="inline-flex items-center justify-end gap-1.5 whitespace-nowrap text-[12px] text-t3">
+        <input
+          type="number"
+          min={1}
+          disabled={!canWrite || busy}
+          value={days}
+          onChange={(e) => setDays(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+          placeholder="—"
+          aria-label={`${service.name} 재방문 주기(일)`}
+          className={`${CONTROL_SM} w-[72px] text-right tabular-nums`}
+        />
+        일
+      </label>
+      {err && <span className="block whitespace-normal text-[12px] text-et">{err}</span>}
+    </>
   );
 }
 

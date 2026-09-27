@@ -26,6 +26,14 @@ const FEATURE_LABEL: Record<keyof IndustryFeatures, string> = {
   studentAttendance: "학생 출결",
 };
 
+/** resourceBooking 내부 값 → 화면 문구(C7: 내부 값 노출 금지). */
+const BOOKING_LABEL: Record<IndustryFeatures["resourceBooking"], string> = {
+  none: "미사용",
+  unit: "개체 단위",
+  "staff+seat": "직원+좌석",
+  "teacher+room": "강사+강의실",
+};
+
 export default async function SettingsPage({ params }: { params: { businessId: string } }) {
   const access = await getAccess(params.businessId, "staff.manage");
   if (!access.ok) {
@@ -51,6 +59,12 @@ export default async function SettingsPage({ params }: { params: { businessId: s
     ? await Promise.all([getFeePolicy(access.businessId), getCancelPolicy(access.businessId)])
     : [null, null];
 
+  const capChips = access.caps.map((c) => (
+    <span key={c} className="rounded-[6px] bg-sf2 px-2 py-1 text-[12px] font-medium text-t2">
+      {CAP_LABEL[c] ?? c}
+    </span>
+  ));
+
   return (
     <div className="mx-auto flex max-w-[760px] flex-col gap-4 p-4 md:p-6">
       <div>
@@ -65,17 +79,20 @@ export default async function SettingsPage({ params }: { params: { businessId: s
         <p className="mb-3 text-[11.5px] text-t3">
           지금 로그인한 계정에 부여된 권한입니다. 원시 코드가 아니라 실제로 할 수 있는 동작으로 표시합니다.
         </p>
-        <div className="flex flex-wrap gap-1.5">
-          {access.caps.length === 0 ? (
-            <p className="text-[12.5px] text-t3">부여된 권한이 없습니다.</p>
-          ) : (
-            access.caps.map((c) => (
-              <span key={c} className="rounded-[6px] bg-sf2 px-2 py-1 text-[11.5px] font-medium text-t2">
-                {CAP_LABEL[c] ?? c}
-              </span>
-            ))
-          )}
-        </div>
+        {access.caps.length === 0 ? (
+          <p className="text-[12.5px] text-t3">부여된 권한이 없습니다.</p>
+        ) : (
+          <>
+            {/* 휴대폰은 접어 두고(C7), PC 는 펼쳐 보인다. <details> 는 CSS 로 강제 open 이 안 돼 두 번 그린다. */}
+            <details className="sm:hidden">
+              <summary className="flex min-h-[44px] cursor-pointer list-none items-center text-[13px] font-medium text-[var(--accent-ink)] [&::-webkit-details-marker]:hidden">
+                권한 {access.caps.length}개 보기
+              </summary>
+              <div className="flex flex-wrap gap-1.5 pt-1">{capChips}</div>
+            </details>
+            <div className="hidden flex-wrap gap-1.5 sm:flex">{capChips}</div>
+          </>
+        )}
       </Card>
 
       <Card className="p-5">
@@ -107,7 +124,7 @@ export default async function SettingsPage({ params }: { params: { businessId: s
               >
                 <span className="text-t2">{FEATURE_LABEL[key]}</span>
                 <Badge kind={on ? "success" : "info"}>
-                  {typeof value === "string" ? value : on ? "사용" : "미사용"}
+                  {typeof value === "string" ? (BOOKING_LABEL[value] ?? value) : on ? "사용" : "미사용"}
                 </Badge>
               </li>
             );

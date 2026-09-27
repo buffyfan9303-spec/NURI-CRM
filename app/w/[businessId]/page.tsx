@@ -13,6 +13,7 @@ import { getSalonToday, listRevisitDue } from "@/lib/domain/salon";
 import { getAcademyToday, getConsultationStats } from "@/lib/domain/academy";
 import { getRentalDashboard } from "@/lib/domain/rental-dashboard";
 import { getFactoryDashboard } from "@/lib/domain/factory-dashboard";
+import { listAssignableMembers } from "@/lib/domain/calendar";
 import { getSalonDashboard } from "@/lib/domain/salon-dashboard";
 import { getAcademyDashboard } from "@/lib/domain/academy-dashboard";
 import { getUnmannedDashboard } from "@/lib/domain/unmanned-dashboard";
@@ -58,11 +59,14 @@ export default async function WorkspaceDashboardPage({
       );
     }
     case "factory": {
-      const [todayResult, processBoardResult, inProgressRes, dashboard] = await Promise.all([
+      // F25: 접수 상태 주문이 대시보드 어디에도 안 보였다 — 접수+진행중을 "진행 수주(접수 포함)"로 센다.
+      // F15: 공정 담당자 uuid 를 이름으로 보여 주기 위해 구성원 목록도 함께 읽는다.
+      const [todayResult, processBoardResult, inProgressRes, dashboard, membersRes] = await Promise.all([
         getFactoryToday(access.businessId, tz),
         listProcessBoard(access.businessId),
-        listFactoryOrders(access.businessId, { status: ["진행중"] }),
+        listFactoryOrders(access.businessId, { status: ["접수", "진행중"] }),
         getFactoryDashboard(access.businessId, tz),
+        listAssignableMembers(access.businessId),
       ]);
       return (
         <FactoryHome
@@ -76,6 +80,7 @@ export default async function WorkspaceDashboardPage({
           canManage={canManage}
           canWrite={canWrite}
           canReadRevenue={canReadRevenue}
+          members={membersRes.ok ? membersRes.members : []}
         />
       );
     }

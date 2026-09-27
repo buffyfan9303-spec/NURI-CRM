@@ -12,7 +12,7 @@
 import { getServerSupabase } from "@/lib/supabase/server";
 import { requireCap, AccessDenied, accessMessage, type Cap } from "@/lib/auth/access";
 import { mustAffect } from "@/lib/db/mustAffect";
-import type { ResolvedScan, StagedScan, ScanBatchItem, ScanMode, ScanCommitHandoff } from "./types";
+import type { ResolvedScan, StagedScan, ScanBatchItem, ScanMode, ScanCommitHandoff, ScanCommitResult } from "./types";
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -73,6 +73,19 @@ export async function stageScan(businessId: string, session: string, code: strin
   });
 }
 
+/**
+ * 조회만(D6). crm.resolve_scan 은 view cap 으로 열려 있으므로 viewer 도 코드가 무엇인지 볼 수 있다 —
+ * 담기(stage_scan_batch)·확정은 write 가 필요해 별도다. 담지 않으므로 staged 는 항상 false.
+ */
+export async function resolveScan(businessId: string, session: string, code: string): Promise<ActionResult<StagedScan>> {
+  return withCap(businessId, "view", async () => {
+    const sb = getServerSupabase();
+    const { data, error } = await sb.schema("crm").rpc("resolve_scan", { p_business: businessId, p_code: code, p_session: session });
+    if (error) return { ok: false, message: pgError(error) };
+    return { ok: true, data: { ...toResolvedScan(data as Record<string, unknown>), staged: false } };
+  });
+}
+
 function toBatchItem(row: Record<string, unknown>): ScanBatchItem {
   return {
     id: row.id as string,
@@ -124,20 +137,20 @@ export async function removeScanBatchItem(businessId: string, itemId: string): P
  *  · unmanned_audit : 진행중 실사가 있으면 스캔 수량을 counted_qty 로 기록(재고는 안 바뀐다 — 실사 완료는 별도 RPC).
  *  · rental_checkout/return : 개체가 속한 예약·항목을 handoff 로 돌려준다(출고·반납 확정은 예약 상세의 기존 RPC).
  *  · 그 외 : 목록 비움만. 모드에 맞지 않는 항목이 있으면 mode_mismatch 로 거부한다.
- * 반환의 배열은 기존 호출부 호환(확정 직전 스냅샷)이고, handoff 는 같은 객체에 붙어 온다.
+ * D2: 반환은 {items, handoff} 객체다 — 이전엔 배열에 handoff 속성을 붙였는데 서버 액션 직렬화가 배열의
+ * 추가 속성을 버려서 예약 상세 링크·실사 기록 안내가 화면에 오지 않았다.
  */
-export async function commitScanBatch(businessId: string, session: string, mode: ScanMode = "generic"): Promise<ActionResult<ScanBatchItem[] & { handoff?: ScanCommitHandoff }>> {
+export async function commitScanBatch(businessId: string, session: string, mode: ScanMode = "generic"): Promise<ActionResult<ScanCommitResult>> {
   return withCap(businessId, "write", async () => {
     const sb = getServerSupabase();
     const { data, error } = await sb.schema("crm").rpc("commit_scan_batch", { p_business: businessId, p_session: session, p_mode: mode });
     if (error) return { ok: false, message: pgError(error) };
     const j = data as { items: Record<string, unknown>[]; handoff: Record<string, unknown> };
-    const snapshot = (j.items ?? []).map(toBatchItem) as ScanBatchItem[] & { handoff?: ScanCommitHandoff };
     const h = j.handoff ?? {};
-    snapshot.handoff = {
+    const handoff: ScanCommitHandoff = {
       ...(h.stock_take_id !== undefined ? { stockTakeId: (h.stock_take_id as string | null) ?? null, countedLines: Number(h.counted_lines ?? 0) } : {}),
       ...(h.reservations ? { reservations: (h.reservations as Record<string, unknown>[]).map((r) => ({ reservationId: String(r.reservation_id), itemIds: (r.item_ids as string[]) ?? [], unitIds: ((r.unit_ids as (string | null)[]) ?? []).filter((u): u is string => Boolean(u)) })) } : {}),
     };
-    return { ok: true, data: snapshot };
+    return { ok: true, data: { items: (j.items ?? []).map(toBatchItem), handoff } };
   });
 }

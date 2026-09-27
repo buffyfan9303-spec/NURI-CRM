@@ -7,6 +7,7 @@ import { listCustomers } from "@/lib/domain/rental";
 import { listMaterials } from "@/lib/domain/factory";
 import { getAccess } from "../../access";
 import { OrderForm } from "@/components/factory/OrderForm";
+import { todayKeyInTz } from "@/lib/utils/datetime";
 
 export default async function NewFactoryOrderPage({ params }: { params: { businessId: string } }) {
   const access = await getAccess(params.businessId, "write");
@@ -57,6 +58,7 @@ export default async function NewFactoryOrderPage({ params }: { params: { busine
         buttons={buttonsRes.ok ? buttonsRes.data : []}
         vatRate={vatRate}
         canAdjustInventory={access.caps.includes("inventory.adjust")}
+        todayKey={todayKeyInTz(access.timezone)}
       />
     </div>
   );

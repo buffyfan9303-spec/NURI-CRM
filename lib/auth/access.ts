@@ -8,7 +8,8 @@
  *  3. "권한 부족 / 서버 장애 / 정상 빈 결과" 는 서로 다른 세 가지다.
  *     호출부가 구분해 처리할 수 있도록 판별 유니온으로 돌려준다.
  */
-import { getServerSupabase } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/user";
+import { isTransientAuthError } from "@/lib/auth/transient";
 import type { Industry } from "@/lib/industry/config";
 import { isIndustry } from "@/lib/industry/config";
 
@@ -64,13 +65,16 @@ export async function checkAccess(
     return { ok: false, reason: "not-member", businessId };
   }
 
-  const sb = getServerSupabase();
+  // 요청 단위 캐시 — 같은 요청의 layout/page/액션이 auth 서버를 다시 두드리지 않는다.
+  const { sb, user, error: authErr } = await getAuthUser();
+  if (authErr || !user) {
+    // 일시 장애(네트워크/5xx/429)는 "로그인 안 됨"이 아니다. 로그인으로 보내지 말고 재시도 화면으로.
+    if (isTransientAuthError(authErr)) return { ok: false, reason: "error", message: authErr!.message };
+    return { ok: false, reason: "unauthenticated" };
+  }
 
-  const { data: auth, error: authErr } = await sb.auth.getUser();
-  if (authErr || !auth?.user) return { ok: false, reason: "unauthenticated" };
-
-  // caps 와 사업장 정보를 병렬로. 둘 다 RLS 아래에서 실행된다.
-  const [capsRes, bizRes] = await Promise.all([
+  // caps · 사업장 · 표시용 역할을 병렬로. 셋 다 RLS 아래에서 실행된다(역할은 화면 표시용일 뿐).
+  const [capsRes, bizRes, memRes] = await Promise.all([
     sb.schema("crm").rpc("my_caps", { p_business: businessId }),
     sb
       .schema("crm")
@@ -78,7 +82,8 @@ export async function checkAccess(
       .select("id,name,industry,timezone,settings,active")
       .eq("id", businessId)
       .maybeSingle(),
-    ]);
+    sb.schema("crm").from("memberships").select("role").eq("business_id", businessId).eq("user_id", user.id).maybeSingle(),
+  ]);
 
   if (capsRes.error) {
     return { ok: false, reason: "error", message: capsRes.error.message };
@@ -100,18 +105,12 @@ export async function checkAccess(
   }
 
   // 역할은 화면 표시용. 권한 판정에는 절대 쓰지 않는다(caps 만 쓴다).
-  const { data: mem } = await sb
-    .schema("crm")
-    .from("memberships")
-    .select("role")
-    .eq("business_id", businessId)
-    .eq("user_id", auth.user.id)
-    .maybeSingle();
+  const mem = memRes.data;
 
   return {
     ok: true,
-    userId: auth.user.id,
-    email: auth.user.email ?? "",
+    userId: user.id,
+    email: user.email ?? "",
     businessId: biz.id as string,
     businessName: biz.name as string,
     industry: isIndustry(biz.industry) ? biz.industry : "factory",

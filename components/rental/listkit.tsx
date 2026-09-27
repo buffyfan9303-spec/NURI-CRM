@@ -71,7 +71,7 @@ export function StatusTab({
     >
       {children}
       {count !== undefined && (
-        <span className={cn("rounded-full px-1.5 py-px text-[11px] tabular-nums", active ? "bg-[var(--accent-strong)] text-[var(--accent-contrast)]" : "bg-sf3 text-t3")}>
+        <span className={cn("rounded-full px-1.5 py-px text-[12px] tabular-nums", active ? "bg-[var(--accent-strong)] text-[var(--accent-contrast)]" : "bg-sf3 text-t3")}>
           {count}
         </span>
       )}
@@ -79,11 +79,24 @@ export function StatusTab({
   );
 }
 
-/** 탭·검색을 한 줄에 — 휴대폰에서는 줄바꿈 대신 가로 스크롤(탭이 3줄로 쌓이지 않게). */
+const FILTER_SCROLL = "scrollable -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0";
+
+/**
+ * 탭·검색을 한 줄에 — 휴대폰에서는 줄바꿈 대신 가로 스크롤(탭이 3줄로 쌓이지 않게).
+ * 직접 자식에 `<SearchBox>` 가 있으면 <sm 에서 그 검색칸만 칩 줄 **위 전폭 한 줄**로 올린다(C2).
+ * sm+ 는 자식 순서 그대로 한 줄. 호출부는 바꿀 것 없다.
+ */
 export function FilterRow({ children, className }: { children: React.ReactNode; className?: string }) {
+  const items = React.Children.toArray(children);
+  const i = items.findIndex((c) => React.isValidElement(c) && c.type === SearchBox);
+  if (i < 0) return <div className={cn(FILTER_SCROLL, className)}>{children}</div>;
   return (
-    <div className={cn("scrollable -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0", className)}>
-      {children}
+    <div className={cn("flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-1.5", className)}>
+      <div className="flex sm:contents">{items[i]}</div>
+      <div className={cn(FILTER_SCROLL, "sm:contents sm:[gap:inherit]")}>
+        {i > 0 && <div className="contents sm:-order-1 sm:flex sm:flex-wrap sm:items-center sm:[gap:inherit]">{items.slice(0, i)}</div>}
+        {items.slice(i + 1)}
+      </div>
     </div>
   );
 }

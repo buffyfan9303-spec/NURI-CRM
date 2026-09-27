@@ -16,7 +16,8 @@ import { mustAffect } from "@/lib/db/mustAffect";
 import { validateFactoryOptions } from "./factory-options";
 import type { FactoryOrderType, FactoryProcessStage, FactoryProcessStatus } from "./factory";
 
-export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; message: string };
+/** 실패 시 hint(기계용 코드)를 함께 준다 — 화면은 문구 대신 hint 로 분기한다(예: insufficient_stock → 재고 안내). */
+export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; message: string; hint?: string };
 
 /** hint → 한국어 안내. 0021_factory_process_fixes.sql 이후 서버가 안정적인 hint를 준다 — 1순위 근거. */
 const HINT_MESSAGE: Record<string, string> = {
@@ -28,7 +29,20 @@ const HINT_MESSAGE: Record<string, string> = {
   invalid_stage: "알 수 없는 공정 단계입니다.",
   first_stage: "첫 단계입니다.",
   forbidden: "이 작업을 수행할 권한이 없습니다.",
+  // 0028_factory_fixes.sql
+  material_not_found: "이 사업장의 자재가 아닙니다.",
+  invalid_qty: "수량은 0보다 커야 합니다.",
+  reason_required: "조정 사유를 입력하세요.",
+  insufficient_stock: "재고가 부족합니다. 입고 후 다시 시도하세요.",
+  negative_stock: "이 변경으로 재고가 음수가 됩니다.",
+  status_locked: "주문 상태는 공정(다음/이전/재개)으로만 바뀝니다.",
+  delivered_date_locked: "출고일은 출고 공정 완료 시 기록됩니다. 완료된 주문만 정정할 수 있습니다.",
+  photo_path_invalid: "사진 경로는 이 사업장·이 주문의 Storage 경로여야 합니다.",
 };
+
+function fail(e: { code?: string; message: string; hint?: string | null }): { ok: false; message: string; hint?: string } {
+  return { ok: false, message: pgError(e), ...(e.hint ? { hint: e.hint } : {}) };
+}
 
 function pgError(e: { code?: string; message: string; hint?: string | null }): string {
   const msg = e.message ?? "";
@@ -111,7 +125,7 @@ export async function createFactoryOrder(
       p_due_date: input.dueDate || null,
       p_memo: input.memo || null,
     });
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     const row = data as { id: string; order_no: string };
     revalFactory(businessId);
     return { ok: true, data: { id: row.id, orderNo: row.order_no } };
@@ -139,7 +153,7 @@ export async function updateFactoryOrderSchedule(
     if ("deliveredDate" in input) patch.delivered_date = input.deliveredDate || null;
     if ("memo" in input) patch.memo = input.memo || null;
     const r = await mustAffect(sb.schema("crm").from("factory_orders").update(patch).eq("business_id", businessId).eq("id", orderId));
-    if (!r.ok) return { ok: false, message: r.error ? pgError(r.error) : "권한이 없거나 주문을 찾을 수 없습니다." };
+    if (!r.ok) return r.error ? fail(r.error) : { ok: false, message: "권한이 없거나 주문을 찾을 수 없습니다." };
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -158,7 +172,7 @@ export async function updateFactoryOrderOptions(
     const r = await mustAffect(
       sb.schema("crm").from("factory_orders").update({ options: input.options, qty: input.qty }).eq("business_id", businessId).eq("id", orderId)
     );
-    if (!r.ok) return { ok: false, message: r.error ? pgError(r.error) : "권한이 없거나 주문을 찾을 수 없습니다." };
+    if (!r.ok) return r.error ? fail(r.error) : { ok: false, message: "권한이 없거나 주문을 찾을 수 없습니다." };
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -168,7 +182,7 @@ export async function cancelFactoryOrder(businessId: string, orderId: string): P
   return withCap(businessId, "write", async () => {
     const sb = getServerSupabase();
     const r = await mustAffect(sb.schema("crm").from("factory_orders").update({ status: "취소" }).eq("business_id", businessId).eq("id", orderId));
-    if (!r.ok) return { ok: false, message: r.error ? pgError(r.error) : "권한이 없거나 주문을 찾을 수 없습니다." };
+    if (!r.ok) return r.error ? fail(r.error) : { ok: false, message: "권한이 없거나 주문을 찾을 수 없습니다." };
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -191,7 +205,7 @@ export async function advanceFactoryProcess(
       p_status: status,
       p_actual_minutes: actualMinutes ?? null,
     });
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -215,7 +229,7 @@ export async function advanceFactoryProcessNext(
       p_stage: stage,
       p_actual_minutes: actualMinutes ?? null,
     });
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -234,7 +248,7 @@ export async function rewindFactoryProcess(
       p_order: orderId,
       p_stage: stage,
     });
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -245,7 +259,7 @@ export async function reopenFactoryOrder(businessId: string, orderId: string): P
   return withCap(businessId, "write", async () => {
     const sb = getServerSupabase();
     const { error } = await sb.schema("crm").rpc("reopen_factory_order", { p_business: businessId, p_order: orderId });
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -270,7 +284,7 @@ export async function planFactoryProcess(
       .schema("crm")
       .from("factory_processes")
       .upsert(patch, { onConflict: "order_id,stage" });
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     revalFactory(businessId, orderId);
     return { ok: true, data: undefined };
   });
@@ -278,6 +292,10 @@ export async function planFactoryProcess(
 
 // ── 자재 소비 ─────────────────────────────────────────────────────────
 
+/**
+ * 주문 자재 소비(출고). RPC 가 inventory.adjust·자재 소속(같은 사업장)·재고 하한을 다시 검사한다(0028).
+ * 실패 hint: material_not_found / insufficient_stock / order_cancelled / invalid_qty / forbidden.
+ */
 export async function consumeMaterial(
   businessId: string,
   orderId: string,
@@ -296,7 +314,7 @@ export async function consumeMaterial(
       p_unit: unit,
       p_note: note ?? null,
     });
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     revalFactory(businessId, orderId);
     revalidatePath(`/w/${businessId}/materials`);
     return { ok: true, data: undefined };
@@ -305,7 +323,11 @@ export async function consumeMaterial(
 
 // ── 가봉 기록 ─────────────────────────────────────────────────────────
 
-/** photoPaths는 반드시 Storage 경로여야 한다(base64 dataURL 금지, DB CHECK가 재차 막는다). */
+/**
+ * photoPaths는 반드시 Storage 경로여야 한다(base64 dataURL 금지, DB CHECK가 재차 막는다).
+ * 0028 F28 키 규칙: `{business_id}/fitting/{order_id}/{uuid}.{ext}`(권장) 또는 구 `{business_id}/factory-orders/{order_id}/…`(호환).
+ * 파일명은 화면이 `[A-Za-z0-9._-]` 로 만든다(한글 원문 금지, F11). DB 트리거가 접두·`..` 를 다시 검사한다.
+ */
 export async function addFittingLog(
   businessId: string,
   orderId: string,
@@ -316,6 +338,13 @@ export async function addFittingLog(
     if (photoPaths.some((p) => p.startsWith("data:"))) {
       return { ok: false, message: "사진은 Storage 경로로만 저장할 수 있습니다." };
     }
+    // 0028 F28: DB 트리거가 같은 규칙을 다시 검사한다. 여기서 먼저 걸러 RPC 왕복을 아낀다.
+    // 접두 뒤는 `[A-Za-z0-9._-]` 세그먼트만(빈 세그먼트·인코딩·공백·한글 금지) + `..` 세그먼트 금지.
+    const prefixes = [`${businessId}/fitting/${orderId}/`, `${businessId}/factory-orders/${orderId}/`];
+    const restOk = (rest: string) => /^[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)*$/.test(rest) && !/(^|\/)\.\.(\/|$)/.test(rest);
+    if (photoPaths.some((p) => !prefixes.some((pre) => p.startsWith(pre) && restOk(p.slice(pre.length))))) {
+      return { ok: false, message: HINT_MESSAGE.photo_path_invalid, hint: "photo_path_invalid" };
+    }
     const sb = getServerSupabase();
     const { data, error } = await sb
       .schema("crm")
@@ -323,7 +352,7 @@ export async function addFittingLog(
       .insert({ business_id: businessId, order_id: orderId, notes: input.notes || null, photo_paths: photoPaths })
       .select("id")
       .single();
-    if (error) return { ok: false, message: pgError(error) };
+    if (error) return fail(error);
     revalFactory(businessId, orderId);
     return { ok: true, data: { id: data.id as string } };
   });

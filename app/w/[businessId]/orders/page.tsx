@@ -45,19 +45,28 @@ export default async function OrdersPage({
     );
   }
 
+  // F12: 검색어 정규화 — PostgREST or() 필터에서 특수문자로 해석되는 , ( ) " 와 제어문자를 걷어내고 길이를 제한한다.
+  // (고객 이름·주문번호에는 이 문자가 들어가지 않는다.) 정규화 후 빈 문자열이면 검색 없음.
+  const q = (searchParams.q ?? "").replace(/[,()"\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || undefined;
+  const STATUSES: FactoryOrderStatus[] = ["접수", "진행중", "완료", "취소"];
+  const TYPES: FactoryOrderType[] = ["suit", "shirt", "shoe"];
+  const status = STATUSES.find((s) => s === searchParams.status);
+  const type = TYPES.find((t) => t === searchParams.type);
+  const due = searchParams.due && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.due) ? searchParams.due : undefined;
+
   const result = await listFactoryOrders(access.businessId, {
-    status: searchParams.status ? [searchParams.status as FactoryOrderStatus] : undefined,
-    type: searchParams.type ? [searchParams.type as FactoryOrderType] : undefined,
-    q: searchParams.q,
+    status: status ? [status] : undefined,
+    type: type ? [type] : undefined,
+    q,
     sort: searchParams.sort === "created_desc" ? "created_desc" : "due_asc",
-    dueDate: searchParams.due,
+    dueDate: due,
   });
 
   if (!result.ok) {
     return (
       <div className="p-4 md:p-6">
         <Card className="px-2 py-2">
-          <ErrorState title="주문 목록을 불러오지 못했습니다." description={result.message} />
+          <ErrorState title="주문 목록을 불러오지 못했습니다." description="잠시 후 다시 시도하세요. 검색어를 바꿔도 계속되면 관리자에게 문의하세요." />
         </Card>
       </div>
     );

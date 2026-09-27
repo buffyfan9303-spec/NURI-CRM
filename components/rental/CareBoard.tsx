@@ -15,7 +15,7 @@ import { formatKRW, parseKRW } from "@/lib/domain/money";
 import type { CareJobRow, UnitPickerRow } from "@/lib/domain/rental-types";
 import { createCareJob, completeCareJob } from "@/lib/domain/rental-actions";
 import { StatusTab, FilterRow, SearchBox, TextAction, CardHead, SelectField, Alert, CONTROL_SM, TABLE, THEAD, TH, TR, TD } from "./listkit";
-import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
+import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 
 const KIND_LABEL = { wash: "세탁", repair: "수선", inspect: "검수" } as const;
 const STATUS_LABEL = { open: "대기", doing: "진행중", done: "완료", cancelled: "취소" } as const;
@@ -90,7 +90,7 @@ export function CareBoard({
       </PageHeader>
 
       <div className="flex flex-col gap-4">
-        <Card className="p-4 sm:p-5">
+        <Card className={`sm:p-5 ${MOBILE_BARE}`}>
           <CardHead title="진행 중" description="접수 순. 완료 처리 시 비용을 함께 기록합니다." />
           {jobs.length === 0 ? (
             <EmptyState title="진행 중인 세탁·수선이 없습니다." description="개체를 세탁·수선에 등록하면 여기 표시됩니다." />
@@ -101,7 +101,7 @@ export function CareBoard({
           )}
         </Card>
 
-        <Card className="p-4 sm:p-5">
+        <Card className={`sm:p-5 ${MOBILE_BARE}`}>
           <CardHead title="완료·취소 이력" description="최근 30건" />
           {done.length === 0 ? (
             <EmptyState title="이력이 없습니다." />
@@ -200,7 +200,7 @@ function JobTable({
         return (
           <MobileCard
             title={v.name}
-            sub={<span className="rounded-[5px] bg-sf2 px-1.5 py-px text-[11px] text-t2">{v.kind}</span>}
+            sub={<span className="rounded-[5px] bg-sf2 px-1.5 py-px text-[12px] text-t2">{v.kind}</span>}
             badge={v.badge}
             fields={[
               ["접수일", v.openedAt],

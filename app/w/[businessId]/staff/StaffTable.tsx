@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { Check, Ban, CircleAlert, Search, CircleUserRound, X } from "@/lib/icons";
 import { cn } from "@/lib/utils/cn";
 import type { Cap } from "@/lib/auth/access";
+import { ROLE_LABEL } from "@/components/factory/labels";
 import {
   approveMember,
   revokeMember,
@@ -64,7 +65,7 @@ export function StaffTable({
 
   const needle = q.trim().toLowerCase();
   const filtered = needle
-    ? memberships.filter((m) => m.displayName.toLowerCase().includes(needle) || m.userId.toLowerCase().includes(needle) || m.role.toLowerCase().includes(needle))
+    ? memberships.filter((m) => m.displayName.toLowerCase().includes(needle) || m.userId.toLowerCase().includes(needle) || m.role.toLowerCase().includes(needle) || (ROLE_LABEL[m.role] ?? "").includes(needle))
     : memberships;
 
   const selected = memberships.find((m) => m.id === selectedId) ?? filtered[0] ?? null;
@@ -113,8 +114,9 @@ export function StaffTable({
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="사용자 ID/역할 검색…"
-              className="h-9 w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf pl-8 pr-3 text-[13px] text-t outline-none focus:border-[var(--accent)]"
+              placeholder="이름/역할 검색…"
+              aria-label="직원 검색"
+              className="h-[36px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf pl-8 pr-3 text-[16px] text-t outline-none focus:border-[var(--accent)] sm:text-[13px] [@media(pointer:coarse)]:h-[44px]"
             />
           </div>
           <div className="flex max-h-[560px] flex-col overflow-y-auto rounded-[var(--r-lg)] border border-[var(--bd)]">
@@ -137,11 +139,11 @@ export function StaffTable({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="truncate text-[12.5px] font-medium text-t">{m.displayName}</span>
-                        {m.userId === currentUserId && <span className="text-[10.5px] text-t3">(본인)</span>}
+                        {m.userId === currentUserId && <span className="text-[11.5px] text-t3">(본인)</span>}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
-                        <span className="text-[11.5px] text-t2">{m.role}</span>
-                        <span className={cn("rounded-[6px] px-1.5 py-px text-[10px] font-bold", STATUS_LABEL[m.status].cls)}>{STATUS_LABEL[m.status].label}</span>
+                        <span className="text-[11.5px] text-t2">{ROLE_LABEL[m.role] ?? m.role}</span>
+                        <span className={cn("rounded-[6px] px-1.5 py-px text-[12px] font-bold", STATUS_LABEL[m.status].cls)}>{STATUS_LABEL[m.status].label}</span>
                       </div>
                     </div>
                   </button>
@@ -174,8 +176,8 @@ export function StaffTable({
                 selected.id,
                 () => updateMemberRole(businessId, selected.id, role, { resetOverrides: !keepOverrides }),
                 keepOverrides
-                  ? `역할을 '${role}'로 변경했습니다(개별 권한 유지).`
-                  : `역할을 '${role}'로 변경했습니다(개별 권한 초기화).`
+                  ? `역할을 '${ROLE_LABEL[role] ?? role}'로 변경했습니다(개별 권한 유지).`
+                  : `역할을 '${ROLE_LABEL[role] ?? role}'로 변경했습니다(개별 권한 초기화).`
               )
             }
             onToggleCap={(cap, next) => run(selected.id, () => setMemberCap(businessId, selected.id, cap, next), `'${capLabels[cap]}' 권한을 ${next ? "켰습니다" : "껐습니다"}.`)}
@@ -225,26 +227,26 @@ function StaffDetail({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-medium text-t">{member.displayName}</span>
-            {isSelf && <span className="text-[11px] text-t3">(본인)</span>}
-            <span className={cn("rounded-[6px] px-2 py-0.5 text-[11px] font-bold", STATUS_LABEL[member.status].cls)}>{STATUS_LABEL[member.status].label}</span>
+            {isSelf && <span className="text-[11.5px] text-t3">(본인)</span>}
+            <span className={cn("rounded-[6px] px-2 py-0.5 text-[12px] font-bold", STATUS_LABEL[member.status].cls)}>{STATUS_LABEL[member.status].label}</span>
           </div>
           <p className="mt-0.5 text-[11.5px] text-t3">소속 사업장 직원 · 역할과 개별 권한을 관리합니다.</p>
         </div>
         <div className="flex gap-1.5">
           {member.status === "pending" && (
-            <button type="button" disabled={busy} onClick={onApprove} className="flex min-h-[36px] items-center gap-1 rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12.5px] text-okt hover:bg-sf2 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={onApprove} className="flex min-h-[36px] items-center gap-1 rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12.5px] text-okt hover:bg-sf2 disabled:opacity-50 [@media(pointer:coarse)]:min-h-[44px]">
               <Check size={14} aria-hidden />
               승인
             </button>
           )}
           {member.status === "revoked" && (
-            <button type="button" disabled={busy} onClick={onReactivate} className="flex min-h-[36px] items-center gap-1 rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12.5px] text-okt hover:bg-sf2 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={onReactivate} className="flex min-h-[36px] items-center gap-1 rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12.5px] text-okt hover:bg-sf2 disabled:opacity-50 [@media(pointer:coarse)]:min-h-[44px]">
               <Check size={14} aria-hidden />
               재활성
             </button>
           )}
           {member.status !== "revoked" && (
-            <button type="button" disabled={busy} onClick={onRevoke} className="flex min-h-[36px] items-center gap-1 rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12.5px] text-et hover:bg-sf2 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={onRevoke} className="flex min-h-[36px] items-center gap-1 rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12.5px] text-et hover:bg-sf2 disabled:opacity-50 [@media(pointer:coarse)]:min-h-[44px]">
               <Ban size={14} aria-hidden />
               해지
             </button>
@@ -252,8 +254,9 @@ function StaffDetail({
         </div>
       </div>
 
+      {/* C6: 라벨은 선택칸 위 줄, 선택칸은 터치 44px, 역할은 한글(셸 roleLabel 과 같은 표). */}
       <label className="mb-1.5 block text-[13px] font-medium text-t2">
-        역할
+        <span className="block">역할</span>
         <select
           value={member.role}
           disabled={busy || roleLocked}
@@ -265,11 +268,11 @@ function StaffDetail({
               onRoleChange(e.target.value, false);
             }
           }}
-          className="mt-1.5 h-10 w-full max-w-[260px] rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-2.5 text-[13px] text-t outline-none focus:border-[var(--accent)]"
+          className="mt-1.5 h-10 w-full max-w-[260px] rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-2.5 text-[16px] text-t outline-none focus:border-[var(--accent)] sm:text-[13px] [@media(pointer:coarse)]:h-[44px]"
         >
           {roleTemplates.map((t) => (
             <option key={t.role} value={t.role}>
-              {t.role}
+              {ROLE_LABEL[t.role] ?? t.role}
             </option>
           ))}
         </select>
@@ -279,7 +282,7 @@ function StaffDetail({
       {pendingRole && (
         <div className="mb-4 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2 p-3">
           <p className="text-[12.5px] text-t2">
-            이 직원에게 개별로 추가·제한한 권한이 있습니다. &lsquo;{pendingRole}&rsquo;로 변경할 때 이 개별 권한을 어떻게 할까요?
+            이 직원에게 개별로 추가·제한한 권한이 있습니다. &lsquo;{ROLE_LABEL[pendingRole] ?? pendingRole}&rsquo;로 변경할 때 이 개별 권한을 어떻게 할까요?
           </p>
           <label className="mt-2 flex items-center gap-1.5 text-[12px] text-t2">
             <input type="checkbox" checked={keepOverrides} onChange={(e) => setKeepOverrides(e.target.checked)} className="h-4 w-4" />
@@ -293,11 +296,11 @@ function StaffDetail({
                 onRoleChange(pendingRole, keepOverrides);
                 setPendingRole(null);
               }}
-              className="min-h-[32px] rounded-[var(--r-sm)] border border-[var(--accent)] bg-[var(--accent-soft)] px-3 text-[12px] font-medium text-[var(--accent-ink)] disabled:opacity-50"
+              className="min-h-[32px] rounded-[var(--r-sm)] border border-[var(--accent)] bg-[var(--accent-soft)] px-3 text-[12px] font-medium text-[var(--accent-ink)] disabled:opacity-50 [@media(pointer:coarse)]:min-h-[44px]"
             >
               확인
             </button>
-            <button type="button" disabled={busy} onClick={() => setPendingRole(null)} className="min-h-[32px] rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12px] text-t2 disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={() => setPendingRole(null)} className="min-h-[32px] rounded-[var(--r-sm)] border border-[var(--bd2)] px-3 text-[12px] text-t2 disabled:opacity-50 [@media(pointer:coarse)]:min-h-[44px]">
               취소
             </button>
           </div>
@@ -324,7 +327,7 @@ function StaffDetail({
                     onClick={() => onToggleCap(cap, !effective)}
                     title={fromRole ? "역할 기본 권한" : "개별 추가 권한"}
                     className={cn(
-                      "flex min-h-[34px] items-center gap-1.5 rounded-[8px] border px-2.5 py-1 text-[12px] font-medium transition-colors disabled:opacity-50",
+                      "flex min-h-[34px] items-center gap-1.5 rounded-[8px] border px-2.5 py-1 text-[12px] font-medium transition-colors disabled:opacity-50 [@media(pointer:coarse)]:min-h-[44px]",
                       effective
                         ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]"
                         : "border-[var(--bd)] bg-sf2 text-t3"
@@ -332,7 +335,8 @@ function StaffDetail({
                   >
                     {effective ? <Check size={13} aria-hidden /> : <X size={13} aria-hidden />}
                     {capLabels[cap]}
-                    {fromRole && <span className="text-[10px] opacity-70">(역할기본)</span>}
+                    {/* F20: opacity-70 + 10px 은 대비 2.85:1 — 불투명 글자색을 그대로 물려받아 4.5:1 이상. */}
+                    {fromRole && <span className="text-[11.5px]">(역할기본)</span>}
                   </button>
                 );
               })}

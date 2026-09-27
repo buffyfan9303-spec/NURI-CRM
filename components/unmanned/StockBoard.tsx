@@ -13,7 +13,7 @@ import type { UsProduct, ReconciliationRow, UsStockTake, UsStockTakeLine, LossRe
 import { LossReportCard, ReorderCard, ExpirySummaryCard } from "./StockInsights";
 import { adjustStock, startStockTake, setStockTakeCount, completeStockTake } from "@/lib/domain/unmanned-actions";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
-import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
+import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { CardHead, SelectField, Alert, CONTROL_SM, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 
 export function StockBoard({
@@ -111,7 +111,8 @@ export function StockBoard({
       <div className="flex flex-col gap-4">
         {error && <Alert>{error}</Alert>}
 
-        <Card className="p-4 sm:p-5">
+        {/* C9: 실사 줄(카드 목록)이 있을 때만 휴대폰에서 바깥 카드를 벗긴다 — 빈 상태는 카드 안에 그대로. */}
+        <Card className={openTake ? `sm:p-5 ${MOBILE_BARE}` : "p-4 sm:p-5"}>
           <CardHead
             title="재고 실사"
             description={
@@ -124,8 +125,7 @@ export function StockBoard({
           {!openTake ? (
             <EmptyState
               title="진행 중인 실사가 없습니다."
-              description={canAdjust ? "새 실사 시작 버튼으로 전체 실사를 시작하세요." : "재고 조정 권한(inventory.adjust)이 있는 사용자가 실사를 시작할 수 있습니다."}
-              action={canAdjust && <Button size="sm" loading={busy} onClick={() => run(() => startStockTake(businessId))}><ClipboardCheck size={14} aria-hidden />새 실사 시작</Button>}
+              description={canAdjust ? "위 '새 실사 시작' 버튼으로 전체 실사를 시작하세요." : "재고 조정 권한이 있는 사용자가 실사를 시작할 수 있습니다."}
             />
           ) : (
             <div className="flex flex-col gap-3">
@@ -185,14 +185,18 @@ export function StockBoard({
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
           <div className="flex flex-col gap-4 lg:col-span-8">
             <ReorderCard rows={reorder} reorderText={reorderText} />
-            <LossReportCard report={loss} businessName={businessName} />
+            {/* U2: 손실 리포트·재고 대사는 PC 분석 섹션 — 휴대폰 순서는 실사 → 보충 발주 추천 → 유통기한 임박. */}
+            <div className="max-sm:hidden sm:contents">
+              <LossReportCard report={loss} businessName={businessName} />
+            </div>
           </div>
           <div className="lg:col-span-4">
             <ExpirySummaryCard lots={expiring} businessName={businessName} todayKey={todayKey} />
           </div>
         </div>
+        <p className="text-[12.5px] text-t3 sm:hidden">추정 손실 리포트와 재고 대사는 PC 화면에서 볼 수 있습니다.</p>
 
-        <Card className="p-4 sm:p-5">
+        <Card className="p-4 max-sm:hidden sm:p-5">
           <CardHead
             title="재고 대사"
             description="매출 기록 수량과 출고 반영 수량, 실사 차이를 상품별로 맞춰 봅니다."
