@@ -238,7 +238,7 @@ function StaffGrid({
 
   return (
     <div
-      className="grid min-w-[520px] border-t border-[var(--bd)] [--slot-h:34px] [@media(pointer:coarse)]:[--slot-h:44px]"
+      className="grid border-t sm:min-w-[520px] border-[var(--bd)] [--slot-h:34px] [@media(pointer:coarse)]:[--slot-h:44px]"
       style={{ gridTemplateColumns: `56px repeat(${staffList.length}, minmax(150px, 1fr))` }}
     >
       <div className="border-b border-[var(--bd)] bg-sf2" />

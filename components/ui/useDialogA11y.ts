@@ -12,10 +12,36 @@ const FOCUSABLE_SELECTOR =
  * - Escape 닫기(캡처 단계라 셸의 Escape 처리보다 먼저)
  * - 닫히면 원래 트리거로 포커스 복귀, body 스크롤 잠금 해제
  */
+// 다이얼로그 밖에서 마지막으로 초점을 가졌던 요소. 모달 안 autoFocus(React 커밋 단계)가 효과보다 먼저
+// 초점을 가져가므로, 효과 시점의 document.activeElement 는 이미 모달 안 요소일 수 있다(2026-09-28 검토 P1).
+let lastFocusOutside: HTMLElement | null = null;
+let tracking = false;
+function trackFocusOutside() {
+  if (tracking || typeof document === "undefined") return;
+  tracking = true;
+  document.addEventListener(
+    "focusin",
+    (e) => {
+      const t = e.target as HTMLElement | null;
+      if (t && !t.closest('[role="dialog"], [data-vaul-drawer]')) lastFocusOutside = t;
+    },
+    true
+  );
+}
+
+// 모듈이 로드될 때(클라이언트) 바로 추적을 시작한다 — 모달이 열릴 때 처음 마운트돼도 직전 초점을 안다.
+trackFocusOutside();
+
 export function useDialogA11y(ref: React.RefObject<HTMLElement>, open: boolean, onClose: () => void) {
+  // onClose 는 호출부가 매 렌더 새 함수로 넘긴다. 의존성에 넣으면 열린 동안 효과가 다시 돌며
+  // trigger 를 다이얼로그 안 요소로 덮어써, 닫을 때 사라진 요소에 포커스를 돌려 초점을 잃는다(2026-09-28 검토 P1).
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose;
+  trackFocusOutside();
   React.useEffect(() => {
     if (!open) return;
-    const trigger = document.activeElement as HTMLElement | null;
+    const active = document.activeElement as HTMLElement | null;
+    const trigger = active && !active.closest('[role="dialog"], [data-vaul-drawer]') ? active : lastFocusOutside;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -28,7 +54,7 @@ export function useDialogA11y(ref: React.RefObject<HTMLElement>, open: boolean, 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -56,9 +82,9 @@ export function useDialogA11y(ref: React.RefObject<HTMLElement>, open: boolean, 
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
       document.body.style.overflow = prevOverflow;
-      trigger?.focus();
+      if (trigger?.isConnected) trigger.focus();
     };
-  }, [ref, open, onClose]);
+  }, [ref, open]);
 }
 
 /** 휴대폰 판정(<640 = Tailwind sm 미만). null 은 아직 마운트 전(SSR)이다. */

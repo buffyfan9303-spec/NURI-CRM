@@ -28,6 +28,16 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
   const titleId = React.useId();
   const isDesktopDialog = open && phone === false;
   useDialogA11y(dialogRef, isDesktopDialog, onClose);
+  // 휴대폰 시트는 닫히면 바로 언마운트돼 Radix 의 포커스 복귀가 돌지 않는다 — 연 버튼으로 직접 돌려준다.
+  React.useEffect(() => {
+    if (!open || phone !== true) return;
+    const trigger = document.activeElement as HTMLElement | null;
+    return () => {
+      requestAnimationFrame(() => {
+        if (trigger && trigger.isConnected) trigger.focus();
+      });
+    };
+  }, [open, phone]);
 
   if (phone === null || !open) return null;
 

@@ -381,7 +381,8 @@ export function CalendarClient({
       )}
 
       <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-hidden">{bodyByState()}</div>
+        {/* overflow-hidden 이면 월 보기 6주가 화면보다 길 때 아래 주(오늘 포함)가 잘리고 스크롤도 안 됐다(검토 P0). */}
+        <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">{bodyByState()}</div>
 
         {/* 결함 수정(§5.6/§11-9): 선택 전에는 빈 320px 패널이 본문 폭을 먹지 않게 — 선택했을 때만 렌더. */}
         {isDesktop && selectedEvent && (
