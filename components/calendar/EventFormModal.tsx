@@ -151,7 +151,7 @@ export function EventFormModal({
             value={kind}
             onChange={(e) => setKind(e.target.value)}
             required
-            className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
+            className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)] focus:shadow-ring"
           >
             {eventKinds.map((k) => (
               <option key={k.kind} value={k.kind}>
@@ -177,7 +177,7 @@ export function EventFormModal({
                 value={dateKey}
                 onChange={(e) => setDateKey(e.target.value)}
                 required
-                className="col-span-2 h-[44px] min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] sm:min-w-[150px] sm:flex-1"
+                className="col-span-2 h-[44px] min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] focus:shadow-ring sm:min-w-[150px] sm:flex-1"
               />
               {!allDay && (
                 <>
@@ -189,7 +189,7 @@ export function EventFormModal({
                       onChange={(e) => setStartTime(e.target.value)}
                       required
                       aria-label="시작 시각"
-                      className="h-[44px] w-full min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] sm:w-[110px]"
+                      className="h-[44px] w-full min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] focus:shadow-ring sm:w-[110px]"
                     />
                   </label>
                   <span className="hidden items-center text-t3 sm:flex">–</span>
@@ -200,7 +200,7 @@ export function EventFormModal({
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
                       aria-label="종료 시각(선택)"
-                      className="h-[44px] w-full min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] sm:w-[110px]"
+                      className="h-[44px] w-full min-w-0 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-sm text-t outline-none focus:border-[var(--accent)] focus:shadow-ring sm:w-[110px]"
                     />
                   </label>
                 </>
@@ -214,7 +214,7 @@ export function EventFormModal({
             id="ev-assignee"
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
-            className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
+            className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)] focus:shadow-ring"
           >
             <option value="">담당자 미지정</option>
             {members.map((m) => (
@@ -231,7 +231,7 @@ export function EventFormModal({
               id="ev-status"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)]"
+              className="h-[44px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none focus:border-[var(--accent)] focus:shadow-ring"
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -249,7 +249,7 @@ export function EventFormModal({
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             maxLength={2000}
-            className="w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 py-2.5 text-sm text-t outline-none focus:border-[var(--accent)]"
+            className="w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 py-2.5 text-sm text-t outline-none focus:border-[var(--accent)] focus:shadow-ring"
           />
         </Field>
 

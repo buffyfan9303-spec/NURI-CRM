@@ -218,8 +218,8 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
           ["미납 청구서", `${countOf("미납")}건`, countOf("미납") > 0 ? "text-et" : "text-t"],
         ].map(([l, v, cls]) => (
           <Card key={l} className="min-w-0 px-4 py-3.5">
-            <p className="text-[12px] text-t2">{l}</p>
-            <p className={`mt-1.5 truncate text-[22px] font-bold leading-none tabular-nums ${cls}`}>{v}</p>
+            <p className="text-[12px] font-medium text-t2">{l}</p>
+            <p className={`mt-1.5 truncate text-[18px] font-bold leading-tight tracking-[var(--tr-snug)] tabular-nums sm:text-[22px] ${cls}`}>{v}</p>
           </Card>
         ))}
       </div>

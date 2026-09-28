@@ -15,7 +15,7 @@ import type { UsTask, DailyChecklist } from "@/lib/domain/unmanned";
 import { DailyChecklistCard } from "./DailyChecklistCard";
 import { createTask, updateTaskStatus, generateExpiryTasks } from "@/lib/domain/unmanned-actions";
 import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
-import { StatusTab, FilterRow, SelectField, TextAction, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
+import { StatusTab, FilterRow, SelectField, TextAction, Alert, TABLE, THEAD, TH, TR, TD, PILL } from "@/components/rental/listkit";
 
 const TASK_TYPES = ["보충", "청소", "시설점검", "기한점검", "기타"] as const;
 const EMPTY_FORM = { taskType: "보충" as (typeof TASK_TYPES)[number], title: "", dueDate: "" };
@@ -74,7 +74,7 @@ export function TasksBoard({ businessId, canWrite, tasks, todayKey, dueToday = f
       // U5: 기한이 지나면 상태 배지 하나가 "기한 지남"을 말한다 — 날짜 줄에는 되풀이하지 않는다.
       due: <span className={overdue ? "font-medium tabular-nums text-et" : isToday ? "font-medium tabular-nums text-wt" : "tabular-nums text-t2"}>{t.dueDate}{isToday ? " · 오늘" : ""}</span>,
       badge: <Badge kind={t.status === "완료" ? "success" : t.status === "건너뜀" ? "info" : overdue ? "error" : "warning"}>{overdue ? "기한 지남" : t.status}</Badge>,
-      type: <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[12px] text-t2">{t.taskType}</span>,
+      type: <span className={PILL}>{t.taskType}</span>,
       actions: canWrite && t.status === "예정" ? (
         <div className="flex items-center gap-1.5">
           <Button variant="primary" size="sm" className="min-w-[64px] justify-center" loading={busy} onClick={() => run(() => updateTaskStatus(businessId, t.id, "완료"))}>완료</Button>
@@ -89,7 +89,7 @@ export function TasksBoard({ businessId, canWrite, tasks, todayKey, dueToday = f
       <PageHeader
         title="점검·보충"
         description="보충·청소·시설·유통기한 점검을 기한별로 관리합니다. 완료·건너뜀 처리는 되돌릴 수 없습니다."
-        meta={overdueCount > 0 ? <span className="rounded-full bg-eb px-2 py-0.5 text-[12px] font-medium tabular-nums text-et">기한 지남 {overdueCount}건</span> : undefined}
+        meta={overdueCount > 0 ? <Badge kind="error">기한 지남 {overdueCount}건</Badge> : undefined}
         actions={
           canWrite ? (
             <>

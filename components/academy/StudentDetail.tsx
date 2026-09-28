@@ -109,79 +109,17 @@ export function StudentDetail({
           canRevenue ? ["미수 잔액", formatKRW(outstanding), outstanding > 0 ? "text-et" : "text-t"] : ["보호자", canReadPii ? `${guardians.length}명` : "비공개", "text-t"],
         ].map(([l, v, cls]) => (
           <Card key={l} className="min-w-0 px-4 py-3.5">
-            <p className="text-[12px] text-t2">{l}</p>
-            <p className={`mt-1.5 truncate text-[22px] font-bold leading-none tabular-nums ${cls}`}>{v}</p>
+            <p className="text-[12px] font-medium text-t2">{l}</p>
+            <p className={`mt-1.5 truncate text-[18px] font-bold leading-tight tracking-[var(--tr-snug)] tabular-nums sm:text-[22px] ${cls}`}>{v}</p>
           </Card>
         ))}
       </div>
 
       {error && <Alert className="mb-4">{error}</Alert>}
 
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-          <Card className="p-4 sm:p-5">
-            <CardHead title="기본 정보" />
-            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[13px]">
-              <dt className="text-t3">학교·학년</dt>
-              <dd className="text-t">{[student.school, student.grade].filter(Boolean).join(" · ") || "—"}</dd>
-              <dt className="text-t3">보호자</dt>
-              <dd className="min-w-0 text-t">
-                {!canReadPii ? (
-                  <span className="inline-flex items-center gap-1 text-t3"><Lock size={11} aria-hidden /> 비공개(pii.read 권한 필요)</span>
-                ) : guardiansError ? (
-                  <span className="text-et">불러오지 못했습니다: {guardiansError}</span>
-                ) : guardians.length === 0 ? (
-                  <span className="text-t3">등록된 보호자가 없습니다.</span>
-                ) : (
-                  <ul className="flex flex-col gap-1">
-                    {guardians.map((g) => (
-                      <li key={g.id} className="flex flex-wrap items-baseline gap-x-2">
-                        <span className="font-medium">{g.name}</span>
-                        <span className="text-[12px] text-t3">{g.relation ?? "보호자"}</span>
-                        <a href={`tel:${g.phone}`} className="tabular-nums text-[var(--accent-ink)] hover:underline">{g.phone}</a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </dd>
-              {student.memo && (
-                <>
-                  <dt className="text-t3">메모</dt>
-                  <dd className="whitespace-pre-wrap text-t">{student.memo}</dd>
-                </>
-              )}
-            </dl>
-          </Card>
-
-          {canReadPii && (
-            <Card className="p-4 sm:p-5">
-              <CardHead title="등원 코드" description="키오스크에서 학생이 직접 입력하는 숫자 4~6자리" />
-              {canWrite ? (
-                <form onSubmit={(e) => { e.preventDefault(); saveCheckinCode(checkinCode); }} className="flex flex-wrap items-center gap-2">
-                  <span className="relative">
-                    <KeyRound size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-t3" aria-hidden />
-                    <input
-                      value={checkinCode}
-                      onChange={(e) => setCheckinCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-                      placeholder="숫자 4~6자리"
-                      inputMode="numeric"
-                      aria-label="등원 코드"
-                      className={`${CONTROL} w-[160px] pl-8 tracking-[3px] tabular-nums`}
-                    />
-                  </span>
-                  <Button type="submit" variant="secondary" loading={codeBusy} disabled={checkinCode === (student.checkinCode ?? "")}>저장</Button>
-                  {student.checkinCode && (
-                    <Button type="button" variant="ghost" loading={codeBusy} onClick={() => { setCheckinCode(""); saveCheckinCode(""); }}>해제</Button>
-                  )}
-                </form>
-              ) : (
-                <p className="text-[13px] tabular-nums text-t">{student.checkinCode ?? <span className="text-t3">설정 안 됨</span>}</p>
-              )}
-              {codeError && <Alert className="mt-3">{codeError}</Alert>}
-            </Card>
-          )}
-        </div>
-
+      {/* PC: 주 열(수강·출결·수강료) + 우측 메타 열(기본 정보·등원 코드). 휴대폰·태블릿 세로는 한 열. */}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-4">
         <Card className="p-4 sm:p-5">
           <CardHead title="수강 이력" description="행을 누르면 반·수강등록으로 이동" />
           {enrollments.length === 0 ? (
@@ -331,6 +269,70 @@ export function StudentDetail({
             <p className="flex items-center gap-1.5 text-[12.5px] text-t3"><Lock size={13} aria-hidden /> 수강료·미납 조회(revenue.read) 권한이 없어 표시되지 않습니다.</p>
           </Card>
         )}
+        </div>
+        <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4" aria-label="학생 정보">
+          <Card className="p-4 sm:p-5">
+            <CardHead title="기본 정보" />
+            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[13px]">
+              <dt className="text-t3">학교·학년</dt>
+              <dd className="text-t">{[student.school, student.grade].filter(Boolean).join(" · ") || "—"}</dd>
+              <dt className="text-t3">보호자</dt>
+              <dd className="min-w-0 text-t">
+                {!canReadPii ? (
+                  <span className="inline-flex items-center gap-1 text-t3"><Lock size={11} aria-hidden /> 비공개(pii.read 권한 필요)</span>
+                ) : guardiansError ? (
+                  <span className="text-et">불러오지 못했습니다: {guardiansError}</span>
+                ) : guardians.length === 0 ? (
+                  <span className="text-t3">등록된 보호자가 없습니다.</span>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {guardians.map((g) => (
+                      <li key={g.id} className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-medium">{g.name}</span>
+                        <span className="text-[12px] text-t3">{g.relation ?? "보호자"}</span>
+                        <a href={`tel:${g.phone}`} className="tabular-nums text-[var(--accent-ink)] hover:underline">{g.phone}</a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </dd>
+              {student.memo && (
+                <>
+                  <dt className="text-t3">메모</dt>
+                  <dd className="whitespace-pre-wrap text-t">{student.memo}</dd>
+                </>
+              )}
+            </dl>
+          </Card>
+
+          {canReadPii && (
+            <Card className="p-4 sm:p-5">
+              <CardHead title="등원 코드" description="키오스크에서 학생이 직접 입력하는 숫자 4~6자리" />
+              {canWrite ? (
+                <form onSubmit={(e) => { e.preventDefault(); saveCheckinCode(checkinCode); }} className="flex flex-wrap items-center gap-2">
+                  <span className="relative">
+                    <KeyRound size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-t3" aria-hidden />
+                    <input
+                      value={checkinCode}
+                      onChange={(e) => setCheckinCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+                      placeholder="숫자 4~6자리"
+                      inputMode="numeric"
+                      aria-label="등원 코드"
+                      className={`${CONTROL} w-[160px] pl-8 tracking-[3px] tabular-nums`}
+                    />
+                  </span>
+                  <Button type="submit" variant="secondary" loading={codeBusy} disabled={checkinCode === (student.checkinCode ?? "")}>저장</Button>
+                  {student.checkinCode && (
+                    <Button type="button" variant="ghost" loading={codeBusy} onClick={() => { setCheckinCode(""); saveCheckinCode(""); }}>해제</Button>
+                  )}
+                </form>
+              ) : (
+                <p className="text-[13px] tabular-nums text-t">{student.checkinCode ?? <span className="text-t3">설정 안 됨</span>}</p>
+              )}
+              {codeError && <Alert className="mt-3">{codeError}</Alert>}
+            </Card>
+          )}
+        </aside>
       </div>
 
       <AcadPayModal businessId={businessId} target={payFor} onClose={() => setPayFor(null)} onDone={() => { setPayFor(null); router.refresh(); }} />

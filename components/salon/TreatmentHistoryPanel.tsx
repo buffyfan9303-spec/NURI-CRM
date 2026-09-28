@@ -241,7 +241,7 @@ function TreatmentHistoryItem({
             placeholder={canWrite ? "시술 메모 — 약제·톤·다음 방문 때 참고할 내용" : "메모 없음"}
             rows={3}
             aria-label="시술 메모"
-            className="min-h-[88px] w-full resize-y rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2 text-[16px] leading-relaxed text-t outline-none transition-colors placeholder:text-t3 focus:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60 sm:text-[13px]"
+            className="min-h-[88px] w-full resize-y rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2 text-[16px] leading-relaxed text-t outline-none transition-colors placeholder:text-t3 focus:border-[var(--accent)] focus:shadow-ring focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60 sm:text-[13px]"
           />
           <p className="mt-1 h-[16px] text-[11.5px] text-t3" aria-live="polite">
             {busy ? "저장 중…" : saved ? "저장됨" : dirty ? "입력창을 벗어나면 저장됩니다" : ""}

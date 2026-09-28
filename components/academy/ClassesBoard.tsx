@@ -93,8 +93,8 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
           ["강의실", `${classrooms.length}실`],
         ].map(([l, v]) => (
           <Card key={l} className="min-w-0 px-4 py-3.5">
-            <p className="text-[12px] text-t2">{l}</p>
-            <p className="mt-1.5 truncate text-[22px] font-bold leading-none tabular-nums text-t">{v}</p>
+            <p className="text-[12px] font-medium text-t2">{l}</p>
+            <p className="mt-1.5 truncate text-[18px] font-bold leading-tight tracking-[var(--tr-snug)] tabular-nums text-t sm:text-[22px]">{v}</p>
           </Card>
         ))}
       </div>

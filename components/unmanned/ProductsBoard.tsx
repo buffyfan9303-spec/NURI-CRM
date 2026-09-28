@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Truck, TriangleAlert, Pencil } from "@/lib/icons";
+import { Plus, Truck, Pencil } from "@/lib/icons";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -12,7 +13,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import type { UsProduct } from "@/lib/domain/unmanned";
 import { createProduct, receiveInbound, setSupplierNote } from "@/lib/domain/unmanned-actions";
 import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
-import { StatusTab, FilterRow, SearchBox, TextAction, SelectField, Alert, CONTROL, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
+import { StatusTab, FilterRow, SearchBox, TextAction, SelectField, Alert, CONTROL, TABLE, THEAD, TH, TR, TD, PILL } from "@/components/rental/listkit";
 import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
 import { useSortedRows } from "@/lib/table/useSortedRows";
 import { SortableTh } from "@/components/table/SortableTh";
@@ -130,15 +131,15 @@ export function ProductsBoard({
 
   // 표와 카드가 같은 값·같은 권한 조건·같은 입고 폼을 쓰도록 한 곳에서 계산한다.
   const rowView = (p: UsProduct) => ({
-    expiryBadge: p.expiryTracked ? <span className="inline-block rounded-[5px] bg-sf2 px-1.5 py-px text-[12px] text-t3">유통기한 추적</span> : null,
+    expiryBadge: p.expiryTracked ? <span className={PILL}>유통기한 추적</span> : null,
     barcode: p.barcode ? <><span className="font-mono tabular-nums">{p.barcode}</span>{p.barcodeType !== "NONE" && <span className="ml-1 text-t3">({p.barcodeType})</span>}</> : <span className="text-t3">-</span>,
     salePrice: `${p.salePrice.toLocaleString()}원`,
     costPrice: p.costPrice == null ? "-" : `${p.costPrice.toLocaleString()}원`,
+    // 상태는 pill(§5.2) — 숫자는 그대로 두고 옆에 저재고 배지만 붙인다(색+아이콘+글자).
     stock: (
-      <span className={p.lowStock ? "inline-flex items-center gap-1 font-semibold tabular-nums text-et" : "tabular-nums text-t"}>
-        {p.lowStock && <TriangleAlert size={12} aria-hidden />}
-        {p.onHand}{p.unit}
-        {p.lowStock && <span className="text-[12px] font-medium">저재고</span>}
+      <span className="inline-flex items-center justify-end gap-1.5">
+        <span className={p.lowStock ? "font-semibold tabular-nums text-et" : "tabular-nums text-t"}>{p.onHand}{p.unit}</span>
+        {p.lowStock && <Badge kind="error">저재고</Badge>}
       </span>
     ),
     supplier: canWrite ? (
@@ -186,7 +187,7 @@ export function ProductsBoard({
       <PageHeader
         title="상품·바코드"
         description="상품 마스터와 바코드, 판매가·저재고 기준을 관리합니다. 입고는 상품 행에서 바로 기록합니다."
-        meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">{products.length}종</span>}
+        meta={<span className={PILL}>{products.length}종</span>}
         actions={
           <Button
             onClick={() => setNewOpen(true)}
@@ -261,7 +262,7 @@ export function ProductsBoard({
                           {canWrite && <td className={TD}>{v.inboundButton}</td>}
                         </tr>
                         {v.inboundOpen && (
-                          <tr className="border-b border-[var(--bd)] bg-sf2/40 last:border-b-0">
+                          <tr className="animate-rise border-b border-[var(--bd)] bg-sf2/40 last:border-b-0">
                             <td colSpan={8} className="px-4 py-3">{v.inboundForm}</td>
                           </tr>
                         )}

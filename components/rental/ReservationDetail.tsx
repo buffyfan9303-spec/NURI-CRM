@@ -42,7 +42,7 @@ import { CancelPenaltyButton } from "./CancelPenaltyButton";
 import { ReturnInspectionPanel, NoticeButton, ClaimsCard } from "./ReservationTools";
 import { confirmAndChargeAction } from "@/lib/domain/rental-money-actions";
 import type { CancelPolicy } from "@/lib/domain/rental-money-types";
-import { CardHead, Alert, BackLink, SelectField, CONTROL, TABLE, THEAD, TH, TR, TD } from "./listkit";
+import { CardHead, Alert, BackLink, SelectField, SummaryStrip, CONTROL, PILL, TABLE, THEAD, TH, TR, TD } from "./listkit";
 
 /** 개체 교환이 허용되는 예약 상태(crm.swap_reservation_unit의 상태 검사와 동일). */
 const SWAPPABLE_STATUS = ["confirmed", "out", "partial_return"];
@@ -150,7 +150,7 @@ export function ReservationDetail({
       unit: i.unitCode ?? "미배정",
       fee: formatKRW(i.fee),
       discount: formatKRW(i.discount),
-      status: <span className="rounded-[6px] bg-sf2 px-2 py-0.5 text-[11.5px] font-medium text-t2">{ITEM_STATUS_LABEL[i.itemStatus]}</span>,
+      status: <span className={PILL}>{ITEM_STATUS_LABEL[i.itemStatus]}</span>,
       actions: canWrite ? (
         <div className="flex flex-wrap items-center gap-1">
           {i.itemStatus === "out" && (
@@ -258,6 +258,22 @@ export function ReservationDetail({
             {canInspect && <ReturnInspectionPanel businessId={businessId} reservation={reservation} balance={flatBalance} onDone={refresh} />}
           </>
         }
+      />
+
+      {/* 요약 줄(상세 헤더 → 핵심 수치 → 섹션 카드 순서). 금액은 revenue.read 가 있을 때만 서버가 내려준 값을 그대로 보여준다. */}
+      <SummaryStrip
+        items={[
+          { label: "대여 시작", value: formatInTz(reservation.periodStart, DEFAULT_TZ, "M. d. (EEE) HH:mm") },
+          { label: overdue ? "반납 지연" : "반납 예정", value: formatInTz(reservation.periodEnd, DEFAULT_TZ, "M. d. (EEE) HH:mm"), tone: overdue ? "danger" : "default" },
+          { label: "품목 · 개체 배정", value: `${reservation.items.length} · ${reservation.items.filter((i) => i.unitCode).length}/${reservation.items.length}` },
+          // 청구·수납 합계는 아래 정산 카드의 4칸이 단일 출처 — 여기서는 바로 행동이 필요한 미수·보증금만 올린다.
+          ...(flatBalance
+            ? [
+                { label: "미수금", value: formatKRW(flatBalance.outstanding), tone: flatBalance.outstanding > 0 ? ("danger" as const) : ("success" as const) },
+                { label: "보관 보증금", value: formatKRW(flatBalance.depositBalance), tone: "muted" as const, hint: reservation.depositRequired != null ? `필요액 ${formatKRW(reservation.depositRequired)}` : undefined },
+              ]
+            : []),
+        ]}
       />
 
       <div className="flex flex-col gap-4">
@@ -430,7 +446,7 @@ export function ReservationDetail({
 
           {/* <1024 에서는 기간·고객 요약을 맨 위로 올린다(연구 8장 "상단 상태 흐름").
               한 칼럼일 때 정산·수납·환불 폼 뒤(약 2,000px 아래)로 밀리던 결함. */}
-          <div className="order-first flex flex-col gap-4 lg:order-none lg:col-span-4">
+          <div className="order-first flex flex-col gap-4 lg:sticky lg:top-4 lg:order-none lg:col-span-4">
             <Card className="p-4 sm:p-5">
               <CardHead
                 title="대여 기간"
@@ -642,7 +658,7 @@ function PeriodChangeForm({
   };
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="mt-4 flex flex-col gap-3 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2/40 p-3">
+    <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="mt-4 flex animate-rise flex-col gap-3 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2/40 p-3">
       {/* 달력(날짜 범위) + 시간 — ReservationForm 과 같은 규칙(문자열 앞 10자리/뒤 5자리). */}
       <DateRangeField
         label="새 대여 기간"

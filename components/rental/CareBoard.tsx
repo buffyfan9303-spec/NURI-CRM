@@ -14,7 +14,7 @@ import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
 import { formatKRW, parseKRW } from "@/lib/domain/money";
 import type { CareJobRow, UnitPickerRow } from "@/lib/domain/rental-types";
 import { createCareJob, completeCareJob } from "@/lib/domain/rental-actions";
-import { StatusTab, FilterRow, SearchBox, TextAction, CardHead, SelectField, Alert, CONTROL_SM, TABLE, THEAD, TH, TR, TD } from "./listkit";
+import { StatusTab, FilterRow, SearchBox, TextAction, CardHead, SelectField, Alert, CONTROL_SM, TABLE, THEAD, TH, TR, TD, PILL } from "./listkit";
 import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 
 const KIND_LABEL = { wash: "세탁", repair: "수선", inspect: "검수" } as const;
@@ -62,7 +62,7 @@ export function CareBoard({
       <PageHeader
         title="세탁·수선"
         description="진행 중인 개체는 새 예약에 배정할 수 없습니다. 완료 처리하면 대여가능 상태로 돌아갑니다."
-        meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">진행 {activeTotal}건</span>}
+        meta={<span className={PILL}>진행 {activeTotal}건</span>}
         actions={
           <Button
             onClick={() => setNewOpen(true)}
@@ -200,7 +200,7 @@ function JobTable({
         return (
           <MobileCard
             title={v.name}
-            sub={<span className="rounded-[5px] bg-sf2 px-1.5 py-px text-[12px] text-t2">{v.kind}</span>}
+            sub={<span className={PILL}>{v.kind}</span>}
             badge={v.badge}
             fields={[
               ["접수일", v.openedAt],

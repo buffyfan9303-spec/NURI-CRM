@@ -13,7 +13,7 @@ import { UNIT_BLOCKED, UNIT_STATUS_LABEL, type ProductWithChildren, type Custome
 import { createReservationDraft, checkAvailabilityAction } from "@/lib/domain/rental-actions";
 import { getCustomerMoneySummaryAction } from "@/lib/domain/rental-money-queries";
 import type { CustomerMoneySummary } from "@/lib/domain/rental-money-types";
-import { CardHead, Alert, CONTROL } from "./listkit";
+import { CardHead, Alert, CONTROL, TEXTAREA } from "./listkit";
 
 interface Row {
   key: string;
@@ -236,12 +236,17 @@ export function ReservationForm({
           }
         />
         <div className="flex flex-col gap-3">
-          {rows.map((row) => {
+          {rows.map((row, idx) => {
             const product = productById.get(row.productId);
             const sku = product?.skus.find((s) => s.id === row.skuId);
             return (
-              <div key={row.key} className="rounded-[var(--r-md)] border border-[var(--bd)] p-3">
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.4fr)_84px_40px]">
+              <div key={row.key} className="animate-rise rounded-[var(--r-md)] border border-[var(--bd)] p-3">
+                {/* 필드 그룹 머리: 번호 + 고른 상품 요약. 인라인 입력은 aria-label 로 이름을 갖고, 눈에는 이 줄이 라벨 구실을 한다. */}
+                <div className="mb-2 flex items-center justify-between gap-2 text-[12px] text-t3">
+                  <span className="font-medium text-t2">항목 {idx + 1}</span>
+                  <span className="truncate">{product ? `${product.name}${sku ? ` · ${sku.color}/${sku.size}` : ""}` : "상품 → SKU → 개체 순서로 고르세요"}</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.4fr)_84px_44px]">
                   <select
                     value={row.productId}
                     aria-label="상품"
@@ -292,8 +297,8 @@ export function ReservationForm({
                   <button
                     type="button"
                     onClick={() => setRows((rs) => rs.filter((r) => r.key !== row.key))}
-                    className="flex h-[40px] items-center justify-center rounded-[var(--r-md)] border border-[var(--bd2)] text-et hover:bg-eb [@media(pointer:coarse)]:h-[44px]"
-                    aria-label="항목 삭제"
+                    className="flex h-[40px] min-w-[44px] items-center justify-center rounded-[var(--r-md)] border border-[var(--bd-strong)] text-et transition-[background-color,border-color] duration-1 ease-out hover:border-[var(--et)] hover:bg-eb disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--bd-strong)] disabled:hover:bg-transparent [@media(pointer:coarse)]:h-[44px]"
+                    aria-label={`항목 ${idx + 1} 삭제`}
                     disabled={rows.length <= 1}
                   >
                     <Trash2 size={15} />
@@ -336,7 +341,7 @@ export function ReservationForm({
           onChange={(e) => setNotes(e.target.value)}
           placeholder="메모(선택)"
           aria-label="메모"
-          className="w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2.5 text-[16px] text-t outline-none focus:border-[var(--accent)] sm:text-[13.5px]"
+          className={TEXTAREA}
           rows={3}
         />
       </Card>

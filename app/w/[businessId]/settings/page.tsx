@@ -10,6 +10,8 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { accessMessage, CAP_LABEL } from "@/lib/auth/access";
 import { INDUSTRY_DEFS, resolveFeatures, type IndustryFeatures } from "@/lib/industry/config";
 import { FeatureToggle } from "@/components/settings/FeatureToggle";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { CardHead } from "@/components/rental/listkit";
 import { RentalMoneySettings } from "@/components/rental/RentalMoneySettings";
 import { getFeePolicy, getCancelPolicy } from "@/lib/domain/rental-money";
 import { getAccess } from "../access";
@@ -60,25 +62,21 @@ export default async function SettingsPage({ params }: { params: { businessId: s
     : [null, null];
 
   const capChips = access.caps.map((c) => (
-    <span key={c} className="rounded-[6px] bg-sf2 px-2 py-1 text-[12px] font-medium text-t2">
+    <span key={c} className="rounded-[var(--r-sm)] bg-sf2 px-2 py-1 text-[12px] font-medium text-t2 shadow-[inset_0_0_0_1px_var(--bd)]">
       {CAP_LABEL[c] ?? c}
     </span>
   ));
 
   return (
     <div className="mx-auto flex max-w-[760px] flex-col gap-4 p-4 md:p-6">
-      <div>
-        <h1 className="text-[18px] font-semibold text-t">사업장 설정</h1>
-        <p className="mt-1 text-[12.5px] text-t2">
-          {access.businessName} · {def.name}. 직원별 개별 권한은 &ldquo;직원·권한 관리&rdquo; 화면에서 조정합니다.
-        </p>
-      </div>
+      <PageHeader
+        className="mb-0 sm:mb-0"
+        title="사업장 설정"
+        description={`${access.businessName} · ${def.name}. 직원별 개별 권한은 "직원·권한 관리" 화면에서 조정합니다.`}
+      />
 
-      <Card className="p-5">
-        <h2 className="mb-1 text-[13.5px] font-semibold text-t">내가 할 수 있는 일</h2>
-        <p className="mb-3 text-[11.5px] text-t3">
-          지금 로그인한 계정에 부여된 권한입니다. 원시 코드가 아니라 실제로 할 수 있는 동작으로 표시합니다.
-        </p>
+      <Card className="p-4 sm:p-5">
+        <CardHead title="내가 할 수 있는 일" description="지금 로그인한 계정에 부여된 권한입니다. 원시 코드가 아니라 실제로 할 수 있는 동작으로 표시합니다." />
         {access.caps.length === 0 ? (
           <p className="text-[12.5px] text-t3">부여된 권한이 없습니다.</p>
         ) : (
@@ -95,11 +93,8 @@ export default async function SettingsPage({ params }: { params: { businessId: s
         )}
       </Card>
 
-      <Card className="p-5">
-        <h2 className="mb-1 text-[13.5px] font-semibold text-t">{def.name} 활성 기능</h2>
-        <p className="mb-3 text-[11.5px] text-t3">
-          업종 기본값에 이 사업장의 설정을 반영한 최종값입니다(공장 근태처럼 업종상 켤 수 없는 항목도 있습니다).
-        </p>
+      <Card className="p-4 sm:p-5">
+        <CardHead title={`${def.name} 활성 기능`} description="업종 기본값에 이 사업장의 설정을 반영한 최종값입니다(공장 근태처럼 업종상 켤 수 없는 항목도 있습니다)." />
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {(Object.keys(FEATURE_LABEL) as (keyof IndustryFeatures)[]).map((key) => {
             const value = features[key];

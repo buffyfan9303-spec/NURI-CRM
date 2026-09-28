@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ClipboardCheck, Pencil } from "@/lib/icons";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -108,7 +109,7 @@ export function StockBoard({
       <PageHeader
         title="재고·실사"
         description="키오스크 매출과 실재고의 차이를 실사로 잡고, 조정·폐기는 사유와 함께 원장에 남깁니다."
-        meta={openTake ? <span className="rounded-full bg-wb px-2 py-0.5 text-[12px] font-medium text-wt">실사 진행 중</span> : undefined}
+        meta={openTake ? <Badge kind="warning">실사 진행 중</Badge> : undefined}
         actions={
           canAdjust ? (
             <>
@@ -217,7 +218,7 @@ export function StockBoard({
           <CardHead
             title="재고 대사"
             description="매출 기록 수량과 출고 반영 수량, 실사 차이를 상품별로 맞춰 봅니다."
-            action={unreconciled > 0 ? <span className="rounded-full bg-eb px-2 py-0.5 text-[12px] font-medium tabular-nums text-et">미대사 {unreconciled}종</span> : undefined}
+            action={unreconciled > 0 ? <Badge kind="error">미대사 {unreconciled}종</Badge> : undefined}
           />
           {reconciliation.length === 0 ? <EmptyState title="대사할 데이터가 없습니다." description="상품과 매출 기록이 생기면 여기서 차이를 확인합니다." /> : (
             <TableOrCards

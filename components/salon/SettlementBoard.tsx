@@ -102,8 +102,8 @@ export function SalonSettlementBoard({
           { label: "미수 잔액", v: sum.outstanding, cls: `${sum.outstanding > 0 ? "text-et" : "text-t"} text-[24px]`, card: "max-sm:order-first max-sm:col-span-2" },
         ].map(({ label, v, cls, card }) => (
           <Card key={label} className={`px-4 py-3.5 sm:px-5 ${card}`}>
-            <p className="text-[12px] text-t2">{label}</p>
-            <p className={`mt-1.5 whitespace-nowrap font-bold leading-none tabular-nums ${cls}`}>{formatKRW(v)}</p>
+            <p className="text-[12px] font-medium text-t2">{label}</p>
+            <p className={`mt-1.5 whitespace-nowrap font-bold leading-tight tracking-[var(--tr-snug)] tabular-nums ${cls}`}>{formatKRW(v)}</p>
           </Card>
         ))}
       </div>

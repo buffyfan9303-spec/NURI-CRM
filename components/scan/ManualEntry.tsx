@@ -33,7 +33,7 @@ export function ManualEntry({ onSubmit, busy }: { onSubmit: (code: string) => vo
         placeholder="코드 입력"
         aria-label="코드 직접 입력"
         aria-describedby="manual-entry-help"
-        className="h-[44px] flex-1 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none placeholder:text-t3 focus:border-[var(--accent)]"
+        className="h-[44px] flex-1 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-sm text-t outline-none placeholder:text-t3 focus:border-[var(--accent)] focus:shadow-ring"
       />
       <Button type="submit" size="md" loading={busy} disabled={!value.trim()}>
         <Search size={15} aria-hidden />

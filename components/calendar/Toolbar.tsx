@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import type { CalendarView, MemberOption } from "@/lib/domain/calendar-shared";
 import { STATUS_OPTIONS } from "@/lib/domain/calendar-shared";
 import { kindTagClass, memberLabel } from "./shared";
+import { Segmented } from "@/components/common/Segmented";
 
 const VIEW_OPTIONS: { value: CalendarView; label: string }[] = [
   { value: "month", label: "월" },
@@ -90,7 +91,7 @@ export function Toolbar({
   // 같은 조작을 PC 는 한 줄에, 휴대폰은 시트 안에 세로로 그린다(sheet=true 면 44px 터치 크기).
   const filterControls = (sheet: boolean) => {
     const control = cn(
-      "rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf text-t outline-none focus:border-[var(--accent)]",
+      "rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf text-t outline-none focus:border-[var(--accent)] focus:shadow-ring",
       sheet ? "h-[44px] w-full px-3 text-[16px]" : "h-[36px] px-2.5 text-[12.5px] [@media(pointer:coarse)]:h-[44px]"
     );
     return (
@@ -148,7 +149,8 @@ export function Toolbar({
                 aria-pressed={active}
                 className={cn(
                   // 시각적 칩 크기는 그대로 두고, coarse 포인터에서만 44px 터치 영역을 가상 영역(::before)으로 넓힌다. 시트 안은 실제 44px.
-                  "ev-tag relative justify-center transition-opacity [@media(pointer:coarse)]:min-w-[44px] [@media(pointer:coarse)]:before:absolute [@media(pointer:coarse)]:before:left-1/2 [@media(pointer:coarse)]:before:top-1/2 [@media(pointer:coarse)]:before:h-[44px] [@media(pointer:coarse)]:before:w-full [@media(pointer:coarse)]:before:-translate-x-1/2 [@media(pointer:coarse)]:before:-translate-y-1/2 [@media(pointer:coarse)]:before:content-['']",
+                  // 시각적 칩 크기는 그대로, coarse 포인터에서는 실제 44px 로 키운다(측정 가능한 목표 크기).
+                  "ev-tag relative justify-center transition-opacity duration-1 [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
                   sheet && "min-h-[44px] min-w-[64px] px-4 text-[13px]",
                   kindTagClass(k.kind, eventKinds),
                   !active && "opacity-40 hover:opacity-70"
@@ -206,22 +208,15 @@ export function Toolbar({
           {isPending && <Loader2 size={14} className="ml-2 inline animate-spin align-middle text-t3" aria-hidden />}
         </h1>
 
-        <div className="flex rounded-[var(--r-md)] border border-[var(--bd2)] p-0.5 max-sm:w-full">
-          {VIEW_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              onClick={() => onViewChange(o.value)}
-              aria-pressed={view === o.value}
-              className={cn(
-                "min-h-[36px] min-w-[44px] rounded-[6px] px-3 text-[12.5px] font-medium transition-colors max-sm:min-h-[44px] max-sm:flex-1 [@media(pointer:coarse)]:min-h-[44px]",
-                view === o.value ? "bg-[var(--accent-strong)] text-[var(--accent-contrast)]" : "text-t2 hover:bg-sf2"
-              )}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
+        {/* 보기 전환 세그먼트(Cal.com 캘린더 상단과 같은 위치·모양). 휴대폰은 전폭 44px. */}
+        <Segmented
+          ariaLabel="캘린더 보기 전환"
+          value={view}
+          onChange={onViewChange}
+          options={VIEW_OPTIONS}
+          size="lg"
+          className="max-sm:w-full [&>button]:min-w-[44px]"
+        />
 
         <div className="flex w-full items-center gap-2 sm:contents">
           {/* 결함 #4: write 없는 사용자에게도 노출되던 버튼 — 서버는 이미 막고 있었지만(보안 문제는 아님) UX 일관성을 위해 비활성+툴팁으로 바꾼다. */}

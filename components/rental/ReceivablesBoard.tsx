@@ -19,7 +19,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TableOrCards, MobileCard } from "@/components/ui/ResponsiveTable";
 import { MessageActions } from "@/components/common/MessageActions";
-import { StatusTab, FilterRow, Alert, SelectField, CONTROL, TABLE, THEAD, TH, TR, TD } from "./listkit";
+import { StatusTab, FilterRow, Alert, SelectField, CONTROL, TABLE, THEAD, TH, TR, TD, PILL } from "./listkit";
 import { formatKRW, parseKRW } from "@/lib/domain/money";
 import { formatInTz } from "@/lib/utils/datetime";
 import { RESERVATION_STATUS_LABEL, RESERVATION_STATUS_BADGE, type ReservationStatus } from "@/lib/domain/rental-types";
@@ -118,7 +118,7 @@ export function ReceivablesBoard({
       <PageHeader
         title="미수금"
         description="받을 돈을 만기 기준 경과일로 나눠 보여줍니다. 독촉 기록과 문구 발송, 수납 바로가기, 회수 불능(대손) 처리를 여기서 합니다."
-        meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">{report.count}건</span>}
+        meta={<span className={PILL}>{report.count}건</span>}
       >
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

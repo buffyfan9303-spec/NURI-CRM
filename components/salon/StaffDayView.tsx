@@ -22,10 +22,11 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { ChevronLeft, ChevronRight } from "@/lib/icons";
+import { Plus } from "@/lib/icons";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, type BadgeKind } from "@/components/ui/Badge";
+import { Segmented } from "@/components/common/Segmented";
 import { CardHead } from "@/components/rental/listkit";
 import { cn } from "@/lib/utils/cn";
 import type { SalonService, SalonStaffProfile, SalonResource, SalonAppointment } from "@/lib/domain/salon";
@@ -39,8 +40,19 @@ import { SALON_STATUS_KIND, BookingModal, type CustomerOption } from "./BookingB
 const BUSINESS_START = 9;
 const BUSINESS_END = 20;
 const SLOT_MIN = 30;
-const ROW_H = 30; // px / 30분
+// 30분 칸 높이는 CSS 변수 --slot-h(PC 34px, 터치 화면 44px = WCAG 2.5.8)로 두고 위치·높이를 전부 calc 로 계산한다 —
+// JS 로 포인터를 감지하면 hydration 뒤 높이가 바뀌어 CLS 가 생긴다. ROW_H 는 "1시간 이상" 같은 비율 판단에만 쓴다.
+const ROW_H = 34;
+const SLOT_H = "var(--slot-h)";
+const slotsY = (n: number) => `calc(${SLOT_H} * ${n})`;
 const TERMINAL = new Set(["완료", "취소", "노쇼"]);
+/** 카드 왼쪽 3px 막대 색 — Badge 의 kind 와 같은 토큰을 쓴다(색만으로 전하지 않도록 Badge 글자도 함께 남긴다). */
+const KIND_BAR: Record<BadgeKind, string> = { success: "border-l-[var(--okt)]", info: "border-l-[var(--it)]", warning: "border-l-[var(--wt)]", error: "border-l-[var(--et)]" };
+
+function minutesNow(): number {
+  const [hh, mm] = formatInTz(new Date().toISOString(), DEFAULT_TZ, "HH:mm").split(":").map(Number);
+  return hh * 60 + mm;
+}
 
 function slotList(): string[] {
   const out: string[] = [];
@@ -87,6 +99,7 @@ export function StaffDayView({
     [appointments, todayKey]
   );
 
+  const dndId = React.useId(); // CalendarClient 와 같은 이유(hydration 경고 방지)
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -129,36 +142,26 @@ export function StaffDayView({
   const current = staff[Math.min(mobileIdx, staff.length - 1)];
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <Card className="overflow-hidden sm:p-5">
+    <DndContext id={dndId} sensors={sensors} onDragEnd={handleDragEnd}>
+      <Card className="overflow-hidden p-4 sm:p-5">
         <CardHead
           title="담당자별 하루 보기"
           description={`오늘 · 영업시간 ${BUSINESS_START}–${BUSINESS_END}시 · 빈 칸을 누르면 예약 등록, 카드를 끌면 시간·담당자 변경`}
         />
 
-        {/* 모바일(<640): 담당자 1명씩 좌우로 넘긴다. */}
-        <div className="mb-2 flex items-center justify-between gap-2 sm:hidden">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setMobileIdx((i) => Math.max(0, i - 1))}
-            disabled={mobileIdx === 0}
-            aria-label="이전 담당자"
-          >
-            <ChevronLeft size={15} aria-hidden />
-          </Button>
-          <span className="text-[13px] font-medium text-t">{current.displayName}</span>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setMobileIdx((i) => Math.min(staff.length - 1, i + 1))}
-            disabled={mobileIdx === staff.length - 1}
-            aria-label="다음 담당자"
-          >
-            <ChevronRight size={15} aria-hidden />
-          </Button>
+        {/* 모바일(<640): 담당자 1명씩 — 세그먼트로 고른다(3명 넘으면 가로 스크롤). */}
+        {staff.length > 1 && (
+        <div className="-mx-4 mb-3 overflow-x-auto px-4 sm:hidden">
+          <Segmented
+            ariaLabel="담당자 선택"
+            value={current.membershipId}
+            onChange={(id) => setMobileIdx(Math.max(0, staff.findIndex((s) => s.membershipId === id)))}
+            options={staff.map((s) => ({ value: s.membershipId, label: s.displayName }))}
+            className="w-full"
+          />
         </div>
-        <div className="sm:hidden">
+        )}
+        <div className="-mx-4 sm:hidden">
           <StaffGrid
             staffList={[current]}
             todays={todays}
@@ -170,7 +173,7 @@ export function StaffDayView({
         </div>
 
         {/* PC/태블릿: 담당자를 나란히. */}
-        <div className="hidden overflow-x-auto sm:block">
+        <div className="-mx-5 hidden overflow-x-auto sm:block">
           <StaffGrid
             staffList={staff}
             todays={todays}
@@ -220,23 +223,52 @@ function StaffGrid({
   noShowByCustomer: Record<string, number>;
   onSlotClick: (staffId: string, time: string) => void;
 }) {
-  const gridHeight = SLOTS.length * ROW_H;
-  return (
-    <div className="grid min-w-[520px]" style={{ gridTemplateColumns: `52px repeat(${staffList.length}, minmax(140px, 1fr))` }}>
-      <div className="border-b border-[var(--bd)]" />
-      {staffList.map((s) => (
-        <div key={s.membershipId} className="truncate border-b border-l border-[var(--bd)] px-2 py-1.5 text-center text-[12px] font-medium text-t">
-          {s.displayName}
-        </div>
-      ))}
+  const gridHeight = slotsY(SLOTS.length);
+  // 현재 시각선 — 1분마다 갱신. 영업시간 밖이면 그리지 않는다.
+  const [now, setNow] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    const tick = () => setNow(minutesNow());
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const nowTop = now !== null && now >= BUSINESS_START * 60 && now < BUSINESS_END * 60 ? slotsY((now - BUSINESS_START * 60) / SLOT_MIN) : null;
+  // 현재시각 라벨(16px)과 20분 안쪽의 정시 라벨은 겹치므로 숨긴다(Cal.com 도 같은 처리).
+  const hideHourLabel = (t: string) => now !== null && Math.abs(Number(t.slice(0, 2)) * 60 - now) < 20;
 
-      <div className="relative" style={{ height: gridHeight }}>
+  return (
+    <div
+      className="grid min-w-[520px] border-t border-[var(--bd)] [--slot-h:34px] [@media(pointer:coarse)]:[--slot-h:44px]"
+      style={{ gridTemplateColumns: `56px repeat(${staffList.length}, minmax(150px, 1fr))` }}
+    >
+      <div className="border-b border-[var(--bd)] bg-sf2" />
+      {staffList.map((s) => {
+        const n = todays.filter((a) => a.staffId === s.membershipId && !TERMINAL.has(a.status)).length;
+        return (
+          <div key={s.membershipId} className="flex min-w-0 items-center gap-2 border-b border-l border-[var(--bd)] bg-sf2 px-2.5 py-2">
+            <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[11px] font-semibold text-[var(--accent-ink)]" aria-hidden>
+              {s.displayName.trim().slice(0, 2)}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-[12.5px] font-semibold text-t">{s.displayName}</span>
+              <span className="block text-[11px] tabular-nums text-t3">{n > 0 ? `예약 ${n}건` : "예약 없음"}</span>
+            </span>
+          </div>
+        );
+      })}
+
+      <div className="relative bg-sf2" style={{ height: gridHeight }}>
         {SLOTS.map((t, i) =>
-          t.endsWith(":00") ? (
-            <div key={t} className="absolute inset-x-0 -translate-y-1/2 pr-1.5 text-right text-[10.5px] text-t3" style={{ top: i * ROW_H }}>
+          t.endsWith(":00") && i > 0 && !hideHourLabel(t) ? (
+            <div key={t} className="absolute inset-x-0 -translate-y-1/2 pr-2 text-right text-[11px] tabular-nums text-t3" style={{ top: slotsY(i) }}>
               {t}
             </div>
           ) : null
+        )}
+        {nowTop !== null && (
+          <span className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[10px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]" style={{ top: nowTop }} aria-hidden>
+            {String(Math.floor((now as number) / 60)).padStart(2, "0")}:{String((now as number) % 60).padStart(2, "0")}
+          </span>
         )}
       </div>
 
@@ -249,12 +281,19 @@ function StaffGrid({
                 key={t}
                 staffId={s.membershipId}
                 time={t}
-                top={i * ROW_H}
-                height={ROW_H}
+                top={slotsY(i)}
+                height={SLOT_H}
+                hour={t.endsWith(":00")}
                 disabled={!canWrite}
                 onClick={() => onSlotClick(s.membershipId, t)}
               />
             ))}
+            {nowTop !== null && (
+              <div className="pointer-events-none absolute inset-x-0 z-[2] flex items-center" style={{ top: nowTop }} aria-hidden>
+                <span className="-ml-[3px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--accent-strong)]" />
+                <span className="h-px flex-1 bg-[var(--accent-strong)]" />
+              </div>
+            )}
             {staffAppts.map((a) => (
               <AppointmentCard
                 key={a.id}
@@ -271,19 +310,22 @@ function StaffGrid({
   );
 }
 
-/** 빈 30분 칸 — 드롭 대상(`slot:{staffId}:{HH:mm}`)이자 클릭하면 그 담당자·시간의 예약 등록 모달을 연다. */
+/** 빈 30분 칸 — 드롭 대상(`slot:{staffId}:{HH:mm}`)이자 클릭하면 그 담당자·시간의 예약 등록 모달을 연다.
+ *  정시 줄은 실선, 30분 줄은 점선(Cal.com 주 보기와 같은 위계). hover 하면 "+ 시각" 힌트가 뜬다. */
 function SlotCell({
   staffId,
   time,
   top,
   height,
+  hour,
   disabled,
   onClick,
 }: {
   staffId: string;
   time: string;
-  top: number;
-  height: number;
+  top: string;
+  height: string;
+  hour: boolean;
   disabled: boolean;
   onClick: () => void;
 }) {
@@ -296,27 +338,36 @@ function SlotCell({
       disabled={disabled}
       aria-label={`${time} 예약 등록`}
       className={cn(
-        "absolute inset-x-0 border-t border-[var(--bd)] text-left outline-none disabled:cursor-default",
+        "group absolute inset-x-0 flex items-center justify-center border-t text-left outline-none transition-colors duration-1 disabled:cursor-default",
+        hour ? "border-[var(--bd)]" : "border-dashed border-[var(--bd)]",
         !disabled && "hover:bg-sf2 focus-visible:bg-sf2",
-        isOver && !disabled && "bg-ib ring-1 ring-inset ring-[var(--accent)]"
+        isOver && !disabled && "bg-[var(--accent-soft)] ring-1 ring-inset ring-[var(--accent)]"
       )}
       style={{ top, height }}
-    />
+    >
+      {!disabled && !isOver && (
+        <span className="pointer-events-none inline-flex items-center gap-0.5 rounded-[var(--r-xs)] px-1 text-[10.5px] font-medium tabular-nums text-t3 opacity-0 transition-opacity duration-1 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden>
+          <Plus size={10} />{time}
+        </span>
+      )}
+    </button>
   );
 }
 
-function apptTop(startAt: string): number {
+function apptTop(startAt: string): string {
   const [hh, mm] = formatInTz(startAt, DEFAULT_TZ, "HH:mm").split(":").map(Number);
   const minutesFromStart = Math.max(0, hh * 60 + mm - BUSINESS_START * 60);
-  return (minutesFromStart / SLOT_MIN) * ROW_H;
+  return slotsY(minutesFromStart / SLOT_MIN);
 }
 
-function apptHeight(startAt: string, endAt: string): number {
+/** 칸 수(30분 단위, 최소 0.7칸). CSS 높이는 slotsY(칸 수). */
+function apptSlots(startAt: string, endAt: string): number {
   const durationMin = (new Date(endAt).getTime() - new Date(startAt).getTime()) / 60000;
-  return Math.max((durationMin / SLOT_MIN) * ROW_H, ROW_H * 0.7);
+  return Math.max(durationMin / SLOT_MIN, 0.7);
 }
 
-/** 예약 카드 — 끌 수 있는 조건은 TERMINAL(완료·취소·노쇼) 아님 + 쓰기 권한. */
+/** 예약 카드 — 끌 수 있는 조건은 TERMINAL(완료·취소·노쇼) 아님 + 쓰기 권한.
+ *  흰 면 + 왼쪽 3px 상태색 막대(Cal.com 예약 블록). 끝난 예약은 sf2 면, 취소·노쇼는 이름에 취소선. */
 function AppointmentCard({
   appt,
   canWrite,
@@ -334,31 +385,41 @@ function AppointmentCard({
     data: { appt },
     disabled: !draggable,
   });
+  const kind = SALON_STATUS_KIND[appt.status] ?? "info";
+  const slots = apptSlots(appt.startAt, appt.endAt);
+  const tall = slots * ROW_H >= ROW_H * 2; // 1시간 이상이면 3줄(이름·시술·상태) 다 보인다
+  const ended = TERMINAL.has(appt.status);
+  const struck = appt.status === "취소" || appt.status === "노쇼";
   return (
     <div
       ref={setNodeRef}
-      title={`${appt.customerName ?? "고객"} · ${appt.serviceName ?? "-"} — ${formatInTz(appt.startAt, DEFAULT_TZ, "HH:mm")}${draggable ? "" : "（고정）"}`}
+      title={`${appt.customerName ?? "고객"} · ${appt.serviceName ?? "-"} — ${formatInTz(appt.startAt, DEFAULT_TZ, "HH:mm")}–${formatInTz(appt.endAt, DEFAULT_TZ, "HH:mm")}${draggable ? "" : "（고정）"}`}
       className={cn(
-        "ev-tag absolute inset-x-0.5 z-[1] flex flex-col overflow-hidden rounded-[6px] px-1.5 py-1 text-left leading-tight tg-ord",
-        draggable && "cursor-grab touch-none active:cursor-grabbing",
+        "absolute inset-x-1 z-[1] flex flex-col overflow-hidden rounded-[var(--r-sm)] border border-[var(--bd)] border-l-[3px] bg-sf px-1.5 py-1 text-left leading-tight shadow-card transition-[box-shadow,opacity] duration-1",
+        KIND_BAR[kind],
+        draggable && "cursor-grab touch-none hover:shadow-raised active:cursor-grabbing",
+        ended && "bg-sf2",
         isDragging && "opacity-40"
       )}
-      style={{ top: apptTop(appt.startAt), height: apptHeight(appt.startAt, appt.endAt) }}
+      style={{ top: apptTop(appt.startAt), height: slotsY(slots) }}
       {...(draggable ? { ...attributes, ...listeners } : {})}
     >
-      <span className="flex items-center gap-1 truncate font-semibold">
-        {appt.customerName ?? appt.customerId.slice(0, 8)}
+      <span className="flex items-center gap-1 text-[12px]">
+        <span className={cn("min-w-0 truncate font-semibold text-t", struck && "line-through decoration-[var(--et)]")}>{appt.customerName ?? appt.customerId.slice(0, 8)}</span>
         {noShow > 0 && (
-          <span className="shrink-0 rounded-[4px] bg-eb px-1 text-[10px] font-bold text-et" title="이 고객의 누적 노쇼 이력">
+          <span className="shrink-0 rounded-[var(--r-xs)] bg-eb px-1 text-[10px] font-bold text-et" title="이 고객의 누적 노쇼 이력">
             노쇼 {noShow}
           </span>
         )}
+        <span className="ml-auto shrink-0 text-[10.5px] tabular-nums text-t3">{formatInTz(appt.startAt, DEFAULT_TZ, "HH:mm")}</span>
       </span>
-      <span className="truncate text-[11px]">{appt.serviceName ?? "-"}</span>
-      <span className="flex items-center gap-1 text-[10.5px]">
-        <Badge kind={SALON_STATUS_KIND[appt.status] ?? "info"}>{appt.status}</Badge>
-        {canRevenue && <span className="tabular-nums">{formatKRW(appt.price)}</span>}
-      </span>
+      <span className="truncate text-[11px] text-t2">{appt.serviceName ?? "-"}</span>
+      {tall && (
+        <span className="mt-auto flex items-center gap-1 text-[10.5px]">
+          <Badge kind={kind}>{appt.status}</Badge>
+          {canRevenue && <span className="tabular-nums text-t2">{formatKRW(appt.price)}</span>}
+        </span>
+      )}
     </div>
   );
 }

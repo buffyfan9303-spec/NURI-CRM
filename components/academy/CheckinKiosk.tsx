@@ -69,7 +69,8 @@ export function CheckinKiosk({ businessId, businessName }: { businessId: string;
     return () => window.removeEventListener("keydown", onKey);
   }, [press, submit]);
 
-  const KEY = "flex h-[64px] items-center justify-center rounded-[var(--r-lg)] border text-[26px] font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 sm:h-[76px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]";
+  // 키: 흰 면 + 카드 그림자(눌리면 sf2 면·그림자 없음·98%). 숫자는 28px/600 tabular — 팔 길이에서도 읽히게.
+  const KEY = "flex h-[64px] select-none items-center justify-center rounded-[var(--r-lg)] border text-[28px] font-semibold tabular-nums transition-[background-color,box-shadow,transform] duration-1 ease-out active:scale-[0.97] active:shadow-none disabled:opacity-40 disabled:shadow-none sm:h-[76px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] motion-reduce:active:scale-100";
 
   return (
     <div className="mx-auto flex w-full max-w-[440px] flex-col items-center gap-5 py-2 sm:py-6">
@@ -102,13 +103,21 @@ export function CheckinKiosk({ businessId, businessName }: { businessId: string;
             )}
           </Card>
         ) : (
-          <div className="flex h-[112px] w-full items-center justify-center gap-3 rounded-[var(--r-lg)] border-2 border-[var(--bd2)] bg-sf" aria-label={`입력한 자리수 ${code.length}`}>
+          <div
+            className={cn(
+              "flex h-[112px] w-full items-center justify-center gap-2.5 rounded-[var(--r-lg)] border-2 bg-sf transition-[border-color,box-shadow] duration-1 sm:gap-3",
+              code.length > 0 ? "border-[var(--accent)] shadow-ring" : "border-[var(--bd2)]"
+            )}
+            role="status"
+            aria-label={`입력한 자리수 ${code.length}`}
+          >
+            {/* 자릿수 칸: 입력한 칸은 채워진 원, 필수 4칸은 실선, 선택 2칸은 점선. */}
             {Array.from({ length: MAX_LEN }).map((_, i) => (
               <span
                 key={i}
                 className={cn(
-                  "h-4 w-4 rounded-full transition-colors sm:h-5 sm:w-5",
-                  i < code.length ? "bg-[var(--accent-strong)]" : i < MIN_LEN ? "border-2 border-[var(--bd2)]" : "border-2 border-dashed border-[var(--bd)]"
+                  "h-4 w-4 rounded-full transition-[background-color,transform,border-color] duration-1 ease-out sm:h-5 sm:w-5",
+                  i < code.length ? "scale-110 bg-[var(--accent-strong)]" : i < MIN_LEN ? "border-2 border-[var(--bd2)]" : "border-2 border-dashed border-[var(--bd-strong)]"
                 )}
                 aria-hidden
               />
@@ -125,7 +134,7 @@ export function CheckinKiosk({ businessId, businessName }: { businessId: string;
             disabled={busy || (d === "back" && code.length === 0) || (d === "clear" && code.length === 0)}
             onClick={() => press(d)}
             aria-label={d === "back" ? "한 글자 지우기" : d === "clear" ? "전체 지우기" : d}
-            className={cn(KEY, d === "back" || d === "clear" ? "border-[var(--bd)] bg-sf2 text-[15px] text-t2 hover:bg-sf3" : "border-[var(--bd2)] bg-sf text-t hover:bg-sf2 active:bg-sel")}
+            className={cn(KEY, d === "back" || d === "clear" ? "border-[var(--bd)] bg-sf2 text-[15px] font-medium text-t2 hover:bg-sf3" : "border-[var(--bd)] bg-sf text-t shadow-card hover:border-[var(--bd-strong)] hover:bg-sf2 active:bg-sf3")}
           >
             {d === "back" ? <Delete size={26} aria-hidden /> : d === "clear" ? "지우기" : d}
           </button>
@@ -136,7 +145,7 @@ export function CheckinKiosk({ businessId, businessName }: { businessId: string;
         type="button"
         disabled={busy || code.trim().length < MIN_LEN}
         onClick={submit}
-        className="min-h-[60px] w-full rounded-[var(--r-lg)] bg-[var(--accent-strong)] text-[18px] font-bold text-[var(--accent-contrast)] transition-[filter] hover:brightness-110 active:scale-[0.99] disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+        className="min-h-[60px] w-full rounded-[var(--r-lg)] bg-[var(--accent-strong)] text-[18px] font-bold text-[var(--accent-contrast)] shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-[background-color,transform,opacity] duration-1 ease-out hover:bg-[var(--accent-hover)] active:scale-[0.99] disabled:opacity-50 disabled:shadow-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] motion-reduce:active:scale-100"
       >
         {busy ? "확인 중…" : "확인"}
       </button>

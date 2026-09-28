@@ -138,7 +138,9 @@ export function TimeGrid({
   );
   const hasAnyAllDay = Array.from(allDayByDay.values()).some((v) => v.length > 0);
 
-  const gridTemplateColumns = `56px repeat(${days.length}, minmax(0, 1fr))`;
+  // 시간축 폭: 휴대폰 44px(360px 화면에서 7열이 45px 씩 나온다), sm 이상 56px — CSS 변수라 SSR/CSR 차이가 없다.
+  const gridTemplateColumns = `var(--gutter) repeat(${days.length}, minmax(0, 1fr))`;
+  const hideHourLabel = (h: number) => nowMinutes !== null && days.includes(todayKey) && Math.abs(h * 60 - nowMinutes) < 20 && h * 60 >= boundStartMin;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -162,21 +164,35 @@ export function TimeGrid({
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="grid" style={{ gridTemplateColumns }}>
+        <div className="grid [--gutter:44px] sm:[--gutter:56px]" style={{ gridTemplateColumns }}>
           <div className="sticky top-0 z-10 border-b border-[var(--bd)] bg-sf" />
           {days.map((d) => {
             const isToday = d === todayKey;
             const headerClass = cn(
-              "sticky top-0 z-10 flex w-full items-center justify-center gap-1.5 border-b border-l border-[var(--bd)] bg-sf py-1.5 text-[12px] font-medium",
+              "sticky top-0 z-10 flex w-full items-center justify-center gap-1.5 border-b border-l border-[var(--bd)] bg-sf py-1.5 text-[12px] font-medium transition-colors duration-1 [@media(pointer:coarse)]:min-h-[44px]",
               isToday ? "text-[var(--accent-ink)]" : "text-t2",
               onOpenDay && "hover:bg-sf2"
             );
-            const label = (
-              <>
-                {formatDayTitle(d)}
-                {isToday && <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-strong)]" aria-hidden />}
-              </>
-            );
+            // 주 보기: 요일은 작게, 날짜 숫자는 굵게(오늘은 accent 원). 일 보기(1열)는 전체 제목 그대로.
+            const label =
+              days.length > 1 ? (
+                <>
+                  <span className="text-[11px] text-t3">{formatDayTitle(d).match(/\((.)\)/)?.[1] ?? ""}</span>
+                  <span
+                    className={cn(
+                      "inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-1 text-[13px] font-semibold tabular-nums",
+                      isToday ? "bg-[var(--accent-strong)] text-[var(--accent-contrast)]" : "text-t"
+                    )}
+                  >
+                    {Number(d.slice(8, 10))}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {formatDayTitle(d)}
+                  {isToday && <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-strong)]" aria-hidden />}
+                </>
+              );
             return onOpenDay ? (
               <button key={d} type="button" onClick={() => onOpenDay(d)} className={headerClass} aria-label={`${d} 하루 보기로 이동`}>
                 {label}
@@ -213,12 +229,21 @@ export function TimeGrid({
             {hours.map((h) => (
               <div
                 key={h}
-                className="absolute inset-x-0 -translate-y-1/2 pr-1.5 text-right text-[10.5px] text-t3"
+                className="absolute inset-x-0 -translate-y-1/2 pr-1.5 text-right text-[11px] tabular-nums text-t3"
                 style={{ top: (h - startHour) * ROW_HEIGHT }}
               >
-                {String(h).padStart(2, "0")}:00
+                {h === startHour || hideHourLabel(h) ? "" : `${String(h).padStart(2, "0")}:00`}
               </div>
             ))}
+            {nowMinutes !== null && nowMinutes >= boundStartMin && nowMinutes < boundEndMin && days.includes(todayKey) && (
+              <span
+                className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[10px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]"
+                style={{ top: ((nowMinutes - boundStartMin) / 60) * ROW_HEIGHT }}
+                aria-hidden
+              >
+                {String(Math.floor(nowMinutes / 60)).padStart(2, "0")}:{String(nowMinutes % 60).padStart(2, "0")}
+              </span>
+            )}
           </div>
           {days.map((d) => {
             const positioned = layoutDay(eventsByDay.get(d) ?? [], tz, boundStartMin, boundEndMin);
@@ -227,11 +252,11 @@ export function TimeGrid({
             return (
               <TimeColumn key={d} dateKey={d} height={gridHeight} canDrag={canDrag}>
                 {hours.map((h) => (
-                  <div
-                    key={h}
-                    className="absolute inset-x-0 border-t border-[var(--bd)]"
-                    style={{ top: (h - startHour) * ROW_HEIGHT }}
-                  />
+                  <React.Fragment key={h}>
+                    <div className="absolute inset-x-0 border-t border-[var(--bd)]" style={{ top: (h - startHour) * ROW_HEIGHT }} />
+                    {/* 30분 보조선(점선) — Cal.com 주 보기와 같은 위계. */}
+                    <div className="absolute inset-x-0 border-t border-dashed border-[var(--bd)]" style={{ top: (h - startHour) * ROW_HEIGHT + ROW_HEIGHT / 2 }} />
+                  </React.Fragment>
                 ))}
                 {showNowLine && (
                   <div
@@ -239,7 +264,7 @@ export function TimeGrid({
                     style={{ top: ((nowMinutes as number) - boundStartMin) / 60 * ROW_HEIGHT }}
                     aria-hidden
                   >
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-strong)]" />
+                    <span className="-ml-[3px] h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--accent-strong)]" />
                     <span className="h-px flex-1 bg-[var(--accent-strong)]" />
                   </div>
                 )}
@@ -251,7 +276,7 @@ export function TimeGrid({
                     title={`${event.title} — ${formatEventTimeLabel(event, tz)}`}
                     canDrag={canDrag}
                     className={cn(
-                      "ev-tag absolute overflow-hidden text-left leading-tight",
+                      "ev-tag absolute flex-col justify-start gap-0 overflow-hidden [&>span]:w-full rounded-[var(--r-sm)] border-l-[3px] border-l-current px-1.5 py-1 text-left leading-tight shadow-card transition-[box-shadow] duration-1 hover:shadow-raised",
                       kindTagClass(event.kind, eventKinds),
                       event.id === selectedId && "outline outline-2 outline-offset-1 outline-[var(--accent)]"
                     )}
@@ -262,8 +287,8 @@ export function TimeGrid({
                       width: `calc(${100 / lanes}% - 4px)`,
                     }}
                   >
-                    <span className="block truncate font-semibold">{formatEventTimeLabel(event, tz)}</span>
-                    <span className="block truncate">{event.title}</span>
+                    <span className="block truncate text-[11px] font-medium tabular-nums opacity-90">{formatEventTimeLabel(event, tz)}</span>
+                    <span className="block truncate font-semibold">{event.title}</span>
                   </TimeEventButton>
                 ))}
               </TimeColumn>

@@ -11,6 +11,8 @@ import { CameraPanel } from "./CameraPanel";
 import { ManualEntry } from "./ManualEntry";
 import { ResultCard, type ScanOutcome } from "./ResultCard";
 import { BatchReviewList } from "./BatchReviewList";
+import { Segmented } from "@/components/common/Segmented";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const MODES_BY_INDUSTRY: Partial<Record<Industry, ScanMode[]>> = {
   rental: ["rental_checkout", "rental_return"],
@@ -113,10 +115,7 @@ export function ScanWorkspace({ businessId, industry, canWrite }: { businessId: 
 
   return (
     <div className="mx-auto flex max-w-[1280px] flex-col gap-4 p-4 md:p-6">
-      <div>
-        <h1 className="text-[18px] font-semibold text-t">스캔</h1>
-        <p className="text-[12.5px] text-t2">카메라·바코드 스캐너·수동 입력으로 코드를 조회하고 목록에 담습니다. 지원 형식: QR코드, 1차원 바코드(EAN/Code128).</p>
-      </div>
+      <PageHeader className="mb-0 sm:mb-0" title="스캔" description="카메라·바코드 스캐너·수동 입력으로 코드를 조회하고 목록에 담습니다. 지원 형식: QR코드, 1차원 바코드(EAN/Code128)." />
 
       {!canWrite && (
         <div role="status" className="rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2 px-3.5 py-2.5 text-[12.5px] text-t2">
@@ -125,24 +124,14 @@ export function ScanWorkspace({ businessId, industry, canWrite }: { businessId: 
       )}
 
       {modes.length > 1 && (
-        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="스캔 모드">
-          {modes.map((m) => (
-            <button
-              key={m}
-              type="button"
-              role="tab"
-              aria-selected={mode === m}
-              onClick={() => setMode(m)}
-              className={
-                mode === m
-                  ? "min-h-[44px] rounded-[6px] border border-[var(--accent)] bg-[var(--accent-soft)] px-3 text-[12.5px] font-medium text-[var(--accent-ink)]"
-                  : "min-h-[44px] rounded-[6px] border border-[var(--bd)] bg-sf2 px-3 text-[12.5px] text-t2 hover:bg-sf"
-              }
-            >
-              {SCAN_MODE_LABEL[m]}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          ariaLabel="스캔 모드"
+          value={mode}
+          onChange={setMode}
+          size="lg"
+          options={modes.map((m) => ({ value: m, label: SCAN_MODE_LABEL[m], tone: "accent" as const }))}
+          className="self-start max-sm:w-full"
+        />
       )}
 
       {/* PC: 카메라/입력 영역과 인식 목록을 나란히. 태블릿 이하: 세로 배치(§5.8). */}

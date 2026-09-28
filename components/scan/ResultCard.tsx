@@ -94,7 +94,7 @@ export function ResultCard({ outcome, mode }: { outcome: ScanOutcome | null; mod
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge kind={badgeKind}>{r.staged ? (outcome.again ? "다시 담음(수량 +1)" : "목록에 담김") : KIND_LABEL[r.kind]}</Badge>
         <span className="font-semibold">{r.label}</span>
-        {r.status && <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[11px] text-t2">{r.status}</span>}
+        {r.status && <span className="rounded-[var(--r-sm)] bg-sf2 px-1.5 py-0.5 text-[11px] text-t2">{r.status}</span>}
       </div>
       {warning && <span>{warning}</span>}
     </div>

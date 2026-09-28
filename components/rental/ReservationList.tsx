@@ -17,8 +17,8 @@ import {
   type ReservationRow,
   type ReservationStatus,
 } from "@/lib/domain/rental-types";
-import { StatusTab, Pager, usePager, FilterRow, SearchBox, TextAction, TABLE, THEAD, TH, TR_CLICK, TD } from "./listkit";
-import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
+import { StatusTab, Pager, usePager, FilterRow, SearchBox, TextAction, PILL, CELL_LINK, TABLE, THEAD, TH, TR_CLICK, TD } from "./listkit";
+import { TableOrCards, MobileCard } from "@/components/ui/ResponsiveTable";
 import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
 import { useSortedRows } from "@/lib/table/useSortedRows";
 import { SortableTh } from "@/components/table/SortableTh";
@@ -144,7 +144,7 @@ export function ReservationList({
       <PageHeader
         title="예약"
         description="대여 기간·개체 배정·출고/반납 상태를 한 곳에서 확인합니다. 행을 누르면 상세로 이동합니다."
-        meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">{reservations.length}건</span>}
+        meta={<span className={PILL}>{reservations.length}건</span>}
         actions={newButton}
       >
         <div className="flex flex-col gap-2">
@@ -223,8 +223,17 @@ export function ReservationList({
                         <tr key={r.id} onClick={() => open(r)} className={`${TR_CLICK} h-[56px]`}>
                           <td className={`${TD} font-mono text-[11.5px] text-t3`}>{reservationNo(r.id)}</td>
                           <td className={TD}>
-                            <CellName max={160}>{v.customer}</CellName>
-                            <div className="text-[11.5px] text-t3">{r.customerPhone ?? ""}</div>
+                            {/* 행 전체가 클릭 영역이지만 실제 링크는 이름 셀 하나(§5.3) — 키보드·스크린리더가 행을 열 수 있다. */}
+                            <Link
+                              href={`/w/${businessId}/reservations/${r.id}`}
+                              prefetch={false}
+                              onClick={(e) => e.stopPropagation()}
+                              className={`${CELL_LINK} max-w-[160px]`}
+                              title={v.customer}
+                            >
+                              {v.customer}
+                            </Link>
+                            <div className="text-[11.5px] tabular-nums text-t3">{r.customerPhone ?? ""}</div>
                           </td>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.period}</td>
                           <td className={`${TD} text-t2`}>
@@ -257,7 +266,7 @@ export function ReservationList({
                   badge={
                     <span className="flex flex-col items-end gap-1">
                       {v.badge}
-                      <span className={`rounded-full px-2 py-0.5 text-[12px] tabular-nums ${v.unitsDone ? "bg-okb text-okt" : "bg-sf2 text-t2"}`}>{v.unitsBadge}</span>
+                      <span className={`${PILL} ${v.unitsDone ? "bg-okb text-okt" : ""}`}>{v.unitsBadge}</span>
                     </span>
                   }
                   onClick={() => open(r)}

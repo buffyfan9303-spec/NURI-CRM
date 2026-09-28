@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import type { DailyChecklist, ChecklistItem } from "@/lib/domain/unmanned";
 import { generateDailyChecklist, setChecklistItem } from "@/lib/domain/unmanned-actions";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
-import { CardHead, Alert, CONTROL_SM } from "@/components/rental/listkit";
+import { CardHead, Alert, CONTROL_SM, PILL } from "@/components/rental/listkit";
 
 const KIND_LABEL: Record<ChecklistItem["kind"], string> = { fixed: "기본", low_stock: "재고 부족", expiry: "유통기한" };
 
@@ -32,6 +32,10 @@ export function DailyChecklistCard({
   const [error, setError] = React.useState<string | null>(null);
   const [memoFor, setMemoFor] = React.useState<string | null>(null);
   const [memo, setMemo] = React.useState("");
+  // 낙관적 체크: 서버 왕복(≈0.5s) 동안 controlled checkbox 가 원래 값으로 되돌아가 깜빡이던 것을 막는다.
+  // 성공하면 refresh 로 서버 값이 같아지고, 실패하면 그 항목만 되돌린다. 새 데이터가 오면 전부 비운다.
+  const [pending, setPending] = React.useState<Record<string, boolean>>({});
+  React.useEffect(() => { setPending({}); }, [checklist?.updatedAt]);
 
   const generate = async () => {
     setBusy("gen"); setError(null);
@@ -44,9 +48,10 @@ export function DailyChecklistCard({
   const setItem = async (it: ChecklistItem, done: boolean, nextMemo?: string) => {
     if (!checklist) return;
     setBusy(it.key); setError(null);
+    setPending((p) => ({ ...p, [it.key]: done }));
     const r = await setChecklistItem(businessId, checklist.id, it.key, done, nextMemo ?? it.memo ?? undefined);
     setBusy(null);
-    if (!r.ok) { setError(r.message); return; }
+    if (!r.ok) { setPending((p) => { const n = { ...p }; delete n[it.key]; return n; }); setError(r.message); return; }
     setMemoFor(null);
     router.refresh();
   };
@@ -81,24 +86,29 @@ export function DailyChecklistCard({
       ) : (
         <>
           <div className="mb-3 h-2 overflow-hidden rounded-full bg-sf2" role="progressbar" aria-valuenow={checklist.rate} aria-valuemin={0} aria-valuemax={100} aria-label="점검 완료율">
-            <div className="h-full rounded-full bg-[var(--accent-strong)] transition-[width] duration-200" style={{ width: `${checklist.rate}%` }} />
+            <div className="h-full rounded-full bg-[var(--accent-strong)] transition-[width] duration-3 ease-out" style={{ width: `${checklist.rate}%` }} />
           </div>
           <ul className="flex flex-col divide-y divide-[var(--bd)]">
-            {checklist.items.map((it) => (
+            {checklist.items.map((raw) => {
+              const it = raw.key in pending ? { ...raw, done: pending[raw.key] } : raw;
+              return (
               <li key={it.key} className="py-1">
                 <div className="flex items-center gap-3">
-                  <label className="flex min-h-[44px] min-w-0 flex-1 cursor-pointer items-center gap-3">
+                  {/* 탭 영역은 라벨 전체(44px) — 안의 20px 체크박스는 측정에서 제외한다. */}
+                  <label data-skip-touch className="flex min-h-[44px] min-w-0 flex-1 cursor-pointer items-center gap-3">
+                    {/* 체크 토글: 저장 중엔 aria-busy + 흐림, 완료되면 라벨이 120ms 로 흐려지며 취소선(색 전환만, 위치 이동 없음). */}
                     <input
                       type="checkbox"
                       checked={it.done}
                       disabled={!canWrite || busy === it.key}
+                      aria-busy={busy === it.key || undefined}
                       onChange={(e) => setItem(it, e.target.checked)}
-                      className="h-[20px] w-[20px] shrink-0 accent-[var(--accent-strong)]"
+                      className="h-[20px] w-[20px] shrink-0 cursor-pointer accent-[var(--accent-strong)] transition-opacity duration-1 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                     />
                     <span className="min-w-0">
-                      <span className={"block truncate text-[13px] " + (it.done ? "text-t3 line-through" : "font-medium text-t")}>{it.label}</span>
+                      <span className={"block truncate text-[13px] transition-[color,text-decoration-color] duration-1 ease-out " + (it.done ? "text-t3 line-through decoration-[var(--t3)]" : "font-medium text-t decoration-transparent")}>{it.label}</span>
                       <span className="flex flex-wrap items-center gap-1.5 text-[11.5px] text-t3">
-                        <span className="rounded-[5px] bg-sf2 px-1.5 py-px">{KIND_LABEL[it.kind]}</span>
+                        <span className={PILL}>{KIND_LABEL[it.kind]}</span>
                         {it.memo && memoFor !== it.key && <span className="truncate">메모: {it.memo}</span>}
                       </span>
                     </span>
@@ -108,6 +118,8 @@ export function DailyChecklistCard({
                       size="sm"
                       variant="ghost"
                       aria-label={`${it.label} 메모`}
+                      aria-expanded={memoFor === it.key}
+                      className="[@media(pointer:coarse)]:min-w-[44px]"
                       onClick={() => { if (memoFor === it.key) { setMemoFor(null); } else { setMemoFor(it.key); setMemo(it.memo ?? ""); } }}
                     >
                       <Pencil size={13} aria-hidden />
@@ -116,13 +128,14 @@ export function DailyChecklistCard({
                   )}
                 </div>
                 {memoFor === it.key && (
-                  <form onSubmit={(e) => { e.preventDefault(); setItem(it, it.done, memo); }} className="mb-2 ml-8 flex items-center gap-2">
+                  <form onSubmit={(e) => { e.preventDefault(); setItem(it, it.done, memo); }} className="mb-2 ml-8 flex animate-rise items-center gap-2">
                     <input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모(예: 우유 2개 폐기)" aria-label="메모" className={`${CONTROL_SM} min-w-0 flex-1`} />
                     <Button size="sm" type="submit" loading={busy === it.key}>저장</Button>
                   </form>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         </>
       )}

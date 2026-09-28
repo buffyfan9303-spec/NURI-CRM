@@ -122,13 +122,15 @@ export function SalonCustomerDetail({
           canRevenue ? ["미수 잔액", <span key="o" className={totalOutstanding > 0 ? "text-et" : undefined}>{formatKRW(totalOutstanding)}</span>] : ["이메일", customer.email ? customer.email : customer.hasEmail === false ? "등록 없음" : PRIVATE],
         ].map(([label, v]) => (
           <Card key={label as string} className="min-w-0 px-4 py-3.5">
-            <p className="text-[12px] text-t2">{label}</p>
-            <p className="mt-1.5 truncate text-[18px] font-bold leading-tight tabular-nums text-t">{v}</p>
+            <p className="text-[12px] font-medium text-t2">{label}</p>
+            <p className="mt-1.5 truncate text-[18px] font-bold leading-tight tracking-[var(--tr-snug)] tabular-nums text-t sm:text-[22px]">{v}</p>
           </Card>
         ))}
       </div>
 
-      <div className="flex flex-col gap-4">
+      {/* PC: 주 열(이력·기록) + 우측 메타 열(기본 정보·치수). 휴대폰·태블릿 세로는 한 열. */}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="flex min-w-0 flex-col gap-4">
         <Card className="p-4 sm:p-5">
           <CardHead
             title="시술 이력"
@@ -200,7 +202,8 @@ export function SalonCustomerDetail({
 
         <TreatmentHistoryPanel businessId={businessId} canWrite={canWrite} history={treatmentHistory} />
 
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        </div>
+        <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4" aria-label="고객 정보">
           <Card className="p-4 sm:p-5">
             <CardHead title="기본 정보" />
             <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[13px]">
@@ -242,7 +245,7 @@ export function SalonCustomerDetail({
               <p className="flex items-center gap-1.5 text-[12.5px] text-t3"><Lock size={13} aria-hidden /> 고객 개인정보 조회(pii.read) 권한이 없어 표시되지 않습니다.</p>
             </Card>
           )}
-        </div>
+        </aside>
       </div>
 
       <PayModal businessId={businessId} target={payTarget} onClose={() => setPayTarget(null)} onDone={() => { setPayTarget(null); router.refresh(); }} />

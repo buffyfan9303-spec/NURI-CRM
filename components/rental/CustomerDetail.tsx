@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/Input";
-import { CardHead, Alert, BackLink, TABLE, THEAD, TH, TR_CLICK, TR, TD } from "./listkit";
+import { CardHead, Alert, BackLink, SummaryStrip, TABLE, THEAD, TH, TR_CLICK, TR, TD, PILL } from "./listkit";
 import type { CustomerRow, CustomerMeasurementRow, ReservationStatus } from "@/lib/domain/rental-types";
 import { RESERVATION_STATUS_LABEL, RESERVATION_STATUS_BADGE } from "@/lib/domain/rental-types";
 import { addCustomerMeasurement } from "@/lib/domain/rental-actions";
@@ -81,7 +81,7 @@ export function CustomerDetail({
       <PageHeader
         title={customer.name}
         description={`등록일 ${formatInTz(customer.createdAt, DEFAULT_TZ, "yyyy. M. d.")}${reservationHistory.length ? ` · 예약 ${reservationHistory.length}건` : ""}`}
-        meta={customer.tags.length > 0 ? customer.tags.map((t) => <span key={t} className="rounded-[6px] bg-sf2 px-2 py-0.5 text-[11.5px] font-medium text-t2">{t}</span>) : undefined}
+        meta={customer.tags.length > 0 ? customer.tags.map((t) => <span key={t} className={PILL}>{t}</span>) : undefined}
         actions={
           canWrite ? (
             <Link href={newReservationHref}>
@@ -91,6 +91,15 @@ export function CustomerDetail({
             </Link>
           ) : undefined
         }
+      />
+      {/* 요약 줄: 건수·상태만. 금액(미수·보증금)은 우측 "미수·보증금" 카드가 단일 출처라 여기서 되풀이하지 않는다. */}
+      <SummaryStrip
+        items={[
+          { label: "예약 이력", value: `${reservationHistory.length}건` },
+          { label: "진행 중 예약", value: `${money?.openReservations ?? 0}건` },
+          { label: "미수", value: money ? (money.hasOutstanding ? "있음" : "없음") : "-", tone: money?.hasOutstanding ? "danger" : "success" },
+          { label: "최근 치수 기록", value: latest ? formatInTz(latest.measuredAt, DEFAULT_TZ, "yyyy. M. d.") : "없음", tone: latest ? "default" : "muted" },
+        ]}
       />
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
     <div className="flex flex-col gap-4 lg:col-span-8">

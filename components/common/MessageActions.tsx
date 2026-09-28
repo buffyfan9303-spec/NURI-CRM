@@ -110,7 +110,7 @@ export function MessageActions({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           rows={4}
-          className="min-h-[88px] w-full resize-y rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2 text-[13px] text-t outline-none focus:border-[var(--accent)]"
+          className="min-h-[88px] w-full resize-y rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2 text-[13px] text-t outline-none focus:border-[var(--accent)] focus:shadow-ring"
         />
       </label>
       <div className="flex flex-wrap gap-2">

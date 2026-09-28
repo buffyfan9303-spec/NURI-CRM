@@ -198,6 +198,8 @@ export function CalendarClient({
   // 키보드는 dnd-kit KeyboardSensor(포커스 후 Space로 잡고 화살표로 이동, Space로 놓음)가 기본 대안이다.
   // 낙관적으로 먼저 옮기지 않는다 — 서버가 성공을 돌려줘야 router.refresh()로 실제 위치가 바뀐다.
   // 그래서 실패해도 "되돌릴 것"이 원래 없다(카드가 그 자리에 그대로 있음).
+  // dnd-kit 접근성 id 는 기본이 증가 카운터라 SSR/CSR 이 어긋나 hydration 경고(aria-describedby)가 났다 — useId 로 고정.
+  const dndId = React.useId();
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
@@ -315,7 +317,7 @@ export function CalendarClient({
   };
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext id={dndId} sensors={sensors} onDragEnd={handleDragEnd}>
     <div className="flex h-full flex-col">
       <Toolbar
         view={view}
@@ -364,7 +366,7 @@ export function CalendarClient({
               setTimeout(() => setRetryingFetch(false), 600);
             }}
             disabled={retryingFetch}
-            className="shrink-0 rounded-[var(--r-sm)] border border-et/40 px-2.5 py-1 font-medium hover:bg-et/10 disabled:opacity-60"
+            className="shrink-0 rounded-[var(--r-sm)] border border-[var(--et)] px-2.5 py-1 font-medium transition-colors duration-1 hover:bg-eb disabled:opacity-60 [@media(pointer:coarse)]:min-h-[44px]"
           >
             {retryingFetch ? "재시도 중…" : "다시 시도"}
           </button>

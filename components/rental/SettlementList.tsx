@@ -7,13 +7,14 @@ import { ChevronDown, ChevronRight, Download } from "@/lib/icons";
 import { cn } from "@/lib/utils/cn";
 import { formatKRW } from "@/lib/domain/money";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
-import { RESERVATION_STATUS_LABEL, PAYMENT_STATUS_LABEL, type ReservationRow, type ReservationBalance } from "@/lib/domain/rental-types";
+import { RESERVATION_STATUS_LABEL, RESERVATION_STATUS_BADGE, PAYMENT_STATUS_LABEL, type ReservationRow, type ReservationBalance } from "@/lib/domain/rental-types";
 import { SettlementPanel } from "./SettlementPanel";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Pager, usePager, FilterRow, SearchBox, TextAction, Alert, TABLE, THEAD, TH, TR_CLICK, TD } from "./listkit";
+import { Pager, usePager, FilterRow, SearchBox, TextAction, Alert, TABLE, THEAD, TH, TR_CLICK, TD, PILL, CELL_LINK } from "./listkit";
 import { TableOrCards, MobileCard } from "@/components/ui/ResponsiveTable";
 import { exportRentalSettlementCsv } from "@/lib/domain/export-actions";
 
@@ -81,6 +82,9 @@ export function SettlementList({
       period: `${formatInTz(r.periodStart, DEFAULT_TZ, "yyyy.MM.dd")} ~ ${formatInTz(r.periodEnd, DEFAULT_TZ, "yyyy.MM.dd")}`,
       status: RESERVATION_STATUS_LABEL[r.status],
       payment: flat ? PAYMENT_STATUS_LABEL[flat.paymentStatus] : "-",
+      // 상태는 pill(§5.2). 결제상태 색은 예약 상세와 같은 규칙(완납=초록, 미수=주황, 그 외=파랑).
+      statusBadge: <Badge kind={RESERVATION_STATUS_BADGE[r.status]}>{RESERVATION_STATUS_LABEL[r.status]}</Badge>,
+      paymentBadge: flat ? <Badge kind={flat.paymentStatus === "paid" ? "success" : flat.outstanding > 0 ? "warning" : "info"}>{PAYMENT_STATUS_LABEL[flat.paymentStatus]}</Badge> : <span className="text-t3">-</span>,
       revenue: flat ? formatKRW(flat.rentalRevenue) : "-",
       lateFee: flat ? formatKRW(flat.lateFee) : "-",
       deposit: flat ? formatKRW(flat.depositBalance) : "-",
@@ -112,7 +116,7 @@ export function SettlementList({
       <PageHeader
         title="정산"
         description="확정·출고·반납된 예약의 대여매출·연체료·보증금·수납을 항목별로 분리해 보여줍니다. 행을 펼치면 수납·환불을 처리합니다. 연령별 미수와 보관 보증금은 '미수금' 화면에서 봅니다."
-        meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">{reservations.length}건</span>}
+        meta={<span className={PILL}>{reservations.length}건</span>}
         actions={
           canExport ? (
             // R4: CSV 는 PC 작업 — 휴대폰(<sm)에서는 첫 동작으로 전폭 버튼이 서지 않게 숨긴다.
@@ -177,13 +181,13 @@ export function SettlementList({
                           <tr className={`${TR_CLICK} h-[52px]`} onClick={() => toggle(r.id)} aria-expanded={v.open}>
                             <td className="px-2 py-2.5 text-t3">{v.open ? <ChevronDown size={15} aria-hidden /> : <ChevronRight size={15} aria-hidden />}</td>
                             <td className={TD}>
-                              <Link href={v.href} prefetch={false} className="block max-w-[160px] truncate font-medium text-t hover:underline" title={v.customer} onClick={(e) => e.stopPropagation()}>
+                              <Link href={v.href} prefetch={false} className={`${CELL_LINK} max-w-[160px]`} title={v.customer} onClick={(e) => e.stopPropagation()}>
                                 {v.customer}
                               </Link>
                             </td>
                             <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.period}</td>
-                            <td className={`${TD} text-t2`}>{v.status}</td>
-                            <td className={`${TD} text-t2`}>{v.payment}</td>
+                            <td className={TD}>{v.statusBadge}</td>
+                            <td className={TD}>{v.paymentBadge}</td>
                             <td className={`${TD} text-right tabular-nums text-t2`}>{v.revenue}</td>
                             <td className={`${TD} text-right tabular-nums text-t2`}>{v.lateFee}</td>
                             <td className={`${TD} text-right tabular-nums text-t2`}>{v.deposit}</td>
@@ -213,7 +217,7 @@ export function SettlementList({
                   badge={<span className={cn("text-[12.5px] font-semibold tabular-nums", v.outstandingClass)}>미수 {v.outstanding}</span>}
                   onClick={() => toggle(r.id)}
                   fields={[
-                    ["상태", `${v.status} · ${v.payment}`],
+                    ["상태", <span key="s" className="inline-flex flex-wrap justify-end gap-1">{v.statusBadge}{v.paymentBadge}</span>],
                     ["대여매출", v.revenue],
                     ["연체료", v.lateFee],
                     ["보증금 잔액", v.deposit],

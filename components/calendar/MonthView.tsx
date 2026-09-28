@@ -133,7 +133,8 @@ export function MonthView({
               canDrag={canCreate}
               ariaLabel={`${dateKey}${holidayLabel ? ` ${holidayLabel}` : ""}${hasEvents ? ` 일정 ${dayEvents.length}건` : ""}`}
               className={cn(
-                "flex min-h-[92px] flex-col gap-1 border-b border-r border-[var(--bd)] p-1.5 outline-none",
+                "flex min-h-[92px] flex-col gap-1 border-b border-r border-[var(--bd)] p-1.5 outline-none transition-colors duration-1",
+                canCreate && "hover:bg-sf2",
                 // §5.6 주말의 "작은" 명도 구분 — 새 색 추가 없이 기존 sf2(보조 영역) 토큰만 재사용한다.
                 // 참고: 이 프로젝트의 색 토큰은 var(--x) 기반이라 bg-x/NN 같은 opacity modifier가
                 // 실제로는 CSS를 생성하지 않는다(확인함) — 반드시 불투명 유틸 클래스만 쓸 것.

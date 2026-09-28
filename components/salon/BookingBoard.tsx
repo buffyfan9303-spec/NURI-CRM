@@ -16,7 +16,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CalendarPlus, Banknote, History, MailCheck, CircleAlert } from "@/lib/icons";
+import { CalendarPlus, Banknote, History, MailCheck, CircleAlert, Menu as ListIcon, Columns2 } from "@/lib/icons";
+import { Segmented } from "@/components/common/Segmented";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -104,6 +105,7 @@ export function BookingBoard({
       noShow: noShowByCustomer[a.customerId] ?? 0,
       when: dateKey === todayKey ? `오늘 ${formatInTz(a.startAt, DEFAULT_TZ, "HH:mm")}` : formatInTz(a.startAt, DEFAULT_TZ, "M. d. (EEE) HH:mm"),
       until: formatInTz(a.endAt, DEFAULT_TZ, "HH:mm"),
+      durationMin: Math.max(0, Math.round((new Date(a.endAt).getTime() - new Date(a.startAt).getTime()) / 60000)),
       service: a.serviceName ?? "-",
       staff: staffName.get(a.staffId) ?? "-",
       price: formatKRW(a.price),
@@ -188,15 +190,24 @@ export function BookingBoard({
           <StatusTab active={showList} onClick={() => setParam("tab", null)}>오늘 예약</StatusTab>
           <StatusTab active={!showList} onClick={() => setParam("tab", "services")}>시술 메뉴</StatusTab>
         </div>
-        <FilterRow className={showList ? undefined : "max-sm:hidden"}>
-          <StatusTab active={todayOnly} onClick={() => setParam("date", null)}>오늘</StatusTab>
-          <StatusTab active={!todayOnly} onClick={() => setParam("date", "all")}>전체(최근 100건)</StatusTab>
-        </FilterRow>
-        {/* 목록 ↔ 담당자별 하루 보기 전환(dnd-kit, 유료 리소스 뷰 대신 직접 구현). */}
-        <FilterRow className={showList ? undefined : "max-sm:hidden"}>
-          <StatusTab active={!staffView} onClick={() => setParam("view", null)}>목록</StatusTab>
-          <StatusTab active={staffView} onClick={() => setParam("view", "staff")}>담당자별</StatusTab>
-        </FilterRow>
+        {/* 기간 필터(탭)와 보기 전환(세그먼트)을 한 줄에 — Cal.com 예약 화면의 "필터 왼쪽 · 보기 오른쪽". */}
+        <div className={`flex flex-wrap items-center justify-between gap-2 ${showList ? "" : "max-sm:hidden"}`}>
+          <FilterRow className="pb-0">
+            <StatusTab active={todayOnly} onClick={() => setParam("date", null)}>오늘</StatusTab>
+            <StatusTab active={!todayOnly} onClick={() => setParam("date", "all")}>전체(최근 100건)</StatusTab>
+          </FilterRow>
+          {/* 목록 ↔ 담당자별 하루 보기 전환(dnd-kit, 유료 리소스 뷰 대신 직접 구현). */}
+          <Segmented
+            ariaLabel="예약 보기 전환"
+            value={staffView ? "staff" : "list"}
+            onChange={(v) => setParam("view", v === "staff" ? "staff" : null)}
+            options={[
+              { value: "list", label: <><ListIcon size={13} aria-hidden />목록</> },
+              { value: "staff", label: <><Columns2 size={13} aria-hidden />담당자별</> },
+            ]}
+            className="max-sm:w-full"
+          />
+        </div>
       </PageHeader>
 
       {error && <Alert className="mb-4">{error}</Alert>}
@@ -251,13 +262,13 @@ export function BookingBoard({
                       return (
                         <tr key={a.id} className={`${TR} h-[52px] hover:bg-sf2`}>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>
-                            <span className="block font-medium text-t">{v.when}</span>
-                            <span className="block text-[11.5px] text-t3">~{v.until}</span>
+                            <span className="block font-medium text-t">{v.when}<span className="font-normal text-t3">–{v.until}</span></span>
+                            <span className="block text-[11.5px] text-t3">{v.durationMin}분</span>
                           </td>
                           <td className={TD}>
                             <span className="flex items-center gap-1.5">
                               <Link href={`/w/${businessId}/customers/${a.customerId}`} prefetch={false} className="inline-flex min-w-0 items-center hover:underline [@media(pointer:coarse)]:min-h-[44px]"><CellName max={160}>{v.customer}</CellName></Link>
-                              {v.noShow > 0 && <span className="shrink-0 rounded-[6px] bg-eb px-1.5 py-px text-[12px] font-bold text-et" title="이 고객의 누적 노쇼 이력">노쇼 {v.noShow}</span>}
+                              {v.noShow > 0 && <span className="shrink-0 rounded-[var(--r-sm)] bg-eb px-1.5 py-px text-[12px] font-bold text-et" title="이 고객의 누적 노쇼 이력">노쇼 {v.noShow}</span>}
                             </span>
                           </td>
                           <td className={`${TD} text-t2`}>
@@ -282,7 +293,7 @@ export function BookingBoard({
               return (
                 <MobileCard
                   title={v.customer}
-                  sub={<><span className="mr-1 tabular-nums">{v.when}~{v.until}</span>{v.noShow > 0 && <span className="rounded-[6px] bg-eb px-1.5 py-px text-[12px] font-bold text-et">노쇼 {v.noShow}</span>}<span className="min-w-0 truncate">{v.service}</span></>}
+                  sub={<><span className="mr-1 tabular-nums">{v.when}~{v.until}</span>{v.noShow > 0 && <span className="rounded-[var(--r-sm)] bg-eb px-1.5 py-px text-[12px] font-bold text-et">노쇼 {v.noShow}</span>}<span className="min-w-0 truncate">{v.service}</span></>}
                   badge={
                     <span className="flex items-center gap-1">
                       <Badge kind={SALON_STATUS_KIND[a.status] ?? "info"}>{a.status}</Badge>

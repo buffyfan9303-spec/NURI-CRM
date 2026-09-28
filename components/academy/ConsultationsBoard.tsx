@@ -152,8 +152,8 @@ export function ConsultationsBoard({ businessId, canWrite, canReadPii, consultat
           ["전환율", rate === null ? "—" : `${rate}%`, "text-[var(--accent-ink)]"],
         ].map(([l, v, cls]) => (
           <Card key={l} className="min-w-0 px-4 py-3.5">
-            <p className="text-[12px] text-t2">{l}</p>
-            <p className={`mt-1.5 truncate text-[22px] font-bold leading-none tabular-nums ${cls}`}>{v}</p>
+            <p className="text-[12px] font-medium text-t2">{l}</p>
+            <p className={`mt-1.5 truncate text-[18px] font-bold leading-tight tracking-[var(--tr-snug)] tabular-nums sm:text-[22px] ${cls}`}>{v}</p>
           </Card>
         ))}
       </div>

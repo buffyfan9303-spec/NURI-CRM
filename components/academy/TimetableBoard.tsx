@@ -142,7 +142,8 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
           {groups.map(([date, list]) => (
             <Card key={date} className="p-4 sm:p-5">
               <div className="mb-3 flex items-baseline justify-between gap-2">
-                <h2 className={`flex items-center gap-1.5 text-[var(--fs-card)] font-semibold ${date === todayKey ? "text-[var(--accent-ink)]" : "text-t"}`}>
+                <h2 className={`flex items-center gap-1.5 text-[length:var(--fs-card)] font-semibold tracking-[var(--tr-snug)] ${date === todayKey ? "text-[var(--accent-ink)]" : "text-t"}`}>
+                  {date === todayKey && <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--accent-strong)]" aria-hidden />}
                   {dateLabel(date)}
                   {holidayMap[date] && (
                     <Badge kind="error">{holidayMap[date]}</Badge>

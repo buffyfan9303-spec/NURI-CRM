@@ -15,12 +15,22 @@ import { ChevronLeft, ChevronRight, Shirt, Search, X, CircleAlert, CheckCircle2,
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/Button";
 
-/** 네이티브 select/input 공통 모양 — Input.tsx 와 같은 치수·경계·포커스. */
+/** 네이티브 select/input/textarea 공통 모양 — Input.tsx 와 같은 치수·경계·포커스(경계 강조색 + 3px 링, 디자인 시스템 §5.4). */
 export const CONTROL =
-  "h-[40px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[16px] text-t outline-none transition-colors sm:text-[13.5px] focus:border-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-50 [@media(pointer:coarse)]:h-[44px]";
+  "h-[40px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[16px] text-t outline-none transition-[border-color,box-shadow,background-color] duration-1 ease-out sm:text-[13.5px] hover:border-t2 focus:border-[var(--accent)] focus:shadow-ring disabled:cursor-not-allowed disabled:bg-sf2 disabled:text-t3 disabled:hover:border-[var(--bd2)] [@media(pointer:coarse)]:h-[44px]";
 /** 표 안의 작은 입력(PC 32px, 터치 44px). */
 export const CONTROL_SM =
-  "h-[32px] rounded-[var(--r-sm)] border border-[var(--bd2)] bg-sf px-2 text-[16px] text-t outline-none sm:text-[12.5px] focus:border-[var(--accent)] [@media(pointer:coarse)]:h-[44px]";
+  "h-[32px] rounded-[var(--r-sm)] border border-[var(--bd2)] bg-sf px-2 text-[16px] text-t outline-none transition-[border-color,box-shadow] duration-1 ease-out sm:text-[12.5px] hover:border-t2 focus:border-[var(--accent)] focus:shadow-ring disabled:bg-sf2 disabled:text-t3 [@media(pointer:coarse)]:h-[44px]";
+/** 여러 줄 입력 — CONTROL 에서 높이만 뺀다. */
+export const TEXTAREA =
+  "w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2.5 text-[16px] leading-relaxed text-t outline-none transition-[border-color,box-shadow] duration-1 ease-out sm:text-[13.5px] hover:border-t2 focus:border-[var(--accent)] focus:shadow-ring disabled:bg-sf2 disabled:text-t3";
+
+/**
+ * 중립 pill — 상태가 아닌 분류·태그·건수(항목 상태, 업무 유형, 고객 태그, 헤더 건수)에 쓴다.
+ * Badge 와 같은 치수(11.5px/600/rounded-full/안쪽 1px 링)라 한 줄에 섞여도 높이가 같다. 색으로 뜻을 나타내지 않는다.
+ */
+export const PILL =
+  "inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sf2 px-2 py-[2px] text-[11.5px] font-semibold leading-[16px] text-t2 shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_14%,transparent)] tabular-nums";
 
 export function SelectField({
   label,
@@ -63,10 +73,10 @@ export function StatusTab({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border px-3 text-[12.5px] font-medium transition-colors [@media(pointer:coarse)]:h-[44px]",
+        "inline-flex h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border px-3 text-[12.5px] font-medium transition-[background-color,border-color,color,transform] duration-1 ease-out active:scale-[.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [@media(pointer:coarse)]:h-[44px]",
         active
           ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]"
-          : "border-[var(--bd)] bg-sf text-t2 hover:bg-sf2 hover:text-t"
+          : "border-[var(--bd)] bg-sf text-t2 hover:border-[var(--bd-strong)] hover:bg-sf2 hover:text-t"
       )}
     >
       {children}
@@ -246,13 +256,55 @@ export function ViewAll({ href, children = "전체 보기" }: { href: string; ch
   );
 }
 
-/** 표 공통 클래스 — 카드 안에서 쓴다(카드가 경계를 이미 가지므로 표에 다시 테두리를 두르지 않는다). */
+/**
+ * 표 공통 클래스 — 카드 안에서 쓴다(카드가 경계를 이미 가지므로 표에 다시 테두리를 두르지 않는다).
+ * 2단계 a(Linear/Airtable 표 밀도): 머리글은 `sf2` 면 + 12px/500 `t2`(흰 면 위 5.6:1), 행은 `bd` 하이라인,
+ * hover `sf2` 120ms, 행 등장은 `animate-rise`(240ms, reduced-motion 이면 전역 규칙이 0ms). 숫자 열은 호출부가 `tabular-nums text-right`.
+ */
 export const TABLE = "w-full border-collapse text-[13px]";
-export const THEAD = "border-b border-[var(--bd)] text-left text-[11.5px] font-medium text-t3";
-export const TH = "px-3 py-2.5 font-medium whitespace-nowrap";
-export const TR = "border-b border-[var(--bd)] last:border-b-0";
-export const TR_CLICK = "border-b border-[var(--bd)] last:border-b-0 cursor-pointer transition-colors hover:bg-sf2 focus-within:bg-sf2";
+export const THEAD = "border-b border-[var(--bd)] bg-sf2/60 text-left text-[12px] font-medium text-t2";
+export const TH = "h-[40px] px-3 py-2 font-medium whitespace-nowrap";
+export const TR = "animate-rise border-b border-[var(--bd)] last:border-b-0 transition-[background-color] duration-1 ease-out";
+export const TR_CLICK = `${TR} cursor-pointer hover:bg-sf2 focus-within:bg-sf2 active:bg-sf3`;
 export const TD = "px-3 py-2.5 align-middle";
+/**
+ * 표 셀 안의 이름 링크/버튼(행 전체 클릭 + 실제 조작 요소 하나, §5.3). 줄상자 20px 로는 터치 기준 미달이라
+ * PC 28px·터치 44px 를 세로 음수 여백으로 흡수해 행 높이(52px)를 바꾸지 않는다. 호출부는 truncate 폭만 준다.
+ */
+export const CELL_LINK =
+  "-my-1 block max-w-full truncate text-left font-medium leading-[28px] text-t hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--accent)] [@media(pointer:coarse)]:-my-3 [@media(pointer:coarse)]:leading-[44px]";
+
+/**
+ * 상세 화면 요약 줄(Stripe/Linear 상세 헤더): PageHeader 바로 아래, 핵심 수치 3~6개를 한 줄로.
+ * 값은 이미 포맷된 문자열/노드. tone 은 값 색만 바꾼다(빨강=지연·미수, 초록=완료, 기본=본문).
+ * 휴대폰은 2열, 태블릿 이상은 자동 채움. 카드 안 카드가 아니라 카드 하나에 구분선으로 나눈다.
+ */
+export function SummaryStrip({
+  items,
+  className,
+}: {
+  items: { label: string; value: React.ReactNode; tone?: "default" | "danger" | "success" | "muted"; hint?: string }[];
+  className?: string;
+}) {
+  if (items.length === 0) return null;
+  const tone = { default: "text-t", danger: "text-et", success: "text-okt", muted: "text-t2" };
+  return (
+    // flex-wrap + 최소 폭: 마지막 줄의 칸이 남은 폭을 채워 빈 회색 칸(grid 의 빈 슬롯)이 생기지 않는다. 1px 틈이 구분선.
+    <dl
+      className={cn(
+        "mb-4 flex flex-wrap gap-px overflow-hidden rounded-[var(--r-lg)] border border-[var(--bd)] bg-[var(--bd)] shadow-card",
+        className
+      )}
+    >
+      {items.map((it) => (
+        <div key={it.label} className="min-w-0 flex-[1_1_140px] bg-sf px-4 py-3" title={it.hint}>
+          <dt className="truncate text-[11.5px] font-medium text-t3">{it.label}</dt>
+          <dd className={cn("mt-0.5 truncate text-[15px] font-semibold tabular-nums tracking-[var(--tr-snug)]", tone[it.tone ?? "default"])}>{it.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
 
 /** 오류/성공/주의 인라인 알림 한 줄. */
 export function Alert({ kind = "error", children, className }: { kind?: "error" | "success" | "warning"; children: React.ReactNode; className?: string }) {

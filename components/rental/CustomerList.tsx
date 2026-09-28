@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
 import { createCustomer } from "@/lib/domain/rental-actions";
 import type { CustomerRow } from "@/lib/domain/rental-types";
-import { Pager, usePager, FilterRow, SearchBox, TextAction, Alert, TABLE, THEAD, TH, TR_CLICK, TD } from "./listkit";
+import { Pager, usePager, FilterRow, SearchBox, TextAction, Alert, TABLE, THEAD, TH, TR_CLICK, TD, PILL, CELL_LINK } from "./listkit";
 import { TableOrCards, MobileCard } from "@/components/ui/ResponsiveTable";
 import { AddressInput } from "@/components/common/AddressInput";
 import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
@@ -84,7 +84,7 @@ export function CustomerList({
       nextVisit: a?.nextVisit ? formatInTz(a.nextVisit, DEFAULT_TZ, "yyyy.MM.dd") : "-",
       open: a && a.openCount > 0 ? `진행 ${a.openCount}건` : "-",
       createdAt: formatInTz(c.createdAt, DEFAULT_TZ, "yyyy.MM.dd"),
-      tags: c.tags.length > 0 ? c.tags.map((t) => <span key={t} className="rounded-[5px] bg-sf2 px-1.5 py-px text-[12px] text-t2">{t}</span>) : null,
+      tags: c.tags.length > 0 ? c.tags.map((t) => <span key={t} className={PILL}>{t}</span>) : null,
     };
   };
 
@@ -97,7 +97,7 @@ export function CustomerList({
             ? "연락처·방문 이력을 확인합니다. 신체 치수는 고객 상세에서 관리합니다."
             : "고객 개인정보 조회(pii.read) 권한이 없어 이름·태그·방문 이력만 표시됩니다."
         }
-        meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">{customers.length}명</span>}
+        meta={<span className={PILL}>{customers.length}명</span>}
         actions={
           <Button
             onClick={() => setOpen(true)}
@@ -157,7 +157,7 @@ export function CustomerList({
                       return (
                         <tr key={c.id} onClick={() => openRow(c)} className={`${TR_CLICK} h-[52px]`}>
                           <td className={`${TD} font-medium text-t`}>
-                            <Link href={v.href} className="block max-w-[180px] truncate hover:underline" title={c.name} onClick={(e) => e.stopPropagation()}>
+                            <Link href={v.href} className={`${CELL_LINK} max-w-[180px]`} title={c.name} onClick={(e) => e.stopPropagation()}>
                               {c.name}
                             </Link>
                           </td>

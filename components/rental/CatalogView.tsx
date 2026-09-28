@@ -25,7 +25,7 @@ import {
   type UnitStatus,
 } from "@/lib/domain/rental-types";
 import { createProduct, createSku, createUnit, createProductPart, setUnitStatus, updateUnitAction, checkAvailabilityAction, inspectReturnedUnit } from "@/lib/domain/rental-actions";
-import { StatusTab, Pager, usePager, Thumb, FilterRow, SearchBox, TextAction, CONTROL_SM, TABLE, THEAD, TH, TR_CLICK, TD } from "./listkit";
+import { StatusTab, Pager, usePager, Thumb, FilterRow, SearchBox, TextAction, CONTROL_SM, TABLE, THEAD, TH, TR_CLICK, TD, PILL, CELL_LINK } from "./listkit";
 import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
 
 const STATUS_CLASS: Record<UnitStatus, string> = {
@@ -170,7 +170,7 @@ export function CatalogView({
       <PageHeader
         title="상품·개체"
         description="상품(스타일) → SKU(색상×사이즈) → 개체(실물 1점) 순서로 관리합니다. 개체를 누르면 편집·QR·가용성을 확인합니다."
-        meta={<span className="rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">개체 {flat.length}</span>}
+        meta={<span className={PILL}>개체 {flat.length}</span>}
         actions={
           <Button
             onClick={() => setNewProductOpen(true)}
@@ -247,7 +247,17 @@ export function CatalogView({
                                 <CellName max={240}>{p.name}</CellName>
                                 <div className="text-[11.5px] text-t3"><span className="font-mono">{p.code}</span> · {v.sku}</div>
                               </td>
-                              <td className={`${TD} font-mono text-t`}>{u.unitCode}</td>
+                              <td className={`${TD} font-mono text-t`}>
+                                {/* 행 전체가 클릭 영역, 실제 조작 요소는 개체코드 하나(§5.3) — 키보드로도 개체 시트를 연다. */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setSelected(f); }}
+                                  className={`${CELL_LINK} font-mono`}
+                                  aria-label={`${u.unitCode} 개체 상세 열기`}
+                                >
+                                  {u.unitCode}
+                                </button>
+                              </td>
                               <td className={TD}>{v.badge}</td>
                               <td className={`${TD} text-t2`}>{v.location}</td>
                               <td className={`${TD} text-right tabular-nums text-t2`}>{v.rentals}</td>
@@ -288,7 +298,7 @@ export function CatalogView({
         <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[var(--fs-card)] font-semibold text-t hover:bg-sf2 [&::-webkit-details-marker]:hidden">
           <span>
             상품·SKU·구성품 관리
-            <span className="ml-2 rounded-full bg-sf2 px-2 py-0.5 text-[12px] font-medium tabular-nums text-t2">상품 {products.length}종</span>
+            <span className={`ml-2 ${PILL}`}>상품 {products.length}종</span>
           </span>
           <ChevronDown size={16} className="shrink-0 text-t3 transition-transform group-open:rotate-180" aria-hidden />
         </summary>
@@ -548,7 +558,7 @@ function ProductCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-[11.5px] text-t3">{product.code}</span>
             <h3 className="text-[14px] font-semibold text-t">{product.name}</h3>
-            <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[12px] text-t2">{product.category}</span>
+            <span className={PILL}>{product.category}</span>
             {!product.active && <span className="rounded-[6px] bg-sf3 px-1.5 py-0.5 text-[12px] text-t3">비활성</span>}
           </div>
           <div className="mt-1 flex flex-wrap gap-3 text-[12px] text-t2">

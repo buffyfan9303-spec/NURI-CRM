@@ -8,6 +8,7 @@ import { accessMessage, CAP_LABEL } from "@/lib/auth/access";
 import { listStaff } from "@/lib/domain/staff";
 import { getAccess } from "../access";
 import { StaffTable } from "./StaffTable";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function StaffPage({ params }: { params: { businessId: string } }) {
   const access = await getAccess(params.businessId, "staff.manage");
@@ -40,9 +41,8 @@ export default async function StaffPage({ params }: { params: { businessId: stri
 
   return (
     <div className="mx-auto max-w-[1180px] p-4 md:p-6">
-      <h1 className="mb-1 text-[18px] font-semibold text-t">직원·권한 관리</h1>
       {/* C6: 개발자 문구(Supabase Auth·user_id) 대신 사용자에게 필요한 한 줄만. */}
-      <p className="mb-4 text-[12.5px] text-t2">역할·권한 변경은 즉시 저장됩니다.</p>
+      <PageHeader title="직원·권한 관리" description="역할·권한 변경은 즉시 저장됩니다." />
       <StaffTable
         businessId={access.businessId}
         currentUserId={access.userId}

@@ -151,7 +151,7 @@ export function AddressInput({
           value={parsed.zonecode ? `[${parsed.zonecode}] ${parsed.base}` : parsed.base}
           placeholder="주소 검색을 눌러 주소를 찾으세요"
           onClick={() => setSearchOpen(true)}
-          className="h-[40px] w-full min-w-0 flex-1 cursor-pointer rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-[16px] text-t outline-none sm:text-[13.5px] [@media(pointer:coarse)]:h-[44px]"
+          className="h-[40px] w-full min-w-0 flex-1 cursor-pointer rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-[16px] text-t outline-none transition-[border-color,box-shadow] duration-1 placeholder:text-t3 hover:border-[var(--t2)] focus:border-[var(--accent)] focus:shadow-ring sm:text-[13.5px] [@media(pointer:coarse)]:h-[44px]"
         />
         <Button type="button" variant="secondary" onClick={() => setSearchOpen(true)} className="shrink-0">
           <MapPin size={15} aria-hidden />
@@ -166,7 +166,7 @@ export function AddressInput({
           onChange(joinAddressValue(parsed.zonecode, parsed.base, e.target.value));
         }}
         placeholder="상세 주소(동·호수 등)"
-        className="mt-1.5 h-[40px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-[16px] text-t outline-none sm:text-[13.5px] [@media(pointer:coarse)]:h-[44px]"
+        className="mt-1.5 h-[40px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-[16px] text-t outline-none transition-[border-color,box-shadow] duration-1 placeholder:text-t3 hover:border-[var(--t2)] focus:border-[var(--accent)] focus:shadow-ring sm:text-[13.5px] [@media(pointer:coarse)]:h-[44px]"
       />
       {searchOpen && <PostcodeOverlay onComplete={handleComplete} onClose={() => setSearchOpen(false)} />}
     </div>

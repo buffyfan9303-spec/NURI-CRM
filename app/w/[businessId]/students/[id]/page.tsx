@@ -91,7 +91,7 @@ export default async function StudentDetailPage({
   const invoicesError = invoicesRes && !invoicesRes.ok ? invoicesRes.message : null;
 
   return (
-    <div className="mx-auto max-w-[900px] p-4 md:p-6">
+    <div className="mx-auto max-w-[1180px] p-4 md:p-6">
       <StudentDetail
         businessId={access.businessId}
         student={studentRes.data}

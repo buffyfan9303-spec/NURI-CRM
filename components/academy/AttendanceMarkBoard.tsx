@@ -19,15 +19,12 @@ import type { AcadStudent } from "@/lib/domain/academy";
 import { markStudentAttendance } from "@/lib/domain/academy-actions";
 import { academyAttendanceNotice } from "@/lib/domain/messages";
 import { MessageActions } from "@/components/common/MessageActions";
+import { Segmented } from "@/components/common/Segmented";
 
 const STATUSES = ["출석", "지각", "결석", "조퇴"] as const;
 const NOTICE_STATUSES = new Set<string>(["결석", "지각", "조퇴"]);
-const ACTIVE_CLASS: Record<(typeof STATUSES)[number], string> = {
-  출석: "border-[var(--okt)] bg-okb text-okt",
-  지각: "border-[var(--wt)] bg-wb text-wt",
-  결석: "border-[var(--et)] bg-eb text-et",
-  조퇴: "border-[var(--wt)] bg-wb text-wt",
-};
+const TONE: Record<(typeof STATUSES)[number], "success" | "warning" | "error"> = { 출석: "success", 지각: "warning", 결석: "error", 조퇴: "warning" };
+const DOT: Record<(typeof STATUSES)[number], string> = { 출석: "bg-okt", 지각: "bg-wt", 결석: "bg-et", 조퇴: "bg-wt" };
 
 export function AttendanceMarkBoard({ businessId, businessName, canWrite, sessionId, className, sessionDate, sessionTime, students, existing }: {
   businessId: string; businessName: string; canWrite: boolean; sessionId: string; className: string; sessionDate: string; sessionTime?: string; students: AcadStudent[]; existing: Record<string, string>;
@@ -85,45 +82,45 @@ export function AttendanceMarkBoard({ businessId, businessName, canWrite, sessio
         <EmptyState title="이 회차에 등록된 학생이 없습니다." description="반·수강등록에서 학생을 등록하면 여기에 나타납니다." />
       ) : (
         <>
-          <ul className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-t3">
-            {counts.map(([st, n]) => <li key={st}><span className="font-medium text-t2">{st}</span> <span className="tabular-nums">{n}</span></li>)}
-          </ul>
-          <ul className="-mx-4 flex flex-col divide-y divide-[var(--bd)] sm:-mx-5">
+          {/* 요약: 상태별 건수 + 진행 막대(입력 완료 비율). */}
+          <div className="mb-3 flex flex-col gap-2">
+            <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-t3">
+              {counts.map(([st, n]) => (
+                <li key={st} className="inline-flex items-center gap-1.5">
+                  <span className={cn("h-2 w-2 rounded-full", DOT[st])} aria-hidden />
+                  <span className="font-medium text-t2">{st}</span> <span className="tabular-nums">{n}</span>
+                </li>
+              ))}
+              <li className="ml-auto tabular-nums">입력 {students.length - uncheckedCount}/{students.length}</li>
+            </ul>
+            <span className="block h-1.5 w-full overflow-hidden rounded-full bg-sf2" role="progressbar" aria-label="출결 입력 진행" aria-valuemin={0} aria-valuemax={students.length} aria-valuenow={students.length - uncheckedCount}>
+              <span className="block h-full rounded-full bg-[var(--accent-strong)] transition-[width] duration-3 ease-out" style={{ width: `${students.length ? ((students.length - uncheckedCount) / students.length) * 100 : 0}%` }} />
+            </span>
+          </div>
+          <ul className="-mx-4 flex flex-col sm:-mx-5">
             {students.map((s) => {
               const marked = existing[s.id];
               const rowBusy = busy === s.id || busy === "__all__";
               return (
-                <li key={s.id} className={cn("flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-5", marked === undefined && "bg-wb/40")}>
+                <li key={s.id} className={cn("flex flex-col gap-2 border-l-2 border-t border-t-[var(--bd)] px-4 py-2.5 transition-colors duration-1 first:border-t-0 sm:flex-row sm:items-center sm:justify-between sm:px-5", marked === undefined ? "border-l-[var(--wt)] bg-wb" : "border-l-transparent")}>
                   <span className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sf2 text-[12px] font-semibold text-t2" aria-hidden>{s.name.slice(0, 2)}</span>
+                    <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold", marked ? "bg-sf2 text-t2" : "bg-sf text-wt shadow-[inset_0_0_0_1px_var(--wt)]")} aria-hidden>{s.name.slice(0, 2)}</span>
                     <span className="min-w-0">
                       <span className="block truncate text-[13.5px] font-medium text-t">{s.name}</span>
-                      <span className="block text-[12px] text-t3">{marked === undefined ? "미입력" : [s.grade, s.school].filter(Boolean).join(" · ") || "입력됨"}</span>
+                      <span className={cn("block text-[12px]", marked === undefined ? "font-medium text-wt" : "text-t3")}>{marked === undefined ? "미입력" : [s.grade, s.school].filter(Boolean).join(" · ") || "입력됨"}</span>
                     </span>
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span role="radiogroup" aria-label={`${s.name} 출결`} className="inline-flex rounded-[var(--r-md)] border border-[var(--bd)] bg-sf p-0.5">
-                      {STATUSES.map((st) => {
-                        const on = marked === st;
-                        return (
-                          <button
-                            key={st}
-                            type="button"
-                            role="radio"
-                            aria-checked={on}
-                            disabled={!canWrite || rowBusy}
-                            onClick={() => setStatus(s.id, st)}
-                            className={cn(
-                              "h-[32px] min-w-[52px] rounded-[8px] border px-2.5 text-[12.5px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 [@media(pointer:coarse)]:h-[44px] [@media(pointer:coarse)]:min-w-[60px]",
-                              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--accent)]",
-                              on ? ACTIVE_CLASS[st] : "border-transparent text-t2 hover:bg-sf2 hover:text-t"
-                            )}
-                          >
-                            {st}
-                          </button>
-                        );
-                      })}
-                    </span>
+                    {/* 세그먼트: 활성 조각이 상태 색(출석 녹색·지각/조퇴 주황·결석 빨강)으로 미끄러진다. */}
+                    <Segmented
+                      role="radiogroup"
+                      ariaLabel={`${s.name} 출결`}
+                      value={marked && (STATUSES as readonly string[]).includes(marked) ? (marked as (typeof STATUSES)[number]) : null}
+                      onChange={(st) => setStatus(s.id, st)}
+                      disabled={!canWrite || rowBusy}
+                      options={STATUSES.map((st) => ({ value: st, label: st, tone: TONE[st] }))}
+                      className="max-sm:flex-1"
+                    />
                     {marked && NOTICE_STATUSES.has(marked) ? (
                       <button
                         type="button"

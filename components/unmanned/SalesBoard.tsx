@@ -153,7 +153,7 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
       <PageHeader
         title="매출 기록"
         description="직접 입력한 판매와 CSV로 가져온 키오스크 판매를 출처별로 구분해 기록합니다. 가져온 기록은 대사 확정 후에만 재고가 줄어듭니다."
-        meta={pendingByFile.size > 0 ? <span className="rounded-full bg-wb px-2 py-0.5 text-[12px] font-medium text-wt">대사 대기 {Array.from(pendingByFile.values()).reduce((a, b) => a + b, 0)}건</span> : undefined}
+        meta={pendingByFile.size > 0 ? <Badge kind="warning">대사 대기 {Array.from(pendingByFile.values()).reduce((a, b) => a + b, 0)}건</Badge> : undefined}
         actions={
           canWrite ? (
             <>
