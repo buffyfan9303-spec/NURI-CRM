@@ -19,17 +19,27 @@ import { CardHead, Alert, SearchBox, TABLE, THEAD, TH, TR, TD, CONTROL_SM } from
 import type { RetailItem } from "@/lib/domain/salon";
 import { createRetailItem, sellRetailItem, addRetailStock } from "@/lib/domain/salon-actions";
 import { formatKRW } from "@/lib/domain/money";
+import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 export function RetailBoard({ businessId, canWrite, canAdjust, items }: { businessId: string; canWrite: boolean; canAdjust: boolean; items: RetailItem[] }) {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [open, setOpen] = React.useState(false);
-  const [q, setQ] = React.useState("");
+  const [q, setQ] = useUrlParam("q");
+  const [sorting, setSorting] = useUrlSorting();
   const [sellQty, setSellQty] = React.useState<Record<string, string>>({});
   const [inboundFor, setInboundFor] = React.useState<RetailItem | null>(null);
 
-  const filtered = q.trim() ? items.filter((it) => it.name.toLowerCase().includes(q.trim().toLowerCase())) : items;
+  const filteredItems = q.trim() ? items.filter((it) => it.name.toLowerCase().includes(q.trim().toLowerCase())) : items;
+  const { sortedRows: filtered, getColumn } = useSortedRows<RetailItem>(
+    filteredItems,
+    { name: (it) => it.name, stockQty: (it) => it.stockQty, price: (it) => it.price },
+    sorting,
+    setSorting
+  );
   const lowCount = items.filter((it) => it.stockQty <= it.lowStockThreshold).length;
 
   const sell = async (it: RetailItem) => {
@@ -71,9 +81,9 @@ export function RetailBoard({ businessId, canWrite, canAdjust, items }: { busine
             <table className={`${TABLE} min-w-[520px]`}>
               <thead>
                 <tr className={THEAD}>
-                  <th className={TH}>상품</th>
-                  <th className={`${TH} text-right`}>재고</th>
-                  <th className={`${TH} text-right`}>가격</th>
+                  <SortableTh column={getColumn("name")} label="상품" className={TH} />
+                  <SortableTh column={getColumn("stockQty")} label="재고" className={`${TH} text-right`} align="right" />
+                  <SortableTh column={getColumn("price")} label="가격" className={`${TH} text-right`} align="right" />
                   {canAdjust && <th className={`${TH} text-right`}>판매</th>}
                 </tr>
               </thead>

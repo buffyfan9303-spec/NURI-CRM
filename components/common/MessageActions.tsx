@@ -7,8 +7,9 @@
  * 클립보드 실패(권한 없음/비보안 컨텍스트)는 조용히 무시하지 않고 숨겨진 textarea + execCommand로 폴백한다.
  */
 import * as React from "react";
-import { CircleAlert, Check, Copy, Share2, MessageSquare, Phone } from "@/lib/icons";
+import { CircleAlert, Copy, Share2, MessageSquare, Phone } from "@/lib/icons";
 import { Button } from "@/components/ui/Button";
+import { toast } from "@/components/ui/toast";
 import { smsHref, telHref } from "@/lib/domain/messages";
 
 async function copyText(text: string): Promise<boolean> {
@@ -55,13 +56,10 @@ export function MessageActions({
   title?: string;
 }) {
   const [value, setValue] = React.useState(text);
-  const [copied, setCopied] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const copiedTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 부모가 넘기는 초기 문구가 바뀌면(다른 대상으로 전환 등) 편집 중이던 값도 따라간다.
   React.useEffect(() => setValue(text), [text]);
-  React.useEffect(() => () => { if (copiedTimer.current) clearTimeout(copiedTimer.current); }, []);
 
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
@@ -69,9 +67,8 @@ export function MessageActions({
     setError(null);
     const ok = await copyText(value);
     if (!ok) { setError("복사하지 못했습니다. 문구를 길게 눌러 직접 복사해 주세요."); return; }
-    setCopied(true);
-    if (copiedTimer.current) clearTimeout(copiedTimer.current);
-    copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+    // 성공은 토스트(짧은 알림), 실패는 위 인라인 alert 에 남긴다.
+    toast.success("문구를 복사했습니다.");
   };
 
   const handleShare = async () => {
@@ -105,12 +102,6 @@ export function MessageActions({
         <div role="alert" className="flex items-start gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-eb px-3.5 py-2.5 text-[12.5px] text-et">
           <CircleAlert size={15} className="mt-[1px] shrink-0" aria-hidden />
           <span>{error}</span>
-        </div>
-      )}
-      {copied && (
-        <div role="status" className="flex items-start gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-okb px-3.5 py-2.5 text-[12.5px] text-okt">
-          <Check size={15} className="mt-[1px] shrink-0" aria-hidden />
-          <span>문구를 복사했습니다.</span>
         </div>
       )}
       <label className="flex flex-col gap-1 text-[12.5px] font-medium text-t2">

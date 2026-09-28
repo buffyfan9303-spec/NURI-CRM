@@ -15,6 +15,10 @@ import { createCustomer } from "@/lib/domain/rental-actions";
 import type { CustomerRow } from "@/lib/domain/rental-types";
 import { Pager, usePager, FilterRow, SearchBox, TextAction, Alert, TABLE, THEAD, TH, TR_CLICK, TD } from "./listkit";
 import { TableOrCards, MobileCard } from "@/components/ui/ResponsiveTable";
+import { AddressInput } from "@/components/common/AddressInput";
+import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 export interface CustomerActivity {
   lastVisit: string | null;
@@ -39,15 +43,27 @@ export function CustomerList({
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [q, setQ] = React.useState("");
+  const [q, setQ] = useUrlParam("q");
+  const [sorting, setSorting] = useUrlSorting();
 
   const needle = q.trim();
   const filtered = needle
     ? customers.filter((c) => c.name.includes(needle) || (c.phone ?? "").includes(needle))
     : customers;
 
-  const { page, setPage, totalPages, pageRows } = usePager(filtered, PAGE_SIZE);
-  React.useEffect(() => setPage(1), [needle, setPage]);
+  const { sortedRows, getColumn } = useSortedRows<CustomerRow>(
+    filtered,
+    {
+      name: (c) => c.name,
+      lastVisit: (c) => activity[c.id]?.lastVisit ?? "",
+      nextVisit: (c) => activity[c.id]?.nextVisit ?? "",
+      createdAt: (c) => c.createdAt,
+    },
+    sorting,
+    setSorting
+  );
+  const { page, setPage, totalPages, pageRows } = usePager(sortedRows, PAGE_SIZE);
+  React.useEffect(() => setPage(1), [needle, sorting, setPage]);
 
   // 표와 카드가 같은 값·같은 동작을 쓰도록 한 곳에서 계산한다.
   const openRow = (c: CustomerRow) => router.push(`/w/${businessId}/customers/${c.id}`);
@@ -126,13 +142,13 @@ export function CustomerList({
                 <table className={`${TABLE} min-w-[860px]`}>
                   <thead>
                     <tr className={THEAD}>
-                      <th className={TH}>이름</th>
+                      <SortableTh column={getColumn("name")} label="이름" className={TH} />
                       <th className={TH}>연락처</th>
-                      <th className={TH}>최근 방문</th>
-                      <th className={TH}>다음 방문</th>
+                      <SortableTh column={getColumn("lastVisit")} label="최근 방문" className={TH} />
+                      <SortableTh column={getColumn("nextVisit")} label="다음 방문" className={TH} />
                       <th className={TH}>진행 업무</th>
                       <th className={TH}>태그</th>
-                      <th className={TH}>등록일</th>
+                      <SortableTh column={getColumn("createdAt")} label="등록일" className={TH} />
                     </tr>
                   </thead>
                   <tbody>
@@ -219,13 +235,14 @@ function NewCustomerModal({
 }) {
   const [name, setName] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [address, setAddress] = React.useState("");
   const [memo, setMemo] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   // CLICK-PATH-212: 취소 후 다시 열면 이전 입력이 남지 않게 open 전환 시 초기화.
   React.useEffect(() => {
-    if (open) { setName(""); setPhone(""); setMemo(""); setError(null); }
+    if (open) { setName(""); setPhone(""); setAddress(""); setMemo(""); setError(null); }
   }, [open]);
 
   const submit = async () => {
@@ -235,7 +252,7 @@ function NewCustomerModal({
     }
     setBusy(true);
     setError(null);
-    const r = await createCustomer(businessId, { name: name.trim(), phone: phone.trim(), memo: memo.trim() });
+    const r = await createCustomer(businessId, { name: name.trim(), phone: phone.trim(), address: address.trim(), memo: memo.trim() });
     setBusy(false);
     if (!r.ok) {
       setError(r.message);
@@ -243,6 +260,7 @@ function NewCustomerModal({
     }
     setName("");
     setPhone("");
+    setAddress("");
     setMemo("");
     onCreated();
   };
@@ -267,6 +285,7 @@ function NewCustomerModal({
         {error && <Alert className="mb-3">{error}</Alert>}
         <Input label="이름" required value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
         <Input label="전화번호" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="010-0000-0000" inputMode="tel" />
+        <AddressInput label="주소" value={address} onChange={setAddress} />
         <Input label="메모" value={memo} onChange={(e) => setMemo(e.target.value)} wrapperClassName="mb-0" />
       </form>
     </Modal>

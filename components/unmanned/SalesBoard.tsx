@@ -18,6 +18,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import type { UsProduct, UsSalesRecord } from "@/lib/domain/unmanned";
 import { recordManualSale, importSalesCsv, confirmReconciliation } from "@/lib/domain/unmanned-actions";
 import { CardHead, SelectField, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
+import { useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 interface CsvRow { sku: string; qty: number; amount: number; soldAt: string }
 
@@ -130,8 +133,20 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
   }, [records]);
 
   const productName = React.useMemo(() => new Map(products.map((p) => [p.id, p.name])), [products]);
-  const recent = records.slice(0, 30);
-  const recentTotal = canReadRevenue ? recent.reduce((s, r) => s + r.amount, 0) : 0;
+  const recentBase = records.slice(0, 30);
+  const [sorting, setSorting] = useUrlSorting();
+  const { sortedRows: recent, getColumn } = useSortedRows<UsSalesRecord>(
+    recentBase,
+    {
+      soldAt: (r) => r.soldAt,
+      product: (r) => (r.productId && productName.get(r.productId)) || r.rawSku || "",
+      qty: (r) => r.qty,
+      amount: (r) => r.amount,
+    },
+    sorting,
+    setSorting
+  );
+  const recentTotal = canReadRevenue ? recentBase.reduce((s, r) => s + r.amount, 0) : 0;
 
   return (
     <>
@@ -194,10 +209,10 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
               <table className={`${TABLE} min-w-[560px]`}>
                 <thead>
                   <tr className={THEAD}>
-                    <th className={TH}>판매일</th>
-                    <th className={TH}>상품</th>
-                    <th className={`${TH} text-right`}>수량</th>
-                    <th className={`${TH} text-right`}>금액</th>
+                    <SortableTh column={getColumn("soldAt")} label="판매일" className={TH} />
+                    <SortableTh column={getColumn("product")} label="상품" className={TH} />
+                    <SortableTh column={getColumn("qty")} label="수량" className={`${TH} text-right`} align="right" />
+                    <SortableTh column={getColumn("amount")} label="금액" className={`${TH} text-right`} align="right" />
                     <th className={TH}>출처</th>
                   </tr>
                 </thead>

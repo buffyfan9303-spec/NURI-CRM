@@ -19,6 +19,9 @@ import {
 } from "@/lib/domain/rental-types";
 import { StatusTab, Pager, usePager, FilterRow, SearchBox, TextAction, TABLE, THEAD, TH, TR_CLICK, TD } from "./listkit";
 import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
+import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 const ALL_STATUS: ReservationStatus[] = ["draft", "confirmed", "out", "partial_return", "returned", "closed", "cancelled"];
 
@@ -60,7 +63,8 @@ export function ReservationList({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [q, setQ] = React.useState(searchParams.get("q") ?? "");
-  const [status, setStatus] = React.useState<ReservationStatus | "all">("all");
+  const [status, setStatus] = useUrlParam("status", "all");
+  const [sorting, setSorting] = useUrlSorting();
 
   const setParam = (key: string, value: string | null) => {
     const sp = new URLSearchParams(searchParams.toString());
@@ -83,8 +87,18 @@ export function ReservationList({
     [reservations, status]
   );
 
-  const { page, setPage, totalPages, pageRows } = usePager(filtered, PAGE_SIZE);
-  React.useEffect(() => setPage(1), [status, reservations, setPage]);
+  const { sortedRows, getColumn } = useSortedRows<ReservationRow>(
+    filtered,
+    {
+      customer: (r) => r.customerName ?? "",
+      period: (r) => r.periodStart,
+      amount: (r) => r.items.reduce((sum, i) => sum + i.fee - i.discount, 0),
+    },
+    sorting,
+    setSorting
+  );
+  const { page, setPage, totalPages, pageRows } = usePager(sortedRows, PAGE_SIZE);
+  React.useEffect(() => setPage(1), [status, reservations, sorting, setPage]);
 
   const filtersActive = searchActive || !!quick || status !== "all";
   // 표와 카드가 같은 값·같은 동작을 쓰도록 한 곳에서 계산한다.
@@ -109,6 +123,7 @@ export function ReservationList({
   const clearFilters = () => {
     setStatus("all");
     setQ("");
+    setSorting([]);
     router.push(pathname);
   };
 
@@ -193,12 +208,12 @@ export function ReservationList({
                   <thead>
                     <tr className={THEAD}>
                       <th className={TH}>예약번호</th>
-                      <th className={TH}>고객</th>
-                      <th className={TH}>대여기간</th>
+                      <SortableTh column={getColumn("customer")} label="고객" className={TH} />
+                      <SortableTh column={getColumn("period")} label="대여기간" className={TH} />
                       <th className={TH}>상품/개체</th>
                       <th className={TH}>상태</th>
                       <th className={TH}>다음 일정</th>
-                      {canRevenue && <th className={`${TH} text-right`}>금액</th>}
+                      {canRevenue && <SortableTh column={getColumn("amount")} label="금액" className={`${TH} text-right`} align="right" />}
                     </tr>
                   </thead>
                   <tbody>

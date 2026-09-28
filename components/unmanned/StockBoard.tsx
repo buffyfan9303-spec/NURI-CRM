@@ -15,6 +15,9 @@ import { adjustStock, startStockTake, setStockTakeCount, completeStockTake } fro
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
 import { TableOrCards, MobileCard, CellName, MOBILE_BARE } from "@/components/ui/ResponsiveTable";
 import { CardHead, SelectField, Alert, CONTROL_SM, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
+import { useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 export function StockBoard({
   businessId, canAdjust, products, reconciliation, openTake, openTakeLines, businessName, todayKey, loss, reorder, reorderText, expiring,
@@ -42,6 +45,20 @@ export function StockBoard({
   const [adjDisposal, setAdjDisposal] = React.useState(false);
   const [adjError, setAdjError] = React.useState<string | null>(null);
   const [counts, setCounts] = React.useState<Record<string, string>>({});
+  const [reconSorting, setReconSorting] = useUrlSorting();
+  const { sortedRows: reconciliationSorted, getColumn: getReconColumn } = useSortedRows<ReconciliationRow>(
+    reconciliation,
+    {
+      name: (r) => r.name,
+      salesQty: (r) => r.salesQty,
+      saleOutQty: (r) => r.saleOutQty,
+      stockTakeDiff: (r) => r.stockTakeDiff,
+      onHand: (r) => r.onHand,
+      unreconciledQty: (r) => r.unreconciledQty,
+    },
+    reconSorting,
+    setReconSorting
+  );
 
   React.useEffect(() => {
     if (adjOpen) { setAdjProduct(""); setAdjQty(""); setAdjReason(""); setAdjDisposal(false); setAdjError(null); }
@@ -204,23 +221,23 @@ export function StockBoard({
           />
           {reconciliation.length === 0 ? <EmptyState title="대사할 데이터가 없습니다." description="상품과 매출 기록이 생기면 여기서 차이를 확인합니다." /> : (
             <TableOrCards
-              rows={reconciliation}
+              rows={reconciliationSorted}
               keyOf={(r) => r.productId}
               table={
                 <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
                   <table className={`${TABLE} min-w-[640px]`}>
                     <thead>
                       <tr className={THEAD}>
-                        <th className={TH}>상품</th>
-                        <th className={`${TH} text-right`}>매출기록 수량</th>
-                        <th className={`${TH} text-right`}>출고 반영 수량</th>
-                        <th className={`${TH} text-right`}>실사 차이 누계</th>
-                        <th className={`${TH} text-right`}>현재고</th>
-                        <th className={`${TH} text-right`}>미대사</th>
+                        <SortableTh column={getReconColumn("name")} label="상품" className={TH} />
+                        <SortableTh column={getReconColumn("salesQty")} label="매출기록 수량" className={`${TH} text-right`} align="right" />
+                        <SortableTh column={getReconColumn("saleOutQty")} label="출고 반영 수량" className={`${TH} text-right`} align="right" />
+                        <SortableTh column={getReconColumn("stockTakeDiff")} label="실사 차이 누계" className={`${TH} text-right`} align="right" />
+                        <SortableTh column={getReconColumn("onHand")} label="현재고" className={`${TH} text-right`} align="right" />
+                        <SortableTh column={getReconColumn("unreconciledQty")} label="미대사" className={`${TH} text-right`} align="right" />
                       </tr>
                     </thead>
                     <tbody>
-                      {reconciliation.map((r) => (
+                      {reconciliationSorted.map((r) => (
                         <tr key={r.productId} className={`${TR} h-[48px]`}>
                           <td className={TD}><CellName max={280}>{r.name}</CellName></td>
                           <td className={`${TD} text-right tabular-nums text-t2`}>{r.salesQty}</td>

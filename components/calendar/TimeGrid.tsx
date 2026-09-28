@@ -6,13 +6,16 @@
  * (결함 #1과 같은 종류의 "빈 결과=빈 화면" 치환을 만들지 않는다).
  */
 import * as React from "react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils/cn";
 import type { CalendarEvent } from "@/lib/domain/calendar-shared";
+import { isDerivedEvent } from "@/lib/domain/calendar-shared";
 import { formatInTz, formatDayTitle } from "@/lib/utils/datetime";
 import { EventChip } from "./EventChip";
 import { kindTagClass, formatEventTimeLabel } from "./shared";
 
-const ROW_HEIGHT = 48; // px / 1시간
+/** px / 1시간. CalendarClient의 onDragEnd가 세로 픽셀 이동량을 분 단위로 환산할 때 같은 값을 쓴다. */
+export const ROW_HEIGHT = 48;
 // ponytail: 사업장별 영업시간 설정이 아직 없어 고정값을 쓴다. crm.businesses에 영업시간
 // 컬럼이 생기면 여기 상수 대신 그 값을 props로 받아 대체한다.
 const BUSINESS_START = 8;
@@ -78,6 +81,7 @@ export function TimeGrid({
   selectedId,
   onSelectEvent,
   onOpenDay,
+  canDrag = false,
 }: {
   /** 주 보기는 7개, 일 보기는 1개. */
   days: string[];
@@ -89,6 +93,8 @@ export function TimeGrid({
   onSelectEvent: (id: string) => void;
   /** 있으면 날짜 헤더를 눌러 하루 보기로 이동(주 보기에서만 사용). */
   onOpenDay?: (dateKey: string) => void;
+  /** 쓰기 권한 — 있어야 시간대 칸에 일정을 끌어다 옮길 수 있다(파생 일정은 여전히 잠금). */
+  canDrag?: boolean;
 }) {
   const [showFullDay, setShowFullDay] = React.useState(false);
   const startHour = showFullDay ? 0 : BUSINESS_START;
@@ -186,7 +192,7 @@ export function TimeGrid({
             <>
               <div className="border-b border-[var(--bd)] px-1.5 py-1 text-right text-[10px] text-t3">종일</div>
               {days.map((d) => (
-                <div key={`ad-${d}`} className="flex flex-col gap-0.5 border-b border-l border-[var(--bd)] p-1">
+                <AllDayCell key={`ad-${d}`} dateKey={d} canDrag={canDrag}>
                   {(allDayByDay.get(d) ?? []).map((ev) => (
                     <EventChip
                       key={ev.id}
@@ -195,9 +201,10 @@ export function TimeGrid({
                       tz={tz}
                       selected={ev.id === selectedId}
                       onClick={() => onSelectEvent(ev.id)}
+                      canDrag={canDrag}
                     />
                   ))}
-                </div>
+                </AllDayCell>
               ))}
             </>
           )}
@@ -218,7 +225,7 @@ export function TimeGrid({
             const showNowLine =
               d === todayKey && nowMinutes !== null && nowMinutes >= boundStartMin && nowMinutes < boundEndMin;
             return (
-              <div key={d} className="relative border-l border-[var(--bd)]" style={{ height: gridHeight }}>
+              <TimeColumn key={d} dateKey={d} height={gridHeight} canDrag={canDrag}>
                 {hours.map((h) => (
                   <div
                     key={h}
@@ -237,11 +244,12 @@ export function TimeGrid({
                   </div>
                 )}
                 {positioned.map(({ event, top, height, lane, lanes }) => (
-                  <button
+                  <TimeEventButton
                     key={event.id}
-                    type="button"
+                    event={event}
                     onClick={() => onSelectEvent(event.id)}
                     title={`${event.title} — ${formatEventTimeLabel(event, tz)}`}
+                    canDrag={canDrag}
                     className={cn(
                       "ev-tag absolute overflow-hidden text-left leading-tight",
                       kindTagClass(event.kind, eventKinds),
@@ -256,13 +264,95 @@ export function TimeGrid({
                   >
                     <span className="block truncate font-semibold">{formatEventTimeLabel(event, tz)}</span>
                     <span className="block truncate">{event.title}</span>
-                  </button>
+                  </TimeEventButton>
                 ))}
-              </div>
+              </TimeColumn>
             );
           })}
         </div>
       </div>
     </div>
+  );
+}
+
+/** "종일" 줄의 하루 칸 — 드롭 대상 id `allday:${dateKey}`(날짜만 바뀜, CalendarClient가 접두사로 판정). */
+function AllDayCell({ dateKey, canDrag, children }: { dateKey: string; canDrag: boolean; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `allday:${dateKey}`, disabled: !canDrag });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex flex-col gap-0.5 border-b border-l border-[var(--bd)] p-1",
+        isOver && canDrag && "bg-ib ring-1 ring-inset ring-[var(--accent)]"
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** 시간축 하루 컬럼 — 드롭 대상 id `day:${dateKey}`(날짜+시각 모두 바뀜). */
+function TimeColumn({
+  dateKey,
+  height,
+  canDrag,
+  children,
+}: {
+  dateKey: string;
+  height: number;
+  canDrag: boolean;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `day:${dateKey}`, disabled: !canDrag });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn("relative border-l border-[var(--bd)]", isOver && canDrag && "bg-ib")}
+      style={{ height }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * 시간대에 배치된 일정 버튼. mode="time"이라 CalendarClient의 onDragEnd가 세로 이동 픽셀을
+ * 분 단위로 환산해 시각을 바꾼다(칼럼이 바뀌면 날짜도 함께 바뀐다). 파생 일정은 항상 잠금.
+ */
+function TimeEventButton({
+  event,
+  onClick,
+  title,
+  canDrag,
+  className,
+  style,
+  children,
+}: {
+  event: CalendarEvent;
+  onClick: () => void;
+  title: string;
+  canDrag: boolean;
+  className: string;
+  style: React.CSSProperties;
+  children: React.ReactNode;
+}) {
+  const derived = isDerivedEvent(event);
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: event.id,
+    data: { event, mode: "time" as const },
+    disabled: !canDrag || derived,
+  });
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      onClick={onClick}
+      title={derived ? `${title}（원 업무에서 만든 일정 — 여기서 옮길 수 없음）` : title}
+      className={cn(className, canDrag && !derived && "cursor-grab touch-none active:cursor-grabbing", isDragging && "opacity-40")}
+      style={style}
+      {...(canDrag && !derived ? { ...attributes, ...listeners } : {})}
+    >
+      {children}
+    </button>
   );
 }

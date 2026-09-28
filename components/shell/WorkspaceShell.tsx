@@ -43,6 +43,7 @@ import type { MyBusiness } from "@/lib/auth/actions";
 import type { Industry, IndustryNav } from "@/lib/industry/config";
 import { NAV_GROUP_ORDER, NAV_GROUP_LABEL, navGroupFor } from "@/components/shell/navGroups";
 import { PRIMARY_ACTION } from "@/components/shell/primaryAction";
+import { CommandPalette } from "@/components/shell/CommandPalette";
 
 const INDUSTRY_LABEL: Record<string, string> = {
   factory: "의류공장",
@@ -128,7 +129,8 @@ export function WorkspaceShell({
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const [acctMenuOpen, setAcctMenuOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  const [paletteOpen, setPaletteOpen] = React.useState(false);
+  const [kbdHint, setKbdHint] = React.useState("Ctrl K");
   const [switching, setSwitching] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
 
@@ -166,6 +168,20 @@ export function WorkspaceShell({
       first.focus();
     }
   };
+
+  // ⌘K(mac) / Ctrl+K — 전역 검색. 입력창 안에서도 동작한다(브라우저 기본 주소창 검색을 막는다).
+  React.useEffect(() => {
+    if (/Mac|iPhone|iPad/.test(navigator.platform)) setKbdHint("⌘K");
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+  const closePalette = React.useCallback(() => setPaletteOpen(false), []);
 
   const switcherRef = useClickOutside<HTMLDivElement>(() => setSwitcherOpen(false));
   const userMenuRef = useClickOutside<HTMLDivElement>(() => setUserMenuOpen(false));
@@ -220,13 +236,9 @@ export function WorkspaceShell({
   const canManage = nav.some((n) => n.cap === SETTINGS_NAV.cap);
   const fullNav = React.useMemo(() => (canManage ? [...nav, SETTINGS_NAV] : nav), [nav, canManage]);
 
-  const filteredNav = query.trim()
-    ? fullNav.filter((n) => n.label.toLowerCase().includes(query.trim().toLowerCase()))
-    : fullNav;
-
   const groupedNav = React.useMemo(() => {
     const buckets = new Map<string, IndustryNav[]>();
-    for (const item of filteredNav) {
+    for (const item of fullNav) {
       const g = navGroupFor(item.key);
       if (!buckets.has(g)) buckets.set(g, []);
       buckets.get(g)!.push(item);
@@ -234,7 +246,7 @@ export function WorkspaceShell({
     return NAV_GROUP_ORDER.map((g) => ({ key: g, label: NAV_GROUP_LABEL[g], items: buckets.get(g) ?? [] })).filter(
       (g) => g.items.length > 0
     );
-  }, [filteredNav]);
+  }, [fullNav]);
 
   // 홈(path "")은 정확히 일치할 때만 잡는다(S2): 예전엔 startsWith(base + "/") 라 nav 에 없는 화면도 "오늘 현황"이 됐다.
   const activeItem = React.useMemo(() => {
@@ -368,9 +380,6 @@ export function WorkspaceShell({
         </div>
 
         <div className="flex-1 overflow-y-auto scrollable py-2">
-          {filteredNav.length === 0 && !isRail && (
-            <p className="px-4 py-3 text-[12px] text-[var(--sbt2)]">일치하는 메뉴가 없습니다.</p>
-          )}
           {groupedNav.map((group, gi) => (
             <div key={group.key} className={cn(gi > 0 && "mt-1")}>
               {!isRail && (
@@ -535,24 +544,30 @@ export function WorkspaceShell({
 
           <div className={cn("flex-1", activeItem && "hidden sm:block")} />
 
-          {/* 검색 — 사이드바 메뉴 필터. 통합검색이 아니라 메뉴 검색임을 정확히 표시한다(§4.2). */}
-          <div className="relative hidden w-full min-w-[120px] max-w-[200px] shrink md:block lg:max-w-[260px]">
-            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-t3" aria-hidden />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="메뉴 검색"
-              aria-label="메뉴 검색"
-              className="h-[var(--ctl)] w-full rounded-full border border-[var(--bd2)] bg-sf pl-8 pr-3 text-[13px] text-t outline-none placeholder:text-t3 focus:border-[var(--accent)] [@media(pointer:coarse)]:h-[44px]"
-            />
-          </div>
-
-          {/* <md 에는 메뉴 검색 버튼이 없다(S1, 2026-09-28): 메뉴가 8~11개뿐이라 드로어가 전체 메뉴다. 예전 버튼은
-              닫힌 드로어 안 목록만 걸러 결과가 화면에 보이지 않았다. */}
+          {/* 전역 검색(⌘K) — 예전 "메뉴 검색" 입력을 흡수했다. md+ 는 입력창 모양 버튼, <md 는 아이콘 버튼(44px). */}
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            aria-label={`검색 (${kbdHint})`}
+            aria-haspopup="dialog"
+            className="hidden h-[var(--ctl)] w-full min-w-[120px] max-w-[200px] shrink items-center gap-2 rounded-full border border-[var(--bd2)] bg-sf pl-3 pr-2 text-left text-[13px] text-t3 hover:bg-sf2 md:flex lg:max-w-[260px] [@media(pointer:coarse)]:h-[44px]"
+          >
+            <Search size={14} className="shrink-0" aria-hidden />
+            <span className="min-w-0 flex-1 truncate">검색</span>
+            <kbd className="hidden shrink-0 rounded-[5px] border border-[var(--bd)] bg-sf2 px-1.5 py-0.5 font-sans text-[11px] text-t3 lg:inline" aria-hidden>{kbdHint}</kbd>
+          </button>
 
           {/* 우측 클러스터: CTA → 테마 → 알림 → 계정 순(§4.2) */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              aria-label="검색"
+              aria-haspopup="dialog"
+              className="flex h-[44px] w-[44px] items-center justify-center rounded-full text-t2 hover:bg-sf2 hover:text-t md:hidden"
+            >
+              <Search size={19} aria-hidden />
+            </button>
             {primaryActionNavItem && (
               <Link
                 href={primaryActionHref!}
@@ -623,6 +638,8 @@ export function WorkspaceShell({
 
         <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
+
+      <CommandPalette open={paletteOpen} onClose={closePalette} businessId={businessId} nav={fullNav} />
     </div>
   );
 }

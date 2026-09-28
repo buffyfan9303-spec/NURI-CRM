@@ -36,6 +36,7 @@ import type { SwapCandidateRow } from "@/lib/domain/rental-types";
 import { UNIT_STATUS_LABEL } from "@/lib/domain/rental-types";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { DateRangeField } from "@/components/ui/DateRangeField";
 import { SettlementPanel } from "./SettlementPanel";
 import { CancelPenaltyButton } from "./CancelPenaltyButton";
 import { ReturnInspectionPanel, NoticeButton, ClaimsCard } from "./ReservationTools";
@@ -642,14 +643,23 @@ function PeriodChangeForm({
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="mt-4 flex flex-col gap-3 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2/40 p-3">
-      <label className="flex flex-col gap-1.5 text-[12.5px] font-medium text-t2">
-        새 대여 일시
-        <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} className={CONTROL} />
-      </label>
-      <label className="flex flex-col gap-1.5 text-[12.5px] font-medium text-t2">
-        새 반납 일시
-        <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} className={CONTROL} />
-      </label>
+      {/* 달력(날짜 범위) + 시간 — ReservationForm 과 같은 규칙(문자열 앞 10자리/뒤 5자리). */}
+      <DateRangeField
+        label="새 대여 기간"
+        from={start.slice(0, 10)}
+        to={end.slice(0, 10)}
+        onChange={(f, t) => { setStart(`${f}T${start.slice(11)}`); setEnd(`${t}T${end.slice(11)}`); }}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex flex-col gap-1.5 text-[12.5px] font-medium text-t2">
+          대여 시간
+          <input type="time" value={start.slice(11)} onChange={(e) => setStart(`${start.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
+        </label>
+        <label className="flex flex-col gap-1.5 text-[12.5px] font-medium text-t2">
+          반납 시간
+          <input type="time" value={end.slice(11)} onChange={(e) => setEnd(`${end.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
+        </label>
+      </div>
       <Button size="sm" type="submit" loading={busy} className="self-end">{busy ? "저장 중…" : "변경 저장"}</Button>
     </form>
   );

@@ -6,8 +6,20 @@ import { Building2, CircleAlert, INDUSTRY_ICON } from "@/lib/icons";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { IndustryPicker, type IndustryOption } from "@/components/auth/IndustryPicker";
-import { createBusiness, signOut } from "@/lib/auth/actions";
+import { checkBusinessNumber, createBusiness, signOut } from "@/lib/auth/actions";
 import { INDUSTRIES, INDUSTRY_DEFS } from "@/lib/industry/config";
+import { formatBizRegNo, isValidBizRegNo, normalizeBizRegNo } from "@/lib/external/bizno";
+import type { NtsStatus } from "@/lib/external/nts";
+
+const BIZNO_FORMAT_ERROR = "사업자등록번호 형식(10자리·검증숫자)이 올바르지 않습니다";
+
+/** 국세청 상태 배지 문구·강조. null = 배지 없음(키 없음/미조회). */
+function ntsBadge(nts: NtsStatus | null | undefined): { text: string; warn: boolean } | null {
+  if (!nts) return null;
+  if (!nts.registered) return { text: "국세청 미등록 번호", warn: true };
+  const tax = nts.taxType ? ` · ${nts.taxType}` : "";
+  return { text: `${nts.status}${tax}${nts.endDate ? ` (${nts.endDate})` : ""}`, warn: nts.statusCode !== "01" };
+}
 
 const INDUSTRY_OPTIONS: IndustryOption[] = INDUSTRIES.map((key) => {
   const def = INDUSTRY_DEFS[key];
@@ -35,6 +47,31 @@ export function CreateBusinessForm() {
   const [industry, setIndustry] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | undefined>(undefined);
   const [pending, setPending] = React.useState(false);
+  // 사업자등록번호(선택). 체크섬 오류는 blur 즉시(클라이언트), 국세청 상태는 서버 액션(키 있을 때만).
+  const [bizNo, setBizNo] = React.useState("");
+  const [bizNoError, setBizNoError] = React.useState<string | undefined>(undefined);
+  const [badge, setBadge] = React.useState<{ text: string; warn: boolean } | null>(null);
+
+  const handleBizNoBlur = async () => {
+    const digits = normalizeBizRegNo(bizNo);
+    setBadge(null);
+    if (!digits) {
+      setBizNoError(undefined);
+      return;
+    }
+    if (!isValidBizRegNo(digits)) {
+      setBizNoError(BIZNO_FORMAT_ERROR);
+      return;
+    }
+    setBizNoError(undefined);
+    setBizNo(formatBizRegNo(digits));
+    const r = await checkBusinessNumber(digits);
+    if (!r.ok) {
+      setBizNoError(r.message);
+      return;
+    }
+    setBadge(r.ntsError ? { text: "국세청 조회 실패(나중에 다시 확인)", warn: true } : ntsBadge(r.nts));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +80,15 @@ export function CreateBusinessForm() {
       setError("업종을 선택하세요.");
       return;
     }
+    const digits = normalizeBizRegNo(bizNo);
+    if (digits && !isValidBizRegNo(digits)) {
+      setBizNoError(BIZNO_FORMAT_ERROR);
+      return;
+    }
     setError(undefined);
     setPending(true);
     try {
-      const result = await createBusiness(name, industry);
+      const result = await createBusiness(name, industry, digits || undefined);
       if (!result.ok) {
         setError(result.message);
         return;
@@ -83,6 +125,34 @@ export function CreateBusinessForm() {
             placeholder="예: 누리 의류렌탈 강남점"
             disabled={pending}
           />
+          <AuthInput
+            label="사업자등록번호 (선택)"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={12}
+            value={bizNo}
+            onChange={(e) => {
+              setBizNo(e.target.value);
+              setBizNoError(undefined);
+              setBadge(null);
+            }}
+            onBlur={handleBizNoBlur}
+            error={bizNoError}
+            disabled={pending}
+          />
+          {badge && (
+            <p className="-mt-2 mb-4 px-1 text-[12.5px] text-auth-tx2">
+              <span
+                className={
+                  badge.warn
+                    ? "inline-flex items-center rounded-full border border-[var(--auth-error)] px-2 py-0.5 font-medium text-[var(--auth-error)]"
+                    : "inline-flex items-center rounded-full border border-auth-input-bd bg-auth-field px-2 py-0.5 font-medium text-auth-tx"
+                }
+              >
+                국세청 {badge.text}
+              </span>
+            </p>
+          )}
 
           {error && (
             <div

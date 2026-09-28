@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/layout/Toaster";
+import { AppToaster } from "@/components/ui/toast";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "NURI CRM — 맞춤양복 통합 관리 시스템",
@@ -14,10 +17,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
       { url: "/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
     ],
-    apple: [{ url: "/icon-192.svg" }],
+    // iOS 는 SVG 홈 아이콘을 쓰지 않는다 — PNG 180px(public/, 메인 세션이 생성).
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
 };
 
@@ -57,6 +62,8 @@ export default function RootLayout({
        이 한 요소의 속성 차이만 무시한다(자식 요소에는 영향 없음). */
     <html lang="ko" suppressHydrationWarning>
       <head>
+        {/* 전역 글꼴 SUIT Variable(OFL) — @font-face 는 globals.css. 첫 paint 글꼴 교체 깜빡임을 줄이려고 미리 받는다. */}
+        <link rel="preload" href="/fonts/SUIT-Variable.woff2" as="font" type="font/woff2" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
@@ -64,7 +71,11 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: BODY_THEME_SCRIPT }} />
         <ThemeProvider>{children}</ThemeProvider>
+        {/* 구 시제품용 zustand Toaster + 신규 화면용 sonner(components/ui/toast.tsx). */}
         <Toaster />
+        <AppToaster />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

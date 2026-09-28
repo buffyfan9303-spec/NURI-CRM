@@ -1,3 +1,13 @@
+/* 본문 글꼴: SUIT Variable (OFL 1.1, 상업적 무료 — public/fonts/SUIT-OFL.txt). 2026-09-28 사용자 지시로
+   맑은 고딕보다 덜 딱딱한 둥근 기하형 고딕으로 교체. 가변 굵기 100~900 한 파일. */
+@font-face {
+  font-family: "SUIT Variable";
+  src: url("/fonts/SUIT-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -304,8 +314,8 @@ body {
   height: 100%;
   /* 한글 폰트를 명시한다(§9.3 "기존 한국어 폰트를 우선"). 예전 스택에는 한글 글꼴이 하나도 없어
      Windows 에서 조용히 맑은고딕으로 떨어졌다 — 결과가 OS 마다 달라진다.
-     새 웹폰트를 내려받지는 않는다(외부 의존 추가는 사용자 결정 사항). */
-  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+     2026-09-28: SUIT 를 자체 호스팅(외부 CDN 의존 없음), 나머지는 로딩 전·실패 시 대체 글꼴. */
+  font-family: "SUIT Variable", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
     "Segoe UI", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", system-ui,
     sans-serif;
   /* ⚠ 이 14px 이 **모든 Tailwind rem 유틸의 기준**이다. h-11 은 44px 이 아니라 38.5px,

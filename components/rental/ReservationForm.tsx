@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { DateRangeField } from "@/components/ui/DateRangeField";
 import { formatKRW, parseKRW, sumItemFees } from "@/lib/domain/money";
 import { UNIT_BLOCKED, UNIT_STATUS_LABEL, type ProductWithChildren, type CustomerRow } from "@/lib/domain/rental-types";
 import { createReservationDraft, checkAvailabilityAction } from "@/lib/domain/rental-actions";
@@ -197,17 +198,26 @@ export function ReservationForm({
       </Card>
 
       <Card className="p-4 sm:p-5">
-        <CardHead title="기간" description="반납 일시는 대여 일시보다 뒤여야 합니다." />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <CardHead title="기간" description="달력에서 대여일·반납일을 고르고 시간을 입력합니다. 반납 일시는 대여 일시보다 뒤여야 합니다." />
+        {/* start/end 는 datetime-local 문자열("yyyy-MM-ddTHH:mm") 그대로 둔다 — 달력은 날짜 10자리, 시간 입력은 뒤 5자리만 바꾼다. */}
+        {/* 날짜 범위는 한 줄 전체(1024 에서 3열이면 요약이 잘렸다), 시간·피팅은 아래 3열. */}
+        <DateRangeField
+          label="대여 기간"
+          required
+          from={start.slice(0, 10)}
+          to={end.slice(0, 10)}
+          onChange={(f, t) => { setStart(`${f}T${start.slice(11) || "10:00"}`); setEnd(`${t}T${end.slice(11) || "18:00"}`); }}
+        />
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <label className="flex flex-col gap-1.5 text-[13px] font-medium text-t2">
-            <span>대여 일시 <span className="text-et" aria-hidden>*</span></span>
-            <input type="datetime-local" required value={start} onChange={(e) => setStart(e.target.value)} className={CONTROL} />
+            <span>대여 시간 <span className="text-et" aria-hidden>*</span></span>
+            <input type="time" required value={start.slice(11)} onChange={(e) => setStart(`${start.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
           </label>
           <label className="flex flex-col gap-1.5 text-[13px] font-medium text-t2">
-            <span>반납 일시 <span className="text-et" aria-hidden>*</span></span>
-            <input type="datetime-local" required value={end} onChange={(e) => setEnd(e.target.value)} className={CONTROL} />
+            <span>반납 시간 <span className="text-et" aria-hidden>*</span></span>
+            <input type="time" required value={end.slice(11)} onChange={(e) => setEnd(`${end.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
           </label>
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-t2">
+          <label className="col-span-2 flex flex-col gap-1.5 text-[13px] font-medium text-t2 sm:col-span-1">
             피팅 예약(선택)
             <input type="datetime-local" value={fittingAt} onChange={(e) => setFittingAt(e.target.value)} className={CONTROL} />
           </label>

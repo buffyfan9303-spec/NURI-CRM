@@ -25,6 +25,9 @@ import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
 import type { SalonAppointment } from "@/lib/domain/salon";
 import { PayModal, type PayTarget } from "./PayModal";
 import { SALON_STATUS_KIND } from "./BookingBoard";
+import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 export type SalonBalance = { price: number; paid: number; outstanding: number } | null;
 
@@ -42,11 +45,24 @@ export function SalonSettlementBoard({
 }) {
   const router = useRouter();
   const [payTarget, setPayTarget] = React.useState<PayTarget | null>(null);
-  const [filter, setFilter] = React.useState<"all" | "due">("all");
+  const [filter, setFilter] = useUrlParam("filter", "all");
+  const [sorting, setSorting] = useUrlSorting();
 
   // 표와 카드가 같은 값·같은 동작을 쓰도록 한 곳에서 계산한다.
   const all = appointments.map((a, idx) => ({ a, bal: balances[idx] }));
-  const rows = filter === "due" ? all.filter(({ bal }) => bal && bal.outstanding > 0) : all;
+  const filteredRows = filter === "due" ? all.filter(({ bal }) => bal && bal.outstanding > 0) : all;
+  const { sortedRows: rows, getColumn } = useSortedRows<{ a: SalonAppointment; bal: SalonBalance }>(
+    filteredRows,
+    {
+      when: ({ a }) => a.startAt,
+      customer: ({ a }) => a.customerName ?? "",
+      price: ({ a, bal }) => bal ? bal.price : a.price,
+      paid: ({ bal }) => bal?.paid ?? 0,
+      outstanding: ({ bal }) => bal?.outstanding ?? 0,
+    },
+    sorting,
+    setSorting
+  );
   const sum = all.reduce(
     (s, { a, bal }) => ({ price: s.price + (bal ? bal.price : a.price), paid: s.paid + (bal?.paid ?? 0), outstanding: s.outstanding + (bal?.outstanding ?? 0) }),
     { price: 0, paid: 0, outstanding: 0 }
@@ -105,13 +121,13 @@ export function SalonSettlementBoard({
                 <table className={`${TABLE} min-w-[820px]`}>
                   <thead>
                     <tr className={THEAD}>
-                      <th className={TH}>일시</th>
-                      <th className={TH}>고객</th>
+                      <SortableTh column={getColumn("when")} label="일시" className={TH} />
+                      <SortableTh column={getColumn("customer")} label="고객" className={TH} />
                       <th className={TH}>시술</th>
                       <th className={TH}>상태</th>
-                      <th className={`${TH} text-right`}>예약금액</th>
-                      <th className={`${TH} text-right`}>수납액</th>
-                      <th className={`${TH} text-right`}>미수</th>
+                      <SortableTh column={getColumn("price")} label="예약금액" className={`${TH} text-right`} align="right" />
+                      <SortableTh column={getColumn("paid")} label="수납액" className={`${TH} text-right`} align="right" />
+                      <SortableTh column={getColumn("outstanding")} label="미수" className={`${TH} text-right`} align="right" />
                       {canWrite && <th className={`${TH} text-right`}>동작</th>}
                     </tr>
                   </thead>

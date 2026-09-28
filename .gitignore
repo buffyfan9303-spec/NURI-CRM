@@ -5,6 +5,7 @@ node_modules/
 
 # next
 .next/
+.next-*/
 out/
 build/
 dist/
@@ -26,3 +27,13 @@ next-env.d.ts
 .DS_Store
 *.pem
 .vercel
+
+# playwright
+/test-results/
+/playwright-report/
+/e2e/.auth.json
+
+# serwist 산출물(빌드 시 생성)
+/public/sw.js
+/public/sw.js.map
+/public/swe-worker-*.js

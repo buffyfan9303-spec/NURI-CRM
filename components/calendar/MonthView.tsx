@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils/cn";
 import type { CalendarEvent } from "@/lib/domain/calendar-shared";
 import { EventChip } from "./EventChip";
 import { groupEventsByDay } from "./shared";
+import { useHolidayMap } from "@/lib/holidays";
 
 const WEEKDAY_HEADERS = ["월", "화", "수", "목", "금", "토", "일"];
 const MAX_VISIBLE = 3;
@@ -33,7 +35,7 @@ export function MonthView({
   selectedId: string | null;
   onSelectEvent: (id: string) => void;
   onOpenDay: (dateKey: string) => void;
-  /** 일정 등록 권한 — 있어야 빈 날짜 선택이 등록 폼으로 이어진다. */
+  /** 일정 등록 권한 — 있어야 빈 날짜 선택이 등록 폼으로 이어지고, 일정을 끌어서 옮길 수 있다(수동 일정만). */
   canCreate: boolean;
   /** §11-4: 빈 날짜 선택 → 그 날짜가 입력된 등록 폼. */
   onCreateDay: (dateKey: string) => void;
@@ -42,6 +44,7 @@ export function MonthView({
   const [focusIdx, setFocusIdx] = React.useState(() => Math.max(0, days.indexOf(todayKey)));
 
   const byDay = React.useMemo(() => groupEventsByDay(events, tz), [events, tz]);
+  const holidayMap = useHolidayMap(days);
 
   function moveFocus(next: number) {
     const clamped = Math.max(0, Math.min(days.length - 1, next));
@@ -109,24 +112,26 @@ export function MonthView({
           const visible = dayEvents.slice(0, MAX_VISIBLE);
           const overflow = dayEvents.length - visible.length;
           const hasEvents = dayEvents.length > 0;
-          const dayLabel = hasEvents || !canCreate ? `${dateKey} 하루 보기로 이동` : `${dateKey} 일정 등록`;
+          const holidayLabel = holidayMap[dateKey];
+          const dayLabel = `${hasEvents || !canCreate ? `${dateKey} 하루 보기로 이동` : `${dateKey} 일정 등록`}${holidayLabel ? `, ${holidayLabel}` : ""}`;
           return (
-            <div
+            <MonthCell
               key={dateKey}
-              ref={(el) => {
+              dateKey={dateKey}
+              idx={idx}
+              focused={idx === focusIdx}
+              setCellRef={(el) => {
                 cellRefs.current[idx] = el;
               }}
-              role="gridcell"
-              aria-label={`${dateKey}${hasEvents ? ` 일정 ${dayEvents.length}건` : ""}`}
-              tabIndex={idx === focusIdx ? 0 : -1}
               onFocus={() => setFocusIdx(idx)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
-              // F21(target-size): 날짜 숫자 버튼은 24px 라 터치 화면에서 작다 — 칸의 빈 곳을 눌러도 같은 동작(일정 칩은 제외).
-              onClick={(e) => {
+              onCellClick={(e) => {
                 if ((e.target as HTMLElement).closest("button")) return;
                 activateDay(idx);
               }}
               onDoubleClick={() => onOpenDay(dateKey)}
+              canDrag={canCreate}
+              ariaLabel={`${dateKey}${holidayLabel ? ` ${holidayLabel}` : ""}${hasEvents ? ` 일정 ${dayEvents.length}건` : ""}`}
               className={cn(
                 "flex min-h-[92px] flex-col gap-1 border-b border-r border-[var(--bd)] p-1.5 outline-none",
                 // §5.6 주말의 "작은" 명도 구분 — 새 색 추가 없이 기존 sf2(보조 영역) 토큰만 재사용한다.
@@ -142,13 +147,18 @@ export function MonthView({
                 className={cn(
                   // html{font-size:14px} 라 h-6 은 21px 였다 — px 로 24px(WCAG 2.5.8 최소), 터치 화면은 28px(칸 전체가 같은 동작).
                   "flex h-[24px] w-[24px] shrink-0 items-center justify-center self-start rounded-full text-[12px] [@media(pointer:coarse)]:h-[28px] [@media(pointer:coarse)]:w-[28px]",
-                  isToday ? "bg-[var(--accent-strong)] font-semibold text-[var(--accent-contrast)]" : "text-t2",
+                  isToday ? "bg-[var(--accent-strong)] font-semibold text-[var(--accent-contrast)]" : holidayLabel ? "text-et" : "text-t2",
                   !inMonth && "text-t3"
                 )}
                 aria-label={dayLabel}
               >
                 {Number(dateKey.slice(8, 10))}
               </button>
+              {holidayLabel && (
+                <span className="-mt-0.5 block truncate text-[10.5px] font-medium leading-tight text-et" title={holidayLabel}>
+                  {holidayLabel}
+                </span>
+              )}
               <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
                 {visible.map((ev) => (
                   <EventChip
@@ -158,6 +168,7 @@ export function MonthView({
                     tz={tz}
                     selected={ev.id === selectedId}
                     onClick={() => onSelectEvent(ev.id)}
+                    canDrag={canCreate}
                   />
                 ))}
                 {overflow > 0 && (
@@ -170,12 +181,66 @@ export function MonthView({
                   </button>
                 )}
               </div>
-            </div>
+            </MonthCell>
           );
         })}
         </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * 날짜 칸 하나. useDroppable은 컴포넌트당 한 번만 불러야 해서(hooks 규칙) .map 안에 바로
+ * 못 쓰고 이 하위 컴포넌트로 뺐다 — 드롭 대상 id는 `day:${dateKey}`(TimeGrid 컬럼과 같은 규칙,
+ * CalendarClient의 onDragEnd가 접두사로 구분한다).
+ */
+function MonthCell({
+  dateKey,
+  idx,
+  focused,
+  setCellRef,
+  onFocus,
+  onKeyDown,
+  onCellClick,
+  onDoubleClick,
+  canDrag,
+  ariaLabel,
+  className,
+  children,
+}: {
+  dateKey: string;
+  idx: number;
+  focused: boolean;
+  setCellRef: (el: HTMLDivElement | null) => void;
+  onFocus: () => void;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  onCellClick: (e: React.MouseEvent) => void;
+  onDoubleClick: () => void;
+  canDrag: boolean;
+  ariaLabel: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: `day:${dateKey}`, disabled: !canDrag });
+  return (
+    <div
+      ref={(el) => {
+        setCellRef(el);
+        setNodeRef(el);
+      }}
+      role="gridcell"
+      aria-label={ariaLabel}
+      tabIndex={focused ? 0 : -1}
+      onFocus={onFocus}
+      onKeyDown={onKeyDown}
+      onClick={onCellClick}
+      onDoubleClick={onDoubleClick}
+      data-idx={idx}
+      className={cn(className, isOver && canDrag && "bg-ib ring-1 ring-inset ring-[var(--accent)]")}
+    >
+      {children}
     </div>
   );
 }

@@ -132,6 +132,7 @@ const config: Config = {
         // globals.css 의 html/body 스택과 **같은 값**이어야 한다. 어긋나면 font-sans 를 명시한
         // 요소만 한글 글꼴이 달라진다.
         sans: [
+          "SUIT Variable",
           "-apple-system",
           "BlinkMacSystemFont",
           "Apple SD Gothic Neo",

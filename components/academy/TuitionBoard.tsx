@@ -21,6 +21,10 @@ import { createInvoice, recordAcadPayment, exemptInvoice, issueMonthlyInvoices }
 import { academyUnpaidNotice } from "@/lib/domain/messages";
 import { MessageActions } from "@/components/common/MessageActions";
 import { formatKRW } from "@/lib/domain/money";
+import { FileText } from "@/lib/icons";
+import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 export const INVOICE_STATUS_KIND: Record<string, BadgeKind> = { 완납: "success", 부분납: "warning", 미납: "error", 면제: "info" };
 const STATUSES = ["미납", "부분납", "완납", "면제"] as const;
@@ -91,7 +95,8 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const [tab, setTab] = React.useState<string>(initialStatus && (STATUSES as readonly string[]).includes(initialStatus) ? initialStatus : "all");
+  const [tab, setTab] = useUrlParam("status", initialStatus && (STATUSES as readonly string[]).includes(initialStatus) ? initialStatus : "all");
+  const [sorting, setSorting] = useUrlSorting();
   const [invOpen, setInvOpen] = React.useState(false);
   const [bulkOpen, setBulkOpen] = React.useState(false);
   const [payFor, setPayFor] = React.useState<(AcadInvoiceBalance & { studentName?: string }) | null>(null);
@@ -134,7 +139,20 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
   };
 
   const label = (e: AcadEnrollment) => `${students.find((s) => s.id === e.studentId)?.name ?? e.studentId.slice(0, 8)} · ${classes.find((c) => c.id === e.classId)?.name ?? ""}`;
-  const rows = tab === "all" ? invoices : invoices.filter((i) => i.status === tab);
+  const filteredRows = tab === "all" ? invoices : invoices.filter((i) => i.status === tab);
+  const { sortedRows: rows, getColumn } = useSortedRows<AcadInvoiceBalance>(
+    filteredRows,
+    {
+      student: (i) => studentByEnrollment.get(i.enrollmentId)?.name ?? "",
+      period: (i) => i.period,
+      dueDate: (i) => i.dueDate,
+      amount: (i) => i.amount,
+      paid: (i) => i.paid,
+      outstanding: (i) => i.outstanding,
+    },
+    sorting,
+    setSorting
+  );
   const countOf = (st: string) => invoices.filter((i) => i.status === st).length;
   const sum = invoices.reduce((s, i) => ({ amount: s.amount + i.amount, paid: s.paid + i.paid, outstanding: s.outstanding + i.outstanding }), { amount: 0, paid: 0, outstanding: 0 });
 
@@ -152,6 +170,17 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
     const nodes: React.ReactNode[] = [];
     if (canWrite && inv.outstanding > 0) nodes.push(<Button key="pay" variant="secondary" size="sm" onClick={() => setPayFor({ ...inv, studentName: v.student })}><Banknote size={13} aria-hidden />납부</Button>);
     if (inv.outstanding > 0) nodes.push(<Button key="notice" variant="ghost" size="sm" onClick={() => setNoticeFor(inv)}><MailCheck size={13} aria-hidden />안내 문구</Button>);
+    nodes.push(
+      <a
+        key="pdf"
+        href={`/api/pdf/academy-invoice/${inv.invoiceId}?businessId=${businessId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-md)] px-3 text-[12.5px] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]"
+      >
+        <FileText size={13} aria-hidden />PDF
+      </a>
+    );
     if (canRefund && !inv.exempted && inv.outstanding > 0) nodes.push(<Button key="exempt" variant="ghost" size="sm" onClick={() => { setExemptFor(inv); setExemptReason(""); }}>면제</Button>);
     return nodes;
   };
@@ -212,12 +241,12 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
                 <table className={`${TABLE} min-w-[900px]`}>
                   <thead>
                     <tr className={THEAD}>
-                      <th className={TH}>학생 · 반</th>
-                      <th className={TH}>청구월</th>
-                      <th className={TH}>납부기한</th>
-                      <th className={`${TH} text-right`}>청구</th>
-                      <th className={`${TH} text-right`}>납부</th>
-                      <th className={`${TH} text-right`}>미수</th>
+                      <SortableTh column={getColumn("student")} label="학생 · 반" className={TH} />
+                      <SortableTh column={getColumn("period")} label="청구월" className={TH} />
+                      <SortableTh column={getColumn("dueDate")} label="납부기한" className={TH} />
+                      <SortableTh column={getColumn("amount")} label="청구" className={`${TH} text-right`} align="right" />
+                      <SortableTh column={getColumn("paid")} label="납부" className={`${TH} text-right`} align="right" />
+                      <SortableTh column={getColumn("outstanding")} label="미수" className={`${TH} text-right`} align="right" />
                       <th className={TH}>상태</th>
                       <th className={`${TH} text-right`}>동작</th>
                     </tr>

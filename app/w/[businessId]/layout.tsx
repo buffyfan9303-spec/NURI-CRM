@@ -4,6 +4,7 @@
  * forbidden → ForbiddenState, error → ErrorState(재시도).
  */
 import { redirect } from "next/navigation";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -80,17 +81,19 @@ export default async function WorkspaceLayout({
   const myBusinesses = bizList.ok ? bizList.businesses : [];
 
   return (
-    <WorkspaceShell
-      businessId={access.businessId}
-      businessName={access.businessName}
-      industry={access.industry}
-      roleLabel={ROLE_LABEL[access.role] ?? access.role}
-      userEmail={access.email}
-      nav={nav}
-      myBusinesses={myBusinesses}
-      canWrite={access.caps.includes("write")}
-    >
-      {children}
-    </WorkspaceShell>
+    <NuqsAdapter>
+      <WorkspaceShell
+        businessId={access.businessId}
+        businessName={access.businessName}
+        industry={access.industry}
+        roleLabel={ROLE_LABEL[access.role] ?? access.role}
+        userEmail={access.email}
+        nav={nav}
+        myBusinesses={myBusinesses}
+        canWrite={access.caps.includes("write")}
+      >
+        {children}
+      </WorkspaceShell>
+    </NuqsAdapter>
   );
 }

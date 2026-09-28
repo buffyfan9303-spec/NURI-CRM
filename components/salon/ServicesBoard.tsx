@@ -19,11 +19,21 @@ import { cn } from "@/lib/utils/cn";
 import type { SalonService } from "@/lib/domain/salon";
 import { createService, setServiceRevisitDays } from "@/lib/domain/salon-actions";
 import { formatKRW } from "@/lib/domain/money";
+import { useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 export function ServicesBoard({ businessId, canWrite, services, className }: { businessId: string; canWrite: boolean; services: SalonService[]; className?: string }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [sorting, setSorting] = useUrlSorting();
   const onSaved = () => router.refresh();
+  const { sortedRows: sortedServices, getColumn } = useSortedRows<SalonService>(
+    services,
+    { name: (s) => s.name, price: (s) => s.price, durationMinutes: (s) => s.durationMinutes },
+    sorting,
+    setSorting
+  );
 
   return (
     <Card className={cn("sm:p-5", MOBILE_BARE, className)}>
@@ -40,21 +50,21 @@ export function ServicesBoard({ businessId, canWrite, services, className }: { b
         />
       ) : (
         <TableOrCards
-          rows={services}
+          rows={sortedServices}
           keyOf={(s) => s.id}
           table={
             <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
               <table className={`${TABLE} min-w-[520px]`}>
                 <thead>
                   <tr className={THEAD}>
-                    <th className={TH}>서비스</th>
-                    <th className={`${TH} text-right`}>가격</th>
-                    <th className={`${TH} text-right`}>소요</th>
+                    <SortableTh column={getColumn("name")} label="서비스" className={TH} />
+                    <SortableTh column={getColumn("price")} label="가격" className={`${TH} text-right`} align="right" />
+                    <SortableTh column={getColumn("durationMinutes")} label="소요" className={`${TH} text-right`} align="right" />
                     <th className={`${TH} text-right`}>재방문 주기</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {services.map((s) => (
+                  {sortedServices.map((s) => (
                     <tr key={s.id} className={`${TR} h-[52px]`}>
                       <td className={TD}>
                         <CellName max={260}>{s.name}</CellName>

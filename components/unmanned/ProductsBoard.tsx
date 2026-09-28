@@ -13,6 +13,9 @@ import type { UsProduct } from "@/lib/domain/unmanned";
 import { createProduct, receiveInbound, setSupplierNote } from "@/lib/domain/unmanned-actions";
 import { TableOrCards, MobileCard, CellName } from "@/components/ui/ResponsiveTable";
 import { StatusTab, FilterRow, SearchBox, TextAction, SelectField, Alert, CONTROL, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
+import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 const BARCODE_TYPES = ["NONE", "EAN13", "CODE128"] as const;
 
@@ -47,8 +50,9 @@ export function ProductsBoard({
   const [inboundFor, setInboundFor] = React.useState<string | null>(null);
   const [inboundQty, setInboundQty] = React.useState("1");
   const [inboundExpiry, setInboundExpiry] = React.useState("");
-  const [q, setQ] = React.useState("");
-  const [tab, setTab] = React.useState<"all" | "low">(lowOnly ? "low" : "all");
+  const [q, setQ] = useUrlParam("q");
+  const [tab, setTab] = useUrlParam("tab", lowOnly ? "low" : "all");
+  const [sorting, setSorting] = useUrlSorting();
   const [noteFor, setNoteFor] = React.useState<string | null>(null);
   const [noteDraft, setNoteDraft] = React.useState("");
 
@@ -113,8 +117,14 @@ export function ProductsBoard({
 
   const needle = q.trim().toLowerCase();
   const lowCount = products.filter((p) => p.lowStock).length;
-  const filtered = products.filter(
+  const filteredProducts = products.filter(
     (p) => (tab === "all" || p.lowStock) && (!needle || `${p.name} ${p.sku} ${p.barcode ?? ""}`.toLowerCase().includes(needle))
+  );
+  const { sortedRows: filtered, getColumn } = useSortedRows<UsProduct>(
+    filteredProducts,
+    { sku: (p) => p.sku, name: (p) => p.name, salePrice: (p) => p.salePrice, costPrice: (p) => p.costPrice ?? 0, stock: (p) => p.onHand },
+    sorting,
+    setSorting
   );
   const filtersActive = !!needle || tab !== "all";
 
@@ -222,12 +232,12 @@ export function ProductsBoard({
               <table className={`${TABLE} min-w-[960px]`}>
                 <thead>
                   <tr className={THEAD}>
-                    <th className={TH}>SKU</th>
-                    <th className={TH}>상품명</th>
+                    <SortableTh column={getColumn("sku")} label="SKU" className={TH} />
+                    <SortableTh column={getColumn("name")} label="상품명" className={TH} />
                     <th className={TH}>바코드</th>
-                    <th className={`${TH} text-right`}>판매가</th>
-                    {canReadCost && <th className={`${TH} text-right`}>원가</th>}
-                    <th className={`${TH} text-right`}>재고</th>
+                    <SortableTh column={getColumn("salePrice")} label="판매가" className={`${TH} text-right`} align="right" />
+                    {canReadCost && <SortableTh column={getColumn("costPrice")} label="원가" className={`${TH} text-right`} align="right" />}
+                    <SortableTh column={getColumn("stock")} label="재고" className={`${TH} text-right`} align="right" />
                     <th className={TH}>도매처 메모</th>
                     {canWrite && <th className={TH}>입고</th>}
                   </tr>

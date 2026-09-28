@@ -14,15 +14,16 @@
  */
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { X } from "@/lib/icons";
 import { cn } from "@/lib/utils/cn";
 import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { Modal } from "@/components/ui/Modal";
 import type { IndustryDef } from "@/lib/industry/config";
 import type { CalendarEvent, CalendarView, MemberOption } from "@/lib/domain/calendar-shared";
-import { shiftDateKey } from "@/lib/domain/calendar-shared";
-import { formatMonthTitle, formatDayTitle } from "@/lib/utils/datetime";
-import { deleteEvent } from "@/lib/domain/calendar-actions";
+import { shiftDateKey, isDerivedEvent } from "@/lib/domain/calendar-shared";
+import { formatMonthTitle, formatDayTitle, formatInTz, localDateTimeToUtcIso } from "@/lib/utils/datetime";
+import { deleteEvent, updateEvent, type CalendarEventInput } from "@/lib/domain/calendar-actions";
 import { Toolbar, type CalendarFilters } from "./Toolbar";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
@@ -30,6 +31,7 @@ import { DayView } from "./DayView";
 import { ListView } from "./ListView";
 import { EventDetail } from "./EventDetail";
 import { EventFormModal } from "./EventFormModal";
+import { ROW_HEIGHT } from "./TimeGrid";
 
 export type EventsState =
   | { kind: "ok"; events: CalendarEvent[] }
@@ -192,6 +194,60 @@ export function CalendarClient({
     router.refresh();
   }
 
+  // 끌어서 옮기기(dnd-kit). 데스크톱은 8px 이동, 모바일은 250ms 길게 눌러야 시작(스크롤과 안 겹침),
+  // 키보드는 dnd-kit KeyboardSensor(포커스 후 Space로 잡고 화살표로 이동, Space로 놓음)가 기본 대안이다.
+  // 낙관적으로 먼저 옮기지 않는다 — 서버가 성공을 돌려줘야 router.refresh()로 실제 위치가 바뀐다.
+  // 그래서 실패해도 "되돌릴 것"이 원래 없다(카드가 그 자리에 그대로 있음).
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  async function handleDragEnd(e: DragEndEvent) {
+    if (!canWrite || !e.over) return;
+    const data = e.active.data.current as { event: CalendarEvent; mode: "date" | "time" } | undefined;
+    if (!data) return;
+    const { event } = data;
+    if (isDerivedEvent(event)) return; // 안전망 — 드래그 자체가 disabled지만 이중 확인.
+    const m = /^(?:day|allday):(.+)$/.exec(String(e.over.id));
+    if (!m) return;
+    const targetDateKey = m[1];
+
+    let input: CalendarEventInput;
+    if (event.allDay) {
+      if (targetDateKey === event.eventDate) return; // 같은 칸에 놓으면 아무것도 안 바뀜.
+      input = { kind: event.kind, title: event.title, allDay: true, eventDate: targetDateKey, assignee: event.assignee, notes: event.notes };
+    } else {
+      const origStart = event.startsAt as string;
+      const [hhStr, mmStr] = formatInTz(origStart, timezone, "HH:mm").split(":");
+      let hh = Number(hhStr);
+      let mm = Number(mmStr);
+      if (data.mode === "time") {
+        const snapped = Math.round((e.delta.y / ROW_HEIGHT) * 60 / 30) * 30; // 30분 단위 스냅
+        const total = Math.max(0, Math.min(23 * 60 + 30, hh * 60 + mm + snapped));
+        hh = Math.floor(total / 60);
+        mm = total % 60;
+      }
+      const newStartIso = localDateTimeToUtcIso(targetDateKey, `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`, timezone);
+      if (newStartIso === origStart) return; // 제자리 — 요청 생략.
+      let newEndIso: string | null = null;
+      if (event.endsAt) {
+        const durationMs = new Date(event.endsAt).getTime() - new Date(origStart).getTime();
+        newEndIso = new Date(new Date(newStartIso).getTime() + durationMs).toISOString();
+      }
+      input = { kind: event.kind, title: event.title, allDay: false, startsAt: newStartIso, endsAt: newEndIso, assignee: event.assignee, notes: event.notes };
+    }
+
+    const result = await updateEvent(businessId, event.id, input);
+    if (!result.ok) {
+      setBanner({ kind: "error", message: result.message });
+      return; // 원위치 — 로컬 상태를 바꾸지 않았으므로 이미 되돌아가 있다.
+    }
+    setBanner(null);
+    router.refresh();
+  }
+
   // 결함 수정(§5.6/§11-4): "일정 없음"·"오류"로 뷰 전체를 대체하는 분기를 없앴다.
   // 격자(월/주/일/목록)는 이벤트 상태와 무관하게 항상 그리고, 상황은 위쪽 얇은 줄로만 알린다.
   // forbidden(뷰 권한 자체가 없어진 경합 상황)만 예외적으로 몸통을 막는다 — 이건 "실패"가 아니라
@@ -228,6 +284,7 @@ export function CalendarClient({
           selectedId={selectedId}
           onSelectEvent={selectEvent}
           onOpenDay={handleOpenDay}
+          canDrag={canWrite}
         />
       );
     }
@@ -258,6 +315,7 @@ export function CalendarClient({
   };
 
   return (
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
     <div className="flex h-full flex-col">
       <Toolbar
         view={view}
@@ -371,5 +429,6 @@ export function CalendarClient({
         onSaved={handleSaved}
       />
     </div>
+    </DndContext>
   );
 }

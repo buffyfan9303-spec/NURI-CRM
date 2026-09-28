@@ -33,8 +33,9 @@ import { formatKRW } from "@/lib/domain/money";
 import { salonReminderNotice } from "@/lib/domain/messages";
 import { MessageActions } from "@/components/common/MessageActions";
 import { PayModal, type PayTarget } from "./PayModal";
+import { StaffDayView } from "./StaffDayView";
 
-interface CustomerOption { id: string; name: string; phone?: string | null }
+export interface CustomerOption { id: string; name: string; phone?: string | null }
 
 export const SALON_STATUS_KIND: Record<string, BadgeKind> = {
   완료: "success", 예약: "info", 확정: "success", 대기: "info", 진행중: "warning", 취소: "error", 노쇼: "error",
@@ -166,6 +167,8 @@ export function BookingBoard({
   };
   const showList = mobileTab === "bookings";
   const moreView = moreFor ? rowView(moreFor) : null;
+  // 목록 ↔ 담당자별 하루 보기(?view=staff). dnd-kit 리소스 뷰는 오늘 하루만 다룬다(StaffDayView).
+  const staffView = searchParams.get("view") === "staff";
 
   return (
     <>
@@ -189,11 +192,33 @@ export function BookingBoard({
           <StatusTab active={todayOnly} onClick={() => setParam("date", null)}>오늘</StatusTab>
           <StatusTab active={!todayOnly} onClick={() => setParam("date", "all")}>전체(최근 100건)</StatusTab>
         </FilterRow>
+        {/* 목록 ↔ 담당자별 하루 보기 전환(dnd-kit, 유료 리소스 뷰 대신 직접 구현). */}
+        <FilterRow className={showList ? undefined : "max-sm:hidden"}>
+          <StatusTab active={!staffView} onClick={() => setParam("view", null)}>목록</StatusTab>
+          <StatusTab active={staffView} onClick={() => setParam("view", "staff")}>담당자별</StatusTab>
+        </FilterRow>
       </PageHeader>
 
       {error && <Alert className="mb-4">{error}</Alert>}
 
-      <Card className={`mb-4 sm:p-5 ${MOBILE_BARE} ${showList ? "" : "max-sm:hidden"}`}>
+      {staffView && (
+        <div className={`mb-4 ${showList ? "" : "max-sm:hidden"}`}>
+          <StaffDayView
+            businessId={businessId}
+            canWrite={canWrite}
+            canRevenue={canRevenue}
+            services={services}
+            staff={staff}
+            resources={resources}
+            customers={customers}
+            appointments={appointments}
+            noShowByCustomer={noShowByCustomer}
+            onError={setError}
+          />
+        </div>
+      )}
+
+      <Card className={`mb-4 sm:p-5 ${MOBILE_BARE} ${showList ? "" : "max-sm:hidden"} ${staffView ? "hidden" : ""}`}>
         <CardHead title={todayOnly ? "오늘 예약" : "예약 목록"} description={`${appointments.length}건 · 시간순`} />
         {appointments.length === 0 ? (
           <EmptyState
@@ -327,17 +352,21 @@ export function BookingBoard({
   );
 }
 
-function BookingModal({
+/** BookingModal은 담당자별 하루 보기(StaffDayView)의 빈 칸 클릭에서도 그대로 재사용한다 — 예약 확정 경로는 하나뿐이다. */
+export function BookingModal({
   open, onClose, businessId, services, staff, resources, customers, noShowByCustomer, prefillCustomerId, onCreated,
+  initialStaffId, initialDate, initialTime,
 }: {
   open: boolean; onClose: () => void; businessId: string;
   services: SalonService[]; staff: SalonStaffProfile[]; resources: SalonResource[]; customers: CustomerOption[];
   noShowByCustomer: Record<string, number>; prefillCustomerId: string; onCreated: () => void;
+  /** StaffDayView 빈 칸 클릭 시 그 담당자·시간을 미리 채운다. */
+  initialStaffId?: string; initialDate?: string; initialTime?: string;
 }) {
   const initial = React.useCallback(() => ({
-    customerId: prefillCustomerId, staffId: "", serviceId: "", resourceId: "",
-    date: todayKeyInTz(DEFAULT_TZ), time: "10:00",
-  }), [prefillCustomerId]);
+    customerId: prefillCustomerId, staffId: initialStaffId ?? "", serviceId: "", resourceId: "",
+    date: initialDate ?? todayKeyInTz(DEFAULT_TZ), time: initialTime ?? "10:00",
+  }), [prefillCustomerId, initialStaffId, initialDate, initialTime]);
   const [form, setForm] = React.useState(initial);
   const [error, setError] = React.useState<string | null>(null);
   const [suggested, setSuggested] = React.useState<string | null>(null);

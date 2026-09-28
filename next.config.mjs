@@ -1,3 +1,13 @@
+import withSerwistInit from "@serwist/next";
+
+// PWA: 운영 빌드에서만 서비스 워커를 만든다(개발 중 캐시로 화면이 안 바뀌는 혼란 방지).
+const withSerwist = withSerwistInit({
+  swSrc: "app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+  additionalPrecacheEntries: [{ url: "/offline.html", revision: "2026-09-28" }],
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -11,4 +21,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

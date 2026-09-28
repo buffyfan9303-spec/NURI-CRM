@@ -38,7 +38,7 @@ async function checkAsync(name, fn) {
 }
 
 // ── 1부: 실제 인코딩→디코딩 왕복 (QR·Code128·EAN13) ─────────────────────
-console.log("[1/2] 바코드 인코딩→디코딩 왕복 (zxing-wasm — 앱이 쓰는 것과 동일한 디코딩 엔진)");
+console.log("[1/3] 바코드 인코딩→디코딩 왕복 (zxing-wasm — 앱이 쓰는 것과 동일한 디코딩 엔진)");
 
 const CASES = [
   { zxingFormat: "QRCode", ourFormat: "qr_code", text: "NURI-SCAN-SELFTEST" },
@@ -86,11 +86,6 @@ function isValidEan13(raw) {
   const sum = digits.reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 1 : 3), 0);
   return (10 - (sum % 10)) % 10 === chk;
 }
-function isDuplicateWithinWindow(seen, code, now, windowMs = 3000) {
-  const last = seen.get(code);
-  return last !== undefined && now - last < windowMs;
-}
-
 check("EAN13 체크섬 유효 — 4006381333931", () => assert.equal(isValidEan13("4006381333931"), true));
 check("EAN13 체크섬 무효 — 마지막 자리 변조", () => assert.equal(isValidEan13("4006381333930"), false));
 check("EAN13 자릿수 부족은 무효", () => assert.equal(isValidEan13("123456789012"), false));
@@ -108,17 +103,44 @@ check("http:// URL은 URL로 판별(자동 실행 금지 대상)", () => assert.
 check("javascript: 스킴도 URL로 판별", () => assert.equal(isUrlLikeCode("javascript:alert(1)"), true));
 check("일반 코드는 URL이 아님", () => assert.equal(isUrlLikeCode("RENT-0001"), false));
 
-check("중복 억제 — 창 안 재스캔은 중복", () => {
-  const seen = new Map([["CODE-1", 1000]]);
-  assert.equal(isDuplicateWithinWindow(seen, "CODE-1", 1000 + 1500, 3000), true);
-});
-check("중복 억제 — 창을 벗어나면 중복 아님", () => {
-  const seen = new Map([["CODE-1", 1000]]);
-  assert.equal(isDuplicateWithinWindow(seen, "CODE-1", 1000 + 3500, 3000), false);
-});
-check("중복 억제 — 처음 보는 코드는 중복 아님", () => {
+// ── 3부: lib/scan/validate.ts 실제 소스 import(Node 22.18+ 타입 스트립) — D3·D4·D9 회귀 ──────────
+console.log("\n[3/3] lib/scan/validate.ts 실제 소스 — 카메라 연속 인식·세션 키 폴백·정규화");
+const v = await import("../lib/scan/validate.ts");
+
+check("카메라 연속 인식(D3) — 처음 fresh → 0.2초 간격 continuous → 1.5초 이상 안 보이면 reappeared", () => {
   const seen = new Map();
-  assert.equal(isDuplicateWithinWindow(seen, "CODE-1", 1000, 3000), false);
+  assert.equal(v.noteCameraSighting(seen, "C", 1000, 1500), "fresh");
+  assert.equal(v.noteCameraSighting(seen, "C", 1220, 1500), "continuous");
+  assert.equal(v.noteCameraSighting(seen, "C", 1440, 1500), "continuous");
+  // 3초 넘게 계속 비춰도(이전 창 3000ms) 프레임 간격이 짧으면 계속 continuous — 수량 부풀림 없음
+  let t = 1440; for (let i = 0; i < 20; i++) { t += 220; assert.equal(v.noteCameraSighting(seen, "C", t, 1500), "continuous"); }
+  assert.equal(v.noteCameraSighting(seen, "C", t + 1600, 1500), "reappeared");
+  assert.equal(v.noteCameraSighting(seen, "D", t + 1600, 1500), "fresh");
+});
+check("정규화(D9) — 앞뒤 공백만 제거, 대소문자·NURI: 접두사 보존", () => {
+  assert.equal(v.normalizeScanCode("  QA-R-0001 \n"), "QA-R-0001");
+  assert.equal(v.normalizeScanCode("qa-r-0001"), "qa-r-0001");
+  assert.equal(v.normalizeScanCode("NURI:F900001"), "NURI:F900001");
+});
+check("EAN13 체크섬 오류(D9) — 13자리 숫자만 판정, 그 외는 false", () => {
+  assert.equal(v.isEan13ChecksumError("4006381333930"), true);
+  assert.equal(v.isEan13ChecksumError("4006381333931"), false);
+  assert.equal(v.isEan13ChecksumError("QA-R-0001"), false);
+});
+check("세션 키(D4) — randomUUID 있으면 uuid, 없으면 getRandomValues 폴백도 uuid v4 형식", () => {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  assert.match(v.newSessionKey(), UUID);
+  const orig = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(crypto), "randomUUID") ?? Object.getOwnPropertyDescriptor(crypto, "randomUUID");
+  Object.defineProperty(crypto, "randomUUID", { value: undefined, configurable: true });
+  try {
+    const k = v.newSessionKey();
+    assert.match(k, UUID);
+    assert.notEqual(k, v.newSessionKey());
+  } finally {
+    delete crypto.randomUUID;
+    if (orig && !Object.getPrototypeOf(crypto).randomUUID) Object.defineProperty(crypto, "randomUUID", orig);
+  }
+  assert.equal(typeof crypto.randomUUID, "function", "테스트 후 randomUUID 복원");
 });
 
 console.log(failed === 0 ? "\n모두 통과." : `\n${failed}건 실패.`);

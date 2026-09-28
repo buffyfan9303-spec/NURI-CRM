@@ -14,6 +14,7 @@ import { formatKRW } from "@/lib/domain/money";
 import { formatInTz } from "@/lib/utils/datetime";
 import { CLAIM_KIND_LABEL, RESERVATION_STATUS_LABEL, type ReservationStatus } from "@/lib/domain/rental-types";
 import { getAccess } from "../../../../../access";
+import { Download } from "@/lib/icons";
 import { BackLink, PrintButton, RetryButton } from "@/components/rental/listkit";
 
 export default async function ClaimPrintPage({ params }: { params: { businessId: string; id: string; claimId: string } }) {
@@ -56,8 +57,20 @@ export default async function ClaimPrintPage({ params }: { params: { businessId:
         <BackLink href={`/w/${access.businessId}/reservations/${params.id}`}>예약 상세</BackLink>
         <PageHeader
           title={`청구서 ${c.claimNo}`}
-          description="브라우저 인쇄 대화상자에서 대상을 'PDF로 저장'으로 바꾸면 PDF 파일로 남길 수 있습니다."
-          actions={<PrintButton />}
+          description="브라우저 인쇄 대화상자에서 대상을 'PDF로 저장'으로 바꾸면 PDF 파일로 남길 수 있습니다. 또는 오른쪽 'PDF 다운로드'로 바로 받을 수 있습니다."
+          actions={
+            <>
+              <a
+                href={`/api/pdf/rental-damage-claim/${params.claimId}?businessId=${access.businessId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-[36px] items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3.5 text-[13px] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]"
+              >
+                <Download size={14} aria-hidden />PDF 다운로드
+              </a>
+              <PrintButton />
+            </>
+          }
         />
         {c.masked && (
           <p className="mb-4 rounded-[var(--r-md)] bg-wb px-3.5 py-2.5 text-[12.5px] text-wt">매출·정산 조회 권한(revenue.read)이 없어 금액이 &lsquo;비공개&rsquo;로 인쇄됩니다.</p>

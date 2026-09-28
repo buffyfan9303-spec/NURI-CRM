@@ -8,6 +8,7 @@
  * 레퍼런스: Fresha — 사진은 예약(시술) 단위로 붙고, 메모는 직원만 본다.
  */
 import * as React from "react";
+import { useDropzone } from "react-dropzone";
 import { Upload, Trash2, Camera } from "@/lib/icons";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -17,11 +18,14 @@ import type { TreatmentHistoryRow } from "@/lib/domain/salon";
 import { updateTreatmentNote, createSalonPhotoUploadUrl, attachSalonPhoto, removeSalonPhoto } from "@/lib/domain/salon-actions";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 import { formatInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
+import { toast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils/cn";
 
 // salon-actions.ts는 "use server" 파일이라 상수 export를 클라이언트에서 그대로 import하지 않는다
 // (서버 액션 번들 규칙 — 함수 외 export는 불안정할 수 있어 값만 여기 복제, 실제 판정은 항상 서버가 한다).
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPT_MIME = ["image/jpeg", "image/png", "image/webp"];
+const ACCEPT_MAP = Object.fromEntries(ACCEPT_MIME.map((m) => [m, []]));
 
 export function TreatmentHistoryPanel({
   businessId,
@@ -76,7 +80,7 @@ function TreatmentHistoryItem({
   const [note, setNote] = React.useState(item.note ?? "");
   const [busy, setBusy] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
-  const fileRef = React.useRef<HTMLInputElement>(null);
+  const [progress, setProgress] = React.useState<{ done: number; total: number } | null>(null);
   const dirty = note !== (item.note ?? "");
 
   const saveNote = async () => {
@@ -96,31 +100,63 @@ function TreatmentHistoryItem({
     }
   };
 
-  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    onError(null);
-    if (!ACCEPT_MIME.includes(file.type)) { onError("JPEG·PNG·WebP 이미지만 올릴 수 있습니다."); return; }
-    if (file.size > MAX_BYTES) { onError("사진은 10MB 이하여야 합니다."); return; }
+  /** 여러 장을 순서대로 올린다(서명 URL → 업로드 → attach, 한 장씩). 실패한 장은 건너뛰고 인라인 오류로 남긴다. */
+  const uploadFiles = async (files: File[], rejectMessage?: string) => {
+    onError(rejectMessage ?? null);
+    if (files.length === 0) return;
     setBusy(true);
+    setProgress({ done: 0, total: files.length });
+    let paths = item.photoPaths;
+    let urls = item.photoUrls;
+    const failed: string[] = [];
     try {
-      const signed = await createSalonPhotoUploadUrl(businessId, { historyId: item.id, fileName: file.name, mime: file.type, size: file.size });
-      if (!signed.ok) { onError(signed.message); return; }
-      const { error: upErr } = await getBrowserSupabase()
-        .storage.from("salon-photos")
-        .uploadToSignedUrl(signed.data.path, signed.data.token, file, { contentType: file.type });
-      if (upErr) { onError("사진 업로드에 실패했습니다."); return; }
-      const attached = await attachSalonPhoto(businessId, item.id, signed.data.path);
-      if (!attached.ok) { onError(attached.message); return; }
-      // 서명 URL은 새로 만들어야 하므로(경로만 갱신됨) 페이지를 새로고침해야 썸네일이 보인다 — 낙관적으로 경로만 반영.
-      onUpdated({ ...item, photoPaths: attached.data.photoPaths, photoUrls: [...item.photoUrls, null] });
+      for (const [i, file] of files.entries()) {
+        try {
+          const signed = await createSalonPhotoUploadUrl(businessId, { historyId: item.id, fileName: file.name, mime: file.type, size: file.size });
+          if (!signed.ok) { failed.push(`${file.name}: ${signed.message}`); continue; }
+          const { error: upErr } = await getBrowserSupabase()
+            .storage.from("salon-photos")
+            .uploadToSignedUrl(signed.data.path, signed.data.token, file, { contentType: file.type });
+          if (upErr) { failed.push(`${file.name}: 업로드 실패`); continue; }
+          const attached = await attachSalonPhoto(businessId, item.id, signed.data.path);
+          if (!attached.ok) { failed.push(`${file.name}: ${attached.message}`); continue; }
+          // 서명 URL은 새로 만들어야 하므로(경로만 갱신됨) 페이지를 새로고침해야 썸네일이 보인다 — 낙관적으로 경로만 반영.
+          paths = attached.data.photoPaths;
+          urls = [...urls, null];
+          onUpdated({ ...item, photoPaths: paths, photoUrls: urls });
+        } finally {
+          setProgress({ done: i + 1, total: files.length });
+        }
+      }
+      const okCount = files.length - failed.length;
+      if (okCount > 0) toast.success(`사진 ${okCount}장을 올렸습니다.`);
+      if (failed.length > 0) onError([rejectMessage, `올리지 못한 사진 — ${failed.join(" / ")}`].filter(Boolean).join(" "));
     } catch {
       onError("저장하지 못했습니다. 잠시 후 다시 시도하세요.");
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   };
+
+  // 끌어서 올리기(PC) + 탭해서 선택(모바일, open()). 형식·10MB 는 dropzone 이 먼저 거르고 서버가 다시 판정한다.
+  const { getRootProps, getInputProps, isDragActive, open: openPicker } = useDropzone({
+    accept: ACCEPT_MAP,
+    maxSize: MAX_BYTES,
+    multiple: true,
+    noClick: true,
+    noKeyboard: true,
+    useFsAccessApi: false,
+    disabled: !canWrite || busy,
+    onDrop: (accepted, rejected) => {
+      const tooBig = rejected.some((r) => r.errors.some((e) => e.code === "file-too-large"));
+      const badType = rejected.some((r) => r.errors.some((e) => e.code === "file-invalid-type"));
+      const rejectMessage = rejected.length
+        ? `${rejected.length}개 건너뜀 — ${[badType && "JPEG·PNG·WebP 이미지만 올릴 수 있습니다.", tooBig && "사진은 10MB 이하여야 합니다."].filter(Boolean).join(" ")}`
+        : undefined;
+      void uploadFiles(accepted, rejectMessage);
+    },
+  });
 
   const removePhoto = async (path: string) => {
     if (!window.confirm("사진을 삭제합니다. 되돌릴 수 없습니다. 계속할까요?")) return;
@@ -148,15 +184,26 @@ function TreatmentHistoryItem({
         <span className="text-[12.5px] font-medium tabular-nums text-t2">{formatInTz(item.createdAt, DEFAULT_TZ, "yyyy.MM.dd HH:mm")}</span>
         {canWrite && (
           <>
-            <input ref={fileRef} type="file" accept={ACCEPT_MIME.join(",")} className="hidden" onChange={onFileChange} />
-            <Button variant="secondary" size="sm" loading={busy} onClick={() => fileRef.current?.click()}>
+            <input {...getInputProps({ "aria-label": "시술 사진 선택" })} />
+            <Button variant="secondary" size="sm" loading={busy} onClick={openPicker}>
               <Upload size={13} aria-hidden />
-              사진 추가
+              {progress ? `올리는 중 ${progress.done}/${progress.total}` : "사진 추가"}
             </Button>
           </>
         )}
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[auto_1fr]">
+      {/* 사진 칸 + 메모 전체가 드롭 대상(PC). 끌고 오면 행 전체에 점선 테두리와 안내가 덮인다. */}
+      <div
+        {...getRootProps({
+          className: cn("relative grid grid-cols-1 gap-3 rounded-[var(--r-md)] sm:grid-cols-[auto_1fr]", canWrite && "-m-1.5 p-1.5"),
+        })}
+      >
+        {isDragActive && (
+          <span className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--accent-soft)]/90 text-[13.5px] font-medium text-[var(--accent-ink)] outline-dashed outline-2 outline-[var(--accent)]">
+            <Upload size={16} aria-hidden />
+            여기에 놓으면 올라갑니다
+          </span>
+        )}
         <div className="flex flex-wrap gap-2">
           {item.photoUrls.length === 0 && (
             <span className="flex h-[88px] w-[88px] flex-col items-center justify-center gap-1 rounded-[var(--r-md)] border border-dashed border-[var(--bd2)] text-[10.5px] text-t3">

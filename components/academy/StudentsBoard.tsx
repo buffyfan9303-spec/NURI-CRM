@@ -20,6 +20,9 @@ import { CellName, TableOrCards, MobileCard, MOBILE_BARE } from "@/components/ui
 import { SearchBox, StatusTab, FilterRow, CardHead, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import type { AcadStudent, AcadGuardian } from "@/lib/domain/academy";
 import { createStudent, addGuardian } from "@/lib/domain/academy-actions";
+import { useUrlParam, useUrlSorting } from "@/lib/table/useUrlTable";
+import { useSortedRows } from "@/lib/table/useSortedRows";
+import { SortableTh } from "@/components/table/SortableTh";
 
 function initials(name: string) { return name.trim().slice(0, 2); }
 
@@ -27,8 +30,9 @@ export function StudentsBoard({ businessId, canWrite, canReadPii, students, guar
   businessId: string; canWrite: boolean; canReadPii: boolean; students: AcadStudent[]; guardians: AcadGuardian[];
 }) {
   const router = useRouter();
-  const [q, setQ] = React.useState("");
-  const [tab, setTab] = React.useState<"active" | "all">("active");
+  const [q, setQ] = useUrlParam("q");
+  const [tab, setTab] = useUrlParam("tab", "active");
+  const [sorting, setSorting] = useUrlSorting();
   const [newOpen, setNewOpen] = React.useState(false);
   const [guardianFor, setGuardianFor] = React.useState<AcadStudent | null>(null);
 
@@ -39,7 +43,13 @@ export function StudentsBoard({ businessId, canWrite, canReadPii, students, guar
   }, [guardians]);
 
   const needle = q.trim().toLowerCase();
-  const rows = students.filter((s) => (tab === "all" || s.active) && (!needle || s.name.toLowerCase().includes(needle) || (s.school ?? "").toLowerCase().includes(needle) || (byStudent.get(s.id) ?? []).some((g) => g.name.toLowerCase().includes(needle) || g.phone.includes(needle))));
+  const filtered = students.filter((s) => (tab === "all" || s.active) && (!needle || s.name.toLowerCase().includes(needle) || (s.school ?? "").toLowerCase().includes(needle) || (byStudent.get(s.id) ?? []).some((g) => g.name.toLowerCase().includes(needle) || g.phone.includes(needle))));
+  const { sortedRows: rows, getColumn } = useSortedRows<AcadStudent>(
+    filtered,
+    { name: (s) => s.name, school: (s) => [s.school, s.grade].filter(Boolean).join(" ") },
+    sorting,
+    setSorting
+  );
   const activeCount = students.filter((s) => s.active).length;
 
   return (
@@ -73,8 +83,8 @@ export function StudentsBoard({ businessId, canWrite, canReadPii, students, guar
             <table className={`${TABLE} min-w-[520px]`}>
               <thead>
                 <tr className={THEAD}>
-                  <th className={TH}>학생</th>
-                  <th className={TH}>학교 · 학년</th>
+                  <SortableTh column={getColumn("name")} label="학생" className={TH} />
+                  <SortableTh column={getColumn("school")} label="학교 · 학년" className={TH} />
                   <th className={TH}>{canReadPii ? "보호자" : "상태"}</th>
                   {canWrite && canReadPii && <th className={`${TH} text-right`}>동작</th>}
                 </tr>

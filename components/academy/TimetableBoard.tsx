@@ -22,6 +22,7 @@ import { SelectField, StatusTab, FilterRow, Alert, TABLE, THEAD, TH, TR, TD } fr
 import type { AcadClass, AcadSession } from "@/lib/domain/academy";
 import { updateSessionOnce, updateScheduleFrom } from "@/lib/domain/academy-actions";
 import { formatInTz, localDateTimeToUtcIso, todayKeyInTz, DEFAULT_TZ } from "@/lib/utils/datetime";
+import { useHolidayMap } from "@/lib/holidays";
 
 const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 const SESSION_STATUS_KIND: Record<string, BadgeKind> = { 예정: "info", 완료: "success", 휴강: "error" };
@@ -45,6 +46,7 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
     for (const s of visible) m.set(s.sessionDate, [...(m.get(s.sessionDate) ?? []), s]);
     return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [visible]);
+  const holidayMap = useHolidayMap(React.useMemo(() => groups.map(([d]) => d), [groups]));
 
   const dateLabel = (key: string) => {
     const [y, mo, d] = key.split("-").map(Number);
@@ -140,7 +142,12 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
           {groups.map(([date, list]) => (
             <Card key={date} className="p-4 sm:p-5">
               <div className="mb-3 flex items-baseline justify-between gap-2">
-                <h2 className={`text-[var(--fs-card)] font-semibold ${date === todayKey ? "text-[var(--accent-ink)]" : "text-t"}`}>{dateLabel(date)}</h2>
+                <h2 className={`flex items-center gap-1.5 text-[var(--fs-card)] font-semibold ${date === todayKey ? "text-[var(--accent-ink)]" : "text-t"}`}>
+                  {dateLabel(date)}
+                  {holidayMap[date] && (
+                    <Badge kind="error">{holidayMap[date]}</Badge>
+                  )}
+                </h2>
                 <span className="text-[12px] tabular-nums text-t3">{list.length}회차</span>
               </div>
               <TableOrCards

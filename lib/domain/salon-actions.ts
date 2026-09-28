@@ -125,6 +125,39 @@ export async function bookAppointment(
   return { ok: true, data: { id: (data as { id: string }).id } };
 }
 
+/**
+ * 담당자별 하루 보기(dnd-kit)에서 예약을 끌어다 다른 시간·담당자로 옮길 때 쓴다.
+ * 소요시간(기존 end_at − start_at)은 그대로 유지하고 시작 시각만 옮긴다.
+ * 겹침은 crm.salon_appointments의 EXCLUDE 제약(salon_book이 쓰는 것과 같은 제약)이
+ * UPDATE에도 그대로 적용돼 서버가 최종 거부한다 — 여기서 따로 재검사하지 않는다.
+ */
+export async function rescheduleAppointment(
+  businessId: string,
+  appointmentId: string,
+  input: { staffId: string; startIso: string }
+): Promise<ActionResult<{ startAt: string; endAt: string }>> {
+  return withCap(businessId, "write", async () => {
+    const sb = getServerSupabase();
+    const { data: existing, error: readErr } = await sb
+      .schema("crm").from("salon_appointments").select("start_at,end_at,status")
+      .eq("id", appointmentId).eq("business_id", businessId).maybeSingle();
+    if (readErr) return { ok: false, message: pgError(readErr) };
+    if (!existing) return { ok: false, message: "예약을 찾을 수 없습니다." };
+    if (existing.status === "취소" || existing.status === "노쇼") return { ok: false, message: "취소·노쇼 예약은 옮길 수 없습니다." };
+    const durationMs = new Date(existing.end_at).getTime() - new Date(existing.start_at).getTime();
+    const startAt = new Date(input.startIso);
+    const endAt = new Date(startAt.getTime() + durationMs);
+    const r = await mustAffect(
+      sb.schema("crm").from("salon_appointments")
+        .update({ staff_id: input.staffId, start_at: startAt.toISOString(), end_at: endAt.toISOString() })
+        .eq("id", appointmentId).eq("business_id", businessId)
+    );
+    if (!r.ok) return { ok: false, message: r.error ? pgError(r.error) : "권한이 없거나 예약을 찾을 수 없습니다." };
+    reval(businessId);
+    return { ok: true, data: { startAt: startAt.toISOString(), endAt: endAt.toISOString() } };
+  });
+}
+
 export async function updateAppointmentStatus(businessId: string, appointmentId: string, status: string): Promise<ActionResult> {
   return withCap(businessId, "write", async () => {
     const sb = getServerSupabase();

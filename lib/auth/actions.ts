@@ -17,6 +17,8 @@ import { getAuthUser } from "@/lib/auth/user";
 import { isTransientAuthError } from "@/lib/auth/transient";
 import type { Industry } from "@/lib/industry/config";
 import { isIndustry } from "@/lib/industry/config";
+import { formatBizRegNo, isValidBizRegNo, normalizeBizRegNo } from "@/lib/external/bizno";
+import { fetchNtsStatus, ntsConfigured, type NtsStatus } from "@/lib/external/nts";
 
 export type AuthActionResult =
   | { ok: true }
@@ -195,18 +197,21 @@ export type CreateBusinessResult =
 
 export async function createBusiness(
   name: string,
-  industry: string
+  industry: string,
+  bizRegNo?: string
 ): Promise<CreateBusinessResult> {
   const n = name.trim();
   if (!n) return { ok: false, message: "사업장 이름을 입력하세요" };
   if (!isIndustry(industry)) return { ok: false, message: "업종을 선택하세요" };
+  const bno = normalizeBizRegNo(bizRegNo ?? "");
+  if (bno && !isValidBizRegNo(bno)) return { ok: false, message: "사업자등록번호 형식이 올바르지 않습니다" };
 
   const sb = getServerSupabase();
   // businesses 에는 INSERT 정책이 없다. 생성은 이 RPC 경유만 가능하고,
-  // RPC 안에서 호출자를 owner/active 로 등록하며 audit 을 남긴다.
+  // RPC 안에서 호출자를 owner/active 로 등록하며 audit 을 남긴다. 번호 체크섬은 DB(0030)가 다시 검사한다.
   const { data, error } = await sb
     .schema("crm")
-    .rpc("create_business", { p_name: n, p_industry: industry });
+    .rpc("create_business", { p_name: n, p_industry: industry, p_biz_reg_no: bno || null });
 
   if (error) return { ok: false, message: error.message };
 
@@ -223,4 +228,34 @@ export async function createBusiness(
 
   revalidatePath("/select", "page");
   return { ok: true, businessId: id };
+}
+
+export type CheckBusinessNumberResult =
+  | { ok: false; message: string }
+  | {
+      ok: true;
+      digits: string;
+      formatted: string;
+      /** null = 국세청 키 미설정(형식만 검사) 또는 로그인 전. */
+      nts: NtsStatus | null;
+      /** 국세청 호출이 실패했을 때만(키는 있으나 응답 오류). */
+      ntsError?: string;
+    };
+
+/**
+ * 사업자등록번호 확인. 체크섬은 키 없이도 돈다.
+ * 국세청 조회는 NTS_SERVICE_KEY 가 있고 **로그인한 사용자**일 때만 — 익명이 서버 키 쿼터를 태우지 못하게.
+ */
+export async function checkBusinessNumber(bno: string): Promise<CheckBusinessNumberResult> {
+  const digits = normalizeBizRegNo(bno ?? "");
+  if (!isValidBizRegNo(digits)) return { ok: false, message: "사업자등록번호 형식(10자리·검증숫자)이 올바르지 않습니다" };
+  const base = { ok: true as const, digits, formatted: formatBizRegNo(digits) };
+  if (!ntsConfigured()) return { ...base, nts: null };
+  const { user } = await getAuthUser();
+  if (!user) return { ...base, nts: null };
+  try {
+    return { ...base, nts: await fetchNtsStatus(digits) };
+  } catch (e) {
+    return { ...base, nts: null, ntsError: e instanceof Error ? e.message : "nts_error" };
+  }
 }

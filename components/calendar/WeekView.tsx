@@ -18,6 +18,7 @@ export function WeekView({
   selectedId,
   onSelectEvent,
   onOpenDay,
+  canDrag = false,
 }: {
   /** 7개 */
   days: string[];
@@ -28,6 +29,7 @@ export function WeekView({
   selectedId: string | null;
   onSelectEvent: (id: string) => void;
   onOpenDay: (dateKey: string) => void;
+  canDrag?: boolean;
 }) {
   const byDay = React.useMemo(() => groupEventsByDay(events, tz), [events, tz]);
   return (
@@ -40,6 +42,7 @@ export function WeekView({
       selectedId={selectedId}
       onSelectEvent={onSelectEvent}
       onOpenDay={onOpenDay}
+      canDrag={canDrag}
     />
   );
 }
