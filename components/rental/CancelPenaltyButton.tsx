@@ -158,7 +158,7 @@ export function CancelPenaltyButton({
                   role="tab"
                   aria-selected={cause === c}
                   onClick={() => setCause(c)}
-                  className={"inline-flex h-[36px] flex-1 items-center justify-center rounded-[var(--r-sm)] border px-3 text-[12.5px] font-medium [@media(pointer:coarse)]:h-[44px] " + (cause === c ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
+                  className={"inline-flex h-[36px] flex-1 items-center justify-center rounded-[var(--r-sm)] border px-3 text-[length:var(--fs-meta)] font-medium [@media(pointer:coarse)]:h-[44px] " + (cause === c ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
                 >
                   {c === "customer" ? "손님 사정(소비자 귀책)" : "매장 사정(사업자 귀책)"}
                 </button>
@@ -166,17 +166,17 @@ export function CancelPenaltyButton({
             </div>
 
             {loading && !quote ? (
-              <p className="py-3 text-center text-[12.5px] text-t3">위약금을 계산하는 중…</p>
+              <p className="py-3 text-center text-[length:var(--fs-meta)] text-t3">위약금을 계산하는 중…</p>
             ) : quote ? (
               <section className="rounded-[var(--r-md)] bg-sf2 p-3">
-                <p className="mb-2 text-[12.5px] text-t2">
+                <p className="mb-2 text-[length:var(--fs-meta)] text-t2">
                   사용 예정일 {formatInTz(quote.useDate, DEFAULT_TZ, "M. d.")} 기준 <span className="font-semibold text-t">{quote.daysBefore >= 0 ? `${quote.daysBefore}일 전` : `${-quote.daysBefore}일 지남`}</span>
                   {quote.withinContractGrace && <span className="ml-1 rounded-[4px] bg-okb px-1.5 py-0.5 text-[11px] font-medium text-okt">계약 후 {quote.contractGraceHours}시간 이내 · 위약금 없음</span>}
                   {" · "}적용 비율 <span className="font-semibold text-t">{quote.rate}%</span>
                   {(quote.policyIsDefault || isDefaultPolicy(policy)) && <span className="ml-1 text-[11px] text-t3">(공정위 기본 기준)</span>}
                 </p>
                 {quote.masked ? (
-                  <p className="text-[12.5px] text-t3">금액은 매출·정산 조회 권한(revenue.read)이 있어야 표시됩니다.</p>
+                  <p className="text-[length:var(--fs-meta)] text-t3">금액은 매출·정산 조회 권한(revenue.read)이 있어야 표시됩니다.</p>
                 ) : (
                   <QuoteSummary q={quote} />
                 )}
@@ -185,7 +185,7 @@ export function CancelPenaltyButton({
 
             {quote && !quote.masked && (
               <section className="flex flex-col gap-2.5">
-                <label className="flex min-h-[44px] items-center gap-2 text-[13px] text-t">
+                <label className="flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t">
                   <input type="checkbox" checked={useOverride} onChange={(e) => { setUseOverride(e.target.checked); if (!e.target.checked) setOverride(""); }} className="h-[18px] w-[18px] accent-[var(--accent-strong)]" />
                   {cause === "customer" ? "위약금" : "배상금"}을 직접 정하기(사유 필수)
                 </label>
@@ -199,7 +199,7 @@ export function CancelPenaltyButton({
                   </div>
                 )}
                 {cause === "customer" && (
-                  <label className="flex min-h-[44px] items-start gap-2 text-[13px] text-t">
+                  <label className="flex min-h-[44px] items-start gap-2 text-[length:var(--fs-body)] text-t">
                     <input type="checkbox" checked={limitToPaid} onChange={(e) => setLimitToPaid(e.target.checked)} className="mt-[3px] h-[18px] w-[18px] shrink-0 accent-[var(--accent-strong)]" />
                     <span>
                       받은 돈(보증금 제외) 한도까지만 공제
@@ -257,7 +257,7 @@ function QuoteSummary({ q }: { q: CancelQuote }) {
     ? `계약 대여료 ${formatKRW(n(q.baseFee))} · 위약금 ${formatKRW(n(q.effectiveAmount))}(${q.overrideAmount != null ? "직접 입력" : `${q.rate}%`})${penalty !== n(q.effectiveAmount) ? ` → 실제 공제 ${formatKRW(penalty)}(받은 대여료 한도)` : ""}`
     : `계약 대여료 ${formatKRW(n(q.baseFee))} · 배상 비율 ${q.rate}%`;
   return (
-    <dl className="flex flex-col text-[12.5px]">
+    <dl className="flex flex-col text-[length:var(--fs-meta)]">
       <div className="flex items-baseline justify-between gap-3 border-b border-[var(--bd)] pb-1.5">
         <dt className="font-semibold text-t">{totalLabel}</dt>
         <dd className={"text-[16px] font-bold tabular-nums " + (total > 0 ? "text-okt" : "text-t")}>{formatKRW(total)}</dd>

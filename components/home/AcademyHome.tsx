@@ -23,7 +23,7 @@ import { formatInTz } from "@/lib/utils/datetime";
 
 /** 차트 부품(components/charts, 다른 소유) 안의 토글·범례·표 보기가 터치 화면에서 44px 미만이라 감싸는 쪽에서 승격한다(1단계 검토 홈 부품 지적). */
 const CHART_TOUCH = "[@media(pointer:coarse)]:[&_button]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:inline-flex [@media(pointer:coarse)]:[&_a]:items-center [@media(pointer:coarse)]:[&_summary]:flex [@media(pointer:coarse)]:[&_summary]:min-h-[44px] [@media(pointer:coarse)]:[&_summary]:items-center";
-const ROW = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-2 text-[13px] [@media(pointer:coarse)]:min-h-[44px]";
+const ROW = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-body)] [@media(pointer:coarse)]:min-h-[44px]";
 
 const tone = (status: string): WorkTableRow["statusTone"] => (status === "완료" ? "success" : status === "휴강" ? "alert" : "neutral");
 
@@ -151,7 +151,7 @@ export function AcademyHome({
   const studentSearch = (
     <Link
       href={`${base}/students`}
-      className="flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[13px] text-t2 hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+      className="flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[length:var(--fs-body)] text-t2 hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
     >
       <Search size={15} aria-hidden />
       학생·보호자 목록에서 검색
@@ -211,7 +211,7 @@ export function AcademyHome({
               ) : (
                 <>
                   <CardHead title="반별 출석률" description="최근 7일 회차 기준" />
-                  <p className="text-[12.5px] text-t3">학생 개인정보 열람 권한(pii.read)이 없어 표시할 수 없습니다.</p>
+                  <p className="text-[length:var(--fs-meta)] text-t3">학생 개인정보 열람 권한(pii.read)이 없어 표시할 수 없습니다.</p>
                 </>
               )}
             </Card>
@@ -219,7 +219,7 @@ export function AcademyHome({
             <Card className="p-4 sm:p-5">
               <CardHead title="보강·휴강" description="오늘 변경된 회차" action={<ViewAll href={`${base}/timetable`}>시간표</ViewAll>} />
               {d.makeupOrCancelToday.length === 0 ? (
-                <p className="text-[12.5px] text-t3">오늘 보강·휴강이 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">오늘 보강·휴강이 없습니다.</p>
               ) : (
                 <ul className="-mx-2 flex flex-col">
                   {d.makeupOrCancelToday.map((s) => (
@@ -241,9 +241,9 @@ export function AcademyHome({
               <Card className="p-4 sm:p-5">
                 <CardHead title="미납 확인" description="상태가 미납인 청구서" action={d.unpaidCount > 0 ? <ViewAll href={`${base}/tuition?status=미납`}>수강료</ViewAll> : undefined} />
                 {d.unpaidCount === 0 ? (
-                  <p className="text-[12.5px] text-t3">미납된 수강료가 없습니다.</p>
+                  <p className="text-[length:var(--fs-meta)] text-t3">미납된 수강료가 없습니다.</p>
                 ) : (
-                  <p className="text-[13px] text-t2">
+                  <p className="text-[length:var(--fs-body)] text-t2">
                     미납 <span className="font-semibold tabular-nums text-et">{d.unpaidCount}건</span> — 수강료·미납 화면에서 납부 등록과 안내 문구를 처리합니다.
                   </p>
                 )}
@@ -253,12 +253,12 @@ export function AcademyHome({
             {consultStats && (
               <Card className="p-4 sm:p-5">
                 <CardHead title="입학 상담 전환율" description={`${consultStats.from} ~ ${consultStats.to}`} action={<ViewAll href={`${base}/consultations`}>상담</ViewAll>} />
-                <p className="text-[13px] text-t2">
+                <p className="text-[length:var(--fs-body)] text-t2">
                   상담 <span className="font-semibold tabular-nums text-t">{consultStats.total}</span>건 중 등록{" "}
                   <span className="font-semibold tabular-nums text-t">{consultStats.converted}</span>건 · <span className="font-semibold tabular-nums text-[var(--accent-ink)]">{consultStats.rate}%</span>
                 </p>
                 {consultStats.bySource.length > 0 && (
-                  <ul className="mt-2 flex flex-col divide-y divide-[var(--bd)] text-[12.5px]">
+                  <ul className="mt-2 flex flex-col divide-y divide-[var(--bd)] text-[length:var(--fs-meta)]">
                     {consultStats.bySource.slice(0, 5).map((s) => (
                       <li key={s.source} className="flex items-center justify-between gap-2 py-1.5">
                         <span className="min-w-0 truncate text-t2">{s.source}</span>

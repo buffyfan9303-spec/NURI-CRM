@@ -176,7 +176,7 @@ export function StudentDetail({
             }}
             className="mt-4 flex flex-col gap-2 border-t border-[var(--bd)] pt-4 sm:flex-row sm:items-center"
           >
-            <label htmlFor="enroll-class" className="text-[13px] font-medium text-t2 sm:w-[96px] sm:shrink-0">새 수강 등록</label>
+            <label htmlFor="enroll-class" className="text-[length:var(--fs-body)] font-medium text-t2 sm:w-[96px] sm:shrink-0">새 수강 등록</label>
             <select
               id="enroll-class"
               value={enrollClassId}
@@ -266,14 +266,14 @@ export function StudentDetail({
         ) : (
           <Card className="p-4 sm:p-5">
             <CardHead title="수강료·미납" />
-            <p className="flex items-center gap-1.5 text-[12.5px] text-t3"><Lock size={13} aria-hidden /> 수강료·미납 조회(revenue.read) 권한이 없어 표시되지 않습니다.</p>
+            <p className="flex items-center gap-1.5 text-[length:var(--fs-meta)] text-t3"><Lock size={13} aria-hidden /> 수강료·미납 조회(revenue.read) 권한이 없어 표시되지 않습니다.</p>
           </Card>
         )}
         </div>
         <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4" aria-label="학생 정보">
           <Card className="p-4 sm:p-5">
             <CardHead title="기본 정보" />
-            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[13px]">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[length:var(--fs-body)]">
               <dt className="text-t3">학교·학년</dt>
               <dd className="text-t">{[student.school, student.grade].filter(Boolean).join(" · ") || "—"}</dd>
               <dt className="text-t3">보호자</dt>
@@ -327,7 +327,7 @@ export function StudentDetail({
                   )}
                 </form>
               ) : (
-                <p className="text-[13px] tabular-nums text-t">{student.checkinCode ?? <span className="text-t3">설정 안 됨</span>}</p>
+                <p className="text-[length:var(--fs-body)] tabular-nums text-t">{student.checkinCode ?? <span className="text-t3">설정 안 됨</span>}</p>
               )}
               {codeError && <Alert className="mt-3">{codeError}</Alert>}
             </Card>

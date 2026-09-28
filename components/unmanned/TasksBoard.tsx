@@ -111,7 +111,7 @@ export function TasksBoard({ businessId, canWrite, tasks, todayKey, dueToday = f
             <StatusTab active={status === "완료"} onClick={() => setStatus("완료")} count={counts.get("완료") ?? 0}>완료</StatusTab>
             <StatusTab active={status === "건너뜀"} onClick={() => setStatus("건너뜀")} count={counts.get("건너뜀") ?? 0}>건너뜀</StatusTab>
             <span className="mx-1 hidden h-4 w-px bg-[var(--bd)] sm:block" aria-hidden />
-            <Link href={`/w/${businessId}/calendar`} prefetch={false} className="inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
+            <Link href={`/w/${businessId}/calendar`} prefetch={false} className="inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
               <CalendarClock size={13} aria-hidden />캘린더에서 보기
             </Link>
           </FilterRow>

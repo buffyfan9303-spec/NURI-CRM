@@ -68,7 +68,7 @@ export function AcadPayModal({ businessId, target, onClose, onDone }: { business
     >
       {target && (
         <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="flex flex-col">
-          <dl className="mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-[var(--r-md)] bg-sf2 px-3.5 py-3 text-[12.5px]">
+          <dl className="mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-[var(--r-md)] bg-sf2 px-3.5 py-3 text-[length:var(--fs-meta)]">
             {target.studentName && (<><dt className="text-t3">학생</dt><dd className="truncate font-medium text-t">{target.studentName}</dd></>)}
             <dt className="text-t3">청구월</dt><dd className="tabular-nums text-t">{target.period}</dd>
             <dt className="text-t3">청구 금액</dt><dd className="tabular-nums text-t">{formatKRW(target.amount)}</dd>
@@ -176,7 +176,7 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
         href={`/api/pdf/academy-invoice/${inv.invoiceId}?businessId=${businessId}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-md)] px-3 text-[12.5px] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]"
+        className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-md)] px-3 text-[length:var(--fs-meta)] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]"
       >
         <FileText size={13} aria-hidden />PDF
       </a>
@@ -324,7 +324,7 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
       >
         {exemptFor && (
           <form onSubmit={(e) => e.preventDefault()}>
-            <p className="mb-4 text-[12.5px] leading-relaxed text-t2">{rowView(exemptFor).student} · {exemptFor.period} 청구서(미수 {formatKRW(exemptFor.outstanding)})를 면제합니다. 사유는 감사 기록에 남습니다.</p>
+            <p className="mb-4 text-[length:var(--fs-meta)] leading-relaxed text-t2">{rowView(exemptFor).student} · {exemptFor.period} 청구서(미수 {formatKRW(exemptFor.outstanding)})를 면제합니다. 사유는 감사 기록에 남습니다.</p>
             <Input label="면제 사유" required value={exemptReason} onChange={(e) => setExemptReason(e.target.value)} placeholder="예: 형편 곤란 승인(2026-09 원장 승인)" autoFocus wrapperClassName="mb-0" />
           </form>
         )}
@@ -394,7 +394,7 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
           </>
         }
       >
-        <p className="mb-4 text-[12.5px] leading-relaxed text-t2">활성 수강 전원에게 해당 월 청구서를 만듭니다. 이미 있는 청구서는 건너뜁니다.</p>
+        <p className="mb-4 text-[length:var(--fs-meta)] leading-relaxed text-t2">활성 수강 전원에게 해당 월 청구서를 만듭니다. 이미 있는 청구서는 건너뜁니다.</p>
         <Input label="청구월" type="month" value={bulkPeriod} onChange={(e) => setBulkPeriod(e.target.value)} wrapperClassName="mb-0" />
       </Modal>
 

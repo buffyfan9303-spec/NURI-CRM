@@ -20,7 +20,7 @@ export const CONTROL =
   "h-[40px] w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 text-[16px] text-t outline-none transition-[border-color,box-shadow,background-color] duration-1 ease-out sm:text-[13.5px] hover:border-t2 focus:border-[var(--accent)] focus:shadow-ring disabled:cursor-not-allowed disabled:bg-sf2 disabled:text-t3 disabled:hover:border-[var(--bd2)] [@media(pointer:coarse)]:h-[44px]";
 /** 표 안의 작은 입력(PC 32px, 터치 44px). */
 export const CONTROL_SM =
-  "h-[32px] rounded-[var(--r-sm)] border border-[var(--bd2)] bg-sf px-2 text-[16px] text-t outline-none transition-[border-color,box-shadow] duration-1 ease-out sm:text-[12.5px] hover:border-t2 focus:border-[var(--accent)] focus:shadow-ring disabled:bg-sf2 disabled:text-t3 [@media(pointer:coarse)]:h-[44px]";
+  "h-[32px] rounded-[var(--r-sm)] border border-[var(--bd2)] bg-sf px-2 text-[16px] text-t outline-none transition-[border-color,box-shadow] duration-1 ease-out sm:text-[length:var(--fs-meta)] hover:border-t2 focus:border-[var(--accent)] focus:shadow-ring disabled:bg-sf2 disabled:text-t3 [@media(pointer:coarse)]:h-[44px]";
 /** 여러 줄 입력 — CONTROL 에서 높이만 뺀다. */
 export const TEXTAREA =
   "w-full rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2.5 text-[16px] leading-relaxed text-t outline-none transition-[border-color,box-shadow] duration-1 ease-out sm:text-[13.5px] hover:border-t2 focus:border-[var(--accent)] focus:shadow-ring disabled:bg-sf2 disabled:text-t3";
@@ -44,7 +44,7 @@ export function SelectField({
   const id = React.useId();
   return (
     <div className={cn("mb-4", wrapperClassName)}>
-      <label htmlFor={id} className="mb-1.5 block text-[13px] font-medium text-t2">
+      <label htmlFor={id} className="mb-1.5 block text-[length:var(--fs-body)] font-medium text-t2">
         {label}
         {required && <span className="ml-0.5 text-et" aria-hidden>*</span>}
       </label>
@@ -73,7 +73,7 @@ export function StatusTab({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border px-3 text-[12.5px] font-medium transition-[background-color,border-color,color,transform] duration-1 ease-out active:scale-[.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [@media(pointer:coarse)]:h-[44px]",
+        "inline-flex h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border px-3 text-[length:var(--fs-meta)] font-medium transition-[background-color,border-color,color,transform] duration-1 ease-out active:scale-[.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] [@media(pointer:coarse)]:h-[44px]",
         active
           ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]"
           : "border-[var(--bd)] bg-sf text-t2 hover:border-[var(--bd-strong)] hover:bg-sf2 hover:text-t"
@@ -164,7 +164,7 @@ export function TextAction({ onClick, children, className }: { onClick: () => vo
     <button
       type="button"
       onClick={onClick}
-      className={cn("inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]", className)}
+      className={cn("inline-flex h-[32px] shrink-0 items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]", className)}
     >
       {children}
     </button>
@@ -249,7 +249,7 @@ export function ViewAll({ href, children = "전체 보기" }: { href: string; ch
   return (
     <Link
       href={href}
-      className="inline-flex h-[32px] items-center gap-0.5 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]"
+      className="inline-flex h-[32px] items-center gap-0.5 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]"
     >
       {children} <ChevronRight size={14} aria-hidden />
     </Link>
@@ -261,7 +261,7 @@ export function ViewAll({ href, children = "전체 보기" }: { href: string; ch
  * 2단계 a(Linear/Airtable 표 밀도): 머리글은 `sf2` 면 + 12px/500 `t2`(흰 면 위 5.6:1), 행은 `bd` 하이라인,
  * hover `sf2` 120ms, 행 등장은 `animate-rise`(240ms, reduced-motion 이면 전역 규칙이 0ms). 숫자 열은 호출부가 `tabular-nums text-right`.
  */
-export const TABLE = "w-full border-collapse text-[13px]";
+export const TABLE = "w-full border-collapse text-[length:var(--fs-body)]";
 export const THEAD = "border-b border-[var(--bd)] bg-sf2/60 text-left text-[12px] font-medium text-t2";
 export const TH = "h-[40px] px-3 py-2 font-medium whitespace-nowrap";
 export const TR = "animate-rise border-b border-[var(--bd)] last:border-b-0 transition-[background-color] duration-1 ease-out";
@@ -311,7 +311,7 @@ export function Alert({ kind = "error", children, className }: { kind?: "error" 
   const cls = kind === "error" ? "bg-eb text-et" : kind === "success" ? "bg-okb text-okt" : "bg-wb text-wt";
   const Icon = kind === "success" ? CheckCircle2 : CircleAlert;
   return (
-    <div role={kind === "error" ? "alert" : "status"} className={cn("flex items-start gap-2 rounded-[var(--r-md)] px-3.5 py-2.5 text-[12.5px] leading-snug", cls, className)}>
+    <div role={kind === "error" ? "alert" : "status"} className={cn("flex items-start gap-2 rounded-[var(--r-md)] px-3.5 py-2.5 text-[length:var(--fs-meta)] leading-snug", cls, className)}>
       <Icon size={15} className="mt-[1px] shrink-0" aria-hidden />
       <span>{children}</span>
     </div>
@@ -321,7 +321,7 @@ export function Alert({ kind = "error", children, className }: { kind?: "error" 
 /** 상세 화면 상단 "← 목록" 링크(터치 44px). */
 export function BackLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="-ml-2 mb-1 inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] text-t3 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:h-[44px]">
+    <Link href={href} className="-ml-2 mb-1 inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] text-t3 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:h-[44px]">
       <ArrowLeft size={14} aria-hidden />
       {children}
     </Link>

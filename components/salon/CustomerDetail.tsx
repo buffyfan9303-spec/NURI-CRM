@@ -206,7 +206,7 @@ export function SalonCustomerDetail({
         <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4" aria-label="고객 정보">
           <Card className="p-4 sm:p-5">
             <CardHead title="기본 정보" />
-            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[13px]">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[length:var(--fs-body)]">
               <dt className="text-t3">전화번호</dt>
               <dd className="min-w-0 truncate text-t">{customer.phone ? customer.phone : customer.hasPhone === false ? <span className="text-t3">등록 없음</span> : PRIVATE}</dd>
               <dt className="text-t3">이메일</dt>
@@ -230,7 +230,7 @@ export function SalonCustomerDetail({
               {measurementsError ? (
                 <Alert>치수 기록을 불러오지 못했습니다: {measurementsError}</Alert>
               ) : measurements.length === 0 ? (
-                <p className="text-[12.5px] text-t3">기록된 신체 치수가 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">기록된 신체 치수가 없습니다.</p>
               ) : (
                 <div className="rounded-[var(--r-md)] bg-[var(--accent-soft)] p-3.5">
                   <p className="mb-2 text-[11.5px] font-semibold text-[var(--accent-ink)]">최신 기록 · {formatInTz(latest.measuredAt, DEFAULT_TZ, "yyyy.MM.dd HH:mm")}</p>
@@ -242,7 +242,7 @@ export function SalonCustomerDetail({
           ) : (
             <Card className="p-4 sm:p-5">
               <CardHead title="신체 치수" />
-              <p className="flex items-center gap-1.5 text-[12.5px] text-t3"><Lock size={13} aria-hidden /> 고객 개인정보 조회(pii.read) 권한이 없어 표시되지 않습니다.</p>
+              <p className="flex items-center gap-1.5 text-[length:var(--fs-meta)] text-t3"><Lock size={13} aria-hidden /> 고객 개인정보 조회(pii.read) 권한이 없어 표시되지 않습니다.</p>
             </Card>
           )}
         </aside>
@@ -265,7 +265,7 @@ function MeasurementValues({ values }: { values: Record<string, number | string>
   const entries = MEASURE_FIELDS.filter((f) => values[f.key] != null);
   if (entries.length === 0) return <span className="text-t3">—</span>;
   return (
-    <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-[12.5px]">
+    <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-[length:var(--fs-meta)]">
       {entries.map((f) => (
         <div key={f.key}>
           <dt className="text-[11px] text-t3">{f.label.replace("(cm)", "")}</dt>

@@ -85,7 +85,7 @@ export function ReceivablesBoard({
           <MessageSquare size={13} aria-hidden />문구
         </Button>
         {canWrite && (
-          <Link href={`/w/${businessId}/reservations/${r.reservationId}#settlement`} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
+          <Link href={`/w/${businessId}/reservations/${r.reservationId}#settlement`} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
             <Banknote size={13} aria-hidden />수납
           </Link>
         )}
@@ -135,7 +135,7 @@ export function ReceivablesBoard({
             ))}
             <StatusTab active={tab === "deposits"} onClick={() => setTab("deposits")} count={deposits.count}>보관 보증금</StatusTab>
             {tab !== "deposits" && report.count > 0 && (
-              <label className="ml-auto flex min-h-[32px] shrink-0 items-center gap-1.5 text-[12.5px] text-t2 [@media(pointer:coarse)]:min-h-[44px]">
+              <label className="ml-auto flex min-h-[32px] shrink-0 items-center gap-1.5 text-[length:var(--fs-meta)] text-t2 [@media(pointer:coarse)]:min-h-[44px]">
                 <input type="checkbox" checked={byCustomer} onChange={(e) => setByCustomer(e.target.checked)} className="h-[16px] w-[16px] accent-[var(--accent-strong)]" />
                 고객별 보기
               </label>
@@ -169,7 +169,7 @@ export function ReceivablesBoard({
                 {g.rows.map((r) => {
                   const v = rowView(r);
                   return (
-                    <li key={r.reservationId} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[12.5px]">
+                    <li key={r.reservationId} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[length:var(--fs-meta)]">
                       <span className="min-w-0">
                         <Link href={v.href} prefetch={false} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link>
                         <span className="ml-2 text-t3">{v.status} · 만기 {v.due} · {v.days}</span>
@@ -328,7 +328,7 @@ function DepositsTable({ businessId, tz, rows }: { businessId: string; tz: strin
                     <td className={`${TD} text-right tabular-nums text-t2`}>{formatKRW(r.depositRequired)}</td>
                     <td className={cn(TD, "text-right tabular-nums", r.outstanding > 0 ? "font-semibold text-et" : "text-t2")}>{formatKRW(r.outstanding)}</td>
                     <td className={`${TD} text-right`}>
-                      <Link href={`${v.href}#settlement`} prefetch={false} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">{v.returned ? "반환 처리" : "예약 상세"}</Link>
+                      <Link href={`${v.href}#settlement`} prefetch={false} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">{v.returned ? "반환 처리" : "예약 상세"}</Link>
                     </td>
                   </tr>
                 );
@@ -345,7 +345,7 @@ function DepositsTable({ businessId, tz, rows }: { businessId: string; tz: strin
             sub={<span>{v.period}</span>}
             badge={v.returned ? <Badge kind="warning">반환 필요</Badge> : <Badge kind={RESERVATION_STATUS_BADGE[v.status] ?? "info"}>{RESERVATION_STATUS_LABEL[v.status] ?? r.status}</Badge>}
             fields={[["보관 보증금", <span key="d" className="font-semibold">{formatKRW(r.depositBalance)}</span>], ["필요액", formatKRW(r.depositRequired)], ["미수금", formatKRW(r.outstanding)]]}
-            actions={<Link href={`${v.href}#settlement`} prefetch={false} className="inline-flex min-h-[44px] items-center rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2">{v.returned ? "반환 처리" : "예약 상세"}</Link>}
+            actions={<Link href={`${v.href}#settlement`} prefetch={false} className="inline-flex min-h-[44px] items-center rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2">{v.returned ? "반환 처리" : "예약 상세"}</Link>}
           />
         );
       }}
@@ -380,11 +380,11 @@ function CollectionLogModal({ businessId, tz, target, onClose, onDone }: { busin
       {target && (
         <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
           {error && <Alert className="mb-3">{error}</Alert>}
-          <p className="mb-3 text-[12.5px] text-t2">{target.customerName ?? "고객 미지정"} · 미수 {formatKRW(target.outstanding)} · 만기 {formatInTz(target.dueDate, tz, "M. d.")}</p>
+          <p className="mb-3 text-[length:var(--fs-meta)] text-t2">{target.customerName ?? "고객 미지정"} · 미수 {formatKRW(target.outstanding)} · 만기 {formatInTz(target.dueDate, tz, "M. d.")}</p>
           <SelectField label="연락 수단" value={channel} onChange={(e) => setChannel(e.target.value as CollectionChannel)}>
             {(Object.keys(COLLECTION_CHANNEL_LABEL) as CollectionChannel[]).map((c) => <option key={c} value={c}>{COLLECTION_CHANNEL_LABEL[c]}</option>)}
           </SelectField>
-          <label className="mb-4 flex flex-col gap-1.5 text-[13px] font-medium text-t2">
+          <label className="mb-4 flex flex-col gap-1.5 text-[length:var(--fs-body)] font-medium text-t2">
             입금 약속일(선택)
             <input type="date" value={promised} onChange={(e) => setPromised(e.target.value)} className={CONTROL} />
           </label>
@@ -426,7 +426,7 @@ function WriteOffModal({ businessId, target, onClose, onDone }: { businessId: st
       {target && (
         <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
           {error && <Alert className="mb-3">{error}</Alert>}
-          <p className="mb-3 text-[12.5px] text-t2">{target.customerName ?? "고객 미지정"} · 미수 {formatKRW(target.outstanding)}. 연락 두절 등으로 받을 수 없는 돈만 처리하세요. 매출 보고는 줄지 않습니다.</p>
+          <p className="mb-3 text-[length:var(--fs-meta)] text-t2">{target.customerName ?? "고객 미지정"} · 미수 {formatKRW(target.outstanding)}. 연락 두절 등으로 받을 수 없는 돈만 처리하세요. 매출 보고는 줄지 않습니다.</p>
           <Input label="대손액(원)" value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" />
           <Input label="사유" required value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 연락 두절 6개월" wrapperClassName="mb-0" />
         </form>

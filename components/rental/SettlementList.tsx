@@ -134,7 +134,7 @@ export function SettlementList({
             <SummaryTile label="정산 대상" value={`${reservations.length}건`} sub="확정~종결 예약" className="col-span-2 sm:col-span-1" />
           </div>
           {/* R4: 미수금 보드 링크는 검색칸 옆이 아니라 KPI 아래 한 줄로. */}
-          <Link href={`/w/${businessId}/receivables`} className="-my-1 inline-flex h-[32px] w-fit items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">미수금·보관 보증금 보드 →</Link>
+          <Link href={`/w/${businessId}/receivables`} className="-my-1 inline-flex h-[32px] w-fit items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">미수금·보관 보증금 보드 →</Link>
           <FilterRow>
             <SearchBox value={q} onChange={setQ} placeholder="고객 이름/전화번호 검색" />
             {needle && <TextAction onClick={() => setQ("")}>검색 지우기</TextAction>}
@@ -214,7 +214,7 @@ export function SettlementList({
                 <MobileCard
                   title={v.customer}
                   sub={<span className="tabular-nums">{v.period}</span>}
-                  badge={<span className={cn("text-[12.5px] font-semibold tabular-nums", v.outstandingClass)}>미수 {v.outstanding}</span>}
+                  badge={<span className={cn("text-[length:var(--fs-meta)] font-semibold tabular-nums", v.outstandingClass)}>미수 {v.outstanding}</span>}
                   onClick={() => toggle(r.id)}
                   fields={[
                     ["상태", <span key="s" className="inline-flex flex-wrap justify-end gap-1">{v.statusBadge}{v.paymentBadge}</span>],
@@ -225,7 +225,7 @@ export function SettlementList({
                   ]}
                   actions={
                     <>
-                      <Link href={v.href} prefetch={false} className="rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2">예약 상세</Link>
+                      <Link href={v.href} prefetch={false} className="rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2">예약 상세</Link>
                       <Button size="sm" variant="secondary" onClick={() => toggle(r.id)}>{v.open ? "접기" : "정산 처리"}</Button>
                     </>
                   }

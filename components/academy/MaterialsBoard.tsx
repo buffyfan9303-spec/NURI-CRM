@@ -86,7 +86,7 @@ export function MaterialsBoard({ businessId, canWrite, canAdjust, canReadCost, m
                 <MobileCard
                   title={m.name}
                   sub={<><span className="font-mono">{m.code}</span>{industry === "factory" && m.kind && <> · {KIND_LABEL[m.kind] ?? m.kind}</>}</>}
-                  badge={low ? <Badge kind="warning">{m.stock}{m.unit} · 부족</Badge> : <span className="tabular-nums text-[13px] font-medium text-t">{m.stock}{m.unit}</span>}
+                  badge={low ? <Badge kind="warning">{m.stock}{m.unit} · 부족</Badge> : <span className="tabular-nums text-[length:var(--fs-body)] font-medium text-t">{m.stock}{m.unit}</span>}
                   fields={[
                     ["최소재고", `${m.minStock}${m.unit}`],
                     ...(canReadCost ? ([["단가", m.unitCost != null ? `${m.unitCost.toLocaleString("ko-KR")}원` : "—"]] as [string, React.ReactNode][]) : []),

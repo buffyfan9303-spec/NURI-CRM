@@ -327,8 +327,8 @@ export function RentalHome({
             {tableRows.length === 0 && (
               // 휴대폰: 큰 빈 상태(아이콘+py-16) 대신 두 줄 — 홈이 2화면 안에 들어오게(H0 §3·§5).
               <div className="flex flex-col items-start gap-2 py-2 sm:hidden">
-                <p className="text-[13px] font-medium text-t">{emptyTitle}</p>
-                <p className="text-[12.5px] text-t2">{emptyDescription}</p>
+                <p className="text-[length:var(--fs-body)] font-medium text-t">{emptyTitle}</p>
+                <p className="text-[length:var(--fs-meta)] text-t2">{emptyDescription}</p>
                 {emptyAction}
               </div>
             )}
@@ -344,9 +344,9 @@ export function RentalHome({
             <Card className="p-4 max-sm:hidden">
               <CardHead title="오늘 일정" description="시간순" action={<ViewAll href={`${base}/calendar`}>캘린더</ViewAll>} />
               {rows.length === 0 ? (
-                <p className="text-[12.5px] text-t3">오늘 일정이 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">오늘 일정이 없습니다.</p>
               ) : (
-                <ul className="flex flex-col divide-y divide-[var(--bd)] text-[12.5px]">
+                <ul className="flex flex-col divide-y divide-[var(--bd)] text-[length:var(--fs-meta)]">
                   {rows.slice(0, 8).map((r) => (
                     <li key={r.id}>
                       <Link href={r.href} className="flex min-h-[40px] items-center gap-2 rounded-[var(--r-sm)] px-1 text-t2 hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]">

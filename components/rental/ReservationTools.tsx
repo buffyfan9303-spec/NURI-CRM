@@ -45,9 +45,9 @@ interface ClaimDraft { key: string; itemId: string; kind: ClaimKind; description
 const newClaim = (): ClaimDraft => ({ key: crypto.randomUUID(), itemId: "", kind: "damaged", description: "", amount: "", reason: "" });
 
 function SettlementSummary({ s }: { s: SettlementResult }) {
-  if (s.masked) return <p className="text-[12.5px] text-t3">정산 금액은 revenue.read 권한이 있는 사용자에게만 표시됩니다.</p>;
+  if (s.masked) return <p className="text-[length:var(--fs-meta)] text-t3">정산 금액은 revenue.read 권한이 있는 사용자에게만 표시됩니다.</p>;
   return (
-    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12.5px] sm:grid-cols-4">
+    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[length:var(--fs-meta)] sm:grid-cols-4">
       <div><dt className="text-[11.5px] text-t3">보증금 차감</dt><dd className="mt-0.5 tabular-nums text-t">{formatKRW(s.applied ?? 0)}</dd></div>
       <div><dt className="text-[11.5px] text-t3">환불</dt><dd className="mt-0.5 tabular-nums font-semibold text-okt">{formatKRW(s.refunded ?? 0)}</dd></div>
       <div><dt className="text-[11.5px] text-t3">남은 보증금</dt><dd className="mt-0.5 tabular-nums text-t">{formatKRW(s.remainingDeposit ?? 0)}</dd></div>
@@ -198,17 +198,17 @@ export function ReturnInspectionPanel({
               <Alert kind="warning">보증금으로 부족한 {formatKRW(result.settlement.additionalDue ?? 0)}은 아래 정산 카드의 &ldquo;미수금 수납&rdquo;으로 받으세요.</Alert>
             )}
             {result.claimIds.length > 0 && (
-              <p className="text-[12.5px] text-t2">청구서 인쇄는 아래 &ldquo;손상·분실 청구&rdquo; 카드에서 건별로 할 수 있습니다.</p>
+              <p className="text-[length:var(--fs-meta)] text-t2">청구서 인쇄는 아래 &ldquo;손상·분실 청구&rdquo; 카드에서 건별로 할 수 있습니다.</p>
             )}
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             <section>
-              <h3 className="mb-2 text-[13px] font-semibold text-t">1. 반납 항목</h3>
+              <h3 className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">1. 반납 항목</h3>
               <ul className="flex flex-col divide-y divide-[var(--bd)] rounded-[var(--r-md)] border border-[var(--bd)]">
                 {returnable.map((i) => (
                   <li key={i.id}>
-                    <label className="flex min-h-[44px] cursor-pointer items-center gap-3 px-3 text-[13px] hover:bg-sf2">
+                    <label className="flex min-h-[44px] cursor-pointer items-center gap-3 px-3 text-[length:var(--fs-body)] hover:bg-sf2">
                       <input type="checkbox" checked={selected.has(i.id)} onChange={() => toggle(i.id)} className="h-[18px] w-[18px] accent-[var(--accent-strong)]" />
                       <span className="min-w-0 flex-1 truncate text-t">{i.productName}{i.skuColor && i.skuSize ? ` · ${i.skuColor}/${i.skuSize}` : ""}</span>
                       <span className="font-mono text-[12px] text-t3">{i.unitCode ?? "미배정"}</span>
@@ -218,18 +218,18 @@ export function ReturnInspectionPanel({
               </ul>
             </section>
             <section>
-              <h3 className="mb-1 text-[13px] font-semibold text-t">2. 손상·분실 청구 <span className="font-normal text-t3">(없으면 비워 두세요)</span></h3>
+              <h3 className="mb-1 text-[length:var(--fs-body)] font-semibold text-t">2. 손상·분실 청구 <span className="font-normal text-t3">(없으면 비워 두세요)</span></h3>
               <p className="mb-2 text-[12px] text-t3">청구는 원장에 손상비로 잡히고 보증금에서 먼저 차감됩니다. 항목을 지정하면 그 개체는 검수 대기(손상)·분실로 표시됩니다.</p>
               <ClaimRows claims={claims} setClaims={setClaims} items={reservation.items} />
             </section>
             <section className="rounded-[var(--r-md)] bg-sf2 p-3">
-              <h3 className="mb-2 text-[13px] font-semibold text-t">3. 보증금 정산</h3>
-              <dl className="mb-3 grid grid-cols-3 gap-2 text-[12.5px]">
+              <h3 className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">3. 보증금 정산</h3>
+              <dl className="mb-3 grid grid-cols-3 gap-2 text-[length:var(--fs-meta)]">
                 <div><dt className="text-[11.5px] text-t3">보증금 잔액</dt><dd className="tabular-nums text-t">{balance ? formatKRW(balance.depositBalance) : "-"}</dd></div>
                 <div><dt className="text-[11.5px] text-t3">기존 미수금</dt><dd className="tabular-nums text-t">{balance ? formatKRW(balance.outstanding) : "-"}</dd></div>
                 <div><dt className="text-[11.5px] text-t3">이번 청구 합계</dt><dd className="tabular-nums font-medium text-t">{formatKRW(claimTotal)}</dd></div>
               </dl>
-              <label className="flex min-h-[44px] items-center gap-2 text-[13px] text-t2">
+              <label className="flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t2">
                 <input type="checkbox" checked={refundRemaining} onChange={(e) => setRefundRemaining(e.target.checked)} className="h-[18px] w-[18px] accent-[var(--accent-strong)]" />
                 차감 후 남은 보증금을 지금 환불
               </label>
@@ -308,16 +308,16 @@ export function CancelConfirmedButton({
           <div className="flex flex-col gap-2">
             <Alert kind="success">예약이 취소되었습니다. 배정된 개체는 대여가능으로 돌아갔습니다.</Alert>
             {!result.masked && (
-              <p className="text-[12.5px] text-t2">현금 환급 {formatKRW(result.refundedCash ?? 0)} · 보증금 반환 {formatKRW(result.depositReturned ?? 0)}</p>
+              <p className="text-[length:var(--fs-meta)] text-t2">현금 환급 {formatKRW(result.refundedCash ?? 0)} · 보증금 반환 {formatKRW(result.depositReturned ?? 0)}</p>
             )}
           </div>
         ) : (
           <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
-            <p className="mb-3 text-[12.5px] leading-relaxed text-t2">출고 전 확정 예약만 취소할 수 있습니다. 취소하면 항목은 취소 상태가 되고 개체 점유가 풀립니다. 되돌릴 수 없습니다.</p>
+            <p className="mb-3 text-[length:var(--fs-meta)] leading-relaxed text-t2">출고 전 확정 예약만 취소할 수 있습니다. 취소하면 항목은 취소 상태가 되고 개체 점유가 풀립니다. 되돌릴 수 없습니다.</p>
             <Input label="취소 사유(선택)" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 고객 요청, 행사 취소" />
             {hasMoney && (
               <div className="rounded-[var(--r-md)] bg-sf2 p-3">
-                <label className="flex min-h-[44px] items-start gap-2 text-[13px] text-t">
+                <label className="flex min-h-[44px] items-start gap-2 text-[length:var(--fs-body)] text-t">
                   <input type="checkbox" checked={refund} onChange={(e) => setRefund(e.target.checked)} disabled={!canRefund} className="mt-[3px] h-[18px] w-[18px] shrink-0 accent-[var(--accent-strong)]" />
                   <span>
                     수납액·보증금을 전액 환급하는 데 동의합니다.
@@ -381,7 +381,7 @@ export function NoticeButton({
               role="tab"
               aria-selected={when === v}
               onClick={() => setWhen(v)}
-              className={"inline-flex h-[32px] items-center rounded-[var(--r-sm)] border px-3 text-[12.5px] font-medium [@media(pointer:coarse)]:h-[44px] " + (when === v ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
+              className={"inline-flex h-[32px] items-center rounded-[var(--r-sm)] border px-3 text-[length:var(--fs-meta)] font-medium [@media(pointer:coarse)]:h-[44px] " + (when === v ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
             >
               {l}
             </button>
@@ -481,12 +481,12 @@ export function ClaimsCard({
       {notice && <Alert kind="success" className="mb-3">{notice}</Alert>}
       {settleResult && (
         <div className="mb-3 rounded-[var(--r-md)] bg-sf2 p-3">
-          <p className="mb-2 text-[12.5px] font-medium text-t">보증금 정산 결과</p>
+          <p className="mb-2 text-[length:var(--fs-meta)] font-medium text-t">보증금 정산 결과</p>
           <SettlementSummary s={settleResult} />
         </div>
       )}
       {claims.length === 0 ? (
-        <p className="text-[12.5px] text-t3">등록된 청구가 없습니다.</p>
+        <p className="text-[length:var(--fs-meta)] text-t3">등록된 청구가 없습니다.</p>
       ) : (
         /* relative: 마지막 열의 sr-only(absolute) 제목이 static 래퍼 밖(뷰포트)을 기준으로 잡혀
            360px 에서 문서를 140px 넓히던 결함. 스크롤 래퍼를 containing block 으로 만든다. */
@@ -514,7 +514,7 @@ export function ClaimsCard({
                   <td className={`${TD} text-right`}>
                     <Link
                       href={`/w/${businessId}/reservations/${reservation.id}/claims/${c.id}/print`}
-                      className="inline-flex h-[32px] items-center gap-1 whitespace-nowrap rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]"
+                      className="inline-flex h-[32px] items-center gap-1 whitespace-nowrap rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]"
                     >
                       <Printer size={13} aria-hidden />청구서
                     </Link>
@@ -527,7 +527,7 @@ export function ClaimsCard({
       )}
       {canSettle && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2/40 px-3.5 py-3">
-          <p className="text-[12.5px] text-t2">
+          <p className="text-[length:var(--fs-meta)] text-t2">
             미수금 <span className="font-semibold tabular-nums text-et">{formatKRW(balance!.outstanding)}</span> · 보증금 잔액 <span className="font-semibold tabular-nums text-t">{formatKRW(balance!.depositBalance)}</span>
           </p>
           <Button size="sm" onClick={settle} loading={busy}>{reservation.status === "partial_return" ? "보증금에서 차감" : "보증금 차감·환불"}</Button>
@@ -547,7 +547,7 @@ export function ClaimsCard({
         }
       >
         {error && <Alert className="mb-3">{error}</Alert>}
-        <p className="mb-3 text-[12.5px] text-t2">청구는 원장에 손상비로 잡힙니다. 보증금 차감은 아래 &ldquo;보증금 차감·환불&rdquo;에서 따로 확정합니다.</p>
+        <p className="mb-3 text-[length:var(--fs-meta)] text-t2">청구는 원장에 손상비로 잡힙니다. 보증금 차감은 아래 &ldquo;보증금 차감·환불&rdquo;에서 따로 확정합니다.</p>
         <ClaimRows claims={drafts} setClaims={setDrafts} items={reservation.items} />
       </Modal>
     </>

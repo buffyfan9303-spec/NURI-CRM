@@ -190,7 +190,7 @@ export function CustomerList({
                       <a
                         href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="-my-3 inline-flex min-h-[44px] items-center px-1 text-[12.5px] tabular-nums text-[var(--accent-ink)] underline-offset-2 hover:underline"
+                        className="-my-3 inline-flex min-h-[44px] items-center px-1 text-[length:var(--fs-meta)] tabular-nums text-[var(--accent-ink)] underline-offset-2 hover:underline"
                         aria-label={`${c.name}에게 전화 ${c.phone}`}
                       >
                         {c.phone}

@@ -49,7 +49,7 @@ export function WorkList({
         <li key={r.id}>
           <Link prefetch={false}
             href={r.href}
-            className="flex min-h-[52px] items-center gap-3 rounded-[var(--r-sm)] px-2 py-2 text-[13px] transition-colors duration-1 hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent)]"
+            className="flex min-h-[52px] items-center gap-3 rounded-[var(--r-sm)] px-2 py-2 text-[length:var(--fs-body)] transition-colors duration-1 hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent)]"
           >
             {r.time && <span className="w-12 shrink-0 tabular-nums text-t3">{r.time}</span>}
             <span className="min-w-0 flex-1">

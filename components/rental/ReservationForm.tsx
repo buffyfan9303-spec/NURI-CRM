@@ -160,7 +160,7 @@ export function ReservationForm({
       <Card className="p-4 sm:p-5">
         <CardHead title="고객" description="기존 고객을 검색해 고르면 예약이 그 고객에 연결됩니다. 고르지 않으면 이름/전화 스냅샷만 저장됩니다." />
         {customerId ? (
-          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-2 text-[13px]">
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--accent)] bg-[var(--accent-soft)] px-3 py-2 text-[length:var(--fs-body)]">
             <span className="font-medium text-[var(--accent-ink)]">선택된 고객: {customerName}</span>
             {money && (money.masked
               ? (money.hasOutstanding ? <Badge kind="warning">미수 있음</Badge> : <Badge kind="success">미수 없음</Badge>)
@@ -168,7 +168,7 @@ export function ReservationForm({
                 ? <Badge kind="warning">미수 {formatKRW(money.outstandingTotal)} · {money.reservationsWithOutstanding}건</Badge>
                 : <Badge kind="success">미수 없음</Badge>))}
             {money?.hasDeposit && <Badge kind="info">보증금 보관 중{!money.masked && money.depositHeldTotal != null ? ` ${formatKRW(money.depositHeldTotal)}` : ""}</Badge>}
-            <button type="button" onClick={clearCustomer} className="ml-auto inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] text-t2 hover:bg-sf [@media(pointer:coarse)]:h-[44px]" aria-label="고객 선택 해제">
+            <button type="button" onClick={clearCustomer} className="ml-auto inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] text-t2 hover:bg-sf [@media(pointer:coarse)]:h-[44px]" aria-label="고객 선택 해제">
               <X size={13} aria-hidden />해제
             </button>
           </div>
@@ -180,7 +180,7 @@ export function ReservationForm({
               <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-[var(--r-md)] border border-[var(--bd)] bg-sf shadow-modal" role="listbox">
                 {customerMatches.map((c) => (
                   <li key={c.id}>
-                    <button type="button" role="option" aria-selected={false} onClick={() => pickCustomer(c)} className="flex min-h-[40px] w-full items-center justify-between gap-2 px-3 text-left text-[13px] hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]">
+                    <button type="button" role="option" aria-selected={false} onClick={() => pickCustomer(c)} className="flex min-h-[40px] w-full items-center justify-between gap-2 px-3 text-left text-[length:var(--fs-body)] hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]">
                       <span className="truncate font-medium text-t">{c.name}</span>
                       <span className="shrink-0 tabular-nums text-t3">{c.phone ?? (c.hasPhone ? "전화 비공개" : "")}</span>
                     </button>
@@ -209,15 +209,15 @@ export function ReservationForm({
           onChange={(f, t) => { setStart(`${f}T${start.slice(11) || "10:00"}`); setEnd(`${t}T${end.slice(11) || "18:00"}`); }}
         />
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-t2">
+          <label className="flex flex-col gap-1.5 text-[length:var(--fs-body)] font-medium text-t2">
             <span>대여 시간 <span className="text-et" aria-hidden>*</span></span>
             <input type="time" required value={start.slice(11)} onChange={(e) => setStart(`${start.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
           </label>
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-t2">
+          <label className="flex flex-col gap-1.5 text-[length:var(--fs-body)] font-medium text-t2">
             <span>반납 시간 <span className="text-et" aria-hidden>*</span></span>
             <input type="time" required value={end.slice(11)} onChange={(e) => setEnd(`${end.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
           </label>
-          <label className="col-span-2 flex flex-col gap-1.5 text-[13px] font-medium text-t2 sm:col-span-1">
+          <label className="col-span-2 flex flex-col gap-1.5 text-[length:var(--fs-body)] font-medium text-t2 sm:col-span-1">
             피팅 예약(선택)
             <input type="datetime-local" value={fittingAt} onChange={(e) => setFittingAt(e.target.value)} className={CONTROL} />
           </label>
@@ -351,7 +351,7 @@ export function ReservationForm({
       <div className="flex flex-col gap-4 lg:sticky lg:top-4">
         <Card className="p-4 sm:p-5">
           <CardHead title="견적(참고용)" description="최종 금액은 확정 시 서버가 계산합니다." />
-          <dl className="mt-3 flex flex-col gap-2 text-[13px]">
+          <dl className="mt-3 flex flex-col gap-2 text-[length:var(--fs-body)]">
             <div className="flex items-center justify-between"><dt className="text-t2">대여료 합계</dt><dd className="tabular-nums text-t">{formatKRW(quote.rentalFee)}</dd></div>
             <div className="flex items-center justify-between"><dt className="text-t2">할인 합계</dt><dd className="tabular-nums text-t">{formatKRW(quote.discount)}</dd></div>
             <div className="flex items-center justify-between border-t border-[var(--bd)] pt-2"><dt className="font-semibold text-t">청구 예정</dt><dd className="font-semibold tabular-nums text-t">{formatKRW(quote.rentalFee - quote.discount)}</dd></div>

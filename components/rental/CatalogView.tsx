@@ -145,7 +145,7 @@ export function CatalogView({
       rentals: `${unitRentalCounts[u.id] ?? 0}회`,
       cost: cost == null ? <span className="text-t3">미입력</span> : formatKRW(cost),
       historyLink: (
-        <Link href={`/w/${businessId}/reservations?productId=${p.id}`} prefetch={false} className="inline-flex h-[32px] items-center rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
+        <Link href={`/w/${businessId}/reservations?productId=${p.id}`} prefetch={false} className="inline-flex h-[32px] items-center rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
           예약 이력
         </Link>
       ),
@@ -422,7 +422,7 @@ function UnitDetailModal({
             role="tab"
             aria-selected={tab === v}
             onClick={() => setTab(v)}
-            className={cn("inline-flex h-[32px] items-center rounded-[var(--r-sm)] border px-3 text-[12.5px] font-medium [@media(pointer:coarse)]:h-[44px]", tab === v ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
+            className={cn("inline-flex h-[32px] items-center rounded-[var(--r-sm)] border px-3 text-[length:var(--fs-meta)] font-medium [@media(pointer:coarse)]:h-[44px]", tab === v ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
           >
             {label}
           </button>
@@ -430,7 +430,7 @@ function UnitDetailModal({
       </div>
 
       {error && (
-        <div role="alert" className="mb-3 flex items-start gap-2 rounded-[var(--r-md)] bg-eb px-3 py-2 text-[12.5px] text-et">
+        <div role="alert" className="mb-3 flex items-start gap-2 rounded-[var(--r-md)] bg-eb px-3 py-2 text-[length:var(--fs-meta)] text-et">
           <CircleAlert size={15} className="mt-[1px] shrink-0" />
           <span>{error}</span>
         </div>
@@ -452,10 +452,10 @@ function UnitDetailModal({
             </div>
           )}
           <p className="mt-2 text-[11.5px] text-t3">상태 변경은 상품·SKU 관리 섹션에서, 세탁·수선 등록은 아래 링크에서 처리합니다.</p>
-          <Link href={`/w/${businessId}/care?unit=${u.id}`} className="mt-1 inline-flex items-center gap-1 text-[12.5px] text-[var(--accent-ink)] underline underline-offset-2">
+          <Link href={`/w/${businessId}/care?unit=${u.id}`} className="mt-1 inline-flex items-center gap-1 text-[length:var(--fs-meta)] text-[var(--accent-ink)] underline underline-offset-2">
             <Wrench size={13} /> 세탁·수선 등록
           </Link>
-          <Link href={`/w/${businessId}/reservations?productId=${p.id}`} className="mt-1 inline-flex items-center gap-1 text-[12.5px] text-[var(--accent-ink)] underline underline-offset-2">
+          <Link href={`/w/${businessId}/reservations?productId=${p.id}`} className="mt-1 inline-flex items-center gap-1 text-[length:var(--fs-meta)] text-[var(--accent-ink)] underline underline-offset-2">
             <History size={13} /> 이 상품의 예약 이력
           </Link>
         </div>
@@ -498,7 +498,7 @@ function UnitDetailModal({
             <Input label="종료" type="date" value={avTo} onChange={(e) => setAvTo(e.target.value)} />
           </div>
           <Button size="sm" variant="secondary" onClick={checkAvailability} loading={avBusy} className="self-start">확인</Button>
-          {avResult && <p className="text-[12.5px] font-medium text-t">{avResult}</p>}
+          {avResult && <p className="text-[length:var(--fs-meta)] font-medium text-t">{avResult}</p>}
         </div>
       )}
     </Modal>
@@ -597,14 +597,14 @@ function ProductCard({
       )}
 
       {product.skus.length === 0 ? (
-        <p className="py-4 text-center text-[12.5px] text-t3">등록된 SKU가 없습니다.</p>
+        <p className="py-4 text-center text-[length:var(--fs-meta)] text-t3">등록된 SKU가 없습니다.</p>
       ) : (
         <TableOrCards
           rows={product.skus.flatMap<{ sku: RentalSku; unit: RentalUnit | null }>((sku) => (sku.units.length === 0 ? [{ sku, unit: null }] : sku.units.map((unit) => ({ sku, unit }))))}
           keyOf={({ sku, unit }) => unit?.id ?? sku.id}
           table={
             <div className="overflow-x-auto rounded-[var(--r-md)] border border-[var(--bd)]">
-              <table className="w-full min-w-[860px] border-collapse text-[12.5px]">
+              <table className="w-full min-w-[860px] border-collapse text-[length:var(--fs-meta)]">
                 <thead>
                   <tr className={THEAD}>
                     <th className="px-2.5 py-2 font-medium">색상/사이즈</th>
@@ -761,7 +761,7 @@ function UnitStatusMenu({
 function ErrorBanner({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div role="alert" className="mb-3 flex items-start gap-2 rounded-[var(--r-md)] bg-eb px-3 py-2 text-[12.5px] text-et">
+    <div role="alert" className="mb-3 flex items-start gap-2 rounded-[var(--r-md)] bg-eb px-3 py-2 text-[length:var(--fs-meta)] text-et">
       <CircleAlert size={15} className="mt-[1px] shrink-0" aria-hidden />
       <span>{message}</span>
     </div>
@@ -870,7 +870,7 @@ function NewPartModal({ businessId, productId, nextSort, open, onClose, onCreate
     <Modal open={open} onClose={onClose} title="구성품 추가" footer={<><Button variant="secondary" onClick={onClose}>취소</Button><Button onClick={submit} loading={busy}>등록</Button></>}>
       <ErrorBanner message={error} />
       <Input label="구성품 이름" required value={partName} onChange={(e) => setPartName(e.target.value)} placeholder="재킷" />
-      <label className="flex items-center gap-2 text-[13px] text-t2">
+      <label className="flex items-center gap-2 text-[length:var(--fs-body)] text-t2">
         <input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} />
         필수 구성품(누락 시 부분출고/부분반납 판정에 사용)
       </label>

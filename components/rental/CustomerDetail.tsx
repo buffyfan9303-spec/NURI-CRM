@@ -223,7 +223,7 @@ export function CustomerDetail({
         </Card>
       ) : (
         <Card className="p-4 sm:p-5">
-          <p className="flex items-center gap-1.5 text-[12.5px] text-t3">
+          <p className="flex items-center gap-1.5 text-[length:var(--fs-meta)] text-t3">
             <Lock size={13} aria-hidden /> 고객 개인정보 조회(pii.read) 권한이 없어 신체 치수 기록이 표시되지 않습니다.
           </p>
         </Card>
@@ -240,7 +240,7 @@ export function CustomerDetail({
               {money.hasDeposit && <Badge kind="info">보증금 보관 중</Badge>}
             </div>
           ) : (
-            <dl className="grid grid-cols-2 gap-3 text-[13px]">
+            <dl className="grid grid-cols-2 gap-3 text-[length:var(--fs-body)]">
               <div>
                 <dt className="text-[11.5px] text-t3">미수금 합계</dt>
                 <dd className={"mt-0.5 text-[16px] font-semibold tabular-nums " + (money.hasOutstanding ? "text-et" : "text-t")}>{formatKRW(money.outstandingTotal)}</dd>
@@ -253,13 +253,13 @@ export function CustomerDetail({
             </dl>
           )}
           {money.hasOutstanding && (
-            <Link href={`/w/${businessId}/receivables`} className="mt-2 inline-flex h-[32px] items-center text-[12.5px] font-medium text-[var(--accent-ink)] hover:underline [@media(pointer:coarse)]:h-[44px]">미수금 보드에서 독촉·수납 →</Link>
+            <Link href={`/w/${businessId}/receivables`} className="mt-2 inline-flex h-[32px] items-center text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:underline [@media(pointer:coarse)]:h-[44px]">미수금 보드에서 독촉·수납 →</Link>
           )}
         </Card>
       )}
       <Card className="p-4 sm:p-5">
         <CardHead title="기본 정보" />
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-[13px] sm:grid-cols-2 lg:grid-cols-1">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-[length:var(--fs-body)] sm:grid-cols-2 lg:grid-cols-1">
           <div>
             <dt className="text-[11.5px] text-t3">전화번호</dt>
             <dd className="mt-0.5 tabular-nums text-t">
@@ -310,7 +310,7 @@ function MeasurementValues({ values, inline }: { values: Record<string, number |
   return inline ? (
     <span>{entries.join(" · ")}</span>
   ) : (
-    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-t">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[length:var(--fs-meta)] text-t">
       {entries.map((e) => (
         <span key={e}>{e}</span>
       ))}

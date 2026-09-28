@@ -75,9 +75,9 @@ export function CheckinKiosk({ businessId, businessName }: { businessId: string;
   return (
     <div className="mx-auto flex w-full max-w-[440px] flex-col items-center gap-5 py-2 sm:py-6">
       <div className="text-center">
-        {businessName && <p className="text-[13px] font-medium text-t3">{businessName}</p>}
+        {businessName && <p className="text-[length:var(--fs-body)] font-medium text-t3">{businessName}</p>}
         <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-tight text-t sm:text-[28px]">등원 코드를 입력하세요</h1>
-        <p className="mt-1 text-[13px] text-t2">숫자 {MIN_LEN}~{MAX_LEN}자리 · 입력 후 확인</p>
+        <p className="mt-1 text-[length:var(--fs-body)] text-t2">숫자 {MIN_LEN}~{MAX_LEN}자리 · 입력 후 확인</p>
       </div>
 
       <div className="w-full" aria-live="polite">

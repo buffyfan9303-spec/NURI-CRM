@@ -55,6 +55,10 @@ const INDUSTRY_LABEL: Record<string, string> = {
 };
 
 const SIDEBAR_COLLAPSE_KEY = "nuri_crm_sidebar_collapsed";
+// CLS: 서버·첫 클라이언트 렌더는 viewport="wide" 라 960~1199(강제 rail)에서 라벨이 먼저 그려졌다가 hydration 뒤
+// 사라지며 메뉴가 위로 밀렸다(1024 실측 0.011). JS 분기(isRail)는 그대로 두고 CSS 로도 같은 폭에서 숨긴다.
+const RAIL_HIDE = "min-[960px]:max-[1199px]:hidden";
+const RAIL_CENTER = "min-[960px]:max-[1199px]:justify-center min-[960px]:max-[1199px]:px-0";
 
 /** 사업장 설정(/settings)은 lib/industry/config.ts 의 nav 에 없다(그 파일은 수정 금지). 셸이 staff.manage 캡이
  *  있을 때만 설정 그룹 끝에 한 줄 덧붙인다(S6) — 서버(settings/page.tsx)도 같은 캡으로 막는다. */
@@ -230,7 +234,7 @@ export function WorkspaceShell({
   const isOffCanvas = viewport === "narrow";
   const canToggleCollapse = viewport === "wide";
   // 960-1199 rail은 터치 태블릿일 수 있어 44px, 1200+ 데스크톱은 36~40px(§4.1).
-  const rowMinH = isOffCanvas || viewport === "mid" ? "min-h-[44px]" : "min-h-[38px] [@media(pointer:coarse)]:min-h-[44px]";
+  const rowMinH = isOffCanvas || viewport === "mid" ? "min-h-[44px]" : "min-h-[38px] min-[960px]:max-[1199px]:min-h-[44px] [@media(pointer:coarse)]:min-h-[44px]";
 
   const Icon = INDUSTRY_ICON[industry] ?? FALLBACK_ICON;
 
@@ -347,7 +351,7 @@ export function WorkspaceShell({
             N
           </div>
           {!isRail && (
-            <div className="min-w-0 leading-tight">
+            <div className={cn("min-w-0 leading-tight", RAIL_HIDE)}>
               {/* S3: 드로어(<960)에서는 현재 사업장명이 첫 줄이다 — 휴대폰엔 사업장명이 달리 없었다. 사이드바(960+)는 제품명. */}
               <div className="truncate text-[13.5px] font-semibold text-sbt min-[960px]:hidden">{businessName}</div>
               <div className="hidden truncate text-[13.5px] font-semibold text-sbt min-[960px]:block">NURI CRM</div>
@@ -385,7 +389,7 @@ export function WorkspaceShell({
           {groupedNav.map((group, gi) => (
             <div key={group.key} className={cn(gi > 0 && "mt-1")}>
               {!isRail && (
-                <p className="px-4 pb-1 pt-2.5 text-[12px] font-semibold uppercase tracking-wide text-[var(--sbt2)]">
+                <p className={cn("px-4 pb-1 pt-2.5 text-[12px] font-semibold uppercase tracking-wide text-[var(--sbt2)]", RAIL_HIDE)}>
                   {group.label}
                 </p>
               )}
@@ -403,6 +407,7 @@ export function WorkspaceShell({
                       // 드로어(<960)는 행 간격 0(S5): 360×740 에서 11개 행(설정 포함)이 스크롤 없이 계정 영역 위에 들어가야 한다.
                       "relative mx-2.5 my-0.5 flex items-center gap-2.5 rounded-[var(--r-sm)] px-3 text-[13.5px] transition-colors duration-1 max-[959px]:my-0",
                       rowMinH,
+                      RAIL_CENTER,
                       isRail && "justify-center px-0",
                       active
                         ? "bg-[var(--nav-active)] font-medium text-[var(--sbact)]"
@@ -422,7 +427,7 @@ export function WorkspaceShell({
                     {isRail ? (
                       <span className="sr-only">{item.label}</span>
                     ) : (
-                      <span className="truncate">{item.label}</span>
+                      <span className={cn("truncate", RAIL_HIDE)}>{item.label}</span>
                     )}
                   </Link>
                 );
@@ -442,6 +447,7 @@ export function WorkspaceShell({
             className={cn(
               // min-h 44: p-1.5(5.25px)+32px 아바타 = 42.5px 라 1024 rail 터치에서 미달이던 버튼.
               "flex min-h-[44px] w-full items-center gap-2.5 rounded-[var(--r-sm)] p-1.5 text-left hover:bg-[var(--sbh)]",
+              "min-[960px]:max-[1199px]:justify-center",
               isRail && "justify-center"
             )}
           >
@@ -449,7 +455,7 @@ export function WorkspaceShell({
               {initialOf(userEmail)}
             </span>
             {!isRail && (
-              <span className="min-w-0 flex-1">
+              <span className={cn("min-w-0 flex-1", RAIL_HIDE)}>
                 <span className="block truncate text-[12.5px] font-medium text-sbt">{userEmail}</span>
                 <span className="block truncate text-[12px] text-[var(--sbt2)]">{roleLabel}</span>
               </span>

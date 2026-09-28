@@ -338,7 +338,7 @@ export function BookingBoard({
       <Modal open={!!moreFor} onClose={() => setMoreFor(null)} title={moreView ? `${moreView.customer} · ${moreView.when}` : "예약"}>
         {moreFor && moreView && (
           <div className="flex flex-col gap-2 [&>button]:w-full">
-            <p className="mb-1 text-[12.5px] text-t3">{moreView.service} · {moreView.staff}</p>
+            <p className="mb-1 text-[length:var(--fs-meta)] text-t3">{moreView.service} · {moreView.staff}</p>
             {actionsOf(moreFor, moreView, true).more}
           </div>
         )}

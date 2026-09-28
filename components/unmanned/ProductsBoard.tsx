@@ -145,12 +145,12 @@ export function ProductsBoard({
     supplier: canWrite ? (
       noteFor === p.id ? (
         <form onSubmit={(e) => { e.preventDefault(); saveNote(p.id); }} className="flex items-center gap-1.5">
-          <input value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="도매처·발주 메모" aria-label="도매처 메모" className={`${CONTROL} h-[32px] w-[180px] px-2 text-[12.5px] [@media(pointer:coarse)]:h-[44px]`} autoFocus />
+          <input value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} placeholder="도매처·발주 메모" aria-label="도매처 메모" className={`${CONTROL} h-[32px] w-[180px] px-2 text-[length:var(--fs-meta)] [@media(pointer:coarse)]:h-[44px]`} autoFocus />
           <Button type="submit" size="sm" loading={busy}>저장</Button>
           <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => setNoteFor(null)}>취소</Button>
         </form>
       ) : (
-        <button type="button" onClick={() => openNote(p)} className="group inline-flex h-[32px] max-w-[220px] items-center gap-1 rounded-[var(--r-sm)] px-1.5 text-left text-[12.5px] text-t2 hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]" title={p.supplierNote ?? "도매처 메모 추가"}>
+        <button type="button" onClick={() => openNote(p)} className="group inline-flex h-[32px] max-w-[220px] items-center gap-1 rounded-[var(--r-sm)] px-1.5 text-left text-[length:var(--fs-meta)] text-t2 hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]" title={p.supplierNote ?? "도매처 메모 추가"}>
           <span className="truncate">{p.supplierNote ?? <span className="text-t3">메모 추가</span>}</span>
           <Pencil size={12} className="shrink-0 text-t3" aria-hidden />
         </button>
@@ -319,7 +319,7 @@ export function ProductsBoard({
             {canReadCost && <Input label="원가(원)" type="number" inputMode="numeric" value={form.costPrice} onChange={(e) => setForm((f) => ({ ...f, costPrice: e.target.value }))} />}
             <Input label="저재고 임계값" type="number" inputMode="numeric" value={form.lowStock} onChange={(e) => setForm((f) => ({ ...f, lowStock: e.target.value }))} hint="재고가 이 값 이하로 내려가면 홈과 목록에 저재고로 표시됩니다." />
           </div>
-          <label className="flex min-h-[44px] items-center gap-2 text-[13px] text-t2">
+          <label className="flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t2">
             <input type="checkbox" checked={form.expiryTracked} onChange={(e) => setForm((f) => ({ ...f, expiryTracked: e.target.checked }))} className="h-[18px] w-[18px] accent-[var(--accent-strong)]" />
             유통기한 추적(입고 시 유통기한 필수)
           </label>

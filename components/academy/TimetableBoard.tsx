@@ -106,7 +106,7 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
   const rowActions = (s: AcadSession) => (
     <span className="inline-flex flex-wrap items-center justify-end gap-1">
       {s.status !== "휴강" && (
-        <Link href={`/w/${businessId}/attendance?sessionId=${s.id}`} prefetch={false} className="inline-flex h-[32px] items-center gap-1 whitespace-nowrap rounded-[var(--r-md)] px-3 text-[13px] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]">
+        <Link href={`/w/${businessId}/attendance?sessionId=${s.id}`} prefetch={false} className="inline-flex h-[32px] items-center gap-1 whitespace-nowrap rounded-[var(--r-md)] px-3 text-[length:var(--fs-body)] font-medium text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:min-h-[44px]">
           <ClipboardCheck size={13} aria-hidden />출결
         </Link>
       )}
@@ -173,7 +173,7 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
                             <td className={`${TD} font-medium text-t`}>{className(s.classId)}</td>
                             <td className={TD}>
                               <span className="inline-flex flex-wrap items-center gap-1">
-                                {s.sessionKind !== "정규" ? <Badge kind="warning">{s.sessionKind}</Badge> : <span className="text-[12.5px] text-t3">정규</span>}
+                                {s.sessionKind !== "정규" ? <Badge kind="warning">{s.sessionKind}</Badge> : <span className="text-[length:var(--fs-meta)] text-t3">정규</span>}
                                 {s.overridden && <Badge kind="info">개별 수정</Badge>}
                               </span>
                             </td>
@@ -207,7 +207,7 @@ export function TimetableBoard({ businessId, canWrite, classes, sessions }: { bu
       >
         {editSession && (
           <form onSubmit={(e) => { e.preventDefault(); saveOnce(); }} className="flex flex-col">
-            <p className="mb-4 text-[12.5px] leading-relaxed text-t2">{className(editSession.classId)} · {dateLabel(editSession.sessionDate)} {formatInTz(editSession.startAt, DEFAULT_TZ, "HH:mm")} 회차만 바꿉니다. 종료 시각은 원래 소요시간대로 함께 이동합니다.</p>
+            <p className="mb-4 text-[length:var(--fs-meta)] leading-relaxed text-t2">{className(editSession.classId)} · {dateLabel(editSession.sessionDate)} {formatInTz(editSession.startAt, DEFAULT_TZ, "HH:mm")} 회차만 바꿉니다. 종료 시각은 원래 소요시간대로 함께 이동합니다.</p>
             {error && <Alert className="mb-4">{error}</Alert>}
             <div className="grid grid-cols-2 gap-x-3">
               <Input label="날짜" type="date" value={onceForm.date} onChange={(e) => setOnceForm((f) => ({ ...f, date: e.target.value }))} autoFocus />

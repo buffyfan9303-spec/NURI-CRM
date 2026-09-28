@@ -179,11 +179,11 @@ function TierEditor({ title, rows, setRows, onReset }: { title: string; rows: Ti
   return (
     <div className="rounded-[var(--r-md)] border border-[var(--bd)] p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-[12.5px] font-semibold text-t">{title}</h3>
+        <h3 className="text-[length:var(--fs-meta)] font-semibold text-t">{title}</h3>
         <button type="button" onClick={onReset} className="inline-flex h-[32px] items-center rounded-[var(--r-sm)] px-2 text-[12px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">공정위 기본값</button>
       </div>
       {/* R6 휴대폰: 한 줄에 입력 4개 대신 "N일 이상 → M%" 읽기 요약 + 편집 시트. */}
-      <ul className="flex flex-col divide-y divide-[var(--bd)] text-[13px] sm:hidden" aria-label={`${title} 요약`}>
+      <ul className="flex flex-col divide-y divide-[var(--bd)] text-[length:var(--fs-body)] sm:hidden" aria-label={`${title} 요약`}>
         {rows.map((r) => (
           <li key={r.key} className="flex min-h-[36px] items-center justify-between gap-3 py-1.5">
             <span className="text-t2">{tierLabel(r)}</span>
@@ -194,7 +194,7 @@ function TierEditor({ title, rows, setRows, onReset }: { title: string; rows: Ti
       <Button type="button" size="sm" variant="secondary" className="mt-2 w-full sm:hidden" onClick={() => setEditing(true)}>편집</Button>
       <div className="max-sm:hidden">{editor}</div>
       <Modal open={editing} onClose={() => setEditing(false)} title={`${title} 편집`} footer={<Button type="button" onClick={() => setEditing(false)}>완료</Button>}>
-        <p className="mb-3 text-[12.5px] text-t2">닫은 뒤 아래 &lsquo;단계표 저장&rsquo;을 눌러야 적용됩니다.</p>
+        <p className="mb-3 text-[length:var(--fs-meta)] text-t2">닫은 뒤 아래 &lsquo;단계표 저장&rsquo;을 눌러야 적용됩니다.</p>
         {editor}
       </Modal>
     </div>

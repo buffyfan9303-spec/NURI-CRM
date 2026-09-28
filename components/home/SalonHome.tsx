@@ -32,7 +32,7 @@ import { MessageActions } from "@/components/common/MessageActions";
 const CHART_TOUCH = "[@media(pointer:coarse)]:[&_button]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:inline-flex [@media(pointer:coarse)]:[&_a]:items-center [@media(pointer:coarse)]:[&_summary]:flex [@media(pointer:coarse)]:[&_summary]:min-h-[44px] [@media(pointer:coarse)]:[&_summary]:items-center";
 /** 보조 카드 — 0건이면 휴대폰에서 카드 자체를 숨긴다(H0 규칙 3: 오늘 할 일 카드 하나만 빈 상태를 크게). */
 const sideCard = (empty: boolean) => `p-4 sm:p-5${empty ? " max-sm:hidden" : ""}`;
-const ROW = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-2 text-[13px] [@media(pointer:coarse)]:min-h-[44px]";
+const ROW = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-body)] [@media(pointer:coarse)]:min-h-[44px]";
 
 const tone = (status: string): WorkTableRow["statusTone"] =>
   status === "완료" ? "success" : status === "취소" || status === "노쇼" ? "neutral" : "warn";
@@ -207,7 +207,7 @@ export function SalonHome({
             <Card className={sideCard(revisitDue.length === 0)}>
               <CardHead title="다시 올 때 된 고객" description="시술별 재방문 주기 기준" />
               {revisitDue.length === 0 ? (
-                <p className="text-[12.5px] text-t3">주기가 지난 고객이 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">주기가 지난 고객이 없습니다.</p>
               ) : (
                 <ul className="-mx-2 flex flex-col">
                   {revisitDue.slice(0, 6).map((r) => (
@@ -227,7 +227,7 @@ export function SalonHome({
               <Card className={sideCard(d.outstanding.length === 0)}>
                 <CardHead title="미수 확인" description="완료됐지만 잔액이 남은 예약" action={d.outstanding.length > 0 ? <ViewAll href={`${base}/settlement`}>정산</ViewAll> : undefined} />
                 {d.outstanding.length === 0 ? (
-                  <p className="text-[12.5px] text-t3">미수가 없습니다.</p>
+                  <p className="text-[length:var(--fs-meta)] text-t3">미수가 없습니다.</p>
                 ) : (
                   <ul className="-mx-2 flex flex-col">
                     {d.outstanding.slice(0, 6).map((o) => (
@@ -246,7 +246,7 @@ export function SalonHome({
             <Card className={sideCard(d.lowStockRetail.length === 0)}>
               <CardHead title="재고 주의" description="기준 수량 이하 소모품" action={d.lowStockRetail.length > 0 ? <ViewAll href={`${base}/stock`}>재고</ViewAll> : undefined} />
               {d.lowStockRetail.length === 0 ? (
-                <p className="text-[12.5px] text-t3">부족한 소모품이 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">부족한 소모품이 없습니다.</p>
               ) : (
                 <ul className="-mx-2 flex flex-col">
                   {d.lowStockRetail.slice(0, 6).map((r) => (
@@ -264,7 +264,7 @@ export function SalonHome({
             <Card className={sideCard(d.timeOffToday.length === 0)}>
               <CardHead title="휴무·휴게" description="오늘" action={canManage ? <ViewAll href={`${base}/staff-shift`}>근무표</ViewAll> : undefined} />
               {d.timeOffToday.length === 0 ? (
-                <p className="text-[12.5px] text-t3">오늘 등록된 휴무·휴게가 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">오늘 등록된 휴무·휴게가 없습니다.</p>
               ) : (
                 <ul className="-mx-2 flex flex-col">
                   {d.timeOffToday.map((t) => (

@@ -178,7 +178,7 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
             <CardHead title="가져오기 대사 대기" description="파일 단위로 확정하면 매칭된 기록만큼 재고가 차감됩니다. 재고가 부족한 건은 보류됩니다." />
             <ul className="flex flex-col gap-2">
               {Array.from(pendingByFile.entries()).map(([file, count]) => (
-                <li key={file} className="flex flex-col gap-2 rounded-[var(--r-md)] border border-[var(--bd)] px-3.5 py-3 text-[13px] sm:flex-row sm:items-center sm:justify-between">
+                <li key={file} className="flex flex-col gap-2 rounded-[var(--r-md)] border border-[var(--bd)] px-3.5 py-3 text-[length:var(--fs-body)] sm:flex-row sm:items-center sm:justify-between">
                   <span className="min-w-0">
                     <span className="block truncate font-medium text-t" title={file}>{file}</span>
                     <span className="text-[12px] text-t3">매칭된 미확정 {count}건</span>
@@ -196,7 +196,7 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
             description={canReadRevenue ? `최근 ${recent.length}건 · 합계 ${recentTotal.toLocaleString()}원` : "최근 30건"}
           />
           {!canReadRevenue ? (
-            <p className="flex items-center gap-1.5 py-6 text-center text-[12.5px] text-t3">
+            <p className="flex items-center gap-1.5 py-6 text-center text-[length:var(--fs-meta)] text-t3">
               <Lock size={13} aria-hidden /> 매출 합계 조회에는 revenue.read 권한이 필요합니다. 기록 등록은 가능합니다.
             </p>
           ) : records.length === 0 ? (
@@ -255,7 +255,7 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
         }
       >
         <form onSubmit={submitManualSale}>
-          <p className="mb-3 flex items-center gap-2 text-[12.5px] text-t2"><Badge kind="info">직접 입력</Badge>지금 판매한 내용을 바로 기록합니다 — 즉시 재고에서 차감됩니다.</p>
+          <p className="mb-3 flex items-center gap-2 text-[length:var(--fs-meta)] text-t2"><Badge kind="info">직접 입력</Badge>지금 판매한 내용을 바로 기록합니다 — 즉시 재고에서 차감됩니다.</p>
           {saleError && <Alert className="mb-3">{saleError}</Alert>}
           <SelectField label="상품" required value={saleProduct} onChange={(e) => setSaleProduct(e.target.value)}>
             <option value="">선택</option>
@@ -282,14 +282,14 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
           </>
         }
       >
-        <p className="mb-3 flex flex-wrap items-center gap-2 text-[12.5px] text-t2">
+        <p className="mb-3 flex flex-wrap items-center gap-2 text-[length:var(--fs-meta)] text-t2">
           <Badge kind="warning">수동 가져오기(CSV) — 실시간 연동 아님</Badge>
         </p>
-        <p className="mb-3 text-[12.5px] leading-relaxed text-t2">
+        <p className="mb-3 text-[length:var(--fs-meta)] leading-relaxed text-t2">
           열 순서: <span className="font-mono text-t">sku, qty, amount, sold_at</span>(YYYY-MM-DD). 업로드만으로는 재고가 변하지 않습니다 — 목록의 &ldquo;대사 확정&rdquo;을 눌러야 반영됩니다.
         </p>
         {csvError && <Alert className="mb-3">{csvError}</Alert>}
-        <label className="mb-3 flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[var(--r-md)] border border-dashed border-[var(--bd2)] px-4 py-3 text-[13px] text-t2 hover:bg-sf2">
+        <label className="mb-3 flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[var(--r-md)] border border-dashed border-[var(--bd2)] px-4 py-3 text-[length:var(--fs-body)] text-t2 hover:bg-sf2">
           <Upload size={16} className="shrink-0 text-t3" aria-hidden />
           <span className="min-w-0 flex-1 truncate">{fileName || "CSV 파일 선택"}</span>
           <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
@@ -297,7 +297,7 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
         {parseError && <Alert className="mb-3">{parseError}</Alert>}
         {preview.length > 0 && (
           <div className="overflow-x-auto rounded-[var(--r-md)] border border-[var(--bd)]">
-            <table className={`${TABLE} min-w-[400px] text-[12.5px]`}>
+            <table className={`${TABLE} min-w-[400px] text-[length:var(--fs-meta)]`}>
               <thead><tr className={THEAD}><th className={TH}>SKU</th><th className={`${TH} text-right`}>수량</th><th className={`${TH} text-right`}>금액</th><th className={TH}>판매일</th></tr></thead>
               <tbody>{preview.slice(0, 20).map((r, i) => (
                 <tr key={i} className={`${TR} h-[40px]`}><td className={`${TD} font-mono`}>{r.sku}</td><td className={`${TD} text-right tabular-nums`}>{r.qty}</td><td className={`${TD} text-right tabular-nums`}>{r.amount.toLocaleString()}</td><td className={`${TD} tabular-nums`}>{r.soldAt}</td></tr>

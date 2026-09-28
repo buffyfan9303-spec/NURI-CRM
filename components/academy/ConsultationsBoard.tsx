@@ -240,7 +240,7 @@ export function ConsultationsBoard({ businessId, canWrite, canReadPii, consultat
               </SelectField>
             )}
           </div>
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-t2">
+          <label className="flex flex-col gap-1.5 text-[length:var(--fs-body)] font-medium text-t2">
             메모
             <textarea
               value={form.memo ?? ""}
@@ -265,7 +265,7 @@ export function ConsultationsBoard({ businessId, canWrite, canReadPii, consultat
       >
         <form onSubmit={(e) => { e.preventDefault(); doConvert(); }} className="flex flex-col">
           {error && <Alert className="mb-4">{error}</Alert>}
-          <p className="mb-4 text-[12.5px] leading-relaxed text-t2">학생을 생성하고 보호자 정보(있으면)를 연결한 뒤 상담 상태를 &apos;등록&apos;으로 바꿉니다. 아래는 선택 입력입니다.</p>
+          <p className="mb-4 text-[length:var(--fs-meta)] leading-relaxed text-t2">학생을 생성하고 보호자 정보(있으면)를 연결한 뒤 상담 상태를 &apos;등록&apos;으로 바꿉니다. 아래는 선택 입력입니다.</p>
           <Input label="생년월일" type="date" value={convertForm.birthDate} onChange={(e) => setConvertForm((f) => ({ ...f, birthDate: e.target.value }))} autoFocus />
           <div className="grid grid-cols-2 gap-x-3">
             <Input label="학교" value={convertForm.school} onChange={(e) => setConvertForm((f) => ({ ...f, school: e.target.value }))} wrapperClassName="mb-0" />

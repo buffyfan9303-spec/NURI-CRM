@@ -142,24 +142,27 @@ export function MonthView({
                 "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
               )}
             >
-              <button
-                type="button"
-                onClick={() => activateDay(idx)}
-                className={cn(
-                  // html{font-size:14px} 라 h-6 은 21px 였다 — px 로 24px(WCAG 2.5.8 최소), 터치 화면은 28px(칸 전체가 같은 동작).
-                  "flex h-[24px] w-[24px] shrink-0 items-center justify-center self-start rounded-full text-[12px] [@media(pointer:coarse)]:h-[28px] [@media(pointer:coarse)]:w-[28px]",
-                  isToday ? "bg-[var(--accent-strong)] font-semibold text-[var(--accent-contrast)]" : holidayLabel ? "text-et" : "text-t2",
-                  !inMonth && "text-t3"
+              {/* CLS: 공휴일 이름(useHolidayMap 비동기)은 날짜 숫자와 같은 줄에 둔다 — 도착해도 칸 높이가 안 변한다. */}
+              <div className="flex h-[24px] shrink-0 items-center gap-1 [@media(pointer:coarse)]:h-[28px]">
+                <button
+                  type="button"
+                  onClick={() => activateDay(idx)}
+                  className={cn(
+                    // html{font-size:14px} 라 h-6 은 21px 였다 — px 로 24px(WCAG 2.5.8 최소), 터치 화면은 28px(칸 전체가 같은 동작).
+                    "flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-[12px] [@media(pointer:coarse)]:h-[28px] [@media(pointer:coarse)]:w-[28px]",
+                    isToday ? "bg-[var(--accent-strong)] font-semibold text-[var(--accent-contrast)]" : holidayLabel ? "text-et" : "text-t2",
+                    !inMonth && "text-t3"
+                  )}
+                  aria-label={dayLabel}
+                >
+                  {Number(dateKey.slice(8, 10))}
+                </button>
+                {holidayLabel && (
+                  <span className="min-w-0 truncate text-[11.5px] font-medium leading-tight text-et" title={holidayLabel}>
+                    {holidayLabel}
+                  </span>
                 )}
-                aria-label={dayLabel}
-              >
-                {Number(dateKey.slice(8, 10))}
-              </button>
-              {holidayLabel && (
-                <span className="-mt-0.5 block truncate text-[11.5px] font-medium leading-tight text-et" title={holidayLabel}>
-                  {holidayLabel}
-                </span>
-              )}
+              </div>
               <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
                 {visible.map((ev) => (
                   <EventChip

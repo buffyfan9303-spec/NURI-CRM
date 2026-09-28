@@ -220,7 +220,7 @@ function InboundModal({ businessId, item, onClose, onDone }: { businessId: strin
       {item && (
         <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="flex flex-col">
           {error && <Alert className="mb-4">{error}</Alert>}
-          <p className="mb-3 text-[12.5px] text-t2">{item.name} · 현재 재고 {item.stockQty}개</p>
+          <p className="mb-3 text-[length:var(--fs-meta)] text-t2">{item.name} · 현재 재고 {item.stockQty}개</p>
           <Input label="입고 수량" type="number" min={1} required inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} autoFocus wrapperClassName="mb-0" />
         </form>
       )}

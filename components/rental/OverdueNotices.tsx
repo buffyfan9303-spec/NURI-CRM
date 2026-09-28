@@ -49,7 +49,7 @@ export function OverdueNotices({
     if (q.ok) setLateFee(q.data.amount);
   };
 
-  if (rows.length === 0) return <p className="text-[12.5px] text-t3">반납이 지연된 예약이 없습니다.</p>;
+  if (rows.length === 0) return <p className="text-[length:var(--fs-meta)] text-t3">반납이 지연된 예약이 없습니다.</p>;
 
   const text = target
     ? rentalOverdueNotice({ businessName, customerName: target.customerName, periodEndIso: target.periodEndIso, daysLate: target.daysLate, lateFee, tz })
@@ -61,7 +61,7 @@ export function OverdueNotices({
         {rows.map((r) => (
           <li key={r.id} className="flex items-center gap-2 py-1.5">
             <Link href={`/w/${businessId}/reservations/${r.id}`} className="flex min-h-[40px] min-w-0 flex-1 flex-col justify-center rounded-[var(--r-sm)] px-1 hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]">
-              <span className="truncate text-[13px] font-medium text-t">{r.customerName ?? "고객 미지정"}</span>
+              <span className="truncate text-[length:var(--fs-body)] font-medium text-t">{r.customerName ?? "고객 미지정"}</span>
               <span className="truncate text-[11.5px] text-et">반납 예정 {formatInTz(r.periodEndIso, tz, "M. d.")} · {r.daysLate}일 지남</span>
             </Link>
             <Button size="sm" variant="secondary" onClick={() => open(r)} aria-label={`${r.customerName ?? "고객"} 독촉 문구`}>
@@ -72,7 +72,7 @@ export function OverdueNotices({
       </ul>
       <Modal open={!!target} onClose={() => setTarget(null)} title="반납 지연 독촉 문구" footer={<Button variant="secondary" onClick={() => setTarget(null)}>닫기</Button>}>
         {loading ? (
-          <p className="py-4 text-center text-[12.5px] text-t3">연체료를 계산하는 중…</p>
+          <p className="py-4 text-center text-[length:var(--fs-meta)] text-t3">연체료를 계산하는 중…</p>
         ) : (
           <MessageActions text={text} phone={target?.customerPhone ?? undefined} title="문구(수정 가능)" />
         )}

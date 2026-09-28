@@ -106,7 +106,7 @@ export function DailyChecklistCard({
                       className="h-[20px] w-[20px] shrink-0 cursor-pointer accent-[var(--accent-strong)] transition-opacity duration-1 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                     />
                     <span className="min-w-0">
-                      <span className={"block truncate text-[13px] transition-[color,text-decoration-color] duration-1 ease-out " + (it.done ? "text-t3 line-through decoration-[var(--t3)]" : "font-medium text-t decoration-transparent")}>{it.label}</span>
+                      <span className={"block truncate text-[length:var(--fs-body)] transition-[color,text-decoration-color] duration-1 ease-out " + (it.done ? "text-t3 line-through decoration-[var(--t3)]" : "font-medium text-t decoration-transparent")}>{it.label}</span>
                       <span className="flex flex-wrap items-center gap-1.5 text-[11.5px] text-t3">
                         <span className={PILL}>{KIND_LABEL[it.kind]}</span>
                         {it.memo && memoFor !== it.key && <span className="truncate">메모: {it.memo}</span>}

@@ -66,7 +66,7 @@ export function PayModal({ businessId, target, onClose, onDone }: { businessId: 
     >
       {target && (
         <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="flex flex-col gap-1">
-          <dl className="mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-[var(--r-md)] bg-sf2 px-3.5 py-3 text-[12.5px]">
+          <dl className="mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-[var(--r-md)] bg-sf2 px-3.5 py-3 text-[length:var(--fs-meta)]">
             <dt className="text-t3">고객</dt>
             <dd className="truncate font-medium text-t">{target.customerName ?? "고객 미지정"}</dd>
             <dt className="text-t3">시술</dt>

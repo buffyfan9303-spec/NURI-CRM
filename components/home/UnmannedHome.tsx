@@ -136,7 +136,7 @@ export async function UnmannedHome({
     }));
 
   const chartError = !dashboard.ok ? dashboard.message : null;
-  const row = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-1 text-[12.5px] text-t2 hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]";
+  const row = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-1 text-[length:var(--fs-meta)] text-t2 hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]";
 
   return (
     <PageBody wide>
@@ -216,7 +216,7 @@ export async function UnmannedHome({
             <Card className="p-4">
               <CardHead title="유통기한 임박 품목" description="7일 이내" action={<ViewAll href={`${base}/products`}>상품</ViewAll>} />
               {d.expiringSoon.length === 0 ? (
-                <p className="text-[12.5px] text-t3">임박한 품목이 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">임박한 품목이 없습니다.</p>
               ) : (
                 <ul className="flex flex-col divide-y divide-[var(--bd)]">
                   {d.expiringSoon.slice(0, 6).map((l) => (
@@ -234,11 +234,11 @@ export async function UnmannedHome({
             <Card className={`p-4 ${d.recentMovements.length === 0 ? "max-sm:hidden" : ""}`}>
               <CardHead title="최근 입출고" action={<ViewAll href={`${base}/stock`}>재고</ViewAll>} />
               {d.recentMovements.length === 0 ? (
-                <p className="text-[12.5px] text-t3">최근 입출고 기록이 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">최근 입출고 기록이 없습니다.</p>
               ) : (
                 <ul className="flex flex-col divide-y divide-[var(--bd)]">
                   {d.recentMovements.map((m) => (
-                    <li key={m.id} className="flex min-h-[36px] items-center justify-between gap-3 px-1 text-[12.5px] text-t2">
+                    <li key={m.id} className="flex min-h-[36px] items-center justify-between gap-3 px-1 text-[length:var(--fs-meta)] text-t2">
                       <span className="rounded-[6px] bg-sf2 px-1.5 py-0.5 text-[12px] text-t2">{MOVEMENT_LABEL[m.movementType] ?? m.movementType}</span>
                       <span className="tabular-nums">
                         <span className={m.qtyDelta > 0 ? "font-medium text-okt" : "font-medium text-t"}>{m.qtyDelta > 0 ? "+" : ""}{m.qtyDelta}</span>
@@ -252,7 +252,7 @@ export async function UnmannedHome({
             <Card className={`p-4 ${d.upcomingTasks.length === 0 ? "max-sm:hidden" : ""}`}>
               <CardHead title="다가오는 점검 일정" description="7일 이내" action={<ViewAll href={`${base}/calendar`}>캘린더</ViewAll>} />
               {d.upcomingTasks.length === 0 ? (
-                <p className="text-[12.5px] text-t3">7일 이내 예정된 점검이 없습니다.</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">7일 이내 예정된 점검이 없습니다.</p>
               ) : (
                 <ul className="flex flex-col divide-y divide-[var(--bd)]">
                   {d.upcomingTasks.slice(0, 6).map((t) => (

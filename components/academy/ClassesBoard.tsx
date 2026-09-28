@@ -165,11 +165,11 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
       <Card className="p-4 sm:p-5">
         <CardHead title="강의실" description="반 개설 때 기본 강의실로 고를 수 있습니다." />
         {classrooms.length === 0 ? (
-          <p className="text-[12.5px] text-t3">등록된 강의실이 없습니다. 강의실 없이도 반은 개설할 수 있습니다.</p>
+          <p className="text-[length:var(--fs-meta)] text-t3">등록된 강의실이 없습니다. 강의실 없이도 반은 개설할 수 있습니다.</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
             {classrooms.map((c) => (
-              <li key={c.id} className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] bg-sf2 px-2.5 py-1.5 text-[12.5px] text-t">
+              <li key={c.id} className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] bg-sf2 px-2.5 py-1.5 text-[length:var(--fs-meta)] text-t">
                 <School size={13} className="text-t3" aria-hidden />{c.name}<span className="tabular-nums text-t3">정원 {c.capacity}</span>
               </li>
             ))}
@@ -255,7 +255,7 @@ function ClassModal({ businessId, open, onClose, onCreated, classrooms, teachers
           <Input label="정원" type="number" min={1} value={form.capacity} onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))} />
           <Input label="월 수강료(원)" inputMode="numeric" value={form.tuition} onChange={(e) => setForm((f) => ({ ...f, tuition: e.target.value }))} placeholder="0" />
         </div>
-        <p className="mb-2 text-[13px] font-medium text-t">매주 수업 시간</p>
+        <p className="mb-2 text-[length:var(--fs-body)] font-medium text-t">매주 수업 시간</p>
         <div className="grid grid-cols-2 gap-x-3 sm:grid-cols-4">
           <Input label="시작일" type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} />
           <SelectField label="요일" value={form.weekday} onChange={(e) => setForm((f) => ({ ...f, weekday: e.target.value }))}>
@@ -294,7 +294,7 @@ function EnrollModal({ businessId, cls, students, onClose, onDone }: { businessI
       {cls && (
         <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="flex flex-col">
           {error && <Alert className="mb-4">{error}</Alert>}
-          <p className="mb-4 text-[12.5px] text-t2">정원 {cls.enrolledCount ?? 0}/{cls.capacity} · 월 {formatKRW(cls.tuitionAmount)}</p>
+          <p className="mb-4 text-[length:var(--fs-meta)] text-t2">정원 {cls.enrolledCount ?? 0}/{cls.capacity} · 월 {formatKRW(cls.tuitionAmount)}</p>
           <SelectField label="학생" required value={studentId} onChange={(e) => setStudentId(e.target.value)} autoFocus wrapperClassName="mb-0">
             <option value="">선택</option>
             {students.filter((s) => s.active).map((s) => <option key={s.id} value={s.id}>{s.name}{s.grade ? ` · ${s.grade}` : ""}</option>)}

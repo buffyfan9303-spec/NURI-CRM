@@ -62,10 +62,10 @@ export function SettlementPanel({
   onChanged: () => void;
 }) {
   const reservationId = reservation.id;
-  if (!balance) return <p className="text-[12.5px] text-et">정산 정보를 불러오지 못했습니다.</p>;
+  if (!balance) return <p className="text-[length:var(--fs-meta)] text-et">정산 정보를 불러오지 못했습니다.</p>;
   if ("masked" in balance) {
     return (
-      <p className="flex items-center gap-1.5 text-[12.5px] text-t3">
+      <p className="flex items-center gap-1.5 text-[length:var(--fs-meta)] text-t3">
         <Lock size={13} /> 매출·정산 조회 권한(revenue.read)이 없어 금액이 표시되지 않습니다.
       </p>
     );
@@ -87,7 +87,7 @@ export function SettlementPanel({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Badge kind={balance.paymentStatus === "paid" ? "success" : balance.outstanding > 0 ? "warning" : "info"}>{PAYMENT_STATUS_LABEL[balance.paymentStatus]}</Badge>
-        <Link href={`/w/${businessId}/reservations/${reservationId}/statement/print`} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
+        <Link href={`/w/${businessId}/reservations/${reservationId}/statement/print`} className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]">
           <Printer size={13} aria-hidden />거래명세서
         </Link>
       </div>
@@ -113,7 +113,7 @@ export function SettlementPanel({
       )}
 
       {!canWrite && (
-        <p className="flex items-center gap-1.5 text-[12.5px] text-t3">
+        <p className="flex items-center gap-1.5 text-[length:var(--fs-meta)] text-t3">
           <Lock size={13} /> 조회만 가능합니다(write 권한 없음) — 수납·연체료·환불 처리는 관리자에게 요청하세요.
         </p>
       )}
@@ -180,7 +180,7 @@ function Tile({ label, value, sub, accent, warn }: { label: string; value: numbe
 function Box({ title, children, hint }: { title: string; children: React.ReactNode; hint?: React.ReactNode }) {
   return (
     <div className="rounded-[var(--r-md)] border border-[var(--bd)] bg-sf p-3.5">
-      <h3 className="mb-2.5 text-[13px] font-semibold text-t">{title}</h3>
+      <h3 className="mb-2.5 text-[length:var(--fs-body)] font-semibold text-t">{title}</h3>
       {children}
       {hint && <p className="mt-1.5 text-[11.5px] text-t3">{hint}</p>}
     </div>
@@ -282,7 +282,7 @@ function ReceiveForm({ businessId, reservationId, outstanding, depositRequired, 
       role="tab"
       aria-selected={kind === v}
       onClick={() => setKind(v)}
-      className={"inline-flex h-[32px] items-center rounded-[var(--r-sm)] border px-3 text-[12.5px] font-medium [@media(pointer:coarse)]:h-[44px] " + (kind === v ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
+      className={"inline-flex h-[32px] items-center rounded-[var(--r-sm)] border px-3 text-[length:var(--fs-meta)] font-medium [@media(pointer:coarse)]:h-[44px] " + (kind === v ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "border-[var(--bd)] text-t2 hover:bg-sf2")}
     >
       {l}
     </button>
@@ -318,7 +318,7 @@ function ReceiveForm({ businessId, reservationId, outstanding, depositRequired, 
             <input value={approvalNo} onChange={(e) => setApprovalNo(e.target.value)} maxLength={40} placeholder="12345678" className={CONTROL} />
           </label>
         ) : method === "cash" ? (
-          <label className="flex min-h-[40px] items-center gap-2 self-end text-[12.5px] text-t2 [@media(pointer:coarse)]:min-h-[44px]">
+          <label className="flex min-h-[40px] items-center gap-2 self-end text-[length:var(--fs-meta)] text-t2 [@media(pointer:coarse)]:min-h-[44px]">
             <input type="checkbox" checked={cashReceipt} onChange={(e) => setCashReceipt(e.target.checked)} className="h-[18px] w-[18px] accent-[var(--accent-strong)]" />
             현금영수증 발행
           </label>
@@ -379,7 +379,7 @@ function LateFeeBox({ businessId, reservationId, onDone }: { businessId: string;
         <Button size="sm" variant="secondary" onClick={check} loading={busy}>연체료 계산</Button>
         {quote && (
           <>
-            <span className="text-[12.5px] text-t2">
+            <span className="text-[length:var(--fs-meta)] text-t2">
               산출 <span className="font-semibold tabular-nums text-t">{formatKRW(quote.amount)}</span> — 연체 {quote.lateDays}일 × 일 {formatKRW(quote.lateFeePerDay)}{quote.graceHours ? `, 유예 ${quote.graceHours}시간` : ""}
             </span>
             {quote.amount > 0 && <Button size="sm" onClick={chargeQuoted} loading={busy}>이 금액으로 청구</Button>}
@@ -556,13 +556,13 @@ function HistoryTable({ businessId, entries, canReverse, onChanged }: { business
 
   return (
     <div className="rounded-[var(--r-md)] border border-[var(--bd)] bg-sf p-3.5">
-      <h3 className="mb-2.5 text-[13px] font-semibold text-t">원장 내역 <span className="font-normal text-t3">({entries.length}건)</span></h3>
+      <h3 className="mb-2.5 text-[length:var(--fs-body)] font-semibold text-t">원장 내역 <span className="font-normal text-t3">({entries.length}건)</span></h3>
       {entries.length === 0 ? (
-        <p className="text-[12.5px] text-t3">기록된 원장 항목이 없습니다.</p>
+        <p className="text-[length:var(--fs-meta)] text-t3">기록된 원장 항목이 없습니다.</p>
       ) : (
         /* relative: 마지막 열 sr-only(absolute) 제목이 static 래퍼 밖(뷰포트)을 기준으로 잡혀 휴대폰에서 문서를 넓히던 결함(D1). */
         <div className="relative -mx-3.5 overflow-x-auto px-3.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]" tabIndex={0} role="region" aria-label="원장 내역 표(가로 스크롤)">
-          <table className="w-full min-w-[620px] border-collapse text-[12.5px]">
+          <table className="w-full min-w-[620px] border-collapse text-[length:var(--fs-meta)]">
             <thead>
               <tr className="border-b border-[var(--bd)] text-left text-[11.5px] font-medium text-t3">
                 <th className="py-2 pr-3 font-medium">일시</th>
@@ -621,7 +621,7 @@ function HistoryTable({ businessId, entries, canReverse, onChanged }: { business
         {target && (
           <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
             {error && <Alert className="mb-3">{error}</Alert>}
-            <p className="mb-3 text-[12.5px] text-t2">
+            <p className="mb-3 text-[length:var(--fs-meta)] text-t2">
               {LEDGER_ENTRY_LABEL[target.entryType] ?? target.entryType} {target.direction === "out" ? "−" : "+"}{formatKRW(target.amount)} ({formatInTz(target.occurredAt, DEFAULT_TZ, "M. d. HH:mm")}) 를 반대 방향의 상계 행으로 정정합니다. 원본은 지워지지 않고 취소선으로 남습니다.
             </p>
             {pairHint(target.entryType) && <Alert kind="warning" className="mb-3">{pairHint(target.entryType)}</Alert>}

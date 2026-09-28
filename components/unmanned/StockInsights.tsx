@@ -86,7 +86,7 @@ export function LossReportCard({ report, businessName }: { report: LossReport | 
             </div>
           }
           card={(p) => (
-            <MobileCard title={p.name} sub={<span className="font-mono">{p.sku}</span>} badge={<span className="text-[12.5px] font-semibold tabular-nums text-et">−{p.lossQty}</span>} fields={[["원가", money(p.costAmount)], ["판매가", money(p.saleAmount)]]} />
+            <MobileCard title={p.name} sub={<span className="font-mono">{p.sku}</span>} badge={<span className="text-[length:var(--fs-meta)] font-semibold tabular-nums text-et">−{p.lossQty}</span>} fields={[["원가", money(p.costAmount)], ["판매가", money(p.saleAmount)]]} />
           )}
         />
       )}
@@ -142,7 +142,7 @@ export function ReorderCard({ rows, reorderText }: { rows: ReorderSuggestion[] |
             <MobileCard
               title={r.name}
               sub={<span className="font-mono">{r.sku}</span>}
-              badge={<span className="text-[12.5px] font-semibold tabular-nums text-t">추천 {r.suggestedQty}{r.unit}</span>}
+              badge={<span className="text-[length:var(--fs-meta)] font-semibold tabular-nums text-t">추천 {r.suggestedQty}{r.unit}</span>}
               fields={[["현재고", `${r.onHand}${r.unit}`], ["14일 판매", `${r.soldQty}${r.unit}`], ["일 평균", r.dailyRate.toFixed(1)], ["도매처 메모", r.supplierNote ?? "-"]]}
             />
           )}
@@ -166,11 +166,11 @@ export function ExpirySummaryCard({ lots, businessName, todayKey }: { lots: (UsL
         action={lots.length > 0 ? <MessageButton text={text} title="유통기한 임박 요약 문구" label="요약 복사" /> : undefined}
       />
       {lots.length === 0 ? (
-        <p className="text-[12.5px] text-t3">7일 이내 유통기한이 도래하는 로트가 없습니다.</p>
+        <p className="text-[length:var(--fs-meta)] text-t3">7일 이내 유통기한이 도래하는 로트가 없습니다.</p>
       ) : (
         <ul className="flex flex-col divide-y divide-[var(--bd)]">
           {lots.slice(0, 12).map((l) => (
-            <li key={l.id} className="flex min-h-[40px] items-center justify-between gap-3 text-[12.5px]">
+            <li key={l.id} className="flex min-h-[40px] items-center justify-between gap-3 text-[length:var(--fs-meta)]">
               <span className="min-w-0 truncate"><span className="font-medium text-t">{l.productName}</span> <span className="font-mono text-[12px] text-t3">{l.lotNo}</span> · {l.qtyCurrent}개</span>
               <span className="shrink-0 tabular-nums font-medium text-wt">{l.expiryDate?.slice(5).replace("-", ".")}</span>
             </li>

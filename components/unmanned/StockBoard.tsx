@@ -177,7 +177,7 @@ export function StockBoard({
                 card={(l) => (
                   <MobileCard
                     title={l.productName}
-                    badge={<span className={"text-[12.5px] tabular-nums " + (l.diffQty !== 0 ? "font-semibold text-et" : "text-t3")}>차이 {l.diffQty > 0 ? `+${l.diffQty}` : l.diffQty}</span>}
+                    badge={<span className={"text-[length:var(--fs-meta)] tabular-nums " + (l.diffQty !== 0 ? "font-semibold text-et" : "text-t3")}>차이 {l.diffQty > 0 ? `+${l.diffQty}` : l.diffQty}</span>}
                     fields={[
                       ["전산 재고", l.expectedQty],
                       ["실사 카운트", countInput(l)],
@@ -212,7 +212,7 @@ export function StockBoard({
             <ExpirySummaryCard lots={expiring} businessName={businessName} todayKey={todayKey} />
           </div>
         </div>
-        <p className="text-[12.5px] text-t3 sm:hidden">추정 손실 리포트와 재고 대사는 PC 화면에서 볼 수 있습니다.</p>
+        <p className="text-[length:var(--fs-meta)] text-t3 sm:hidden">추정 손실 리포트와 재고 대사는 PC 화면에서 볼 수 있습니다.</p>
 
         <Card className="p-4 max-sm:hidden sm:p-5">
           <CardHead
@@ -255,7 +255,7 @@ export function StockBoard({
               card={(r) => (
                 <MobileCard
                   title={r.name}
-                  badge={<span className={"text-[12.5px] tabular-nums " + (r.unreconciledQty !== 0 ? "font-semibold text-et" : "text-okt")}>미대사 {r.unreconciledQty}</span>}
+                  badge={<span className={"text-[length:var(--fs-meta)] tabular-nums " + (r.unreconciledQty !== 0 ? "font-semibold text-et" : "text-okt")}>미대사 {r.unreconciledQty}</span>}
                   fields={[
                     ["매출기록 수량", r.salesQty],
                     ["출고 반영 수량", r.saleOutQty],
@@ -288,7 +288,7 @@ export function StockBoard({
           </SelectField>
           <Input label="증감 수량" required type="number" inputMode="numeric" value={adjQty} onChange={(e) => setAdjQty(e.target.value)} hint="음수를 입력하면 감소합니다. 예: -3" />
           <Input label="사유" required value={adjReason} onChange={(e) => setAdjReason(e.target.value)} placeholder="예: 파손 폐기, 입고 누락 정정" />
-          <label className="flex min-h-[44px] items-center gap-2 text-[13px] text-t2">
+          <label className="flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t2">
             <input type="checkbox" checked={adjDisposal} onChange={(e) => setAdjDisposal(e.target.checked)} className="h-[18px] w-[18px] accent-[var(--accent-strong)]" />
             폐기로 처리(원장에 폐기로 기록)
           </label>

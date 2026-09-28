@@ -250,7 +250,7 @@ function StaffGrid({
               {s.displayName.trim().slice(0, 2)}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-[12.5px] font-semibold text-t">{s.displayName}</span>
+              <span className="block truncate text-[length:var(--fs-meta)] font-semibold text-t">{s.displayName}</span>
               <span className="block text-[11.5px] tabular-nums text-t3">{n > 0 ? `예약 ${n}건` : "예약 없음"}</span>
             </span>
           </div>

@@ -86,7 +86,7 @@ export function WorkTable({
       keyOf={(r) => r.id}
       table={
         <div className="-mx-4 overflow-x-auto px-4">
-          <table className="w-full min-w-[520px] table-fixed border-collapse text-[13px]">
+          <table className="w-full min-w-[520px] table-fixed border-collapse text-[length:var(--fs-body)]">
             <colgroup>
               <col className="w-8" />
               <col />

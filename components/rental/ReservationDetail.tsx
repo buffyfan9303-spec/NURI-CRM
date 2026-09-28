@@ -184,7 +184,7 @@ export function ReservationDetail({
           {i.unitId && (
             <Link
               href={`/w/${businessId}/care?unit=${i.unitId}`}
-              className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[12.5px] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]"
+              className="inline-flex h-[32px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]"
             >
               <Wrench size={13} aria-hidden />세탁·수선
             </Link>
@@ -388,7 +388,7 @@ export function ReservationDetail({
                       actions={
                         <>
                           {v.selectable && (
-                            <label className="mr-auto inline-flex min-h-[44px] items-center gap-2 text-[12.5px] text-t2">
+                            <label className="mr-auto inline-flex min-h-[44px] items-center gap-2 text-[length:var(--fs-meta)] text-t2">
                               {v.checkbox}
                               선택
                             </label>
@@ -405,7 +405,7 @@ export function ReservationDetail({
             {!canRevenueRead && (
               <Card className="scroll-mt-4 p-4 sm:p-5" id="settlement">
                 <CardHead title="정산" />
-                <p className="flex items-start gap-1.5 text-[12.5px] text-t2">
+                <p className="flex items-start gap-1.5 text-[length:var(--fs-meta)] text-t2">
                   <Lock size={14} className="mt-[2px] shrink-0 text-t3" aria-hidden />
                   금액·정산은 매출 조회 권한이 있는 직원만 볼 수 있습니다. 수납·환불이 필요하면 관리자에게 요청하세요.
                 </p>
@@ -452,7 +452,7 @@ export function ReservationDetail({
                 title="대여 기간"
                 action={canChangePeriod ? <Button size="sm" variant="secondary" onClick={() => setPeriodOpen((v) => !v)}>{periodOpen ? "닫기" : "기간 변경"}</Button> : undefined}
               />
-              <dl className="flex flex-col gap-3 text-[13px]">
+              <dl className="flex flex-col gap-3 text-[length:var(--fs-body)]">
                 <PeriodRow label="대여" value={formatInTz(reservation.periodStart, DEFAULT_TZ, FMT)} />
                 <PeriodRow label="반납" value={formatInTz(reservation.periodEnd, DEFAULT_TZ, FMT)} alert={overdue} />
                 {reservation.fittingAt && <PeriodRow label="피팅" value={formatInTz(reservation.fittingAt, DEFAULT_TZ, FMT)} />}
@@ -471,7 +471,7 @@ export function ReservationDetail({
 
             <Card className="p-4 sm:p-5">
               <CardHead title="고객·메모" />
-              <dl className="flex flex-col gap-3 text-[13px]">
+              <dl className="flex flex-col gap-3 text-[length:var(--fs-body)]">
                 <div>
                   <dt className="text-[11.5px] text-t3">고객</dt>
                   <dd className="mt-0.5 flex flex-wrap items-center text-t">
@@ -602,9 +602,9 @@ function SwapUnitButton({
             )}
           </div>
         ) : loading ? (
-          <p className="py-4 text-center text-[12.5px] text-t3">가용 개체를 불러오는 중…</p>
+          <p className="py-4 text-center text-[length:var(--fs-meta)] text-t3">가용 개체를 불러오는 중…</p>
         ) : candidates && candidates.length === 0 ? (
-          <p className="py-4 text-center text-[12.5px] text-t3">같은 SKU에 교환 가능한 다른 개체가 없습니다.</p>
+          <p className="py-4 text-center text-[length:var(--fs-meta)] text-t3">같은 SKU에 교환 가능한 다른 개체가 없습니다.</p>
         ) : (
           <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
             <SelectField label="교환할 개체" required value={newUnitId} onChange={(e) => setNewUnitId(e.target.value)}>
@@ -667,11 +667,11 @@ function PeriodChangeForm({
         onChange={(f, t) => { setStart(`${f}T${start.slice(11)}`); setEnd(`${t}T${end.slice(11)}`); }}
       />
       <div className="grid grid-cols-2 gap-2">
-        <label className="flex flex-col gap-1.5 text-[12.5px] font-medium text-t2">
+        <label className="flex flex-col gap-1.5 text-[length:var(--fs-meta)] font-medium text-t2">
           대여 시간
           <input type="time" value={start.slice(11)} onChange={(e) => setStart(`${start.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
         </label>
-        <label className="flex flex-col gap-1.5 text-[12.5px] font-medium text-t2">
+        <label className="flex flex-col gap-1.5 text-[length:var(--fs-meta)] font-medium text-t2">
           반납 시간
           <input type="time" value={end.slice(11)} onChange={(e) => setEnd(`${end.slice(0, 10)}T${e.target.value}`)} className={CONTROL} />
         </label>
