@@ -23,11 +23,12 @@ export interface WorkTableRow {
   statusTone?: "neutral" | "warn" | "alert" | "success";
 }
 
+// 상태 pill — WorkList·Badge 와 같은 모양(배경+글자, 11.5px/600).
 const STATUS_CLASS: Record<NonNullable<WorkTableRow["statusTone"]>, string> = {
-  neutral: "text-t2",
-  warn: "text-wt",
-  alert: "text-et",
-  success: "text-okt",
+  neutral: "bg-sf2 text-t2",
+  warn: "bg-wb text-wt",
+  alert: "bg-eb text-et",
+  success: "bg-okb text-okt",
 };
 
 function initialsOf(title: string): string {
@@ -75,7 +76,7 @@ export function WorkTable({
         <span className="w-9 shrink-0 tabular-nums text-[11.5px] text-t3">{Math.round(r.progressPct)}%</span>
       </span>
     ) : (
-      <span className={cn("text-[12px] font-medium", STATUS_CLASS[r.statusTone ?? "neutral"])}>{r.statusLabel}</span>
+      <span className={cn("inline-block whitespace-nowrap rounded-full px-2 py-[2px] text-[11.5px] font-semibold leading-[16px]", STATUS_CLASS[r.statusTone ?? "neutral"])}>{r.statusLabel}</span>
     );
   const amount = (r: WorkTableRow) => (r.amount == null ? "—" : formatKRW(r.amount));
 

@@ -21,11 +21,12 @@ export interface WorkRow {
   action?: string;
 }
 
+// 상태는 작은 pill(배경+글자) — 글자색만 바꾸던 것을 Badge 와 같은 모양으로 맞췄다. 중립은 회색 면.
 const STATUS_CLASS: Record<NonNullable<WorkRow["statusTone"]>, string> = {
-  neutral: "text-t2",
-  warn: "text-wt",
-  alert: "text-et",
-  success: "text-okt",
+  neutral: "bg-sf2 text-t2",
+  warn: "bg-wb text-wt",
+  alert: "bg-eb text-et",
+  success: "bg-okb text-okt",
 };
 
 export function WorkList({
@@ -48,14 +49,14 @@ export function WorkList({
         <li key={r.id}>
           <Link prefetch={false}
             href={r.href}
-            className="flex min-h-[52px] items-center gap-3 px-1 py-2 text-[13px] hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent)]"
+            className="flex min-h-[52px] items-center gap-3 rounded-[var(--r-sm)] px-2 py-2 text-[13px] transition-colors duration-1 hover:bg-sf2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--accent)]"
           >
             {r.time && <span className="w-12 shrink-0 tabular-nums text-t3">{r.time}</span>}
             <span className="min-w-0 flex-1">
               <span className="block truncate font-medium text-t">{r.title}</span>
               {r.subtitle && <span className="block truncate text-[12px] text-t3">{r.subtitle}</span>}
             </span>
-            <span className={cn("shrink-0 text-[12px] font-medium", STATUS_CLASS[r.statusTone ?? "neutral"])}>
+            <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2 py-[2px] text-[11.5px] font-semibold leading-[16px]", STATUS_CLASS[r.statusTone ?? "neutral"])}>
               {r.statusLabel}
             </span>
             {r.action && (

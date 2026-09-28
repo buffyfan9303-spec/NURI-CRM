@@ -15,10 +15,13 @@ export interface ButtonProps
   loading?: boolean;
 }
 
+// 상태 규칙(2026-09-28, Vercel/Cal 버튼 기준): hover 는 색 한 단계, active(누름)는 scale .98 로 눌린 느낌,
+// disabled 는 opacity .5 + 그림자 제거, loading 은 스피너 + 클릭 차단. 주 버튼만 1px 하이라이트 그림자로 "들린" 면.
 const VARIANT_CLASS: Record<Variant, string> = {
   primary:
-    "bg-[var(--accent-strong)] text-[var(--accent-contrast)] hover:brightness-110 border border-transparent",
-  secondary: "bg-sf text-t border border-[var(--bd2)] hover:bg-sf2",
+    "bg-[var(--accent-strong)] text-[var(--accent-contrast)] hover:bg-[var(--accent-hover)] border border-transparent shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_1px_2px_rgba(16,24,40,.12)] disabled:shadow-none",
+  secondary:
+    "bg-sf text-t border border-[var(--bd-strong)] shadow-card hover:bg-sf2 hover:border-[var(--bd2)] disabled:shadow-none",
   ghost: "bg-transparent text-t2 border border-transparent hover:bg-sf2 hover:text-t",
   // 글자는 흰색이 아니라 --eb(오류 배경 토큰)다. 다크의 --et 는 연분홍(#ffacb8)이라 흰 글자가 1.77:1 로
   // 안 보였다. --eb 는 라이트 #fdecec(6.5:1) · 다크 #44232b(7.8:1) 로 두 테마 모두 AA 를 넘는다.
@@ -50,7 +53,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           // whitespace-nowrap + shrink-0: 좁은 flex 행에서 라벨이 "수/정" 처럼 세로로 쪼개지거나
           // 버튼이 눌려 찌그러지는 결함을 공용으로 막는다. 긴 라벨은 호출부가 줄이거나 아이콘만 남긴다.
           "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-[var(--r-md)] font-medium",
-          "transition-[filter,background-color,opacity] duration-150",
+          "transition-[filter,background-color,border-color,box-shadow,transform,opacity] duration-1 ease-out",
+          "active:scale-[.98] disabled:active:scale-100",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           VARIANT_CLASS[variant],

@@ -36,6 +36,7 @@ import {
   FALLBACK_ICON,
   navIcon,
 } from "@/lib/icons";
+import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils/cn";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { signOut } from "@/lib/auth/actions";
@@ -135,6 +136,7 @@ export function WorkspaceShell({
   const [collapsed, setCollapsed] = React.useState(false);
 
   const viewport = useViewportMode();
+  const reducedMotion = useReducedMotion();
   const menuButtonRef = React.useRef<HTMLButtonElement>(null);
   const drawerCloseRef = React.useRef<HTMLButtonElement>(null);
   const drawerWasOpen = React.useRef(false);
@@ -399,7 +401,7 @@ export function WorkspaceShell({
                     title={isRail ? item.label : undefined}
                     className={cn(
                       // 드로어(<960)는 행 간격 0(S5): 360×740 에서 11개 행(설정 포함)이 스크롤 없이 계정 영역 위에 들어가야 한다.
-                      "mx-2.5 my-0.5 flex items-center gap-2.5 rounded-[var(--r-sm)] px-3 text-[13.5px] transition-colors max-[959px]:my-0",
+                      "relative mx-2.5 my-0.5 flex items-center gap-2.5 rounded-[var(--r-sm)] px-3 text-[13.5px] transition-colors duration-1 max-[959px]:my-0",
                       rowMinH,
                       isRail && "justify-center px-0",
                       active
@@ -407,6 +409,15 @@ export function WorkspaceShell({
                         : "text-[var(--sbt2)] hover:bg-[var(--sbh)] hover:text-sbt"
                     )}
                   >
+                    {/* 활성 표시(좌측 2px 막대)가 메뉴 사이를 미끄러진다 — layoutId 하나로 motion 이 이전 위치에서 새 위치로 옮긴다. */}
+                    {active && (
+                      <motion.span
+                        layoutId="nav-active-bar"
+                        transition={{ duration: reducedMotion ? 0 : 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+                        className="absolute inset-y-2 left-0 w-[2px] rounded-full bg-[var(--sbact)]"
+                        aria-hidden
+                      />
+                    )}
                     <ItemIcon size={19} className="shrink-0" aria-hidden />
                     {isRail ? (
                       <span className="sr-only">{item.label}</span>
@@ -448,7 +459,7 @@ export function WorkspaceShell({
             <div
               role="menu"
               className={cn(
-                "absolute bottom-full z-50 mb-1.5 w-[220px] rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-modal",
+                "absolute bottom-full z-50 mb-1.5 w-[220px] origin-bottom-left animate-pop-in rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-pop",
                 isRail ? "left-full ml-2" : "left-2.5 right-2.5 w-auto"
               )}
             >
@@ -511,7 +522,7 @@ export function WorkspaceShell({
             </button>
 
             {switcherOpen && otherBusinesses.length > 0 && (
-              <div className="absolute left-0 top-full z-50 mt-1 w-[240px] rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-modal">
+              <div className="absolute left-0 top-full z-50 mt-1 w-[240px] origin-top-left animate-pop-in rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-pop">
                 <p className="px-3 pb-1 pt-1 text-[12px] font-medium uppercase tracking-wide text-t3">
                   사업장 전환
                 </p>
@@ -550,11 +561,11 @@ export function WorkspaceShell({
             onClick={() => setPaletteOpen(true)}
             aria-label={`검색 (${kbdHint})`}
             aria-haspopup="dialog"
-            className="hidden h-[var(--ctl)] w-full min-w-[120px] max-w-[200px] shrink items-center gap-2 rounded-full border border-[var(--bd2)] bg-sf pl-3 pr-2 text-left text-[13px] text-t3 hover:bg-sf2 md:flex lg:max-w-[260px] [@media(pointer:coarse)]:h-[44px]"
+            className="hidden h-[var(--ctl)] w-full min-w-[120px] max-w-[200px] shrink items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2 pl-3 pr-2 text-left text-[13px] text-t3 transition-[background-color,border-color,box-shadow] duration-1 hover:border-[var(--bd-strong)] hover:bg-sf hover:shadow-card md:flex lg:max-w-[260px] [@media(pointer:coarse)]:h-[44px]"
           >
             <Search size={14} className="shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">검색</span>
-            <kbd className="hidden shrink-0 rounded-[5px] border border-[var(--bd)] bg-sf2 px-1.5 py-0.5 font-sans text-[11px] text-t3 lg:inline" aria-hidden>{kbdHint}</kbd>
+            <kbd className="hidden shrink-0 rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf px-1.5 py-0.5 font-sans text-[11px] text-t3 lg:inline" aria-hidden>{kbdHint}</kbd>
           </button>
 
           {/* 우측 클러스터: CTA → 테마 → 알림 → 계정 순(§4.2) */}
@@ -571,7 +582,7 @@ export function WorkspaceShell({
             {primaryActionNavItem && (
               <Link
                 href={primaryActionHref!}
-                className="hidden h-[var(--ctl)] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[7px] bg-[var(--accent-strong)] px-3.5 text-[13px] font-medium text-[var(--accent-contrast)] hover:bg-[var(--accent-hover)] sm:inline-flex [@media(pointer:coarse)]:h-[44px]"
+                className="hidden h-[var(--ctl)] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--r-md)] bg-[var(--accent-strong)] px-3.5 text-[13px] font-medium text-[var(--accent-contrast)] shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_1px_2px_rgba(16,24,40,.12)] transition-[background-color,transform] duration-1 hover:bg-[var(--accent-hover)] active:scale-[.98] sm:inline-flex [@media(pointer:coarse)]:h-[44px]"
               >
                 <Plus size={15} aria-hidden />
                 {primaryAction!.label}
@@ -589,12 +600,12 @@ export function WorkspaceShell({
                 aria-expanded={notifOpen}
                 aria-label="알림"
                 title="알림"
-                className="flex h-[36px] w-[36px] items-center justify-center rounded-full border border-[var(--bd)] bg-sf text-t2 hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:h-[44px] [@media(pointer:coarse)]:w-[44px]"
+                className="flex h-[36px] w-[36px] items-center justify-center rounded-full border border-[var(--bd)] bg-sf text-t2 transition-[background-color,color,border-color] duration-1 hover:border-[var(--bd-strong)] hover:bg-sf2 hover:text-t [@media(pointer:coarse)]:h-[44px] [@media(pointer:coarse)]:w-[44px]"
               >
                 <Bell size={16} aria-hidden />
               </button>
               {notifOpen && (
-                <div className="absolute right-0 top-full z-50 mt-1 w-[240px] rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-3 shadow-modal">
+                <div className="absolute right-0 top-full z-50 mt-1 w-[240px] origin-top-right animate-pop-in rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-3 shadow-pop">
                   <p className="px-3.5 text-[12.5px] font-medium text-t">알림</p>
                   <p className="px-3.5 pt-1.5 text-[12px] leading-relaxed text-t3">새 알림이 없습니다.</p>
                 </div>
@@ -618,7 +629,7 @@ export function WorkspaceShell({
                 <ChevronDown size={14} aria-hidden />
               </button>
               {userMenuOpen && (
-                <div className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-modal">
+                <div className="absolute right-0 top-full z-50 mt-1 w-[200px] origin-top-right animate-pop-in rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf py-1.5 shadow-pop">
                   <p className="truncate px-3 pb-0.5 pt-1 text-[12px] text-t3">{userEmail}</p>
                   <p className="truncate px-3 pb-1.5 text-[12px] text-t3">{roleLabel}</p>
                   <button

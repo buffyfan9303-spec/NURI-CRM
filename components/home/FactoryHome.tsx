@@ -182,7 +182,7 @@ export function FactoryHome({
         <div className="flex flex-col gap-4">
           <KpiRow>
             {kpiCards.map(({ metric, icon, tint, trend }) => (
-              <KpiCard
+              <KpiCard countUp={false}
                 key={metric.key}
                 label={metric.label}
                 value={String(metric.count)}

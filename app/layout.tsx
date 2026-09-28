@@ -7,8 +7,8 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
-  title: "NURI CRM — 맞춤양복 통합 관리 시스템",
-  description: "맞춤 양복 · 공장 · 원단 통합 관리 시스템",
+  title: "NURI CRM — 매장 업무 관리",
+  description: "공장·렌탈·학원·미용실·무인매장 매장 업무 관리",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

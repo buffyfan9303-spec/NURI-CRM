@@ -273,7 +273,7 @@ export function RentalHome({
     <PageBody wide>
       {header}
       <div className="flex flex-col gap-4">
-        <KpiRow>
+        <KpiRow animate>
           {kpiCards.map(({ metric, icon, tint, trend, note }) => (
             <div key={metric.key} className={KPI_CELL}>
               <KpiCard

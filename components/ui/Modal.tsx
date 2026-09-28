@@ -58,7 +58,7 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
                 <X size={17} aria-hidden />
               </button>
             </div>
-            <div className="scrollable min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+            <div className="scrollable min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
             {footer && (
               <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[var(--bd)] px-5 py-3 [&>button]:flex-1">
                 {footer}
@@ -72,7 +72,8 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 animate-fade-in bg-black/45" aria-hidden onClick={onClose} />
+      {/* 막: 살짝 흐림(2px)으로 뒤 화면과 분리 — 유리 효과가 아니라 초점 분리용이다. */}
+      <div className="absolute inset-0 animate-fade-in bg-black/45 backdrop-blur-[2px]" aria-hidden onClick={onClose} />
       <div
         ref={dialogRef}
         role="dialog"
@@ -97,7 +98,7 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
             <X size={17} aria-hidden />
           </button>
         </div>
-        <div className="scrollable min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="scrollable min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
         {footer && (
           <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[var(--bd)] px-5 py-3">
             {footer}

@@ -128,11 +128,31 @@
   /* 레거시 전용: 구 시제품 app/(app)/** 만 참조 */
   --gold: #8a6520;
 
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 20px;
+  /* ── 반경 체계 (2026-09-28 디자인 강화 1단계) ─────────────────
+     레퍼런스 Vercel(--geist-radius 6 / 카드 8~12) · Cal.com(버튼·입력 8, 카드 12) · Linear(버튼 8, 카드 12, 패널 16).
+     세 곳 모두 "조작 요소 6~8 / 카드 12 / 큰 패널 16" 이라 그대로 맞췄다. 이전 값 8/12/16/20 은 한 단계씩 컸다.
+     xs 4 = 칩·kbd, sm 6 = 메뉴 행·작은 아이콘 버튼, md 8 = 버튼·입력, lg 12 = 카드, xl 16 = 모달·시트, 2xl 20 = 휴대폰 시트 윗모서리.
+     인증 화면은 px 리터럴이라 영향 없다(e2e 로그인 스크린샷 기준 유지). */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-2xl: 20px;
   --r-pill: 999px;
+
+  /* 조작 요소 경계(보조 버튼·hover 경계). 입력의 --bd2(3:1)보다 옅고 카드의 --bd 보다 진하다.
+     흰 면 위 1.9:1 — 글자 라벨이 있는 버튼이라 비텍스트 3:1 대상이 아니다(입력은 계속 --bd2). */
+  --bd-strong: #c3cad0;
+
+  /* 입력 초점 링(테두리 + 바깥 3px 연한 강조). Cal/Vercel 의 2px ring 50% 를 3px 28% 로 — 청록은 채도가 높아 얇게. */
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+
+  /* ── 모션 토큰 — 업무 도구라 120~240ms 만 쓴다. reduced-motion 이면 전역 규칙이 전부 0 으로 만든다. */
+  --dur-1: 120ms;  /* hover·press */
+  --dur-2: 180ms;  /* 팝오버·탭 인디케이터 */
+  --dur-3: 240ms;  /* 드로어·시트·카드 등장 */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* ── 레이아웃/치수 토큰 (2026-09 개편 1단계) ──────────────────
      html{font-size:14px} 때문에 rem 유틸이 ×0.875 로 줄어든다. 치수는 전부 px 다.
@@ -153,10 +173,20 @@
   --fs-body: 13.5px;
   --fs-meta: 12px;
   --fs-label: 11px;
+  /* KPI 큰 숫자. 28px/700/-0.02em — Stripe·Vercel 처럼 숫자는 tabular-nums(Tailwind tabular-nums) 로 폭을 고정한다. */
+  --fs-kpi: 28px;
+  --tr-tight: -0.02em;  /* 22px 이상 제목·KPI */
+  --tr-snug: -0.01em;   /* 15~20px 카드 제목 */
 
-  /* 레퍼런스 §7: 낮은 그림자 + 1px 경계로 면을 구분. 광택/유리 blur 금지 */
-  --sh-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 0 0 1px rgba(16, 24, 40, 0.02);
-  --sh-pop: 0 16px 40px -16px rgba(16, 24, 40, 0.28);
+  /* ── 높이(elevation) 3단계 (2026-09-28) — Vercel 방식 "작은 오프셋 여러 겹" 으로 바꿨다.
+     한 겹 8px blur 대신 1px+2px, 2px+8px, 8px+24px 를 겹치면 실제 조명처럼 읽히고 탁해지지 않는다.
+     1 card: 카드·KPI(경계 1px 이 형태를 잡고 그림자는 살짝만)  Vercel Level 2 `0 1px 1px .02, 0 2px 2px .04`
+     2 raised: hover 로 들린 카드·드롭다운                       Vercel Level 4 `0 2px 2px .04, 0 8px 16px -4px .04`
+     3 pop: 팝오버·커맨드 팔레트                                 Vercel Level 5 `… 0 24px 32px -8px .06`
+     modal: 기존 유지(가장 깊음). 광택/유리 blur 는 계속 금지. */
+  --sh-card: 0 1px 1px rgba(16, 24, 40, 0.03), 0 2px 2px rgba(16, 24, 40, 0.03);
+  --sh-raised: 0 2px 2px rgba(16, 24, 40, 0.04), 0 8px 16px -4px rgba(16, 24, 40, 0.08);
+  --sh-pop: 0 1px 1px rgba(16, 24, 40, 0.02), 0 8px 16px -4px rgba(16, 24, 40, 0.08), 0 24px 32px -8px rgba(16, 24, 40, 0.1);
   --sh-modal: 0 24px 64px -12px rgba(16, 24, 40, 0.32), 0 0 0 1px rgba(16, 24, 40, 0.04);
 }
 
@@ -241,8 +271,13 @@ body.dk,
 
   --gold: #d4a055;
 
+  --bd-strong: #4a545c;
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 32%, transparent);
+
+  /* 다크 높이: Linear 방식 — 그림자보다 "면 사다리 + 윗변 1px 하이라이트" 가 층을 만든다. 그림자는 깊고 검게. */
   --sh-card: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --sh-pop: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+  --sh-raised: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sh-pop: 0 8px 16px -4px rgba(0, 0, 0, 0.55), 0 24px 32px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
   --sh-modal: 0 24px 64px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
@@ -333,6 +368,7 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important; /* stagger 등장(animate-rise)이 delay 동안 숨어 있지 않게 */
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
@@ -354,6 +390,76 @@ img,
 svg,
 video {
   max-width: 100%;
+}
+
+/* ── 조작 기본기 (Vercel Web Interface Guidelines) ───────────────────────
+   touch-action: manipulation — 휴대폰에서 두 번 탭 확대 지연(300ms)을 없앤다.
+   제목은 text-wrap: pretty 로 마지막 줄 외톨이 단어를 막는다(truncate 한 줄 제목에는 영향 없음). */
+button,
+[role="button"],
+a,
+input,
+select,
+textarea,
+summary {
+  touch-action: manipulation;
+}
+h1,
+h2,
+h3 {
+  text-wrap: pretty;
+}
+
+/* ── 타이포 토큰 유틸 구제 (2026-09-28 실측 결함) ──────────────────────────
+   `text-[var(--fs-card)]` 처럼 var() 만 넣은 arbitrary 클래스를 Tailwind 는 **색**으로 해석한다(font-size 가 아니라
+   color: var(--fs-card) → 무효 → 무시). 그래서 카드 제목(15px)·페이지 제목(22px)이 전부 본문 14px 로 찍히고 있었다.
+   올바른 표기는 `text-[length:var(--fs-card)]` 다. 다른 소유자의 화면(listkit·TimetableBoard·CatalogView·TasksBoard·
+   staff-shift)까지 한 번에 살리려고, Tailwind 가 만든 것과 **같은 선택자**에 font-size 를 얹는다. 새 코드는 length: 를 쓸 것. */
+@layer utilities {
+  .text-\[var\(--fs-page\)\] { font-size: var(--fs-page); }
+  .text-\[var\(--fs-card\)\] { font-size: var(--fs-card); }
+  .text-\[var\(--fs-body\)\] { font-size: var(--fs-body); }
+  .text-\[var\(--fs-meta\)\] { font-size: var(--fs-meta); }
+  .text-\[var\(--fs-label\)\] { font-size: var(--fs-label); }
+  .text-\[var\(--fs-kpi\)\] { font-size: var(--fs-kpi); }
+}
+@media (min-width: 640px) {
+  .sm\:text-\[var\(--fs-page\)\] { font-size: var(--fs-page); }
+  .sm\:text-\[var\(--fs-card\)\] { font-size: var(--fs-card); }
+}
+
+/* ── 로딩 뼈대 shimmer — Tailwind animate-pulse 를 전역에서 shimmer 로 바꿨다(tailwind.config animation.pulse).
+   기존 loading.tsx 의 `animate-pulse bg-sf2` 호출부를 하나도 고치지 않고 흐르는 하이라이트가 된다.
+   reduced-motion 이면 전역 규칙이 애니메이션을 끝 프레임(하이라이트 화면 밖)으로 보내 정지한 면만 남는다. */
+.animate-pulse {
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--t) 6%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+}
+@keyframes shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+/* 팝오버·드롭다운 진입: 살짝 위에서 내려오며 나타난다(180ms). transform/opacity 만 애니메이션. */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ── 드로어/모달 진입 (사용자 동작에 대한 응답이라 reduced-motion 이 아니면 짧게 보인다) ── */

@@ -37,7 +37,8 @@ export function PageHeader({
         <div className="flex min-w-0 items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-[20px] font-bold leading-tight tracking-tight text-t sm:text-[var(--fs-page)]">{title}</h1>
+              {/* length: 힌트 — 예전 sm:text-[var(--fs-page)] 는 색으로 해석돼 PC 에서도 20px 에 머물렀다(2026-09-28 실측). */}
+              <h1 className="text-[20px] font-bold leading-tight tracking-[var(--tr-tight)] text-t sm:text-[length:var(--fs-page)]">{title}</h1>
               {meta}
             </div>
             {/* 휴대폰은 한 줄 말줄임(C1) — 전체 문구는 title 로. */}

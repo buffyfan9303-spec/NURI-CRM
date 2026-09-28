@@ -17,7 +17,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { PageBody, PageHeader } from "@/components/ui/PageHeader";
 import { CardHead, ViewAll, RetryButton } from "@/components/rental/listkit";
 import { WorkTable, type WorkTableRow } from "./WorkTable";
-import { KpiCard, type KpiCardProps } from "@/components/charts/KpiCard";
+import { KpiCard, KpiRow, type KpiCardProps } from "@/components/charts/KpiCard";
 import { AreaChartCard, type AreaSeries } from "@/components/charts/AreaChartCard";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { HorizontalBarChart } from "@/components/charts/HorizontalBarChart";
@@ -28,8 +28,6 @@ import { formatInTz } from "@/lib/utils/datetime";
 import { formatKRW } from "@/lib/domain/money";
 import { MessageActions } from "@/components/common/MessageActions";
 
-/** KPI 4장을 같은 높이로 — 추이선이 있는 카드만 커지던 결함(1단계 검토 #18). */
-const KPI_GRID = "grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-4 [&>a]:h-full [&>a>div]:h-full [&>div]:h-full";
 /** 차트 부품(components/charts, 다른 소유) 안의 토글·범례·표 보기가 터치 화면에서 44px 미만이라 감싸는 쪽에서 승격한다(1단계 검토 홈 부품 지적). */
 const CHART_TOUCH = "[@media(pointer:coarse)]:[&_button]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:inline-flex [@media(pointer:coarse)]:[&_a]:items-center [@media(pointer:coarse)]:[&_summary]:flex [@media(pointer:coarse)]:[&_summary]:min-h-[44px] [@media(pointer:coarse)]:[&_summary]:items-center";
 /** 보조 카드 — 0건이면 휴대폰에서 카드 자체를 숨긴다(H0 규칙 3: 오늘 할 일 카드 하나만 빈 상태를 크게). */
@@ -163,11 +161,11 @@ export function SalonHome({
       <PageHeader settingsHref={canManage ? `${base}/settings` : undefined} title={businessName} description={`${d.todayKey} · 오늘 예약·시술·수납 현황`} actions={actions} />
 
       <div className="flex flex-col gap-4">
-        <div className={KPI_GRID}>
+        <KpiRow animate>
           {kpis.map((k) => (
             <KpiCard key={k.label} {...k} />
           ))}
-        </div>
+        </KpiRow>
 
         <div className="grid grid-cols-1 items-start gap-4 max-sm:hidden lg:grid-cols-12">
           <Card className={`p-4 sm:p-5 lg:col-span-8 ${CHART_TOUCH}`}>

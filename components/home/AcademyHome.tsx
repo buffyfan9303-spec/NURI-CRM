@@ -12,7 +12,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { PageBody, PageHeader } from "@/components/ui/PageHeader";
 import { CardHead, ViewAll, RetryButton } from "@/components/rental/listkit";
 import { WorkTable, type WorkTableRow } from "./WorkTable";
-import { KpiCard, type KpiCardProps } from "@/components/charts/KpiCard";
+import { KpiCard, KpiRow, type KpiCardProps } from "@/components/charts/KpiCard";
 import { AreaChartCard, type AreaSeries } from "@/components/charts/AreaChartCard";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { HorizontalBarChart } from "@/components/charts/HorizontalBarChart";
@@ -21,8 +21,6 @@ import { trendDelta } from "@/lib/domain/home-charts";
 import type { AcademyDashboard } from "@/lib/domain/academy-dashboard";
 import { formatInTz } from "@/lib/utils/datetime";
 
-/** KPI 4장을 같은 높이로 — 추이선이 있는 카드만 커지던 결함(1단계 검토 #18). */
-const KPI_GRID = "grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-4 [&>a]:h-full [&>a>div]:h-full [&>div]:h-full";
 /** 차트 부품(components/charts, 다른 소유) 안의 토글·범례·표 보기가 터치 화면에서 44px 미만이라 감싸는 쪽에서 승격한다(1단계 검토 홈 부품 지적). */
 const CHART_TOUCH = "[@media(pointer:coarse)]:[&_button]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:min-h-[44px] [@media(pointer:coarse)]:[&_a]:inline-flex [@media(pointer:coarse)]:[&_a]:items-center [@media(pointer:coarse)]:[&_summary]:flex [@media(pointer:coarse)]:[&_summary]:min-h-[44px] [@media(pointer:coarse)]:[&_summary]:items-center";
 const ROW = "flex min-h-[40px] items-center justify-between gap-3 rounded-[var(--r-sm)] px-2 text-[13px] [@media(pointer:coarse)]:min-h-[44px]";
@@ -167,11 +165,11 @@ export function AcademyHome({
       <div className="flex flex-col gap-4">
         {/* H0/A1: 휴대폰은 "학생 찾기"를 KPI 위에(홈 맨 끝 y≈2040 → 첫 화면). PC 는 우측 보조 카드 그대로. */}
         <div className="sm:hidden">{studentSearch}</div>
-        <div className={KPI_GRID}>
+        <KpiRow animate>
           {kpis.map((k) => (
             <KpiCard key={k.label} {...k} />
           ))}
-        </div>
+        </KpiRow>
 
         {/* H0: 휴대폰(<sm)은 "KPI → 오늘 수업" — 추이·분포 차트는 PC 분석용이라 숨긴다. */}
         <div className="grid grid-cols-1 items-start gap-4 max-sm:hidden lg:grid-cols-12">

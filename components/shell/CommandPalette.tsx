@@ -84,7 +84,7 @@ export function CommandPalette({
 
   return createPortal(
     <div className="fixed inset-0 z-[70] sm:flex sm:items-start sm:justify-center sm:p-4 sm:pt-[10vh]">
-      <div className="absolute inset-0 animate-fade-in bg-black/45" aria-hidden onClick={onClose} />
+      <div className="absolute inset-0 animate-fade-in bg-black/45 backdrop-blur-[2px]" aria-hidden onClick={onClose} />
       <Command
         ref={ref}
         role="dialog"
@@ -96,7 +96,7 @@ export function CommandPalette({
         tabIndex={-1}
         className={cn(
           "relative z-10 flex h-full w-full flex-col bg-sf outline-none",
-          "sm:h-auto sm:max-h-[min(560px,80vh)] sm:w-[min(640px,100%)] sm:animate-sheet-up sm:rounded-[var(--r-xl)] sm:border sm:border-[var(--bd)] sm:shadow-modal"
+          "sm:h-auto sm:max-h-[min(560px,80vh)] sm:w-[min(640px,100%)] sm:animate-pop-in sm:rounded-[var(--r-xl)] sm:border sm:border-[var(--bd)] sm:shadow-pop"
         )}
       >
         <div className="flex shrink-0 items-center gap-2 border-b border-[var(--bd)] pl-4 pr-2">
@@ -172,9 +172,9 @@ export function CommandPalette({
         </Command.List>
 
         <div className="hidden shrink-0 items-center gap-3 border-t border-[var(--bd)] px-4 py-2 text-[11.5px] text-t3 sm:flex" aria-hidden>
-          <span><kbd className="rounded-[4px] border border-[var(--bd)] bg-sf2 px-1">↑↓</kbd> 이동</span>
-          <span><kbd className="rounded-[4px] border border-[var(--bd)] bg-sf2 px-1">Enter</kbd> 열기</span>
-          <span><kbd className="rounded-[4px] border border-[var(--bd)] bg-sf2 px-1">Esc</kbd> 닫기</span>
+          <span><kbd className="rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf2 px-1">↑↓</kbd> 이동</span>
+          <span><kbd className="rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf2 px-1">Enter</kbd> 열기</span>
+          <span><kbd className="rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf2 px-1">Esc</kbd> 닫기</span>
         </div>
       </Command>
     </div>,

@@ -97,7 +97,8 @@ export function AreaChartCard({
           {description && <p className="mt-0.5 text-[12px] text-t3">{description}</p>}
         </div>
         {series.length > 1 && (
-          <div className="flex shrink-0 rounded-[8px] bg-sf2 p-0.5 text-[12px]">
+          /* 세그먼트: 선택 조각이 흰 면으로 "들리고"(1단계 그림자) 나머지는 평평. 터치 화면은 44×44 이상(폭도). */
+          <div className="flex shrink-0 rounded-[var(--r-md)] bg-sf2 p-0.5 text-[12px]">
             {series.map((s) => (
               <button
                 key={s.key}
@@ -109,8 +110,8 @@ export function AreaChartCard({
                 aria-pressed={s.key === activeKey}
                 className={
                   s.key === activeKey
-                    ? "rounded-[6px] bg-sf px-3 py-1 font-medium text-t shadow-card"
-                    : "rounded-[6px] px-3 py-1 text-t2 hover:text-t"
+                    ? "rounded-[var(--r-sm)] bg-sf px-3 py-1 font-medium text-t shadow-card transition-[background-color,box-shadow] duration-1 [@media(pointer:coarse)]:min-w-[44px]"
+                    : "rounded-[var(--r-sm)] px-3 py-1 text-t2 transition-colors duration-1 hover:text-t [@media(pointer:coarse)]:min-w-[44px]"
                 }
               >
                 {s.label}
@@ -121,7 +122,8 @@ export function AreaChartCard({
       </div>
 
       {!hasEnough ? (
-        <div className="flex flex-1 flex-col items-start justify-center gap-1 py-10">
+        /* 빈 상태: 그래프가 들어올 자리와 같은 높이(200px 기준)의 점선 면 — 데이터가 생겨도 카드 높이가 튀지 않는다. */
+        <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-1 rounded-[var(--r-md)] border border-dashed border-[var(--bd-strong)] bg-sf2/40 px-4 py-8 text-center">
           <p className="text-[12.5px] text-t2">{insufficientNote}</p>
           {points.length === 1 && (
             <p className="text-[20px] font-bold tabular-nums text-t">{formatValue(points[0].value, active.unit)}</p>

@@ -2,7 +2,7 @@
   "name": "nuri-crm",
   "version": "0.1.0",
   "private": true,
-  "description": "NURI CRM — 맞춤양복 통합 관리 시스템 (Next.js)",
+  "description": "NURI CRM — 매장 업무 관리 (Next.js)",
   "scripts": {
     "dev": "next dev -p 3001 -H 0.0.0.0",
     "dev:https": "next dev -p 3001 -H 0.0.0.0 --experimental-https",
@@ -37,6 +37,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "motion": "^13.4.4",
     "next": "14.2.15",
     "nuqs": "^2.10.1",
     "qrcode.react": "^4.0.1",

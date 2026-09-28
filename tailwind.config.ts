@@ -68,6 +68,7 @@ const config: Config = {
         // 보더
         bd: tok("bd"),
         bd2: tok("bd2"),
+        "bd-strong": tok("bd-strong"),
 
         // §5.3 신규 의미 토큰
         nav: tok("nav"),
@@ -150,13 +151,25 @@ const config: Config = {
         "3xs": "10px",
       },
       boxShadow: {
-        // 디자인 폴리시 v2/v3에서 자주 쓰던 그림자
-        card: "0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)",
-        "card-hover": "0 6px 22px rgba(0,0,0,.12)",
+        // 높이 3단계 + 모달. 값은 전부 globals.css 의 --sh-* 가 갖는다(라이트/다크 다름). 2026-09-28 부터
+        // card-hover 는 raised 의 별칭이다 — 구 화면(components/mtm 등)이 그대로 새 단계를 탄다.
+        card: "var(--sh-card)",
+        raised: "var(--sh-raised)",
+        "card-hover": "var(--sh-raised)",
+        pop: "var(--sh-pop)",
+        modal: "var(--sh-modal)",
         topbar: "0 1px 0 var(--bd), 0 2px 8px rgba(0,0,0,.05)",
         panel: "-6px 0 32px rgba(0,0,0,.18)",
-        // 테마별 값은 globals.css 의 --sh-modal 이 갖는다(다크에서 더 깊게).
-        modal: "var(--sh-modal)",
+        // 입력 초점 링(테두리 색 변경과 함께 쓴다): focus:shadow-ring
+        ring: "var(--ring)",
+      },
+      transitionTimingFunction: {
+        out: "var(--ease-out)",
+      },
+      transitionDuration: {
+        1: "var(--dur-1)",
+        2: "var(--dur-2)",
+        3: "var(--dur-3)",
       },
       // ⚠ borderRadius 의 sm/md/lg/xl 은 덮어쓰지 않는다 — 기존 화면이 Tailwind 기본 rounded-lg(8px) 등을
       //   그대로 쓰고 있어 토큰(16px)으로 바꾸면 전 화면이 한꺼번에 둥글어진다. 토큰은 rounded-[var(--r-md)] 로 쓴다.
@@ -169,10 +182,18 @@ const config: Config = {
       keyframes: {
         sheetUp: { from: { opacity: "0", transform: "translateY(24px)" }, to: { opacity: "1", transform: "translateY(0)" } },
         fadeIn: { from: { opacity: "0" }, to: { opacity: "1" } },
+        popIn: { from: { opacity: "0", transform: "translateY(-4px) scale(.98)" }, to: { opacity: "1", transform: "translateY(0) scale(1)" } },
+        shimmer: { from: { backgroundPosition: "120% 0" }, to: { backgroundPosition: "-120% 0" } },
+        rise: { from: { opacity: "0", transform: "translateY(6px)" }, to: { opacity: "1", transform: "translateY(0)" } },
       },
       animation: {
-        "sheet-up": "sheetUp 200ms cubic-bezier(.2,.8,.2,1)",
+        // KPI 등장(KpiRow animate). both: delay 동안 from 상태 유지. reduced-motion 은 globals.css 전역 규칙이 즉시 끝낸다.
+        rise: "rise 240ms cubic-bezier(.2,.8,.2,1) both",
+        "sheet-up": "sheetUp 240ms cubic-bezier(.2,.8,.2,1)",
         "fade-in": "fadeIn 150ms ease-out",
+        "pop-in": "popIn 180ms cubic-bezier(.2,.8,.2,1)",
+        // animate-pulse 를 shimmer 로 교체 — 배경 그라데이션은 globals.css .animate-pulse 가 붙인다.
+        pulse: "shimmer 1.8s linear infinite",
       },
     },
   },
