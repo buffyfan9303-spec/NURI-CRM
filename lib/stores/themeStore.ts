@@ -43,7 +43,8 @@ export function applyTheme(isDark: boolean) {
 }
 
 /** app/layout.tsx 의 viewport.themeColor 와 동일한 값이어야 한다. */
-const THEME_COLOR = { light: "#f7f8fa", dark: "#0c0d10" } as const;
+// dark 는 globals.css [data-theme="dark"] --bg 와 같은 값(주소창 색 = 본문 배경, Vercel 지침).
+const THEME_COLOR = { light: "#f7f8fa", dark: "#111315" } as const;
 
 export const useThemeStore = create<ThemeState>()(
   persist(

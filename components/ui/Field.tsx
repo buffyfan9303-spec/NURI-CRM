@@ -22,7 +22,7 @@ export function Field({
 }) {
   return (
     <div className={cn("mb-4", className)}>
-      <label htmlFor={htmlFor} className="mb-1.5 block text-[13px] font-medium text-t2">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-[length:var(--fs-body)] font-medium text-t2">
         {label}
         {required && (
           <span className="ml-0.5 text-et" aria-hidden>

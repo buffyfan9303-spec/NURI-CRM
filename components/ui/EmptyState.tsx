@@ -22,7 +22,7 @@ export function EmptyState({
         <Inbox size={20} aria-hidden />
       </div>
       <p className="text-[14px] font-medium text-t">{title}</p>
-      {description && <p className="max-w-[320px] text-[12.5px] leading-relaxed text-t2">{description}</p>}
+      {description && <p className="max-w-[320px] break-keep text-[length:var(--fs-meta)] leading-relaxed text-t2">{description}</p>}
       {/* flex: 호출부가 <Link><Button/></Link> 로 넘겨도 <a> 가 버튼 크기(44px)를 갖는다 — 인라인이면 18px 줄상자가 된다(실측). */}
       {action && <div className="mt-1 flex justify-center">{action}</div>}
     </div>

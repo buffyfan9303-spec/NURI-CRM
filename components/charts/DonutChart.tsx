@@ -84,13 +84,13 @@ export function DonutChart({
             </svg>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[22px] font-bold tabular-nums text-t">{formatCount(total, "")}</span>
-              <span className="text-[11px] text-t3">전체 {unit}</span>
+              <span className="text-[11.5px] text-t3">전체 {unit}</span>
             </div>
           </div>
           <ul className="flex w-full flex-col gap-1.5">
             {slices.map((s) => {
               const row = (
-                <span className="flex items-center gap-2 rounded-[6px] px-1 py-0.5 text-[12.5px]">
+                <span className="flex min-h-[24px] items-center gap-2 rounded-[var(--r-sm)] px-1 py-0.5 text-[length:var(--fs-meta)]">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: chartColor(s.colorIndex) }} aria-hidden />
                   <span className="min-w-0 flex-1 truncate text-t2">{s.label}</span>
                   <span className="shrink-0 tabular-nums font-medium text-t">{formatCount(s.value, unit)}</span>

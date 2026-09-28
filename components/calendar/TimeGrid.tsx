@@ -138,8 +138,20 @@ export function TimeGrid({
   );
   const hasAnyAllDay = Array.from(allDayByDay.values()).some((v) => v.length > 0);
 
-  // 시간축 폭: 휴대폰 44px(360px 화면에서 7열이 45px 씩 나온다), sm 이상 56px — CSS 변수라 SSR/CSR 차이가 없다.
-  const gridTemplateColumns = `var(--gutter) repeat(${days.length}, minmax(0, 1fr))`;
+  // 시간축 폭: 휴대폰 44px, sm 이상 56px — CSS 변수라 SSR/CSR 차이가 없다.
+  // 주 보기(7열)는 <640 에서 열 최소폭 96px 을 두고 가로 스크롤한다(검토 P2: 40px 열은 "11…/남…" 만 보였다).
+  // 시간축·모서리·종일 칸은 sticky left 로 남겨 어느 열을 보든 시각을 읽을 수 있다.
+  const gridTemplateColumns = `var(--gutter) repeat(${days.length}, minmax(var(--col-min), 1fr))`;
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    // 가로 스크롤이 생겼을 때만 오늘(없으면 첫 열) 열이 시간축 바로 옆에 오도록 맞춘다.
+    const box = scrollRef.current;
+    if (!box || box.scrollWidth <= box.clientWidth) return;
+    const col = box.querySelector<HTMLElement>("[data-today-col]");
+    const gutter = box.querySelector<HTMLElement>("[data-gutter]");
+    if (!col || !gutter) return;
+    box.scrollLeft = col.getBoundingClientRect().left - box.getBoundingClientRect().left - gutter.offsetWidth + box.scrollLeft;
+  }, [days]);
   const hideHourLabel = (h: number) => nowMinutes !== null && days.includes(todayKey) && Math.abs(h * 60 - nowMinutes) < 20 && h * 60 >= boundStartMin;
 
   return (
@@ -163,9 +175,12 @@ export function TimeGrid({
         </button>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="grid [--gutter:44px] sm:[--gutter:56px]" style={{ gridTemplateColumns }}>
-          <div className="sticky top-0 z-10 border-b border-[var(--bd)] bg-sf" />
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">
+        <div
+          className={cn("grid [--col-min:0px] [--gutter:44px] sm:[--gutter:56px]", days.length > 1 && "max-sm:[--col-min:96px]")}
+          style={{ gridTemplateColumns }}
+        >
+          <div data-gutter className="sticky left-0 top-0 z-20 border-b border-[var(--bd)] bg-sf" />
           {days.map((d) => {
             const isToday = d === todayKey;
             const headerClass = cn(
@@ -177,7 +192,7 @@ export function TimeGrid({
             const label =
               days.length > 1 ? (
                 <>
-                  <span className="text-[11px] text-t3">{formatDayTitle(d).match(/\((.)\)/)?.[1] ?? ""}</span>
+                  <span className="text-[11.5px] text-t3">{formatDayTitle(d).match(/\((.)\)/)?.[1] ?? ""}</span>
                   <span
                     className={cn(
                       "inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-1 text-[13px] font-semibold tabular-nums",
@@ -193,12 +208,13 @@ export function TimeGrid({
                   {isToday && <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-strong)]" aria-hidden />}
                 </>
               );
+            const todayAttr = isToday || (!days.includes(todayKey) && d === days[0]) ? { "data-today-col": "" } : {};
             return onOpenDay ? (
-              <button key={d} type="button" onClick={() => onOpenDay(d)} className={headerClass} aria-label={`${d} 하루 보기로 이동`}>
+              <button key={d} type="button" onClick={() => onOpenDay(d)} className={headerClass} aria-label={`${d} 하루 보기로 이동`} {...todayAttr}>
                 {label}
               </button>
             ) : (
-              <div key={d} className={headerClass}>
+              <div key={d} className={headerClass} {...todayAttr}>
                 {label}
               </div>
             );
@@ -206,7 +222,7 @@ export function TimeGrid({
 
           {hasAnyAllDay && (
             <>
-              <div className="border-b border-[var(--bd)] px-1.5 py-1 text-right text-[10px] text-t3">종일</div>
+              <div className="sticky left-0 z-[3] border-b border-[var(--bd)] bg-sf px-1.5 py-1 text-right text-[11.5px] text-t3">종일</div>
               {days.map((d) => (
                 <AllDayCell key={`ad-${d}`} dateKey={d} canDrag={canDrag}>
                   {(allDayByDay.get(d) ?? []).map((ev) => (
@@ -225,11 +241,11 @@ export function TimeGrid({
             </>
           )}
 
-          <div className="relative" style={{ height: gridHeight }}>
+          <div className="sticky left-0 z-[3] bg-sf" style={{ height: gridHeight }}>
             {hours.map((h) => (
               <div
                 key={h}
-                className="absolute inset-x-0 -translate-y-1/2 pr-1.5 text-right text-[11px] tabular-nums text-t3"
+                className="absolute inset-x-0 -translate-y-1/2 pr-1.5 text-right text-[11.5px] tabular-nums text-t3"
                 style={{ top: (h - startHour) * ROW_HEIGHT }}
               >
                 {h === startHour || hideHourLabel(h) ? "" : `${String(h).padStart(2, "0")}:00`}
@@ -237,7 +253,7 @@ export function TimeGrid({
             ))}
             {nowMinutes !== null && nowMinutes >= boundStartMin && nowMinutes < boundEndMin && days.includes(todayKey) && (
               <span
-                className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[10px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]"
+                className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[11.5px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]"
                 style={{ top: ((nowMinutes - boundStartMin) / 60) * ROW_HEIGHT }}
                 aria-hidden
               >
@@ -287,7 +303,7 @@ export function TimeGrid({
                       width: `calc(${100 / lanes}% - 4px)`,
                     }}
                   >
-                    <span className="block truncate text-[11px] font-medium tabular-nums opacity-90">{formatEventTimeLabel(event, tz)}</span>
+                    <span className="block truncate text-[11.5px] font-medium tabular-nums opacity-90">{formatEventTimeLabel(event, tz)}</span>
                     <span className="block truncate font-semibold">{event.title}</span>
                   </TimeEventButton>
                 ))}

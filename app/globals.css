@@ -383,6 +383,10 @@ body {
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
   overscroll-behavior-y: none;
+  /* 한국어는 어절 단위로 줄바꿈("표시됩니 / 다." 방지). 라틴 단어에는 영향 없다. */
+  word-break: keep-all;
+  /* 안전장치: 좁은 칸(공장 표 등)에서 한 어절이 칸보다 길면 그때만 어절 안에서 줄을 바꾼다. */
+  overflow-wrap: break-word; /* anywhere 는 표 열의 최소 폭까지 줄여 글자가 세로로 쌓이므로 쓰지 않는다 */
 }
 
 /* 이미지·SVG 가 부모 폭을 넘겨 가로 스크롤을 만드는 걸 전역에서 막는다. */
@@ -558,7 +562,7 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   padding: 2px 9px;
-  border-radius: 5px;
+  border-radius: var(--r-sm); /* 반경 토큰 밖 5px → 6px(디자인 검토 P2) */
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.2px;

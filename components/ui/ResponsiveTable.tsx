@@ -99,7 +99,7 @@ export function MobileCard({
       }
       className={cn(
         // 카드 = 높이 1단계(경계 + --sh-card). 누를 수 있으면 hover 에 경계가 진해지고 누르는 동안 sf2 면.
-        "min-h-[44px] rounded-[var(--r-md)] border border-[var(--bd)] bg-sf px-3 py-2.5 text-[12.5px] shadow-card transition-[background-color,border-color] duration-1 ease-out",
+        "min-h-[44px] rounded-[var(--r-md)] border border-[var(--bd)] bg-sf px-3 py-2.5 text-[length:var(--fs-meta)] shadow-card transition-[background-color,border-color] duration-1 ease-out",
         clickable && "cursor-pointer hover:border-[var(--bd-strong)] hover:bg-sf2 active:bg-sf3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]",
         className
       )}

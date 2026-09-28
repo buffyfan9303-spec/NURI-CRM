@@ -99,7 +99,7 @@ export function DateRangeField({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <span id={id} className="text-[13px] font-medium text-t2">
+      <span id={id} className="text-[length:var(--fs-body)] font-medium text-t2">
         {fieldLabel} {required && <span className="text-et" aria-hidden>*</span>}
       </span>
       <button
@@ -128,7 +128,7 @@ export function DateRangeField({
           </>
         }
       >
-        <p className="mb-2 text-[12.5px] text-t2" aria-live="polite">
+        <p className="mb-2 text-[length:var(--fs-meta)] text-t2" aria-live="polite">
           {draft?.from
             ? draft.to
               ? `${label(toDateKey(draft.from))} → ${label(toDateKey(draft.to))} · ${nights(toDateKey(draft.from), toDateKey(draft.to))}박`

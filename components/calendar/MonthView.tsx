@@ -156,7 +156,7 @@ export function MonthView({
                 {Number(dateKey.slice(8, 10))}
               </button>
               {holidayLabel && (
-                <span className="-mt-0.5 block truncate text-[10.5px] font-medium leading-tight text-et" title={holidayLabel}>
+                <span className="-mt-0.5 block truncate text-[11.5px] font-medium leading-tight text-et" title={holidayLabel}>
                   {holidayLabel}
                 </span>
               )}
@@ -176,7 +176,7 @@ export function MonthView({
                   <button
                     type="button"
                     onClick={() => onOpenDay(dateKey)}
-                    className="min-h-[24px] text-left text-[11px] font-medium text-t3 hover:text-t2"
+                    className="min-h-[24px] text-left text-[11.5px] font-medium text-t3 hover:text-t2"
                   >
                     +{overflow}개 더
                   </button>

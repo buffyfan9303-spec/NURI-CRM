@@ -357,7 +357,7 @@ export function ReservationForm({
             <div className="flex items-center justify-between border-t border-[var(--bd)] pt-2"><dt className="font-semibold text-t">청구 예정</dt><dd className="font-semibold tabular-nums text-t">{formatKRW(quote.rentalFee - quote.discount)}</dd></div>
             <div className="flex items-center justify-between rounded-[var(--r-md)] bg-sf2 px-2.5 py-2"><dt className="text-t2">보증금 예상 합계</dt><dd className="tabular-nums text-t">{formatKRW(depositTotal)}</dd></div>
           </dl>
-          <p className="mt-2 text-[11px] text-t3">보증금은 대여매출과 별도로 관리되며 위 청구 예정 합계에 포함되지 않습니다.</p>
+          <p className="mt-2 text-[11.5px] text-t3">보증금은 대여매출과 별도로 관리되며 위 청구 예정 합계에 포함되지 않습니다.</p>
         </Card>
 
         <Card className="p-4 sm:p-5">

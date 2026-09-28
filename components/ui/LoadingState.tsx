@@ -22,7 +22,7 @@ export function LoadingState({ label = "불러오는 중…", rows }: { label?: 
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
       <Spinner size={26} />
-      <p className="text-[13px] text-t2">{label}</p>
+      <p className="text-[length:var(--fs-body)] text-t2">{label}</p>
     </div>
   );
 }

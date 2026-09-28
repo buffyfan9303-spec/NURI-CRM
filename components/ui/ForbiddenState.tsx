@@ -17,7 +17,7 @@ export function ForbiddenState({
         <Lock size={20} aria-hidden />
       </div>
       <p className="text-[14px] font-medium text-t">{title}</p>
-      <p className="max-w-[320px] text-[12.5px] leading-relaxed text-t2">{description}</p>
+      <p className="max-w-[320px] text-[length:var(--fs-meta)] leading-relaxed text-t2">{description}</p>
       {action}
     </div>
   );

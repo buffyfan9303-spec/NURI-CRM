@@ -41,7 +41,7 @@ export const viewport: Viewport = {
  * 저장값 없음/JSON 손상/localStorage 접근 실패는 전부 light로 폴백한다.
  * themeStore(lib/stores/themeStore.ts)가 쓰는 zustand persist 키("nuri_dark")를 그대로 읽는다.
  */
-const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var raw=window.localStorage.getItem('nuri_dark');var dark=false;if(raw){var parsed=JSON.parse(raw);dark=!!(parsed&&parsed.state&&parsed.state.isDark===true);}document.documentElement.setAttribute('data-theme',dark?'dark':'light');if(dark){var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#0c0d10';}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
+const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var raw=window.localStorage.getItem('nuri_dark');var dark=false;if(raw){var parsed=JSON.parse(raw);dark=!!(parsed&&parsed.state&&parsed.state.isDark===true);}document.documentElement.setAttribute('data-theme',dark?'dark':'light');if(dark){var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#111315';}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 /**
  * body.dk 는 구 시제품 화면들이 쓰는 레거시 셀렉터다. 예전에는 themeStore 가 **하이드레이션 이후**

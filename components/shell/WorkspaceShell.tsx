@@ -565,7 +565,7 @@ export function WorkspaceShell({
           >
             <Search size={14} className="shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">검색</span>
-            <kbd className="hidden shrink-0 rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf px-1.5 py-0.5 font-sans text-[11px] text-t3 lg:inline" aria-hidden>{kbdHint}</kbd>
+            <kbd className="hidden shrink-0 rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf px-1.5 py-0.5 font-sans text-[11.5px] text-t3 lg:inline" aria-hidden>{kbdHint}</kbd>
           </button>
 
           {/* 우측 클러스터: CTA → 테마 → 알림 → 계정 순(§4.2) */}

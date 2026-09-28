@@ -256,10 +256,10 @@ function SidebarItem({
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2.5 mx-2 my-px rounded-[7px] cursor-pointer transition-colors select-none relative",
+        "flex items-center gap-2.5 mx-2 my-px rounded-[var(--r-md)] cursor-pointer transition-colors select-none relative",
         primary
           ? "px-[18px] py-2 text-[13px]"
-          : "pl-9 pr-[18px] py-[7px] text-xs rounded-[5px]",
+          : "pl-9 pr-[18px] py-[7px] text-xs rounded-[var(--r-sm)]",
         active
           ? cn(
               "bg-[var(--sba)] text-white",

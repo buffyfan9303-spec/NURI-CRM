@@ -150,7 +150,7 @@ export function Toolbar({
                 className={cn(
                   // 시각적 칩 크기는 그대로 두고, coarse 포인터에서만 44px 터치 영역을 가상 영역(::before)으로 넓힌다. 시트 안은 실제 44px.
                   // 시각적 칩 크기는 그대로, coarse 포인터에서는 실제 44px 로 키운다(측정 가능한 목표 크기).
-                  "ev-tag relative justify-center transition-opacity duration-1 [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
+                  "ev-tag relative min-h-[24px] justify-center transition-opacity duration-1 [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:min-w-[44px]",
                   sheet && "min-h-[44px] min-w-[64px] px-4 text-[13px]",
                   kindTagClass(k.kind, eventKinds),
                   !active && "opacity-40 hover:opacity-70"

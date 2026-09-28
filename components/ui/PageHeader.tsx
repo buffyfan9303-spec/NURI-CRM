@@ -42,7 +42,7 @@ export function PageHeader({
               {meta}
             </div>
             {/* 휴대폰은 한 줄 말줄임(C1) — 전체 문구는 title 로. */}
-            {description && <p className="mt-1 text-[13px] leading-snug text-t2 max-sm:line-clamp-1" title={description}>{description}</p>}
+            {description && <p className="mt-1 text-[length:var(--fs-body)] leading-snug text-t2 max-sm:line-clamp-1" title={description}>{description}</p>}
           </div>
           {settingsHref && <SettingsIconLink href={settingsHref} />}
         </div>

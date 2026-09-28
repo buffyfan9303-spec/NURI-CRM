@@ -32,7 +32,7 @@ const VARIANT_CLASS: Record<Variant, string> = {
 //   sm 은 PC 표/카드 안의 보조 동작용 32px, 터치 화면(pointer:coarse)에서는 44px 로 자동 승격한다.
 //   md/lg 는 어디서나 44px 이상.
 const SIZE_CLASS: Record<Size, string> = {
-  sm: "h-[32px] px-3 text-[13px] gap-1.5 [@media(pointer:coarse)]:min-h-[44px]",
+  sm: "h-[32px] px-3 text-[length:var(--fs-body)] gap-1.5 [@media(pointer:coarse)]:min-h-[44px]",
   md: "min-h-[44px] px-4 text-[13.5px] gap-2",
   lg: "min-h-[48px] px-5 text-[15px] gap-2",
 };

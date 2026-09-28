@@ -246,12 +246,12 @@ function StaffGrid({
         const n = todays.filter((a) => a.staffId === s.membershipId && !TERMINAL.has(a.status)).length;
         return (
           <div key={s.membershipId} className="flex min-w-0 items-center gap-2 border-b border-l border-[var(--bd)] bg-sf2 px-2.5 py-2">
-            <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[11px] font-semibold text-[var(--accent-ink)]" aria-hidden>
+            <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-[11.5px] font-semibold text-[var(--accent-ink)]" aria-hidden>
               {s.displayName.trim().slice(0, 2)}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-[12.5px] font-semibold text-t">{s.displayName}</span>
-              <span className="block text-[11px] tabular-nums text-t3">{n > 0 ? `예약 ${n}건` : "예약 없음"}</span>
+              <span className="block text-[11.5px] tabular-nums text-t3">{n > 0 ? `예약 ${n}건` : "예약 없음"}</span>
             </span>
           </div>
         );
@@ -260,13 +260,13 @@ function StaffGrid({
       <div className="relative bg-sf2" style={{ height: gridHeight }}>
         {SLOTS.map((t, i) =>
           t.endsWith(":00") && i > 0 && !hideHourLabel(t) ? (
-            <div key={t} className="absolute inset-x-0 -translate-y-1/2 pr-2 text-right text-[11px] tabular-nums text-t3" style={{ top: slotsY(i) }}>
+            <div key={t} className="absolute inset-x-0 -translate-y-1/2 pr-2 text-right text-[11.5px] tabular-nums text-t3" style={{ top: slotsY(i) }}>
               {t}
             </div>
           ) : null
         )}
         {nowTop !== null && (
-          <span className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[10px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]" style={{ top: nowTop }} aria-hidden>
+          <span className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[11.5px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]" style={{ top: nowTop }} aria-hidden>
             {String(Math.floor((now as number) / 60)).padStart(2, "0")}:{String((now as number) % 60).padStart(2, "0")}
           </span>
         )}
@@ -346,7 +346,7 @@ function SlotCell({
       style={{ top, height }}
     >
       {!disabled && !isOver && (
-        <span className="pointer-events-none inline-flex items-center gap-0.5 rounded-[var(--r-xs)] px-1 text-[10.5px] font-medium tabular-nums text-t3 opacity-0 transition-opacity duration-1 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden>
+        <span className="pointer-events-none inline-flex items-center gap-0.5 rounded-[var(--r-xs)] px-1 text-[11.5px] font-medium tabular-nums text-t3 opacity-0 transition-opacity duration-1 group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden>
           <Plus size={10} />{time}
         </span>
       )}
@@ -407,15 +407,15 @@ function AppointmentCard({
       <span className="flex items-center gap-1 text-[12px]">
         <span className={cn("min-w-0 truncate font-semibold text-t", struck && "line-through decoration-[var(--et)]")}>{appt.customerName ?? appt.customerId.slice(0, 8)}</span>
         {noShow > 0 && (
-          <span className="shrink-0 rounded-[var(--r-xs)] bg-eb px-1 text-[10px] font-bold text-et" title="이 고객의 누적 노쇼 이력">
+          <span className="shrink-0 rounded-[var(--r-xs)] bg-eb px-1 text-[11.5px] font-bold text-et" title="이 고객의 누적 노쇼 이력">
             노쇼 {noShow}
           </span>
         )}
-        <span className="ml-auto shrink-0 text-[10.5px] tabular-nums text-t3">{formatInTz(appt.startAt, DEFAULT_TZ, "HH:mm")}</span>
+        <span className="ml-auto shrink-0 text-[11.5px] tabular-nums text-t3">{formatInTz(appt.startAt, DEFAULT_TZ, "HH:mm")}</span>
       </span>
-      <span className="truncate text-[11px] text-t2">{appt.serviceName ?? "-"}</span>
+      <span className="truncate text-[11.5px] text-t2">{appt.serviceName ?? "-"}</span>
       {tall && (
-        <span className="mt-auto flex items-center gap-1 text-[10.5px]">
+        <span className="mt-auto flex items-center gap-1 text-[11.5px]">
           <Badge kind={kind}>{appt.status}</Badge>
           {canRevenue && <span className="tabular-nums text-t2">{formatKRW(appt.price)}</span>}
         </span>

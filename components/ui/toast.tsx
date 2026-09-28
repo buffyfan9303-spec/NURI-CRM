@@ -56,7 +56,7 @@ export function AppToaster() {
         classNames: {
           toast: "!pr-[52px] !text-[13.5px] !shadow-modal",
           title: "!font-medium",
-          description: "!text-[12.5px] !text-t2",
+          description: "!text-[length:var(--fs-meta)] !text-t2",
           // sonner 기본 닫기(20px, 좌상단 걸침)를 오른쪽 세로 중앙 44px 로 옮긴다.
           closeButton:
             "!left-auto !right-1 !top-1/2 !h-[44px] !w-[44px] !-translate-y-1/2 !translate-x-0 !rounded-[var(--r-sm)] !border-0 !bg-transparent !text-t2 hover:!bg-sf2",

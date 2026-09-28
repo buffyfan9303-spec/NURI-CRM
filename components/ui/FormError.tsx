@@ -7,7 +7,7 @@ export function FormError({ id, message }: { id?: string; message?: string }) {
     <p
       id={id}
       role="alert"
-      className="mt-1.5 flex items-start gap-1.5 text-[12.5px] leading-snug text-et"
+      className="mt-1.5 flex items-start gap-1.5 text-[length:var(--fs-meta)] leading-snug text-et"
     >
       <CircleAlert size={14} className="mt-[1px] shrink-0" aria-hidden />
       <span>{message}</span>

@@ -172,7 +172,7 @@ function Tile({ label, value, sub, accent, warn }: { label: string; value: numbe
     <div className={"rounded-[var(--r-md)] border px-3 py-2.5 " + (accent ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--bd)] bg-sf")}>
       <p className="text-[11.5px] text-t3">{label}</p>
       <p className={"mt-0.5 text-[16px] font-semibold tabular-nums " + (warn ? "text-et" : accent ? "text-[var(--accent-ink)]" : "text-t")}>{formatKRW(value)}</p>
-      {sub && <p className="mt-0.5 truncate text-[11px] text-t3" title={sub}>{sub}</p>}
+      {sub && <p className="mt-0.5 truncate text-[12px] text-t3" title={sub}>{sub}</p>}
     </div>
   );
 }
@@ -182,7 +182,7 @@ function Box({ title, children, hint }: { title: string; children: React.ReactNo
     <div className="rounded-[var(--r-md)] border border-[var(--bd)] bg-sf p-3.5">
       <h3 className="mb-2.5 text-[13px] font-semibold text-t">{title}</h3>
       {children}
-      {hint && <p className="mt-1.5 text-[11px] text-t3">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[11.5px] text-t3">{hint}</p>}
     </div>
   );
 }
@@ -582,12 +582,12 @@ function HistoryTable({ businessId, entries, canReverse, onChanged }: { business
                     <td className="whitespace-nowrap py-2 pr-3 tabular-nums text-t3">{formatInTz(e.occurredAt, DEFAULT_TZ, "M. d. HH:mm")}</td>
                     <td className={"py-2 pr-3 " + (depositRow ? "pl-4 text-t2" : "text-t")}>
                       {depositRow ? `↳ ${e.entryType === "deposit_in" ? "보증금으로 보관(위 현금 수납 중)" : "보관 보증금 해제(현금은 '환급' 행)"}` : e.entryType === "payment_in" && e.stage === "deposit" ? "현금 수납(보증금)" : LEDGER_ENTRY_LABEL[e.entryType] ?? e.entryType}
-                      {e.reversesId && <span className="ml-1 rounded-[4px] bg-sf3 px-1 text-[10.5px] no-underline">정정</span>}
+                      {e.reversesId && <span className="ml-1 rounded-[4px] bg-sf3 px-1 text-[11.5px] no-underline">정정</span>}
                     </td>
                     <td className="whitespace-nowrap py-2 pr-3 text-t2">
                       {depositRow ? <span className="text-t3">보관 계정</span> : [e.stage ? PAY_STAGE_LABEL[e.stage as PayStage] ?? e.stage : null, e.method ? PAY_METHOD_LABEL[e.method as PayMethod] ?? e.method : null].filter(Boolean).join(" · ")}
-                      {e.approvalNo && <span className="block text-[11px] text-t3">승인 {e.approvalNo}</span>}
-                      {e.cashReceipt && <span className="block text-[11px] text-t3">현금영수증</span>}
+                      {e.approvalNo && <span className="block text-[11.5px] text-t3">승인 {e.approvalNo}</span>}
+                      {e.cashReceipt && <span className="block text-[11.5px] text-t3">현금영수증</span>}
                     </td>
                     <td className="max-w-[220px] py-2 pr-3 text-t2"><span className="block truncate" title={e.reason ?? undefined}>{e.reason ?? ""}</span></td>
                     <td className={"whitespace-nowrap py-2 text-right tabular-nums " + (depositRow ? "text-t3" : e.direction === "out" ? "text-et" : "text-t")}>{depositRow ? "보관 " : ""}{e.direction === "out" ? "−" : "+"}{formatKRW(e.amount)}</td>
