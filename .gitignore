@@ -37,3 +37,6 @@ next-env.d.ts
 /public/sw.js
 /public/sw.js.map
 /public/swe-worker-*.js
+
+# Serena MCP 프로젝트 캐시(세션별)
+.serena/

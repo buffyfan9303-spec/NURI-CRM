@@ -145,7 +145,7 @@ export default async function StudentAttendancePage({ params, searchParams }: { 
                       >
                         <span className="tabular-nums">{formatInTz(s.startAt, access.timezone, "HH:mm")}</span>
                         <span className="max-w-[180px] truncate">{className(s.classId)}</span>
-                        {s.status === "휴강" && <span className="text-[11px] text-et">휴강</span>}
+                        {s.status === "휴강" && <span className="text-[length:var(--fs-meta)] text-et">휴강</span>}
                         {un && <span className="h-1.5 w-1.5 rounded-full bg-[var(--wt)]" aria-label="미확인" />}
                       </Link>
                     );

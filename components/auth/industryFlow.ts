@@ -11,4 +11,5 @@ export const INDUSTRY_WORKFLOW: Record<Industry, string[]> = {
   unmanned: ["입고", "진열·점검", "판매", "실사"],
   salon: ["예약", "접수", "시술", "수납"],
   academy: ["수강 등록", "시간표 배정", "출결", "미납 확인"],
+  building: ["검침·비용 입력", "관리비 계산", "승인·명세서", "입금·세금계산서"],
 };

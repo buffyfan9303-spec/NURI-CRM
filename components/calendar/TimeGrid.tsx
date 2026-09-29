@@ -12,7 +12,8 @@ import type { CalendarEvent } from "@/lib/domain/calendar-shared";
 import { isDerivedEvent } from "@/lib/domain/calendar-shared";
 import { formatInTz, formatDayTitle } from "@/lib/utils/datetime";
 import { EventChip } from "./EventChip";
-import { kindTagClass, formatEventTimeLabel } from "./shared";
+import { kindTagClass, formatEventTimeLabel, shortHolidayLabel } from "./shared";
+import { useHolidayMap } from "@/lib/holidays";
 
 /** px / 1시간. CalendarClient의 onDragEnd가 세로 픽셀 이동량을 분 단위로 환산할 때 같은 값을 쓴다. */
 export const ROW_HEIGHT = 48;
@@ -132,6 +133,9 @@ export function TimeGrid({
     return () => clearInterval(id);
   }, [tz]);
 
+  // D12: 주 보기 머리글에도 월 보기와 같은 공휴일 표시(빨간 날짜 + 이름). 이름 줄은 휴대폰에서 자리를 미리 잡아(14px) 도착해도 높이가 안 변한다.
+  const holidayMap = useHolidayMap(days);
+
   const allDayByDay = React.useMemo(
     () => new Map(days.map((d) => [d, (eventsByDay.get(d) ?? []).filter((e) => e.allDay)])),
     [days, eventsByDay]
@@ -160,7 +164,7 @@ export function TimeGrid({
         <button
           type="button"
           onClick={() => setShowFullDay(true)}
-          className="shrink-0 border-b border-[var(--bd)] bg-sf2 px-3 py-1.5 text-left text-[11.5px] text-t2 hover:text-t"
+          className="shrink-0 border-b border-[var(--bd)] bg-sf2 px-3 py-1.5 text-left text-[12px] text-t2 hover:text-t"
         >
           비영업 시간에 일정 {hiddenCount}건이 더 있습니다 — 눌러서 전체 시간 보기
         </button>
@@ -169,7 +173,7 @@ export function TimeGrid({
         <button
           type="button"
           onClick={() => setShowFullDay(false)}
-          className="shrink-0 border-b border-[var(--bd)] bg-sf2 px-3 py-1.5 text-left text-[11.5px] text-t2 hover:text-t"
+          className="shrink-0 border-b border-[var(--bd)] bg-sf2 px-3 py-1.5 text-left text-[12px] text-t2 hover:text-t"
         >
           영업시간({BUSINESS_START}–{BUSINESS_END}시)만 보기로 돌아가기
         </button>
@@ -184,22 +188,33 @@ export function TimeGrid({
           {days.map((d) => {
             const isToday = d === todayKey;
             const headerClass = cn(
-              "sticky top-0 z-10 flex w-full items-center justify-center gap-1.5 border-b border-l border-[var(--bd)] bg-sf py-1.5 text-[12px] font-medium transition-colors duration-1 [@media(pointer:coarse)]:min-h-[44px]",
+              "sticky top-0 z-10 flex w-full min-w-0 flex-wrap items-center justify-center gap-x-1.5 border-b border-l border-[var(--bd)] bg-sf px-1 py-1.5 text-[12px] font-medium transition-colors duration-1 [@media(pointer:coarse)]:min-h-[44px]",
               isToday ? "text-[var(--accent-ink)]" : "text-t2",
               onOpenDay && "hover:bg-sf2"
             );
             // 주 보기: 요일은 작게, 날짜 숫자는 굵게(오늘은 accent 원). 일 보기(1열)는 전체 제목 그대로.
+            const holiday = holidayMap[d];
             const label =
               days.length > 1 ? (
                 <>
-                  <span className="text-[11.5px] text-t3">{formatDayTitle(d).match(/\((.)\)/)?.[1] ?? ""}</span>
+                  <span className="text-[12px] text-t3">{formatDayTitle(d).match(/\((.)\)/)?.[1] ?? ""}</span>
                   <span
                     className={cn(
                       "inline-flex h-[24px] min-w-[24px] items-center justify-center rounded-full px-1 text-[13px] font-semibold tabular-nums",
-                      isToday ? "bg-[var(--accent-strong)] text-[var(--accent-contrast)]" : "text-t"
+                      isToday ? "bg-[var(--accent-strong)] text-[var(--accent-contrast)]" : holiday ? "text-et" : "text-t"
                     )}
                   >
                     {Number(d.slice(8, 10))}
+                  </span>
+                  {/* 이름은 항상 아래 줄 전폭 14px 고정 슬롯(비어도 유지 → 도착해도 CLS 0, 어느 폭에서도 줄바꿈 없음).
+                      열이 좁은 <1024 는 짧은 이름("개천절(대체)"), 원래 이름은 aria-label. */}
+                  <span className="h-[14px] basis-full truncate text-center text-[12px] font-medium leading-[14px] text-et" title={holiday}>
+                    {holiday && (
+                      <>
+                        <span className="lg:hidden">{shortHolidayLabel(holiday)}</span>
+                        <span className="max-lg:hidden">{holiday}</span>
+                      </>
+                    )}
                   </span>
                 </>
               ) : (
@@ -210,7 +225,7 @@ export function TimeGrid({
               );
             const todayAttr = isToday || (!days.includes(todayKey) && d === days[0]) ? { "data-today-col": "" } : {};
             return onOpenDay ? (
-              <button key={d} type="button" onClick={() => onOpenDay(d)} className={headerClass} aria-label={`${d} 하루 보기로 이동`} {...todayAttr}>
+              <button key={d} type="button" onClick={() => onOpenDay(d)} className={headerClass} aria-label={`${d}${holiday ? ` ${holiday}` : ""} 하루 보기로 이동`} {...todayAttr}>
                 {label}
               </button>
             ) : (
@@ -222,7 +237,7 @@ export function TimeGrid({
 
           {hasAnyAllDay && (
             <>
-              <div className="sticky left-0 z-[3] border-b border-[var(--bd)] bg-sf px-1.5 py-1 text-right text-[11.5px] text-t3">종일</div>
+              <div className="sticky left-0 z-[3] border-b border-[var(--bd)] bg-sf px-1.5 py-1 text-right text-[12px] text-t3">종일</div>
               {days.map((d) => (
                 <AllDayCell key={`ad-${d}`} dateKey={d} canDrag={canDrag}>
                   {(allDayByDay.get(d) ?? []).map((ev) => (
@@ -245,7 +260,7 @@ export function TimeGrid({
             {hours.map((h) => (
               <div
                 key={h}
-                className="absolute inset-x-0 -translate-y-1/2 pr-1.5 text-right text-[11.5px] tabular-nums text-t3"
+                className="absolute inset-x-0 -translate-y-1/2 pr-1.5 text-right text-[12px] tabular-nums text-t3"
                 style={{ top: (h - startHour) * ROW_HEIGHT }}
               >
                 {h === startHour || hideHourLabel(h) ? "" : `${String(h).padStart(2, "0")}:00`}
@@ -253,7 +268,7 @@ export function TimeGrid({
             ))}
             {nowMinutes !== null && nowMinutes >= boundStartMin && nowMinutes < boundEndMin && days.includes(todayKey) && (
               <span
-                className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[11.5px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]"
+                className="absolute right-1 z-[2] -translate-y-1/2 rounded-[var(--r-xs)] bg-[var(--accent-strong)] px-1 text-[12px] font-semibold tabular-nums leading-[16px] text-[var(--accent-contrast)]"
                 style={{ top: ((nowMinutes - boundStartMin) / 60) * ROW_HEIGHT }}
                 aria-hidden
               >
@@ -292,7 +307,10 @@ export function TimeGrid({
                     title={`${event.title} — ${formatEventTimeLabel(event, tz)}`}
                     canDrag={canDrag}
                     className={cn(
-                      "ev-tag absolute flex-col justify-start gap-0 overflow-hidden [&>span]:w-full rounded-[var(--r-sm)] border-l-[3px] border-l-current px-1.5 py-1 text-left leading-tight shadow-card transition-[box-shadow] duration-1 hover:shadow-raised",
+                      // D3: 두 줄(시간 14px + 제목 16px + 여백 8px = 38px)이 안 들어가는 짧은 일정(30분=24px)은 한 줄 "10:50 남성 커트".
+                      // 열이 좁은 <1024(96~136px)는 한 줄에 시간까지 못 넣어 제목만 — 시각은 시간축 위치가 말해 준다.
+                      "ev-tag absolute justify-start gap-0 overflow-hidden rounded-[var(--r-sm)] border-l-[3px] border-l-current px-1.5 text-left leading-tight shadow-card transition-[box-shadow] duration-1 hover:shadow-raised",
+                      height < 40 ? "flex-row items-center py-0" : "flex-col py-1 [&>span]:w-full [&>span]:shrink-0",
                       kindTagClass(event.kind, eventKinds),
                       event.id === selectedId && "outline outline-2 outline-offset-1 outline-[var(--accent)]"
                     )}
@@ -303,8 +321,10 @@ export function TimeGrid({
                       width: `calc(${100 / lanes}% - 4px)`,
                     }}
                   >
-                    <span className="block truncate text-[11.5px] font-medium tabular-nums opacity-90">{formatEventTimeLabel(event, tz)}</span>
-                    <span className="block truncate font-semibold">{event.title}</span>
+                    <span className={cn("block text-[12px] font-medium tabular-nums opacity-90", height < 40 ? "mr-1 shrink-0 max-lg:hidden" : "truncate")}>
+                      {height < 40 ? formatEventTimeLabel(event, tz).split("–")[0] : formatEventTimeLabel(event, tz)}
+                    </span>
+                    <span className="block min-w-0 truncate font-semibold">{event.title}</span>
                   </TimeEventButton>
                 ))}
               </TimeColumn>

@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Input } from "@/components/ui/Input";
-import { CardHead, Alert, BackLink, SummaryStrip, TABLE, THEAD, TH, TR_CLICK, TR, TD, PILL } from "./listkit";
+import { CardHead, Alert, BackLink, SummaryStrip, TABLE, THEAD, TH, TR_CLICK, TR, TD, PILL, ScrollTable } from "./listkit";
 import type { CustomerRow, CustomerMeasurementRow, ReservationStatus } from "@/lib/domain/rental-types";
 import { RESERVATION_STATUS_LABEL, RESERVATION_STATUS_BADGE } from "@/lib/domain/rental-types";
 import { addCustomerMeasurement } from "@/lib/domain/rental-actions";
@@ -59,6 +59,7 @@ export function CustomerDetail({
   measurementsError,
   reservationHistory,
   money = null,
+  showRental = true,
 }: {
   businessId: string;
   customer: CustomerRow;
@@ -69,6 +70,8 @@ export function CustomerDetail({
   reservationHistory: ReservationHistoryRow[];
   /** 0027: 미수·보관 보증금 요약(렌탈만). revenue.read 없으면 masked 로 여부만 온다. */
   money?: CustomerMoneySummary | null;
+  /** false(공장 등)면 렌탈 전용 섹션(예약 이력·새 예약·미수/보증금·대여 의류 문구)을 그리지 않는다(D22). 공장은 호출 페이지가 주문 이력을 붙인다. */
+  showRental?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -80,10 +83,10 @@ export function CustomerDetail({
       <BackLink href={`/w/${businessId}/customers`}>고객 목록</BackLink>
       <PageHeader
         title={customer.name}
-        description={`등록일 ${formatInTz(customer.createdAt, DEFAULT_TZ, "yyyy. M. d.")}${reservationHistory.length ? ` · 예약 ${reservationHistory.length}건` : ""}`}
+        description={`등록일 ${formatInTz(customer.createdAt, DEFAULT_TZ, "yyyy. M. d.")}${showRental && reservationHistory.length ? ` · 예약 ${reservationHistory.length}건` : ""}`}
         meta={customer.tags.length > 0 ? customer.tags.map((t) => <span key={t} className={PILL}>{t}</span>) : undefined}
         actions={
-          canWrite ? (
+          showRental && canWrite ? (
             <Link href={newReservationHref}>
               <Button className="w-full">
                 <Plus size={15} aria-hidden />새 예약
@@ -93,6 +96,7 @@ export function CustomerDetail({
         }
       />
       {/* 요약 줄: 건수·상태만. 금액(미수·보증금)은 우측 "미수·보증금" 카드가 단일 출처라 여기서 되풀이하지 않는다. */}
+      {showRental && (
       <SummaryStrip
         items={[
           { label: "예약 이력", value: `${reservationHistory.length}건` },
@@ -101,8 +105,10 @@ export function CustomerDetail({
           { label: "최근 치수 기록", value: latest ? formatInTz(latest.measuredAt, DEFAULT_TZ, "yyyy. M. d.") : "없음", tone: latest ? "default" : "muted" },
         ]}
       />
+      )}
     <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
     <div className="flex flex-col gap-4 lg:col-span-8">
+      {showRental && (
       <Card className="p-4 sm:p-5">
         <CardHead title="예약 이력" description="확정 연결된 예약과 이름으로 추정 연결된 예약을 함께 보여줍니다." />
         {reservationHistory.length === 0 ? (
@@ -118,12 +124,11 @@ export function CustomerDetail({
             }
           />
         ) : (
-          <div className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:-mx-5 sm:px-5" tabIndex={0} role="region" aria-label="예약 이력 표(가로 스크롤)">
-            <table className={`${TABLE} min-w-[720px]`}>
+          <ScrollTable label="예약 이력 표(가로 스크롤)">
+            <table className={`${TABLE} min-w-[520px]`}>
               <thead>
                 <tr className={THEAD}>
-                  <th className={TH}>예약번호</th>
-                  <th className={TH}>대여기간</th>
+                  <th className={TH}>예약번호 · 대여기간</th>
                   <th className={TH}>상태</th>
                   <th className={`${TH} text-right`}>금액</th>
                   <th className={`${TH} text-right`}>잔액(미수)</th>
@@ -137,16 +142,18 @@ export function CustomerDetail({
                     onClick={() => router.push(`/w/${businessId}/reservations/${r.id}`)}
                     className={`${TR_CLICK} h-[48px]`}
                   >
-                    <td className={`${TD} font-mono text-[11.5px] text-t3`}>
-                      {r.reservationNo}
-                      {r.linkKind === "guessed" && (
-                        <span className="ml-1.5 rounded-[4px] bg-sf3 px-1.5 py-0.5 font-sans text-[10.5px] font-medium text-t3">
-                          이름으로 추정 연결됨
-                        </span>
-                      )}
-                    </td>
-                    <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>
-                      {formatInTz(r.periodStart, DEFAULT_TZ, "yyyy.MM.dd")} ~ {formatInTz(r.periodEnd, DEFAULT_TZ, "yyyy.MM.dd")}
+                    <td className={`${TD} whitespace-nowrap`}>
+                      <span className="block font-mono text-[length:var(--fs-meta)] text-t3">
+                        {r.reservationNo}
+                        {r.linkKind === "guessed" && (
+                          <span className="ml-1.5 rounded-[4px] bg-sf3 px-1.5 py-0.5 font-sans text-[length:var(--fs-meta)] font-medium text-t3">
+                            이름으로 추정 연결됨
+                          </span>
+                        )}
+                      </span>
+                      <span className="block tabular-nums text-t2">
+                        {formatInTz(r.periodStart, DEFAULT_TZ, "yyyy.MM.dd")} ~ {formatInTz(r.periodEnd, DEFAULT_TZ, "yyyy.MM.dd")}
+                      </span>
                     </td>
                     <td className={TD}>
                       <Badge kind={RESERVATION_STATUS_BADGE[r.status]}>{RESERVATION_STATUS_LABEL[r.status]}</Badge>
@@ -164,15 +171,16 @@ export function CustomerDetail({
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollTable>
         )}
       </Card>
+      )}
 
       {canReadPii ? (
         <Card className="p-4 sm:p-5">
           <CardHead
             title="고객 신체 치수"
-            description="이 고객의 몸 치수 기록입니다. 대여 의류의 실측(개체 실측)은 상품·개체 화면에서 따로 관리합니다."
+            description={showRental ? "이 고객의 몸 치수 기록입니다. 대여 의류의 실측(개체 실측)은 상품·개체 화면에서 따로 관리합니다." : "이 고객의 몸 치수 기록입니다."}
             action={
               canWrite ? (
                 <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
@@ -191,7 +199,7 @@ export function CustomerDetail({
             <div className="flex flex-col gap-3">
               <div className="rounded-[var(--r-md)] border border-[var(--accent)] bg-[var(--accent-soft)] p-3.5">
                 {/* ponytail: toLocaleString("ko-KR") → formatInTz(ICU 오전/오후 불일치로 인한 hydration 오류 방지). */}
-                <p className="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-[var(--accent-ink)]"><Ruler size={13} aria-hidden />최신 기록 · {formatInTz(latest.measuredAt, DEFAULT_TZ, "yyyy. M. d. HH:mm")}</p>
+                <p className="mb-2 flex items-center gap-1.5 text-[length:var(--fs-meta)] font-bold text-[var(--accent-ink)]"><Ruler size={13} aria-hidden />최신 기록 · {formatInTz(latest.measuredAt, DEFAULT_TZ, "yyyy. M. d. HH:mm")}</p>
                 <MeasurementValues values={latest.values} />
                 {latest.note && <p className="mt-1.5 text-[12px] text-t2">메모: {latest.note}</p>}
               </div>
@@ -231,7 +239,7 @@ export function CustomerDetail({
     </div>
 
     <div className="flex flex-col gap-4 lg:col-span-4">
-      {money && (
+      {showRental && money && (
         <Card className={"p-4 sm:p-5 " + (money.hasOutstanding ? "border-[var(--et)]" : "")}>
           <CardHead title="미수·보증금" description={money.masked ? "금액은 매출·정산 조회 권한이 있어야 보입니다." : `진행 중 예약 ${money.openReservations}건`} />
           {money.masked ? (
@@ -242,12 +250,12 @@ export function CustomerDetail({
           ) : (
             <dl className="grid grid-cols-2 gap-3 text-[length:var(--fs-body)]">
               <div>
-                <dt className="text-[11.5px] text-t3">미수금 합계</dt>
+                <dt className="text-[length:var(--fs-meta)] text-t3">미수금 합계</dt>
                 <dd className={"mt-0.5 text-[16px] font-semibold tabular-nums " + (money.hasOutstanding ? "text-et" : "text-t")}>{formatKRW(money.outstandingTotal)}</dd>
-                <dd className="text-[11px] text-t3">{money.reservationsWithOutstanding}건</dd>
+                <dd className="text-[length:var(--fs-meta)] text-t3">{money.reservationsWithOutstanding}건</dd>
               </div>
               <div>
-                <dt className="text-[11.5px] text-t3">보관 보증금</dt>
+                <dt className="text-[length:var(--fs-meta)] text-t3">보관 보증금</dt>
                 <dd className="mt-0.5 text-[16px] font-semibold tabular-nums text-t">{formatKRW(money.depositHeldTotal)}</dd>
               </div>
             </dl>
@@ -261,27 +269,27 @@ export function CustomerDetail({
         <CardHead title="기본 정보" />
         <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-[length:var(--fs-body)] sm:grid-cols-2 lg:grid-cols-1">
           <div>
-            <dt className="text-[11.5px] text-t3">전화번호</dt>
+            <dt className="text-[length:var(--fs-meta)] text-t3">전화번호</dt>
             <dd className="mt-0.5 tabular-nums text-t">
               {customer.phone ? customer.phone : customer.hasPhone === false ? <span className="text-t3">등록 없음</span> : <span className="inline-flex items-center gap-1 text-t3"><Lock size={11} aria-hidden /> 비공개(권한 필요)</span>}
             </dd>
           </div>
           <div>
-            <dt className="text-[11.5px] text-t3">이메일</dt>
+            <dt className="text-[length:var(--fs-meta)] text-t3">이메일</dt>
             <dd className="mt-0.5 break-all text-t">
               {customer.email ? customer.email : customer.hasEmail === false ? <span className="text-t3">등록 없음</span> : <span className="inline-flex items-center gap-1 text-t3"><Lock size={11} aria-hidden /> 비공개(권한 필요)</span>}
             </dd>
           </div>
           <div>
-            <dt className="text-[11.5px] text-t3">태그</dt>
+            <dt className="text-[length:var(--fs-meta)] text-t3">태그</dt>
             <dd className="mt-0.5 text-t">{customer.tags.join(", ") || <span className="text-t3">없음</span>}</dd>
           </div>
           <div>
-            <dt className="text-[11.5px] text-t3">등록일</dt>
+            <dt className="text-[length:var(--fs-meta)] text-t3">등록일</dt>
             <dd className="mt-0.5 tabular-nums text-t">{formatInTz(customer.createdAt, DEFAULT_TZ, "yyyy. M. d.")}</dd>
           </div>
           <div className="sm:col-span-2 lg:col-span-1">
-            <dt className="text-[11.5px] text-t3">메모</dt>
+            <dt className="text-[length:var(--fs-meta)] text-t3">메모</dt>
             <dd className="mt-0.5 whitespace-pre-wrap text-t">{customer.memo || <span className="text-t3">없음</span>}</dd>
           </div>
         </dl>

@@ -5,11 +5,21 @@ import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils/cn";
 import type { CalendarEvent } from "@/lib/domain/calendar-shared";
 import { EventChip } from "./EventChip";
-import { groupEventsByDay } from "./shared";
+import { groupEventsByDay, shortHolidayLabel } from "./shared";
 import { useHolidayMap } from "@/lib/holidays";
 
 const WEEKDAY_HEADERS = ["월", "화", "수", "목", "금", "토", "일"];
 const MAX_VISIBLE = 3;
+// 휴대폰(<640)은 칩이 2줄(28px+)이라 한 칸 2개까지만 보이고 나머지는 "+N개 더". 달 전체 높이를 보이는 영역의 1.3배 안으로 묶는다. D24
+const MAX_VISIBLE_MOBILE = 2;
+// html{font-size:14px} 라 h-6 은 21px 였다 — px 로 24px(WCAG 2.5.8 최소). 터치는 칸 전체가 목표라 숫자는 같은 크기.
+const DAY_NUMBER_CLASS = "flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-[12px]";
+function dayNumberTone(isToday: boolean, isHoliday: boolean, inMonth: boolean): string {
+  return cn(
+    isToday ? "bg-[var(--accent-strong)] font-semibold text-[var(--accent-contrast)]" : isHoliday ? "text-et" : "text-t2",
+    !inMonth && "text-t3"
+  );
+}
 
 export function MonthView({
   days,
@@ -93,14 +103,15 @@ export function MonthView({
 
   return (
     <div className="flex h-full flex-col" role="grid" aria-label="월간 달력">
-      <div className="grid grid-cols-7 border-b border-[var(--bd)] text-center text-[11.5px] font-medium text-t3" role="row">
+      <div className="grid grid-cols-7 border-b border-[var(--bd)] text-center text-[12px] font-medium text-t3" role="row">
         {WEEKDAY_HEADERS.map((w) => (
           <div key={w} className="py-2" role="columnheader">
             {w}
           </div>
         ))}
       </div>
-      <div className="grid flex-1 grid-cols-7 grid-rows-6">
+      {/* D24: 휴대폰은 행 높이를 내용 기준(auto, 칸 최소 92px)으로 — 일정 없는 주까지 가장 높은 주와 같은 높이가 되지 않는다. sm+ 는 기존 6등분. */}
+      <div className="grid flex-1 grid-cols-7 sm:grid-rows-6">
         {weeks.map((week, wi) => (
         <div key={wi} role="row" className="contents">
         {week.map((dateKey, di) => {
@@ -111,6 +122,7 @@ export function MonthView({
           const dayEvents = byDay.get(dateKey) ?? [];
           const visible = dayEvents.slice(0, MAX_VISIBLE);
           const overflow = dayEvents.length - visible.length;
+          const overflowMobile = dayEvents.length - MAX_VISIBLE_MOBILE;
           const hasEvents = dayEvents.length > 0;
           const holidayLabel = holidayMap[dateKey];
           const dayLabel = `${hasEvents || !canCreate ? `${dateKey} 하루 보기로 이동` : `${dateKey} 일정 등록`}${holidayLabel ? `, ${holidayLabel}` : ""}`;
@@ -142,46 +154,63 @@ export function MonthView({
                 "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
               )}
             >
-              {/* CLS: 공휴일 이름(useHolidayMap 비동기)은 날짜 숫자와 같은 줄에 둔다 — 도착해도 칸 높이가 안 변한다. */}
-              <div className="flex h-[24px] shrink-0 items-center gap-1 [@media(pointer:coarse)]:h-[28px]">
+              {/* CLS: 공휴일 이름(useHolidayMap 비동기)이 도착해도 칸 높이가 안 변하게 자리를 미리 잡는다.
+                  sm+ : 날짜 옆 한 줄, 좁으면 두 줄까지(행 최소 28px = 14px×2 라 두 줄이 돼도 높이 불변).
+                  <640: 칸 안쪽 폭이 약 44px 라 날짜 아래 전폭 두 줄(28px 고정 슬롯, 비어도 유지). D1·D11 */}
+              <div className="flex min-h-[28px] shrink-0 flex-wrap items-center gap-x-1">
+                {/* 마우스: 날짜 숫자가 버튼(24px). 터치: 칸 전체(≥44px)가 같은 동작이라 28px 버튼을 두지 않고 숫자만 보여 준다. D19 */}
                 <button
                   type="button"
                   onClick={() => activateDay(idx)}
-                  className={cn(
-                    // html{font-size:14px} 라 h-6 은 21px 였다 — px 로 24px(WCAG 2.5.8 최소), 터치 화면은 28px(칸 전체가 같은 동작).
-                    "flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-[12px] [@media(pointer:coarse)]:h-[28px] [@media(pointer:coarse)]:w-[28px]",
-                    isToday ? "bg-[var(--accent-strong)] font-semibold text-[var(--accent-contrast)]" : holidayLabel ? "text-et" : "text-t2",
-                    !inMonth && "text-t3"
-                  )}
+                  className={cn(DAY_NUMBER_CLASS, "[@media(pointer:coarse)]:hidden", dayNumberTone(isToday, !!holidayLabel, inMonth))}
                   aria-label={dayLabel}
                 >
                   {Number(dateKey.slice(8, 10))}
                 </button>
-                {holidayLabel && (
-                  <span className="min-w-0 truncate text-[11.5px] font-medium leading-tight text-et" title={holidayLabel}>
-                    {holidayLabel}
-                  </span>
-                )}
+                <span className={cn(DAY_NUMBER_CLASS, "hidden [@media(pointer:coarse)]:flex", dayNumberTone(isToday, !!holidayLabel, inMonth))} aria-hidden>
+                  {Number(dateKey.slice(8, 10))}
+                </span>
+                <span
+                  className="line-clamp-2 min-w-0 flex-1 break-keep text-[12px] font-medium leading-[14px] text-et [overflow-wrap:anywhere] max-sm:h-[28px] max-sm:basis-full"
+                  title={holidayLabel}
+                >
+                  {holidayLabel && (
+                    <>
+                      <span className="sm:hidden">{shortHolidayLabel(holidayLabel)}</span>
+                      <span className="max-sm:hidden">{holidayLabel}</span>
+                    </>
+                  )}
+                </span>
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
-                {visible.map((ev) => (
-                  <EventChip
-                    key={ev.id}
-                    event={ev}
-                    eventKinds={eventKinds}
-                    tz={tz}
-                    selected={ev.id === selectedId}
-                    onClick={() => onSelectEvent(ev.id)}
-                    canDrag={canCreate}
-                  />
+                {visible.map((ev, vi) => (
+                  <div key={ev.id} className={cn("min-w-0", vi >= MAX_VISIBLE_MOBILE && "max-sm:hidden")}>
+                    <EventChip
+                      event={ev}
+                      eventKinds={eventKinds}
+                      tz={tz}
+                      selected={ev.id === selectedId}
+                      onClick={() => onSelectEvent(ev.id)}
+                      canDrag={canCreate}
+                    />
+                  </div>
                 ))}
                 {overflow > 0 && (
                   <button
                     type="button"
                     onClick={() => onOpenDay(dateKey)}
-                    className="min-h-[24px] text-left text-[11.5px] font-medium text-t3 hover:text-t2"
+                    className="min-h-[24px] text-left text-[12px] font-medium text-t3 hover:text-t2 max-sm:hidden"
                   >
                     +{overflow}개 더
+                  </button>
+                )}
+                {overflowMobile > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenDay(dateKey)}
+                    className="min-h-[24px] text-left text-[12px] font-medium text-t3 hover:text-t2 sm:hidden"
+                  >
+                    +{overflowMobile}
                   </button>
                 )}
               </div>

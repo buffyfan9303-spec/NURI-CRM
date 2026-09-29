@@ -221,7 +221,7 @@ export function ReservationList({
                       const v = rowView(r);
                       return (
                         <tr key={r.id} onClick={() => open(r)} className={`${TR_CLICK} h-[56px]`}>
-                          <td className={`${TD} font-mono text-[11.5px] text-t3`}>{reservationNo(r.id)}</td>
+                          <td className={`${TD} font-mono text-[length:var(--fs-meta)] text-t3`}>{reservationNo(r.id)}</td>
                           <td className={TD}>
                             {/* 행 전체가 클릭 영역이지만 실제 링크는 이름 셀 하나(§5.3) — 키보드·스크린리더가 행을 열 수 있다. */}
                             <Link
@@ -233,12 +233,12 @@ export function ReservationList({
                             >
                               {v.customer}
                             </Link>
-                            <div className="text-[11.5px] tabular-nums text-t3">{r.customerPhone ?? ""}</div>
+                            <div className="text-[length:var(--fs-meta)] tabular-nums text-t3">{r.customerPhone ?? ""}</div>
                           </td>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.period}</td>
                           <td className={`${TD} text-t2`}>
                             <span className="block max-w-[280px] truncate text-t" title={v.products}>{v.products}</span>
-                            <div className="text-[11.5px] text-t3">{v.itemsSummary}</div>
+                            <div className="text-[length:var(--fs-meta)] text-t3">{v.itemsSummary}</div>
                           </td>
                           <td className={TD}>{v.badge}</td>
                           <td className={`${TD} whitespace-nowrap ${v.nextClass}`}>{v.next}</td>

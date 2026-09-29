@@ -45,7 +45,7 @@ export function AuthField({
       )}
       {children}
       {hint && (
-        <p id={hintId} className="mt-1.5 text-[11.5px] leading-snug text-auth-tx2">
+        <p id={hintId} className="mt-1.5 text-[length:var(--fs-meta)] leading-snug text-auth-tx2">
           {hint}
         </p>
       )}
@@ -80,10 +80,10 @@ export function FloatLabel({
       htmlFor={htmlFor}
       style={{ left: inset }}
       className={cn(
-        "pointer-events-none absolute top-[8px] translate-y-0 text-[11.5px] font-medium leading-none text-auth-tx2 transition-all duration-150",
+        "pointer-events-none absolute top-[8px] translate-y-0 text-[length:var(--fs-meta)] font-medium leading-none text-auth-tx2 transition-all duration-150",
         "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-[15px] peer-placeholder-shown:font-normal",
-        "peer-focus:top-[8px] peer-focus:translate-y-0 peer-focus:text-[11.5px] peer-focus:font-medium",
-        "peer-autofill:top-[8px] peer-autofill:translate-y-0 peer-autofill:text-[11.5px]"
+        "peer-focus:top-[8px] peer-focus:translate-y-0 peer-focus:text-[length:var(--fs-meta)] peer-focus:font-medium",
+        "peer-autofill:top-[8px] peer-autofill:translate-y-0 peer-autofill:text-[length:var(--fs-meta)]"
       )}
     >
       {label}

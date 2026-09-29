@@ -54,7 +54,7 @@ function FeePolicyCard({ businessId, initial }: { businessId: string; initial: F
   return (
     <Card className="p-5">
       <h2 className="mb-1 text-[13.5px] font-semibold text-t">연체료 기준</h2>
-      <p className="mb-3 text-[11.5px] text-t3">
+      <p className="mb-3 text-[length:var(--fs-meta)] text-t3">
         반납 예정 시각을 넘긴 예약의 연체료를 계산하는 기준입니다. 저장하면 새 버전이 생기고, 이미 확정된 예약은 확정 당시 기준을 그대로 씁니다.
         {saved && <span className="block">현재 적용: {saved.name} · {formatInTz(saved.effectiveFrom, DEFAULT_TZ, "yyyy. M. d. HH:mm")}부터 · 일 {formatKRW(saved.lateFeePerDay)}{saved.lateFeeRate != null ? ` · 요율 ${Math.round(saved.lateFeeRate * 1000) / 10}%` : ""} · 유예 {saved.graceHours}시간</span>}
         {!saved && <span className="block text-wt">아직 기준이 없습니다 — 연체료 계산이 0원으로 나옵니다.</span>}
@@ -125,7 +125,7 @@ function CancelPolicyCard({ businessId, initial }: { businessId: string; initial
   return (
     <Card className="p-5">
       <h2 className="mb-1 text-[13.5px] font-semibold text-t">취소 위약금 단계표</h2>
-      <p className="mb-3 text-[11.5px] text-t3">
+      <p className="mb-3 text-[length:var(--fs-meta)] text-t3">
         확정 예약을 취소할 때 남은 일수에 따라 대여료의 몇 %를 위약금(손님 사정)·배상금(매장 사정)으로 할지 정합니다.
         기본값은 공정위 소비자분쟁해결기준(단기 물품대여서비스업)입니다. {sameAsDefault ? "저장된 규정이 공정위 기본 기준과 동일합니다." : isDefault ? "지금은 기본값을 쓰고 있습니다." : "사업장 규정이 적용 중입니다."}
       </p>

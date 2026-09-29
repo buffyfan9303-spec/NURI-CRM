@@ -40,7 +40,7 @@ export default function CalendarLoading() {
       <div className="flex min-h-0 flex-1">
         <div className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
           <div className="flex h-full flex-col">
-            <div className="grid grid-cols-7 border-b border-[var(--bd)] text-center text-[11.5px] font-medium text-t3">
+            <div className="grid grid-cols-7 border-b border-[var(--bd)] text-center text-[length:var(--fs-meta)] font-medium text-t3">
               {WEEKDAY_HEADERS.map((w) => (
                 <div key={w} className="py-2">
                   {w}

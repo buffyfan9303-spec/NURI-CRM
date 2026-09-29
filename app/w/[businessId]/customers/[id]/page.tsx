@@ -11,6 +11,7 @@ import { PageBody } from "@/components/ui/PageHeader";
 import { RetryButton } from "@/components/rental/listkit";
 import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { HintedScroll } from "@/components/ui/ScrollHint";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { accessMessage } from "@/lib/auth/access";
 import { getCustomer, listCustomerMeasurements, listReservations, getReservationBalance } from "@/lib/domain/rental";
@@ -97,12 +98,14 @@ export default async function CustomerDetailPage({
           measurementsError={measurements && !measurements.ok ? measurements.message : null}
           reservationHistory={[]}
           money={null}
+          showRental={false}
         />
         <Card className="mt-4 p-5">
           <h2 className="mb-3 text-[14px] font-semibold text-t">주문 이력</h2>
           {ordersRes.data.length === 0 ? (
             <EmptyState title="주문 이력이 없습니다." />
           ) : (
+            <HintedScroll>
             <div className="overflow-x-auto rounded-[var(--r-md)] border border-[var(--bd)]">
               <table className="w-full min-w-[560px] border-collapse text-[12.5px]">
                 <thead>
@@ -119,7 +122,7 @@ export default async function CustomerDetailPage({
                   {ordersRes.data.map((o) => (
                     <tr key={o.id} className="border-b border-[var(--bd)] last:border-b-0">
                       <td className="px-2.5 py-2">
-                        <Link href={`/w/${access.businessId}/orders/${o.id}`} className="font-medium text-[var(--accent-ink)] hover:underline">
+                        <Link href={`/w/${access.businessId}/orders/${o.id}`} className="inline-flex min-h-[32px] items-center font-medium text-[var(--accent-ink)] hover:underline [@media(pointer:coarse)]:min-h-[44px]">
                           {o.orderNo}
                         </Link>
                       </td>
@@ -133,6 +136,7 @@ export default async function CustomerDetailPage({
                 </tbody>
               </table>
             </div>
+            </HintedScroll>
           )}
         </Card>
       </PageBody>

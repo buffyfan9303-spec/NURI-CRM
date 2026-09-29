@@ -48,10 +48,10 @@ function SettlementSummary({ s }: { s: SettlementResult }) {
   if (s.masked) return <p className="text-[length:var(--fs-meta)] text-t3">정산 금액은 revenue.read 권한이 있는 사용자에게만 표시됩니다.</p>;
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[length:var(--fs-meta)] sm:grid-cols-4">
-      <div><dt className="text-[11.5px] text-t3">보증금 차감</dt><dd className="mt-0.5 tabular-nums text-t">{formatKRW(s.applied ?? 0)}</dd></div>
-      <div><dt className="text-[11.5px] text-t3">환불</dt><dd className="mt-0.5 tabular-nums font-semibold text-okt">{formatKRW(s.refunded ?? 0)}</dd></div>
-      <div><dt className="text-[11.5px] text-t3">남은 보증금</dt><dd className="mt-0.5 tabular-nums text-t">{formatKRW(s.remainingDeposit ?? 0)}</dd></div>
-      <div><dt className="text-[11.5px] text-t3">추가 청구</dt><dd className={"mt-0.5 tabular-nums " + ((s.additionalDue ?? 0) > 0 ? "font-semibold text-et" : "text-t")}>{formatKRW(s.additionalDue ?? 0)}</dd></div>
+      <div><dt className="text-[length:var(--fs-meta)] text-t3">보증금 차감</dt><dd className="mt-0.5 tabular-nums text-t">{formatKRW(s.applied ?? 0)}</dd></div>
+      <div><dt className="text-[length:var(--fs-meta)] text-t3">환불</dt><dd className="mt-0.5 tabular-nums font-semibold text-okt">{formatKRW(s.refunded ?? 0)}</dd></div>
+      <div><dt className="text-[length:var(--fs-meta)] text-t3">남은 보증금</dt><dd className="mt-0.5 tabular-nums text-t">{formatKRW(s.remainingDeposit ?? 0)}</dd></div>
+      <div><dt className="text-[length:var(--fs-meta)] text-t3">추가 청구</dt><dd className={"mt-0.5 tabular-nums " + ((s.additionalDue ?? 0) > 0 ? "font-semibold text-et" : "text-t")}>{formatKRW(s.additionalDue ?? 0)}</dd></div>
     </dl>
   );
 }
@@ -225,9 +225,9 @@ export function ReturnInspectionPanel({
             <section className="rounded-[var(--r-md)] bg-sf2 p-3">
               <h3 className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">3. 보증금 정산</h3>
               <dl className="mb-3 grid grid-cols-3 gap-2 text-[length:var(--fs-meta)]">
-                <div><dt className="text-[11.5px] text-t3">보증금 잔액</dt><dd className="tabular-nums text-t">{balance ? formatKRW(balance.depositBalance) : "-"}</dd></div>
-                <div><dt className="text-[11.5px] text-t3">기존 미수금</dt><dd className="tabular-nums text-t">{balance ? formatKRW(balance.outstanding) : "-"}</dd></div>
-                <div><dt className="text-[11.5px] text-t3">이번 청구 합계</dt><dd className="tabular-nums font-medium text-t">{formatKRW(claimTotal)}</dd></div>
+                <div><dt className="text-[length:var(--fs-meta)] text-t3">보증금 잔액</dt><dd className="tabular-nums text-t">{balance ? formatKRW(balance.depositBalance) : "-"}</dd></div>
+                <div><dt className="text-[length:var(--fs-meta)] text-t3">기존 미수금</dt><dd className="tabular-nums text-t">{balance ? formatKRW(balance.outstanding) : "-"}</dd></div>
+                <div><dt className="text-[length:var(--fs-meta)] text-t3">이번 청구 합계</dt><dd className="tabular-nums font-medium text-t">{formatKRW(claimTotal)}</dd></div>
               </dl>
               <label className="flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t2">
                 <input type="checkbox" checked={refundRemaining} onChange={(e) => setRefundRemaining(e.target.checked)} className="h-[18px] w-[18px] accent-[var(--accent-strong)]" />
@@ -507,7 +507,7 @@ export function ClaimsCard({
                   <td className={TD}><Badge kind={c.kind === "missing" ? "error" : c.kind === "damaged" ? "warning" : "info"}>{CLAIM_KIND_LABEL[c.kind]}</Badge></td>
                   <td className={TD}>
                     <span className="block max-w-[320px] truncate text-t" title={c.description}>{c.description}</span>
-                    {c.reason && <span className="block truncate text-[11.5px] text-t3">{c.reason}</span>}
+                    {c.reason && <span className="block truncate text-[length:var(--fs-meta)] text-t3">{c.reason}</span>}
                   </td>
                   <td className={`${TD} text-right tabular-nums text-t`}>{c.amount == null ? <span className="text-t3">비공개</span> : formatKRW(c.amount)}</td>
                   <td className={`${TD} whitespace-nowrap tabular-nums text-t3`}>{formatInTz(c.createdAt, DEFAULT_TZ, "yyyy. M. d.")}</td>

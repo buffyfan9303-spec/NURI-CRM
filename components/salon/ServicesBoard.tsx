@@ -68,7 +68,7 @@ export function ServicesBoard({ businessId, canWrite, services, className }: { b
                     <tr key={s.id} className={`${TR} h-[52px]`}>
                       <td className={TD}>
                         <CellName max={260}>{s.name}</CellName>
-                        {s.category && <span className="block text-[11.5px] text-t3">{s.category}</span>}
+                        {s.category && <span className="block text-[length:var(--fs-meta)] text-t3">{s.category}</span>}
                       </td>
                       <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{formatKRW(s.price)}</td>
                       <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t2`}>{s.durationMinutes}분</td>

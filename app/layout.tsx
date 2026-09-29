@@ -63,7 +63,7 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <head>
         {/* 전역 글꼴 SUIT Variable(OFL) — @font-face 는 globals.css. 첫 paint 글꼴 교체 깜빡임을 줄이려고 미리 받는다. */}
-        <link rel="preload" href="/fonts/SUIT-Variable.woff2" as="font" type="font/woff2" crossOrigin="" />
+        <link rel="preload" href="/fonts/SUIT-400-700-ui.woff2" as="font" type="font/woff2" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>

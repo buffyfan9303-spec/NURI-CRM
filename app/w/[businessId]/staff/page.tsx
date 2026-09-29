@@ -49,6 +49,7 @@ export default async function StaffPage({ params }: { params: { businessId: stri
         memberships={staff.memberships}
         roleTemplates={staff.roleTemplates}
         capLabels={CAP_LABEL}
+        industry={access.industry}
       />
     </div>
   );

@@ -181,7 +181,7 @@ export function EventFormModal({
               />
               {!allDay && (
                 <>
-                  <label className="flex min-w-0 flex-col gap-1 text-[11.5px] text-t3 sm:contents">
+                  <label className="flex min-w-0 flex-col gap-1 text-[length:var(--fs-meta)] text-t3 sm:contents">
                     <span className="sm:hidden">시작</span>
                     <input
                       type="time"
@@ -193,7 +193,7 @@ export function EventFormModal({
                     />
                   </label>
                   <span className="hidden items-center text-t3 sm:flex">–</span>
-                  <label className="flex min-w-0 flex-col gap-1 text-[11.5px] text-t3 sm:contents">
+                  <label className="flex min-w-0 flex-col gap-1 text-[length:var(--fs-meta)] text-t3 sm:contents">
                     <span className="sm:hidden">종료(선택)</span>
                     <input
                       type="time"

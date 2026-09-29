@@ -25,7 +25,7 @@ export function OptionsSummary({
       </div>
       {FACTORY_OPTION_GROUPS.filter((g) => g !== "일정/수량").map((g) => (
         <div key={g}>
-          <div className="mb-1 text-[11.5px] font-semibold text-t3">{g}</div>
+          <div className="mb-1 text-[length:var(--fs-meta)] font-semibold text-t3">{g}</div>
           <div className={dense ? "grid grid-cols-1 gap-x-3 gap-y-1 text-[12px]" : "grid grid-cols-1 gap-x-4 gap-y-1 text-[12.5px] [word-break:keep-all] min-[420px]:grid-cols-2 sm:grid-cols-3"}>
             {fieldsByGroup(g).map((f) => {
               const v = options[f.key];

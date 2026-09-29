@@ -171,9 +171,9 @@ export function CancelPenaltyButton({
               <section className="rounded-[var(--r-md)] bg-sf2 p-3">
                 <p className="mb-2 text-[length:var(--fs-meta)] text-t2">
                   사용 예정일 {formatInTz(quote.useDate, DEFAULT_TZ, "M. d.")} 기준 <span className="font-semibold text-t">{quote.daysBefore >= 0 ? `${quote.daysBefore}일 전` : `${-quote.daysBefore}일 지남`}</span>
-                  {quote.withinContractGrace && <span className="ml-1 rounded-[4px] bg-okb px-1.5 py-0.5 text-[11px] font-medium text-okt">계약 후 {quote.contractGraceHours}시간 이내 · 위약금 없음</span>}
+                  {quote.withinContractGrace && <span className="ml-1 rounded-[4px] bg-okb px-1.5 py-0.5 text-[length:var(--fs-meta)] font-medium text-okt">계약 후 {quote.contractGraceHours}시간 이내 · 위약금 없음</span>}
                   {" · "}적용 비율 <span className="font-semibold text-t">{quote.rate}%</span>
-                  {(quote.policyIsDefault || isDefaultPolicy(policy)) && <span className="ml-1 text-[11px] text-t3">(공정위 기본 기준)</span>}
+                  {(quote.policyIsDefault || isDefaultPolicy(policy)) && <span className="ml-1 text-[length:var(--fs-meta)] text-t3">(공정위 기본 기준)</span>}
                 </p>
                 {quote.masked ? (
                   <p className="text-[length:var(--fs-meta)] text-t3">금액은 매출·정산 조회 권한(revenue.read)이 있어야 표시됩니다.</p>
@@ -191,7 +191,7 @@ export function CancelPenaltyButton({
                 </label>
                 {useOverride && (
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <label className="flex flex-col gap-1 text-[11.5px] text-t2">
+                    <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2">
                       금액(원)
                       <input value={override} onChange={(e) => setOverride(e.target.value)} inputMode="numeric" placeholder={String(quote.computedAmount ?? 0)} className={CONTROL} />
                     </label>
@@ -203,7 +203,7 @@ export function CancelPenaltyButton({
                     <input type="checkbox" checked={limitToPaid} onChange={(e) => setLimitToPaid(e.target.checked)} className="mt-[3px] h-[18px] w-[18px] shrink-0 accent-[var(--accent-strong)]" />
                     <span>
                       받은 돈(보증금 제외) 한도까지만 공제
-                      <span className="block text-[11.5px] text-t3">체크 해제하면 부족분이 미수금으로 남아 미수금 보드에 뜹니다.</span>
+                      <span className="block text-[length:var(--fs-meta)] text-t3">체크 해제하면 부족분이 미수금으로 남아 미수금 보드에 뜹니다.</span>
                     </span>
                   </label>
                 )}
@@ -266,12 +266,12 @@ function QuoteSummary({ q }: { q: CancelQuote }) {
         <div key={r.k} className={"flex items-baseline justify-between gap-3 py-1 " + (r.sub ? "pl-3" : "")}>
           <dt className={r.sub ? "text-t2" : "font-medium text-t"}>
             {r.k}
-            {r.note && <span className="block text-[11px] text-t3">{r.note}</span>}
+            {r.note && <span className="block text-[length:var(--fs-meta)] text-t3">{r.note}</span>}
           </dt>
           <dd className={"shrink-0 tabular-nums " + (r.cls ?? (r.sub ? "text-t2" : "text-t"))}>{formatKRW(r.v)}</dd>
         </div>
       ))}
-      <div className="mt-1 border-t border-[var(--bd)] pt-1.5 text-[11px] text-t3">
+      <div className="mt-1 border-t border-[var(--bd)] pt-1.5 text-[length:var(--fs-meta)] text-t3">
         <dt className="sr-only">산정 근거</dt>
         <dd>{basis}{forfeited > 0 ? ` · 이미 몰수한 보증금 ${formatKRW(forfeited)}은 돌려주지 않습니다` : ""}</dd>
       </div>
@@ -296,7 +296,7 @@ function TierTable({ tiers, cause, active, isDefault }: { tiers: CancelTier[]; c
           ))}
         </tbody>
       </table>
-      <p className="mt-1 text-[11px] text-t3">계약 후 24시간 이내 취소는 0%. 남은 기간 = 사용 예정일 − 오늘(서버 기준). &lsquo;개월&rsquo;은 달력 기준입니다.</p>
+      <p className="mt-1 text-[length:var(--fs-meta)] text-t3">계약 후 24시간 이내 취소는 0%. 남은 기간 = 사용 예정일 − 오늘(서버 기준). &lsquo;개월&rsquo;은 달력 기준입니다.</p>
     </details>
   );
 }

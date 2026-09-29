@@ -245,7 +245,7 @@ export function CatalogView({
                               <td className="px-3 py-2"><Thumb src={u.photoUrl} code={u.unitCode} size={40} /></td>
                               <td className={TD}>
                                 <CellName max={240}>{p.name}</CellName>
-                                <div className="text-[11.5px] text-t3"><span className="font-mono">{p.code}</span> · {v.sku}</div>
+                                <div className="text-[length:var(--fs-meta)] text-t3"><span className="font-mono">{p.code}</span> · {v.sku}</div>
                               </td>
                               <td className={`${TD} font-mono text-t`}>
                                 {/* 행 전체가 클릭 영역, 실제 조작 요소는 개체코드 하나(§5.3) — 키보드로도 개체 시트를 연다. */}
@@ -451,7 +451,7 @@ function UnitDetailModal({
               <Button size="sm" variant="secondary" onClick={finishInspection} loading={busy}>검수 완료(대여가능으로)</Button>
             </div>
           )}
-          <p className="mt-2 text-[11.5px] text-t3">상태 변경은 상품·SKU 관리 섹션에서, 세탁·수선 등록은 아래 링크에서 처리합니다.</p>
+          <p className="mt-2 text-[length:var(--fs-meta)] text-t3">상태 변경은 상품·SKU 관리 섹션에서, 세탁·수선 등록은 아래 링크에서 처리합니다.</p>
           <Link href={`/w/${businessId}/care?unit=${u.id}`} className="mt-1 inline-flex items-center gap-1 text-[length:var(--fs-meta)] text-[var(--accent-ink)] underline underline-offset-2">
             <Wrench size={13} /> 세탁·수선 등록
           </Link>
@@ -471,7 +471,7 @@ function UnitDetailModal({
             <QrCode size={13} className="mr-1 inline" />
             {u.unitCode} · {p.code}
           </p>
-          <p className="max-w-[320px] text-center text-[11.5px] text-t3">인쇄하면 흰 여백과 검은 코드가 유지됩니다. 스캔 화면에서 이 코드로 개체를 조회할 수 있습니다.</p>
+          <p className="max-w-[320px] text-center text-[length:var(--fs-meta)] text-t3">인쇄하면 흰 여백과 검은 코드가 유지됩니다. 스캔 화면에서 이 코드로 개체를 조회할 수 있습니다.</p>
           <Button size="sm" variant="secondary" onClick={() => window.print()}>
             <Printer size={14} aria-hidden /> 라벨 인쇄
           </Button>
@@ -556,7 +556,7 @@ function ProductCard({
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[11.5px] text-t3">{product.code}</span>
+            <span className="font-mono text-[length:var(--fs-meta)] text-t3">{product.code}</span>
             <h3 className="text-[14px] font-semibold text-t">{product.name}</h3>
             <span className={PILL}>{product.category}</span>
             {!product.active && <span className="rounded-[6px] bg-sf3 px-1.5 py-0.5 text-[12px] text-t3">비활성</span>}

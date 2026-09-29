@@ -10,7 +10,7 @@ import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { accessMessage } from "@/lib/auth/access";
 import { listMyBusinesses } from "@/lib/auth/actions";
-import { INDUSTRY_DEFS } from "@/lib/industry/config";
+import { INDUSTRY_DEFS, buildingNav } from "@/lib/industry/config";
 import { WorkspaceShell } from "@/components/shell/WorkspaceShell";
 import { getAccess } from "./access";
 import { ROLE_LABEL } from "@/lib/auth/roles";
@@ -76,7 +76,9 @@ export default async function WorkspaceLayout({
   }
 
   const def = INDUSTRY_DEFS[access.industry];
-  const nav = def.nav.filter((item) => access.caps.includes(item.cap as (typeof access.caps)[number]));
+  // 건물: 세금계산서·민원·점검 메뉴는 선택 기능이 켜졌을 때만(buildingNav).
+  const baseNav = access.industry === "building" ? buildingNav(access.settings) : def.nav;
+  const nav = baseNav.filter((item) => access.caps.includes(item.cap as (typeof access.caps)[number]));
 
   const myBusinesses = bizList.ok ? bizList.businesses : [];
 

@@ -149,7 +149,7 @@ export default async function StatementPrintPage({ params }: { params: { busines
             <tbody>
               {s.items.map((i) => (
                 <tr key={i.itemId} className="border-b" style={{ borderColor: LINE }}>
-                  <td className="py-2 align-top">{i.productName}<span className="block text-[11.5px]" style={{ color: MUTED }}>{i.productCode}{i.unitCode ? ` · ${i.unitCode}` : ""} · {ITEM_STATUS_LABEL[i.itemStatus as ItemStatus] ?? i.itemStatus}</span></td>
+                  <td className="py-2 align-top">{i.productName}<span className="block text-[length:var(--fs-meta)]" style={{ color: MUTED }}>{i.productCode}{i.unitCode ? ` · ${i.unitCode}` : ""} · {ITEM_STATUS_LABEL[i.itemStatus as ItemStatus] ?? i.itemStatus}</span></td>
                   <td className="py-2 align-top">{i.color && i.size ? `${i.color}/${i.size}` : "-"}</td>
                   <td className="py-2 text-right align-top tabular-nums">{i.qty}</td>
                   <td className="py-2 text-right align-top tabular-nums">{formatKRW(i.fee)}</td>
@@ -241,7 +241,7 @@ export default async function StatementPrintPage({ params }: { params: { busines
           </p>
         </section>
 
-        <footer className="mt-10 border-t pt-4 text-[11.5px]" style={{ borderColor: LINE, color: MUTED }}>
+        <footer className="mt-10 border-t pt-4 text-[length:var(--fs-meta)]" style={{ borderColor: LINE, color: MUTED }}>
           <p>보증금은 대여료와 별도로 보관되며 반납·검수 후 손상·연체·미수를 차감하고 돌려드립니다. 취소선 항목은 정정된 기록입니다.</p>
           <p className="mt-1">문의: {s.business.name}</p>
         </footer>

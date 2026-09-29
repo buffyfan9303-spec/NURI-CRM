@@ -155,7 +155,7 @@ export function OrderDetail({
 function Amount({ label, value, bold }: { label: string; value: number; bold?: boolean }) {
   return (
     <div>
-      <div className="text-[11px] text-t3">{label}</div>
+      <div className="text-[length:var(--fs-meta)] text-t3">{label}</div>
       <div className={`whitespace-nowrap tabular-nums ${bold ? "text-[16px] font-bold text-t" : "text-[13px] text-t"}`}>{formatKRW(value)}</div>
     </div>
   );
@@ -257,7 +257,7 @@ function ScheduleCard({
 function Info({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <div className="text-[11px] text-t3">{label}</div>
+      <div className="text-[length:var(--fs-meta)] text-t3">{label}</div>
       <div className="text-t">{value ?? "-"}</div>
     </div>
   );

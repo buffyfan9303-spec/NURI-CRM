@@ -8,6 +8,7 @@
  *  3. "권한 부족 / 서버 장애 / 정상 빈 결과" 는 서로 다른 세 가지다.
  *     호출부가 구분해 처리할 수 있도록 판별 유니온으로 돌려준다.
  */
+import { cache } from "react";
 import { getAuthUser } from "@/lib/auth/user";
 import { isTransientAuthError } from "@/lib/auth/transient";
 import type { Industry } from "@/lib/industry/config";
@@ -25,7 +26,12 @@ export type Cap =
   | "export"
   | "staff.manage"
   | "attendance.self"
-  | "attendance.all";
+  | "attendance.all"
+  // 0031 건물 관리비: 금액 확정·발행만 신규 cap(role_template 데이터. owner 전부, manager configure+allocate, accountant approve+allocate+issue)
+  | "billing.configure"
+  | "billing.approve"
+  | "payment.allocate"
+  | "tax.issue";
 
 export interface AccessOk {
   ok: true;
@@ -64,7 +70,22 @@ export async function checkAccess(
   if (!UUID_RE.test(businessId)) {
     return { ok: false, reason: "not-member", businessId };
   }
+  const r = await loadAccess(businessId);
+  if (!r.ok) return r;
+  if (cap && !r.caps.includes(cap)) {
+    return { ok: false, reason: "forbidden", businessId, missing: cap, caps: r.caps };
+  }
+  return r;
+}
 
+/**
+ * 사업장 단위 조회(auth → my_caps·businesses·memberships)를 **요청 단위**로 캐시한다(React.cache).
+ * 한 요청 안에서 layout → page → 도메인 함수(listEvents 등 17개 파일 25곳)가 각자 checkAccess/requireCap 을 부르면
+ * 같은 3개 쿼리가 최대 4번 직렬로 반복됐다(2026-09-29 실측: 캘린더 문서 1회 = my_caps 4회, 왕복 단계 +1~2).
+ * 다음 요청부터는 새로 읽으므로 "권한은 항상 다시 읽는다"(§5) 와 충돌하지 않는다 — cap 판정은 캐시 밖에서 한다.
+ * ⚠ 같은 요청 안에서 권한을 바꾸고 곧바로 다시 판정하면 옛 caps 를 본다(반영은 다음 요청부터). 현재 그런 경로는 없다(소유자 cam-db 승인 조건 1).
+ */
+const loadAccess = cache(async (businessId: string): Promise<AccessResult> => {
   // 요청 단위 캐시 — 같은 요청의 layout/page/액션이 auth 서버를 다시 두드리지 않는다.
   const { sb, user, error: authErr } = await getAuthUser();
   if (authErr || !user) {
@@ -100,10 +121,6 @@ export async function checkAccess(
     return { ok: false, reason: "not-member", businessId };
   }
 
-  if (cap && !caps.includes(cap)) {
-    return { ok: false, reason: "forbidden", businessId, missing: cap, caps };
-  }
-
   // 역할은 화면 표시용. 권한 판정에는 절대 쓰지 않는다(caps 만 쓴다).
   const mem = memRes.data;
 
@@ -119,7 +136,7 @@ export async function checkAccess(
     caps,
     settings: (biz.settings as Record<string, unknown>) ?? {},
   };
-}
+});
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -179,4 +196,8 @@ export const CAP_LABEL: Record<Cap, string> = {
   "staff.manage": "직원·권한 관리",
   "attendance.self": "본인 근태",
   "attendance.all": "전 직원 근태",
+  "billing.configure": "관리비 항목·배분 설정",
+  "billing.approve": "월 금액 확정·정정 승인",
+  "payment.allocate": "입금 배정·역분개",
+  "tax.issue": "세무 승인·세금계산서 발행",
 };

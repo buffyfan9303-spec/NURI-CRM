@@ -34,7 +34,7 @@ export function ResultCard({ outcome, mode }: { outcome: ScanOutcome | null; mod
     return (
       <div className="flex items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-ib px-3.5 py-2.5 text-[12.5px] text-it">
         <Badge kind="info">이미 담김</Badge>
-        <span className="font-mono text-[11.5px]">{outcome.code}</span>
+        <span className="font-mono text-[length:var(--fs-meta)]">{outcome.code}</span>
         <span>이미 목록에 있는 코드입니다. 수량을 늘리려면 목록의 + 버튼을 누르거나 코드를 직접 입력하세요.</span>
       </div>
     );
@@ -66,7 +66,7 @@ export function ResultCard({ outcome, mode }: { outcome: ScanOutcome | null; mod
       <div className="flex flex-col gap-1 rounded-[var(--r-md)] border border-[var(--bd)] bg-ib px-3.5 py-2.5 text-[12.5px] text-it">
         <div className="flex items-center gap-2">
           <Badge kind="info">텍스트</Badge>
-          <span className="break-all font-mono text-[11.5px]">{r.label}</span>
+          <span className="break-all font-mono text-[length:var(--fs-meta)]">{r.label}</span>
         </div>
         {isUrl && <span>URL 형태입니다. 자동으로 열지 않았습니다 — 필요하면 직접 복사해 사용하세요.</span>}
       </div>
@@ -94,7 +94,7 @@ export function ResultCard({ outcome, mode }: { outcome: ScanOutcome | null; mod
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge kind={badgeKind}>{r.staged ? (outcome.again ? "다시 담음(수량 +1)" : "목록에 담김") : KIND_LABEL[r.kind]}</Badge>
         <span className="font-semibold">{r.label}</span>
-        {r.status && <span className="rounded-[var(--r-sm)] bg-sf2 px-1.5 py-0.5 text-[11px] text-t2">{r.status}</span>}
+        {r.status && <span className="rounded-[var(--r-sm)] bg-sf2 px-1.5 py-0.5 text-[length:var(--fs-meta)] text-t2">{r.status}</span>}
       </div>
       {warning && <span>{warning}</span>}
     </div>

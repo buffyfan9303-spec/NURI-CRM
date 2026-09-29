@@ -9,7 +9,8 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Command } from "cmdk";
 import { useRouter } from "next/navigation";
-import { Search, X, Loader2, CircleAlert, ArrowRight, navIcon } from "@/lib/icons";
+import { Search, X, Loader2, CircleAlert, ArrowRight } from "@/lib/icons";
+import { navIcon } from "@/lib/icons-nav";
 import type { IndustryNav } from "@/lib/industry/config";
 import { searchWorkspace } from "@/lib/search/actions";
 import type { SearchGroup } from "@/lib/search/types";
@@ -20,7 +21,7 @@ type Status = "idle" | "loading" | "ok" | "error";
 
 const ITEM =
   "flex min-h-[44px] cursor-pointer select-none items-center gap-2.5 rounded-[var(--r-sm)] px-3 text-[13.5px] text-t outline-none data-[selected=true]:bg-[var(--accent-soft)] data-[selected=true]:text-[var(--accent-ink)]";
-const HEADING = "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2.5 [&_[cmdk-group-heading]]:text-[11.5px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-t3";
+const HEADING = "[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:pt-2.5 [&_[cmdk-group-heading]]:text-[length:var(--fs-meta)] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-t3";
 
 export function CommandPalette({
   open,
@@ -171,7 +172,7 @@ export function CommandPalette({
           )}
         </Command.List>
 
-        <div className="hidden shrink-0 items-center gap-3 border-t border-[var(--bd)] px-4 py-2 text-[11.5px] text-t3 sm:flex" aria-hidden>
+        <div className="hidden shrink-0 items-center gap-3 border-t border-[var(--bd)] px-4 py-2 text-[length:var(--fs-meta)] text-t3 sm:flex" aria-hidden>
           <span><kbd className="rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf2 px-1">↑↓</kbd> 이동</span>
           <span><kbd className="rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf2 px-1">Enter</kbd> 열기</span>
           <span><kbd className="rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf2 px-1">Esc</kbd> 닫기</span>

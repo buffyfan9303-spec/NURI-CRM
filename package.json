@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots=all",
     "test:rls": "node ../scripts/test-rls.mjs",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "smoke:live": "node scripts/live-smoke.cjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -37,6 +38,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "exceljs": "^4.4.0",
     "motion": "^13.4.4",
     "next": "14.2.15",
     "nuqs": "^2.10.1",
@@ -50,6 +52,7 @@
     "sonner": "^2.0.8",
     "tailwind-merge": "^2.5.2",
     "vaul": "^1.1.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^3.23.8",
     "zustand": "^4.5.5"
   },
@@ -64,6 +67,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.15",
+    "iconv-lite": "^0.7.3",
     "msw": "^2.15.0",
     "postcss": "^8.4.47",
     "serwist": "^9.5.12",

@@ -180,7 +180,7 @@ function JobTable({
                   <tr key={j.id} className={`${TR} h-[52px]`}>
                     <td className={TD}>
                       <CellName max={240}>{v.name}</CellName>
-                      <div className="text-[11.5px] text-t3">{v.kind}</div>
+                      <div className="text-[length:var(--fs-meta)] text-t3">{v.kind}</div>
                     </td>
                     <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.openedAt}</td>
                     <td className={TD}>{v.badge}</td>
@@ -250,7 +250,7 @@ function CompleteButton({ businessId, jobId, onChanged }: { businessId: string; 
         <Button size="sm" onClick={submit} loading={busy}>확인</Button>
         <Button size="sm" variant="ghost" onClick={() => setOpen(false)} disabled={busy}>취소</Button>
       </div>
-      {error && <span role="alert" className="text-[11.5px] text-et">{error}</span>}
+      {error && <span role="alert" className="text-[length:var(--fs-meta)] text-et">{error}</span>}
     </div>
   );
 }

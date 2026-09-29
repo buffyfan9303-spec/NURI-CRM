@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Shirt, Search, X, CircleAlert, CheckCircle2, ArrowLeft, Printer } from "@/lib/icons";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/Button";
+import { ScrollHintOverlay } from "@/components/ui/ScrollHint";
 
 /** 네이티브 select/input/textarea 공통 모양 — Input.tsx 와 같은 치수·경계·포커스(경계 강조색 + 3px 링, 디자인 시스템 §5.4). */
 export const CONTROL =
@@ -30,7 +31,7 @@ export const TEXTAREA =
  * Badge 와 같은 치수(11.5px/600/rounded-full/안쪽 1px 링)라 한 줄에 섞여도 높이가 같다. 색으로 뜻을 나타내지 않는다.
  */
 export const PILL =
-  "inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sf2 px-2 py-[2px] text-[11.5px] font-semibold leading-[16px] text-t2 shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_14%,transparent)] tabular-nums";
+  "inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-sf2 px-2 py-[2px] text-[length:var(--fs-meta)] font-semibold leading-[16px] text-t2 shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_14%,transparent)] tabular-nums";
 
 export function SelectField({
   label,
@@ -268,6 +269,43 @@ export const TR = "animate-rise border-b border-[var(--bd)] last:border-b-0 tran
 export const TR_CLICK = `${TR} cursor-pointer hover:bg-sf2 focus-within:bg-sf2 active:bg-sf3`;
 export const TD = "px-3 py-2.5 align-middle";
 /**
+ * 가로로 넘칠 수 있는 표 래퍼 — 넘칠 때만 오른쪽 끝에 그림자와 "옆으로 밀어 보기" 단서가 뜬다(D4·D7).
+ * 표 머리글 줄 오른쪽 끝에 떠서 본문 금액을 가리지 않는다. 끝까지 밀면 사라진다. 카드 안쪽 여백(p-4 sm:p-5, tight 면 3.5)을 상쇄해 카드 가장자리까지 스크롤 영역을 넓힌다.
+ * 단서는 absolute 라 레이아웃을 밀지 않는다(CLS 0).
+ */
+export function ScrollTable({ label, tight, children }: { label: string; tight?: boolean; children: React.ReactNode }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [more, setMore] = React.useState(false);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setMore(el.scrollWidth - el.clientWidth - el.scrollLeft > 2);
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
+  return (
+    <div className={cn("relative", tight ? "-mx-3.5" : "-mx-4 sm:-mx-5")}>
+      <div
+        ref={ref}
+        className={cn("overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]", tight ? "px-3.5" : "px-4 sm:px-5")}
+        tabIndex={0}
+        role="region"
+        aria-label={label}
+      >
+        {children}
+      </div>
+      <ScrollHintOverlay more={more} />
+    </div>
+  );
+}
+/**
  * 표 셀 안의 이름 링크/버튼(행 전체 클릭 + 실제 조작 요소 하나, §5.3). 줄상자 20px 로는 터치 기준 미달이라
  * PC 28px·터치 44px 를 세로 음수 여백으로 흡수해 행 높이(52px)를 바꾸지 않는다. 호출부는 truncate 폭만 준다.
  */
@@ -298,7 +336,7 @@ export function SummaryStrip({
     >
       {items.map((it) => (
         <div key={it.label} className="min-w-0 flex-[1_1_140px] bg-sf px-4 py-3" title={it.hint}>
-          <dt className="truncate text-[11.5px] font-medium text-t3">{it.label}</dt>
+          <dt className="truncate text-[length:var(--fs-meta)] font-medium text-t3">{it.label}</dt>
           <dd className={cn("mt-0.5 truncate text-[15px] font-semibold tabular-nums tracking-[var(--tr-snug)]", tone[it.tone ?? "default"])}>{it.value}</dd>
         </div>
       ))}

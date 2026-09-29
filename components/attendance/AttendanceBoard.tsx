@@ -89,7 +89,7 @@ export function AttendanceBoard({
                   className="h-9 w-20 rounded-[var(--r-sm)] border border-[var(--bd2)] bg-sf px-2 text-[12.5px] text-t outline-none focus:border-[var(--accent)]"
                   aria-label="휴게시간(분)"
                 />
-                <span className="text-[11.5px] text-t3">분 휴게</span>
+                <span className="text-[length:var(--fs-meta)] text-t3">분 휴게</span>
                 <Button
                   variant="secondary"
                   size="sm"
@@ -145,7 +145,7 @@ export function AttendanceBoard({
                     const missingClockOut = !r.clockOut;
                     return (
                       <tr key={r.id} className="h-[44px] border-b border-[var(--bd)] last:border-b-0">
-                        <td className="px-2.5 py-2 font-mono text-[11px] text-t2">
+                        <td className="px-2.5 py-2 font-mono text-[length:var(--fs-meta)] text-t2">
                           {r.userId.slice(0, 8)}…{r.userId === currentUserId && " (본인)"}
                         </td>
                         <td className="whitespace-nowrap px-2.5 py-2 text-t2">{r.clockIn ? r.clockIn.slice(0, 10) : "-"}</td>
@@ -154,13 +154,13 @@ export function AttendanceBoard({
                         <td className="px-2.5 py-2">{r.breakMinutes}분</td>
                         <td className="px-2.5 py-2">
                           {r.approvedAt ? (
-                            <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-okt"><Check size={13} />승인됨</span>
+                            <span className="inline-flex items-center gap-1 text-[length:var(--fs-meta)] font-medium text-okt"><Check size={13} />승인됨</span>
                           ) : needsApproval ? (
-                            <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-wt"><TriangleAlert size={13} />승인 대기 · {r.source === "correction" ? `보정(${r.correctionReason ?? ""})` : "관리자입력"}</span>
+                            <span className="inline-flex items-center gap-1 text-[length:var(--fs-meta)] font-medium text-wt"><TriangleAlert size={13} />승인 대기 · {r.source === "correction" ? `보정(${r.correctionReason ?? ""})` : "관리자입력"}</span>
                           ) : missingClockOut ? (
-                            <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-t2"><Play size={13} />근무 중</span>
+                            <span className="inline-flex items-center gap-1 text-[length:var(--fs-meta)] font-medium text-t2"><Play size={13} />근무 중</span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[11.5px] text-t3"><Check size={13} />본인 기록</span>
+                            <span className="inline-flex items-center gap-1 text-[length:var(--fs-meta)] text-t3"><Check size={13} />본인 기록</span>
                           )}
                         </td>
                         <td className="px-2.5 py-2">

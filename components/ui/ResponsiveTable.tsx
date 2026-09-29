@@ -10,6 +10,7 @@
 import * as React from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils/cn";
+import { HintedScroll } from "./ScrollHint";
 
 /**
  * 목록을 감싼 바깥 `<Card>` 에 붙이면 휴대폰(<sm)에서 카드 안의 카드(이중 여백)가 안 생긴다(C9).
@@ -35,7 +36,7 @@ export function TableOrCards<T>({
   const reduced = useReducedMotion();
   return (
     <>
-      <div className="hidden sm:block">{table}</div>
+      <HintedScroll className="hidden sm:block">{table}</HintedScroll>
       <ul className="flex flex-col gap-2 sm:hidden">
         {rows.map((r, i) => (
           <motion.li

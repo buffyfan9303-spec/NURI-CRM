@@ -62,7 +62,7 @@ export function OverdueNotices({
           <li key={r.id} className="flex items-center gap-2 py-1.5">
             <Link href={`/w/${businessId}/reservations/${r.id}`} className="flex min-h-[40px] min-w-0 flex-1 flex-col justify-center rounded-[var(--r-sm)] px-1 hover:bg-sf2 [@media(pointer:coarse)]:min-h-[44px]">
               <span className="truncate text-[length:var(--fs-body)] font-medium text-t">{r.customerName ?? "고객 미지정"}</span>
-              <span className="truncate text-[11.5px] text-et">반납 예정 {formatInTz(r.periodEndIso, tz, "M. d.")} · {r.daysLate}일 지남</span>
+              <span className="truncate text-[length:var(--fs-meta)] text-et">반납 예정 {formatInTz(r.periodEndIso, tz, "M. d.")} · {r.daysLate}일 지남</span>
             </Link>
             <Button size="sm" variant="secondary" onClick={() => open(r)} aria-label={`${r.customerName ?? "고객"} 독촉 문구`}>
               <MessageSquare size={13} aria-hidden />독촉

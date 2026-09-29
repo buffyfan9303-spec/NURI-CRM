@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { CONTROL, SelectField, Alert } from "./listkit";
+import { CONTROL, SelectField, Alert, ScrollTable } from "./listkit";
 import { formatKRW, parseKRW } from "@/lib/domain/money";
 import { PAYMENT_STATUS_LABEL, type ReservationBalance, type LedgerEntryRow, type ReservationRow } from "@/lib/domain/rental-types";
 import {
@@ -170,7 +170,7 @@ function breakdown(b: ReservationBalance): string {
 function Tile({ label, value, sub, accent, warn }: { label: string; value: number; sub?: string; accent?: boolean; warn?: boolean }) {
   return (
     <div className={"rounded-[var(--r-md)] border px-3 py-2.5 " + (accent ? "border-[var(--accent)] bg-[var(--accent-soft)]" : "border-[var(--bd)] bg-sf")}>
-      <p className="text-[11.5px] text-t3">{label}</p>
+      <p className="text-[length:var(--fs-meta)] text-t3">{label}</p>
       <p className={"mt-0.5 text-[16px] font-semibold tabular-nums " + (warn ? "text-et" : accent ? "text-[var(--accent-ink)]" : "text-t")}>{formatKRW(value)}</p>
       {sub && <p className="mt-0.5 truncate text-[12px] text-t3" title={sub}>{sub}</p>}
     </div>
@@ -182,7 +182,7 @@ function Box({ title, children, hint }: { title: string; children: React.ReactNo
     <div className="rounded-[var(--r-md)] border border-[var(--bd)] bg-sf p-3.5">
       <h3 className="mb-2.5 text-[length:var(--fs-body)] font-semibold text-t">{title}</h3>
       {children}
-      {hint && <p className="mt-1.5 text-[11.5px] text-t3">{hint}</p>}
+      {hint && <p className="mt-1.5 text-[length:var(--fs-meta)] text-t3">{hint}</p>}
     </div>
   );
 }
@@ -199,7 +199,7 @@ function ErrorLine({ message }: { message: string | null }) {
 
 function MoneyInput({ label, value, onChange, placeholder = "0" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
-    <label className="flex flex-col gap-1 text-[11.5px] text-t2">
+    <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2">
       {label}
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} inputMode="numeric" className={CONTROL} />
     </label>
@@ -313,7 +313,7 @@ function ReceiveForm({ businessId, reservationId, outstanding, depositRequired, 
           <div className="hidden sm:block" />
         )}
         {method === "card" ? (
-          <label className="flex flex-col gap-1 text-[11.5px] text-t2">
+          <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2">
             카드 승인번호(선택)
             <input value={approvalNo} onChange={(e) => setApprovalNo(e.target.value)} maxLength={40} placeholder="12345678" className={CONTROL} />
           </label>
@@ -325,7 +325,7 @@ function ReceiveForm({ businessId, reservationId, outstanding, depositRequired, 
         ) : (
           <div className="hidden sm:block" />
         )}
-        <label className="flex flex-col gap-1 text-[11.5px] text-t2 sm:col-span-3">
+        <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2 sm:col-span-3">
           메모(선택)
           <input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 잔금 절반 먼저" className={CONTROL} />
         </label>
@@ -388,7 +388,7 @@ function LateFeeBox({ businessId, reservationId, onDone }: { businessId: string;
       </div>
       <div className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-4">
         <MoneyInput label="직접 입력 청구(원)" value={override} onChange={setOverride} />
-        <label className="flex flex-col gap-1 text-[11.5px] text-t2 sm:col-span-2">
+        <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2 sm:col-span-2">
           사유(필수)
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 반나절 지연이라 반액만" className={CONTROL} />
         </label>
@@ -443,7 +443,7 @@ function DepositBox({ businessId, reservationId, depositBalance, enabled, canFor
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-4" title={blockedWhy || undefined}>
         <MoneyInput label="반환액(원)" value={amount} onChange={setAmount} placeholder={String(depositBalance)} />
         <MethodSelect value={method} onChange={setMethod} label="반환 수단" />
-        <label className="flex flex-col gap-1 text-[11.5px] text-t2">
+        <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2">
           사유(선택)
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 검수 이상 없음" className={CONTROL} disabled={disabled} />
         </label>
@@ -452,7 +452,7 @@ function DepositBox({ businessId, reservationId, depositBalance, enabled, canFor
       {canForfeit && (
         <div className="mt-3 grid grid-cols-1 gap-2 border-t border-[var(--bd)] pt-3 sm:grid-cols-4" title={blockedWhy || undefined}>
           <MoneyInput label="몰수액(원)" value={forfeitAmt} onChange={setForfeitAmt} />
-          <label className="flex flex-col gap-1 text-[11.5px] text-t2 sm:col-span-2">
+          <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2 sm:col-span-2">
             몰수 사유(필수)
             <input value={forfeitReason} onChange={(e) => setForfeitReason(e.target.value)} placeholder="예: 노쇼 · 반납 거부" className={CONTROL} disabled={disabled} />
           </label>
@@ -486,7 +486,7 @@ function WriteOffBox({ businessId, reservationId, outstanding, onDone }: { busin
       <ErrorLine message={error} />
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
         <MoneyInput label="대손액(원)" value={amount} onChange={setAmount} placeholder={String(outstanding)} />
-        <label className="flex flex-col gap-1 text-[11.5px] text-t2 sm:col-span-2">
+        <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] text-t2 sm:col-span-2">
           사유(필수)
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 연락 두절 6개월" className={CONTROL} />
         </label>
@@ -561,10 +561,10 @@ function HistoryTable({ businessId, entries, canReverse, onChanged }: { business
         <p className="text-[length:var(--fs-meta)] text-t3">기록된 원장 항목이 없습니다.</p>
       ) : (
         /* relative: 마지막 열 sr-only(absolute) 제목이 static 래퍼 밖(뷰포트)을 기준으로 잡혀 휴대폰에서 문서를 넓히던 결함(D1). */
-        <div className="relative -mx-3.5 overflow-x-auto px-3.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]" tabIndex={0} role="region" aria-label="원장 내역 표(가로 스크롤)">
+        <ScrollTable tight label="원장 내역 표(가로 스크롤)">
           <table className="w-full min-w-[620px] border-collapse text-[length:var(--fs-meta)]">
             <thead>
-              <tr className="border-b border-[var(--bd)] text-left text-[11.5px] font-medium text-t3">
+              <tr className="border-b border-[var(--bd)] text-left text-[length:var(--fs-meta)] font-medium text-t3">
                 <th className="py-2 pr-3 font-medium">일시</th>
                 <th className="py-2 pr-3 font-medium">계정</th>
                 <th className="py-2 pr-3 font-medium">단계·수단</th>
@@ -582,12 +582,12 @@ function HistoryTable({ businessId, entries, canReverse, onChanged }: { business
                     <td className="whitespace-nowrap py-2 pr-3 tabular-nums text-t3">{formatInTz(e.occurredAt, DEFAULT_TZ, "M. d. HH:mm")}</td>
                     <td className={"py-2 pr-3 " + (depositRow ? "pl-4 text-t2" : "text-t")}>
                       {depositRow ? `↳ ${e.entryType === "deposit_in" ? "보증금으로 보관(위 현금 수납 중)" : "보관 보증금 해제(현금은 '환급' 행)"}` : e.entryType === "payment_in" && e.stage === "deposit" ? "현금 수납(보증금)" : LEDGER_ENTRY_LABEL[e.entryType] ?? e.entryType}
-                      {e.reversesId && <span className="ml-1 rounded-[4px] bg-sf3 px-1 text-[11.5px] no-underline">정정</span>}
+                      {e.reversesId && <span className="ml-1 rounded-[4px] bg-sf3 px-1 text-[length:var(--fs-meta)] no-underline">정정</span>}
                     </td>
                     <td className="whitespace-nowrap py-2 pr-3 text-t2">
                       {depositRow ? <span className="text-t3">보관 계정</span> : [e.stage ? PAY_STAGE_LABEL[e.stage as PayStage] ?? e.stage : null, e.method ? PAY_METHOD_LABEL[e.method as PayMethod] ?? e.method : null].filter(Boolean).join(" · ")}
-                      {e.approvalNo && <span className="block text-[11.5px] text-t3">승인 {e.approvalNo}</span>}
-                      {e.cashReceipt && <span className="block text-[11.5px] text-t3">현금영수증</span>}
+                      {e.approvalNo && <span className="block text-[length:var(--fs-meta)] text-t3">승인 {e.approvalNo}</span>}
+                      {e.cashReceipt && <span className="block text-[length:var(--fs-meta)] text-t3">현금영수증</span>}
                     </td>
                     <td className="max-w-[220px] py-2 pr-3 text-t2"><span className="block truncate" title={e.reason ?? undefined}>{e.reason ?? ""}</span></td>
                     <td className={"whitespace-nowrap py-2 text-right tabular-nums " + (depositRow ? "text-t3" : e.direction === "out" ? "text-et" : "text-t")}>{depositRow ? "보관 " : ""}{e.direction === "out" ? "−" : "+"}{formatKRW(e.amount)}</td>
@@ -605,7 +605,7 @@ function HistoryTable({ businessId, entries, canReverse, onChanged }: { business
               })}
             </tbody>
           </table>
-        </div>
+        </ScrollTable>
       )}
       <Modal
         open={!!target}

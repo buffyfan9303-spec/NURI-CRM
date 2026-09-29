@@ -9,7 +9,7 @@ export function ScanOverlay({ hint, engineLabel }: { hint: string; engineLabel?:
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-between p-4">
       {engineLabel && (
-        <span className="rounded-full bg-black/55 px-2.5 py-1 text-[10.5px] font-medium text-white backdrop-blur-sm">
+        <span className="rounded-full bg-black/55 px-2.5 py-1 text-[length:var(--fs-meta)] font-medium text-white backdrop-blur-sm">
           {engineLabel}
         </span>
       )}

@@ -48,8 +48,8 @@ export function ListView({
                     {kindLabel(ev.kind, eventKinds)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[13px] text-t">{ev.title}</span>
-                  <span className="shrink-0 text-[11.5px] text-t3">{formatEventTimeLabel(ev, tz)}</span>
-                  <span className="hidden shrink-0 text-[11.5px] text-t3 sm:inline">
+                  <span className="shrink-0 text-[12px] text-t3">{formatEventTimeLabel(ev, tz)}</span>
+                  <span className="hidden shrink-0 text-[12px] text-t3 sm:inline">
                     {memberLabel(ev.assignee, members)}
                   </span>
                   <Badge kind={statusBadgeKind(ev.status)} className="shrink-0">

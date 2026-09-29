@@ -118,12 +118,12 @@ export function MaterialsBoard({ businessId, canWrite, canAdjust, canReadCost, m
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--r-sm)] bg-sf2 text-t3" aria-hidden><Package size={15} /></span>
                           <span className="min-w-0">
                             <CellName max={240}>{m.name}</CellName>
-                            {industry === "factory" && m.kind && <span className="block text-[11.5px] text-t3">{KIND_LABEL[m.kind] ?? m.kind}</span>}
+                            {industry === "factory" && m.kind && <span className="block text-[length:var(--fs-meta)] text-t3">{KIND_LABEL[m.kind] ?? m.kind}</span>}
                           </span>
                         </span>
                       </td>
                       <td className={`${TD} whitespace-nowrap text-right`}>
-                        {low ? <Badge kind="warning">{m.stock}{m.unit} · 부족</Badge> : <span className="tabular-nums text-t">{m.stock}<span className="ml-0.5 text-[11.5px] text-t3">{m.unit}</span></span>}
+                        {low ? <Badge kind="warning">{m.stock}{m.unit} · 부족</Badge> : <span className="tabular-nums text-t">{m.stock}<span className="ml-0.5 text-[length:var(--fs-meta)] text-t3">{m.unit}</span></span>}
                         <span className="block text-[12px] text-t3">최소 {m.minStock}{m.unit}</span>
                       </td>
                       {canReadCost && <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t2`}>{m.unitCost != null ? `${m.unitCost.toLocaleString("ko-KR")}원` : "—"}</td>}

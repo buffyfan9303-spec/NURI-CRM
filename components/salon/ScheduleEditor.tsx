@@ -240,7 +240,7 @@ function WeeklyGrid({ profiles, schedules }: { profiles: SalonStaffProfile[]; sc
                       ) : (
                         <span className="flex flex-col gap-1">
                           {slots.map((s) => (
-                            <span key={s.id} className="flex items-center justify-center gap-1 rounded-[var(--r-sm)] bg-[var(--accent-soft)] px-1.5 py-1 text-[11.5px] font-medium tabular-nums text-[var(--accent-ink)]">
+                            <span key={s.id} className="flex items-center justify-center gap-1 rounded-[var(--r-sm)] bg-[var(--accent-soft)] px-1.5 py-1 text-[length:var(--fs-meta)] font-medium tabular-nums text-[var(--accent-ink)]">
                               <CalendarClock size={11} aria-hidden />{s.startTime.slice(0, 5)}–{s.endTime.slice(0, 5)}
                             </span>
                           ))}

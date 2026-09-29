@@ -37,6 +37,8 @@ const CAP_GROUPS: { title: string; caps: Cap[] }[] = [
   { title: "근태", caps: ["attendance.self", "attendance.all"] },
   { title: "관리자 권한", caps: ["staff.manage"] },
 ];
+/** 건물 관리비 업종만: 월 금액 확정·입금 배정·세무 등 업종 전용 권한. */
+const BUILDING_CAP_GROUP: { title: string; caps: Cap[] } = { title: "관리비 업무", caps: ["billing.configure", "billing.approve", "payment.allocate", "tax.issue"] };
 
 export function StaffTable({
   businessId,
@@ -44,8 +46,10 @@ export function StaffTable({
   memberships,
   roleTemplates,
   capLabels,
+  industry,
 }: {
   businessId: string;
+  industry?: string;
   currentUserId: string;
   memberships: MembershipRow[];
   roleTemplates: RoleTemplateRow[];
@@ -133,10 +137,10 @@ export function StaffTable({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="truncate text-[12.5px] font-medium text-t">{m.displayName}</span>
-                        {m.userId === currentUserId && <span className="text-[11.5px] text-t3">(본인)</span>}
+                        {m.userId === currentUserId && <span className="text-[length:var(--fs-meta)] text-t3">(본인)</span>}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
-                        <span className="text-[11.5px] text-t2">{ROLE_LABEL[m.role] ?? m.role}</span>
+                        <span className="text-[length:var(--fs-meta)] text-t2">{ROLE_LABEL[m.role] ?? m.role}</span>
                         <Badge kind={STATUS_LABEL[m.status].kind}>{STATUS_LABEL[m.status].label}</Badge>
                       </div>
                     </div>
@@ -158,6 +162,7 @@ export function StaffTable({
             roleTemplates={viewerIsOwner ? roleTemplates : roleTemplates.filter((t) => t.role !== "owner" || selected.role === "owner")}
             templateCaps={templateMap.get(selected.role) ?? []}
             capLabels={capLabels}
+            capGroups={industry === "building" ? [...CAP_GROUPS, BUILDING_CAP_GROUP] : CAP_GROUPS}
             busy={busyId === selected.id}
             onApprove={() => run(selected.id, () => approveMember(businessId, selected.id), "승인했습니다.")}
             onRevoke={() => {
@@ -191,6 +196,7 @@ function StaffDetail({
   roleTemplates,
   templateCaps,
   capLabels,
+  capGroups,
   busy,
   onApprove,
   onRevoke,
@@ -204,6 +210,7 @@ function StaffDetail({
   roleTemplates: RoleTemplateRow[];
   templateCaps: string[];
   capLabels: Record<Cap, string>;
+  capGroups: { title: string; caps: Cap[] }[];
   busy: boolean;
   onApprove: () => void;
   onRevoke: () => void;
@@ -222,10 +229,10 @@ function StaffDetail({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[length:var(--fs-card)] font-semibold tracking-[var(--tr-snug)] text-t">{member.displayName}</span>
-            {isSelf && <span className="text-[11.5px] text-t3">(본인)</span>}
+            {isSelf && <span className="text-[length:var(--fs-meta)] text-t3">(본인)</span>}
             <Badge kind={STATUS_LABEL[member.status].kind}>{STATUS_LABEL[member.status].label}</Badge>
           </div>
-          <p className="mt-0.5 text-[11.5px] text-t3">소속 사업장 직원 · 역할과 개별 권한을 관리합니다.</p>
+          <p className="mt-0.5 text-[length:var(--fs-meta)] text-t3">소속 사업장 직원 · 역할과 개별 권한을 관리합니다.</p>
         </div>
         <div className="flex gap-1.5">
           {member.status === "pending" && (
@@ -271,7 +278,7 @@ function StaffDetail({
             </option>
           ))}
         </select>
-        <span className="mt-1 block text-[11.5px] text-t3">역할을 바꾸면 아래 기본 권한 표시가 새 역할 기준으로 즉시 바뀝니다.</span>
+        <span className="mt-1 block text-[length:var(--fs-meta)] text-t3">역할을 바꾸면 아래 기본 권한 표시가 새 역할 기준으로 즉시 바뀝니다.</span>
       </label>
 
       {pendingRole && (
@@ -302,11 +309,11 @@ function StaffDetail({
       )}
 
       <h3 className="mb-2 text-[13px] font-semibold text-t">개별 권한</h3>
-      <p className="mb-3 text-[11.5px] text-t3">역할 기본값에서 이 직원만 켜거나(추가 허용) 끈(추가 제한) 항목을 표시합니다. 즉시 저장되며 되돌릴 수 있습니다.</p>
+      <p className="mb-3 text-[length:var(--fs-meta)] text-t3">역할 기본값에서 이 직원만 켜거나(추가 허용) 끈(추가 제한) 항목을 표시합니다. 즉시 저장되며 되돌릴 수 있습니다.</p>
       <div className="flex flex-col gap-3">
-        {CAP_GROUPS.map((group) => (
+        {capGroups.map((group) => (
           <div key={group.title}>
-            <h4 className="mb-1.5 text-[11.5px] font-semibold uppercase tracking-wide text-t3">{group.title}</h4>
+            <h4 className="mb-1.5 text-[length:var(--fs-meta)] font-semibold uppercase tracking-wide text-t3">{group.title}</h4>
             <div className="flex flex-wrap gap-1.5">
               {group.caps.map((cap) => {
                 const fromRole = templateCaps.includes(cap);
@@ -331,7 +338,7 @@ function StaffDetail({
                     {effective ? <Check size={13} aria-hidden /> : <X size={13} aria-hidden />}
                     {capLabels[cap]}
                     {/* F20: opacity-70 + 10px 은 대비 2.85:1 — 불투명 글자색을 그대로 물려받아 4.5:1 이상. */}
-                    {fromRole && <span className="text-[11.5px]">(역할기본)</span>}
+                    {fromRole && <span className="text-[length:var(--fs-meta)]">(역할기본)</span>}
                   </button>
                 );
               })}

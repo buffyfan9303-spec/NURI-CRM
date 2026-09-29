@@ -33,8 +33,17 @@ assert.match(
 );
 ok("tailwind 색 토큰이 opacity modifier 를 처리한다");
 
+// 검사 범위는 colors 블록만 — boxShadow 등 비색상 토큰은 var() 문자열이 정답이다(2026-09-29).
+const twNoComment = twSrc.replace(/\/\*[\s\S]*?\*\//g, "");
+const colorsStart = twNoComment.indexOf("colors: {");
+let depth = 0, colorsEnd = colorsStart;
+for (let i = colorsStart; i < twNoComment.length; i++) {
+  if (twNoComment[i] === "{") depth++;
+  else if (twNoComment[i] === "}" && --depth === 0) { colorsEnd = i; break; }
+}
+assert.ok(colorsStart >= 0 && colorsEnd > colorsStart, "tailwind.config.ts 에서 colors 블록을 찾지 못했다");
 assert.doesNotMatch(
-  twSrc.replace(/\/\*[\s\S]*?\*\//g, ""),
+  twNoComment.slice(colorsStart, colorsEnd),
   /:\s*"var\(--[\w-]+\)"/,
   "아직 `var(--x)` 문자열로 정의된 색 토큰이 남아 있다 — 그 토큰은 /NN 이 무효다"
 );

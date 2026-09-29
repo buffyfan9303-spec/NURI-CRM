@@ -259,7 +259,7 @@ export function TuitionBoard({ businessId, businessName, canWrite, canRefund, en
                         <tr key={inv.invoiceId} className={`${TR} h-[52px] hover:bg-sf2`}>
                           <td className={TD}>
                             <CellName max={180}>{v.student}</CellName>
-                            <span className="block max-w-[180px] truncate text-[11.5px] text-t3" title={v.cls}>{v.cls}</span>
+                            <span className="block max-w-[180px] truncate text-[length:var(--fs-meta)] text-t3" title={v.cls}>{v.cls}</span>
                           </td>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{inv.period}</td>
                           <td className={`${TD} whitespace-nowrap tabular-nums ${v.overdue ? "font-medium text-et" : "text-t2"}`}>{inv.dueDate}{v.overdue && <span className="ml-1 text-[12px]">지남</span>}</td>

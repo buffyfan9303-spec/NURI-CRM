@@ -53,7 +53,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf p-4">
-      <div className="mb-2 text-[11px] font-semibold text-t3">{label}</div>
+      <div className="mb-2 text-[length:var(--fs-meta)] font-semibold text-t3">{label}</div>
       {children}
     </div>
   );

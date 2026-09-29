@@ -85,7 +85,7 @@ export function BatchReviewList({
       </div>
 
       {items.length > 0 && (
-        <p className="text-[11.5px] text-t3">
+        <p className="text-[length:var(--fs-meta)] text-t3">
           {kindsPresent.length > 0 ? `${items.length}건 담김 · ${commitLabel} 전에 아래 목록에서 미일치·누락을 확인하세요.` : ""}
         </p>
       )}
@@ -107,7 +107,7 @@ export function BatchReviewList({
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[12.5px] font-medium text-t">{item.label ?? item.targetId}</p>
-                <p className="text-[11px] text-t3">{KIND_LABEL[item.kind]}</p>
+                <p className="text-[length:var(--fs-meta)] text-t3">{KIND_LABEL[item.kind]}</p>
               </div>
               {canWrite && (
                 <div className="flex items-center gap-1">
@@ -148,7 +148,7 @@ export function BatchReviewList({
 
       {canWrite && items.length > 0 && (
         <div className="flex items-center justify-between gap-2 border-t border-[var(--bd)] pt-3">
-          <span className="text-[11.5px] text-t3">미일치·누락이 없는지 확인한 뒤 눌러 주세요. 재고·금액은 여기서 바뀌지 않습니다.</span>
+          <span className="text-[length:var(--fs-meta)] text-t3">미일치·누락이 없는지 확인한 뒤 눌러 주세요. 재고·금액은 여기서 바뀌지 않습니다.</span>
           <Button onClick={() => setConfirmOpen(true)} className="shrink-0">
             <Check size={14} aria-hidden />
             {commitLabel}

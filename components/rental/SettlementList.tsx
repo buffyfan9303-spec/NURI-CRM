@@ -115,7 +115,7 @@ export function SettlementList({
     <>
       <PageHeader
         title="정산"
-        description="확정·출고·반납된 예약의 대여매출·연체료·보증금·수납을 항목별로 분리해 보여줍니다. 행을 펼치면 수납·환불을 처리합니다. 연령별 미수와 보관 보증금은 '미수금' 화면에서 봅니다."
+        description="대여매출·연체료·보증금·수납을 항목별로 나눠 봅니다. 행을 펼쳐 수납·환불을 처리하세요."
         meta={<span className={PILL}>{reservations.length}건</span>}
         actions={
           canExport ? (
@@ -247,7 +247,7 @@ function SummaryTile({ label, value, sub, tone = "neutral", className }: { label
     <div className={cn("rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf px-4 py-3 shadow-card", className)}>
       <p className="text-[12px] text-t2">{label}</p>
       <p className={cn("mt-1 text-[22px] font-bold leading-none tabular-nums", tone === "alert" ? "text-et" : "text-t")}>{value}</p>
-      {sub && <p className="mt-1.5 text-[11.5px] text-t3">{sub}</p>}
+      {sub && <p className="mt-1.5 text-[length:var(--fs-meta)] text-t3">{sub}</p>}
     </div>
   );
 }

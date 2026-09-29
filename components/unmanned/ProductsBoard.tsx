@@ -166,12 +166,12 @@ export function ProductsBoard({
     ),
     inboundForm: (
       <form onSubmit={(e) => { e.preventDefault(); submitInbound(p.id); }} className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1 text-[11.5px] font-medium text-t2">
+        <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] font-medium text-t2">
           수량
           <input type="number" min={1} value={inboundQty} onChange={(e) => setInboundQty(e.target.value)} className={`${CONTROL} w-[96px]`} />
         </label>
         {p.expiryTracked && (
-          <label className="flex flex-col gap-1 text-[11.5px] font-medium text-t2">
+          <label className="flex flex-col gap-1 text-[length:var(--fs-meta)] font-medium text-t2">
             유통기한(필수)
             <input type="date" required value={inboundExpiry} onChange={(e) => setInboundExpiry(e.target.value)} className={`${CONTROL} w-[160px]`} />
           </label>

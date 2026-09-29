@@ -184,7 +184,7 @@ export function ExpirySummaryCard({ lots, businessName, todayKey }: { lots: (UsL
 function Tile({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "neutral" | "alert" }) {
   return (
     <div className="rounded-[var(--r-md)] bg-sf2 px-3 py-2.5">
-      <p className="text-[11.5px] text-t3">{label}</p>
+      <p className="text-[length:var(--fs-meta)] text-t3">{label}</p>
       <p className={"mt-0.5 text-[16px] font-bold tabular-nums " + (tone === "alert" ? "text-et" : "text-t")}>{value}</p>
     </div>
   );

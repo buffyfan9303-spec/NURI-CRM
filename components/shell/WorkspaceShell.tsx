@@ -20,7 +20,7 @@
  */
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   X,
@@ -32,10 +32,9 @@ import {
   PanelLeftOpen,
   Bell,
   Plus,
-  INDUSTRY_ICON,
-  FALLBACK_ICON,
-  navIcon,
 } from "@/lib/icons";
+import { INDUSTRY_ICON, FALLBACK_ICON } from "@/lib/icons-map";
+import { navIcon } from "@/lib/icons-nav";
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils/cn";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -141,6 +140,11 @@ export function WorkspaceShell({
 
   const viewport = useViewportMode();
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
+  // 성능(2026-09-29): 기본 prefetch 는 사이드바 메뉴 12개가 화면에 보이는 즉시 서버 요청 12건(각각 미들웨어 세션 검증 =
+  // Supabase auth 왕복)을 만들었다 — 운영 실측 화면 1회당 RSC 프리페치 10~15건·250~840ms. 마우스를 올리거나(hover/focus)
+  // 손가락이 닿는(touchstart) 순간에만 미리 받는다. 클릭까지의 100~300ms 동안 받아 두므로 탭 전환 체감은 유지된다.
+  const prefetchOnIntent = React.useCallback((href: string) => () => router.prefetch(href), [router]);
   const menuButtonRef = React.useRef<HTMLButtonElement>(null);
   const drawerCloseRef = React.useRef<HTMLButtonElement>(null);
   const drawerWasOpen = React.useRef(false);
@@ -300,15 +304,25 @@ export function WorkspaceShell({
     const root = document.documentElement;
     if (accent) root.dataset.accent = accent;
     else delete root.dataset.accent;
+    // 업종별 토큰 범위(건물: 글자 확대 등). 모달 포털이 body 아래라 <html> 에도 건다.
+    root.dataset.industry = industry;
     return () => {
       delete root.dataset.accent;
+      delete root.dataset.industry;
     };
-  }, [accent]);
+  }, [accent, industry]);
 
   // h-dvh(S4): 100vh 는 모바일 주소창을 뺀 높이보다 커서 iOS Safari 하단이 툴바에 가렸다. 인쇄 규칙(globals.css @media print)은
   // .overflow-hidden 선택자로도 이 뿌리를 풀기 때문에 .h-screen 이 빠져도 영향 없다.
   return (
-    <div data-accent={accent} className="flex h-dvh overflow-hidden bg-bg">
+    <div data-accent={accent} data-industry={industry} className="flex h-dvh overflow-hidden bg-bg">
+      {/* D20: 키보드 사용자는 Tab 첫 11~13번이 사이드바 메뉴였다. 초점이 올 때만 보이는 건너뛰기 링크. */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-[var(--r-md)] focus:bg-sf focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-t focus:shadow-pop focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+      >
+        본문으로 건너뛰기
+      </a>
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/45 min-[960px]:hidden"
@@ -401,6 +415,10 @@ export function WorkspaceShell({
                   <Link
                     key={item.key}
                     href={href}
+                    prefetch={false}
+                    onMouseEnter={prefetchOnIntent(href)}
+                    onFocus={prefetchOnIntent(href)}
+                    onTouchStart={prefetchOnIntent(href)}
                     onClick={() => setMobileOpen(false)}
                     title={isRail ? item.label : undefined}
                     className={cn(
@@ -512,8 +530,8 @@ export function WorkspaceShell({
               <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[var(--r-sm)] bg-[var(--accent-soft)] text-[var(--accent-ink)]">
                 <Icon size={16} aria-hidden />
               </span>
-              {/* S3: 휴대폰(<640)은 짧은 이름 한 줄(max 96px). 검색 버튼(S1)을 없애 생긴 자리다. */}
-              <span className="min-w-0 max-w-[96px] truncate text-[13px] font-medium text-t sm:hidden">{businessName}</span>
+              {/* D8: 휴대폰(<640)은 사업장 이름을 그리지 않는다 — 96px 를 먼저 차지해 페이지 이름이 "주문…"(41px)으로 잘렸다.
+                  이름은 aria-label·title 과 드로어 첫 줄에 있고, 아이콘이 업종을 말해 준다. */}
               <span className="hidden min-w-0 sm:block">
                 <span className="block max-w-[110px] truncate text-[13.5px] font-medium text-t lg:max-w-[180px]">
                   {businessName}
@@ -561,17 +579,18 @@ export function WorkspaceShell({
 
           <div className={cn("flex-1", activeItem && "hidden sm:block")} />
 
-          {/* 전역 검색(⌘K) — 예전 "메뉴 검색" 입력을 흡수했다. md+ 는 입력창 모양 버튼, <md 는 아이콘 버튼(44px). */}
+          {/* 전역 검색(⌘K) — 예전 "메뉴 검색" 입력을 흡수했다. lg+ 는 입력창 모양 버튼, <lg 는 아이콘 버튼(44px).
+              D9: md(768)에서는 입력창(120~200px)이 사업장 이름을 54px 로 눌러 "누리 맞…" 이 됐다. */}
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             aria-label={`검색 (${kbdHint})`}
             aria-haspopup="dialog"
-            className="hidden h-[var(--ctl)] w-full min-w-[120px] max-w-[200px] shrink items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2 pl-3 pr-2 text-left text-[13px] text-t3 transition-[background-color,border-color,box-shadow] duration-1 hover:border-[var(--bd-strong)] hover:bg-sf hover:shadow-card md:flex lg:max-w-[260px] [@media(pointer:coarse)]:h-[44px]"
+            className="hidden h-[var(--ctl)] w-full min-w-[120px] max-w-[200px] shrink items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2 pl-3 pr-2 text-left text-[13px] text-t3 transition-[background-color,border-color,box-shadow] duration-1 hover:border-[var(--bd-strong)] hover:bg-sf hover:shadow-card lg:flex lg:max-w-[260px] [@media(pointer:coarse)]:h-[44px]"
           >
             <Search size={14} className="shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">검색</span>
-            <kbd className="hidden shrink-0 rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf px-1.5 py-0.5 font-sans text-[11.5px] text-t3 lg:inline" aria-hidden>{kbdHint}</kbd>
+            <kbd className="hidden shrink-0 rounded-[var(--r-xs)] border border-[var(--bd)] bg-sf px-1.5 py-0.5 font-sans text-[12px] text-t3 lg:inline" aria-hidden>{kbdHint}</kbd>
           </button>
 
           {/* 우측 클러스터: CTA → 테마 → 알림 → 계정 순(§4.2) */}
@@ -581,7 +600,7 @@ export function WorkspaceShell({
               onClick={() => setPaletteOpen(true)}
               aria-label="검색"
               aria-haspopup="dialog"
-              className="flex h-[44px] w-[44px] items-center justify-center rounded-full text-t2 hover:bg-sf2 hover:text-t md:hidden"
+              className="flex h-[44px] w-[44px] items-center justify-center rounded-full text-t2 hover:bg-sf2 hover:text-t lg:hidden"
             >
               <Search size={19} aria-hidden />
             </button>
@@ -629,7 +648,7 @@ export function WorkspaceShell({
                 className="flex h-[36px] items-center gap-1.5 rounded-[var(--r-md)] px-2 text-t2 hover:bg-sf2 [@media(pointer:coarse)]:h-[44px]"
               >
                 <span className="hidden max-w-[140px] truncate text-[12.5px] lg:block">{userEmail}</span>
-                <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--accent-soft)] text-[11.5px] font-semibold text-[var(--accent-ink)] lg:hidden" aria-hidden>
+                <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--accent-soft)] text-[12px] font-semibold text-[var(--accent-ink)] lg:hidden" aria-hidden>
                   {initialOf(userEmail)}
                 </span>
                 <ChevronDown size={14} aria-hidden />
@@ -653,7 +672,9 @@ export function WorkspaceShell({
 
         </header>
 
-        <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 overflow-y-auto outline-none">
+          {children}
+        </main>
       </div>
 
       <CommandPalette open={paletteOpen} onClose={closePalette} businessId={businessId} nav={fullNav} />

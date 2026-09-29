@@ -23,12 +23,18 @@ import { FactoryHome } from "@/components/home/FactoryHome";
 import { UnmannedHome } from "@/components/home/UnmannedHome";
 import { SalonHome } from "@/components/home/SalonHome";
 import { AcademyHome } from "@/components/home/AcademyHome";
+import { BuildingHome } from "@/components/building/BuildingHome";
+import { resolveBuildingContext } from "@/components/building/context";
+import { getTodo } from "@/lib/domain/building";
 import { getAccess } from "./access";
 
 export default async function WorkspaceDashboardPage({
   params,
+  searchParams,
 }: {
   params: { businessId: string };
+  /** 건물 관리비: ?b=<building_id>&p=YYYY-MM(components/building/context.ts). 다른 업종은 쓰지 않는다. */
+  searchParams?: { b?: string; p?: string };
 }) {
   const access = await getAccess(params.businessId, "view");
   if (!access.ok) redirect("/select"); // layout이 이미 걸렀어야 하지만 이중 방어.
@@ -130,6 +136,13 @@ export default async function WorkspaceDashboardPage({
           consultStats={consultStatsRes.ok ? consultStatsRes.data : null}
         />
       );
+    }
+    case "building": {
+      // 0031 건물 관리비 홈 = 이번 달 할 일(5단계). 건물·청구월은 URL(?b&p) → 첫 건물·이번 달.
+      const ctx = await resolveBuildingContext(access.businessId, tz, searchParams);
+      if (!ctx.ok) return <BuildingHome base={base} tz={tz} ctx={{ buildings: [], building: null, period: "", periodRow: null, qs: "" }} todo={ctx} />;
+      const todo = ctx.data.building ? await getTodo(ctx.data.building.id, ctx.data.period) : null;
+      return <BuildingHome base={base} tz={tz} ctx={ctx.data} todo={todo} />;
     }
     default:
       return null;

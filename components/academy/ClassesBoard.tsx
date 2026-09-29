@@ -125,7 +125,7 @@ export function ClassesBoard({ businessId, canWrite, classrooms, classes, studen
                     <tr key={c.id} className={`${TR} h-[56px] hover:bg-sf2`}>
                       <td className={TD}>
                         <CellName max={240}>{c.name}</CellName>
-                        <span className="block truncate text-[11.5px] text-t3">{[c.subject, roomName(c.defaultClassroomId), `시작 ${c.startDate}`].filter(Boolean).join(" · ")}{!c.active && " · 종료"}</span>
+                        <span className="block truncate text-[length:var(--fs-meta)] text-t3">{[c.subject, roomName(c.defaultClassroomId), `시작 ${c.startDate}`].filter(Boolean).join(" · ")}{!c.active && " · 종료"}</span>
                       </td>
                       <td className={`${TD} whitespace-nowrap`}>
                         <CapacityBar n={n} pct={pct} full={full} capacity={c.capacity} />

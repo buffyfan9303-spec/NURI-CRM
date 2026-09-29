@@ -37,8 +37,8 @@ export function Badge({
   return (
     <span
       className={cn(
-        // 상태 배지는 pill(Linear·Notion status-badge). 11.5px/600 + 안쪽 1px 같은 색 링으로 면 위에서 또렷하다.
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-[2px] text-[11.5px] font-semibold leading-[16px] shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_18%,transparent)]",
+        // 상태 배지는 pill(Linear·Notion status-badge). 12px/600 + 안쪽 1px 같은 색 링으로 면 위에서 또렷하다.
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-[2px] text-[length:var(--fs-meta)] font-semibold leading-[16px] shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_18%,transparent)]",
         KIND_CLASS[kind],
         className
       )}

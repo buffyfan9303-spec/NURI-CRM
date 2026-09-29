@@ -50,7 +50,7 @@ export function FeatureToggle({
       <div className="flex items-center justify-between gap-3">
         <label htmlFor={id} className="min-w-0 cursor-pointer text-t2">
           {label}
-          <span className="ml-1.5 text-[11.5px] text-t3" aria-hidden>{busy ? "저장 중…" : on ? "사용" : "미사용"}</span>
+          <span className="ml-1.5 text-[length:var(--fs-meta)] text-t3" aria-hidden>{busy ? "저장 중…" : on ? "사용" : "미사용"}</span>
         </label>
         <button
           id={id}
@@ -83,7 +83,7 @@ export function FeatureToggle({
           </span>
         </button>
       </div>
-      {error && <p role="alert" className="text-[11.5px] text-et">{error}</p>}
+      {error && <p role="alert" className="text-[length:var(--fs-meta)] text-et">{error}</p>}
     </li>
   );
 }

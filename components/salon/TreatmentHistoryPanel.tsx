@@ -206,7 +206,7 @@ function TreatmentHistoryItem({
         )}
         <div className="flex flex-wrap gap-2">
           {item.photoUrls.length === 0 && (
-            <span className="flex h-[88px] w-[88px] flex-col items-center justify-center gap-1 rounded-[var(--r-md)] border border-dashed border-[var(--bd2)] text-[10.5px] text-t3">
+            <span className="flex h-[88px] w-[88px] flex-col items-center justify-center gap-1 rounded-[var(--r-md)] border border-dashed border-[var(--bd2)] text-[length:var(--fs-meta)] text-t3">
               <Camera size={18} aria-hidden />사진 없음
             </span>
           )}
@@ -216,7 +216,7 @@ function TreatmentHistoryItem({
                 // eslint-disable-next-line @next/next/no-img-element -- 비공개 버킷 서명 URL이라 next/image 원격 도메인 설정 대상이 아니다.
                 <img src={url} alt="시술 사진" className="h-full w-full object-cover" />
               ) : (
-                <span className="flex h-full w-full items-center justify-center px-1 text-center text-[10.5px] leading-tight text-t3">새로고침 후 표시</span>
+                <span className="flex h-full w-full items-center justify-center px-1 text-center text-[length:var(--fs-meta)] leading-tight text-t3">새로고침 후 표시</span>
               )}
               {canWrite && (
                 <button
@@ -243,7 +243,7 @@ function TreatmentHistoryItem({
             aria-label="시술 메모"
             className="min-h-[88px] w-full resize-y rounded-[var(--r-md)] border border-[var(--bd2)] bg-sf px-3 py-2 text-[16px] leading-relaxed text-t outline-none transition-colors placeholder:text-t3 focus:border-[var(--accent)] focus:shadow-ring focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60 sm:text-[length:var(--fs-body)]"
           />
-          <p className="mt-1 h-[16px] text-[11.5px] text-t3" aria-live="polite">
+          <p className="mt-1 h-[16px] text-[length:var(--fs-meta)] text-t3" aria-live="polite">
             {busy ? "저장 중…" : saved ? "저장됨" : dirty ? "입력창을 벗어나면 저장됩니다" : ""}
           </p>
         </div>

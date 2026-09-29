@@ -166,9 +166,10 @@ export function GarmentStage({
       <div
         className={cn(
           "relative flex min-h-[280px] w-full items-center justify-center overflow-hidden rounded-[var(--r-lg)] border border-[var(--bd)]",
-          compactVh ? "flex-none" : "aspect-[3/4] max-h-[72vh]"
+          // compactVh 가 있으면 조상 컨테이너(GarmentWorkspace)가 760px 미만일 때만 그 높이(vh)로, 이상이면 3:4 로 — 첫 paint 부터 CSS 가 정한다(D5).
+          compactVh ? "h-[var(--cvh)] flex-none [@container(min-width:760px)]:aspect-[3/4] [@container(min-width:760px)]:h-auto [@container(min-width:760px)]:max-h-[72vh]" : "aspect-[3/4] max-h-[72vh]"
         )}
-        style={{ background: "#ECEEF0", height: compactVh ? `${compactVh}vh` : undefined }}
+        style={{ background: "#ECEEF0", ...(compactVh ? { ["--cvh" as string]: `${compactVh}vh` } : {}) }}
       >
         <div className="relative aspect-[2/3] h-full max-h-full" style={{ transform: `scale(${zoom})`, transition: "transform .15s ease" }}>
           <GarmentPreview item={item} view={view} jacket={jacket} pants={pants} vest={vest} fabric={fabric} lining={lining} button={button} calibrationMm={calibrationMm} />
@@ -188,7 +189,7 @@ export function GarmentStage({
 
         {fabricLoading && (
           <div className="absolute inset-x-0 bottom-2 flex justify-center">
-            <span className="rounded-full bg-black/70 px-3 py-1 text-[11px] text-white">새 원단 불러오는 중 · 이전 미리보기</span>
+            <span className="rounded-full bg-black/70 px-3 py-1 text-[length:var(--fs-meta)] text-white">새 원단 불러오는 중 · 이전 미리보기</span>
           </div>
         )}
       </div>
@@ -200,7 +201,7 @@ export function GarmentStage({
               key={`t-${h.key}`}
               type="button"
               onClick={() => onFocusField(h.key)}
-              className="min-h-[44px] rounded-[6px] border border-[var(--bd)] px-2.5 text-[11.5px] text-t2 hover:border-[var(--accent)] hover:text-t"
+              className="min-h-[44px] rounded-[6px] border border-[var(--bd)] px-2.5 text-[length:var(--fs-meta)] text-t2 hover:border-[var(--accent)] hover:text-t"
             >
               {h.label} 편집
             </button>
@@ -208,7 +209,7 @@ export function GarmentStage({
         </div>
       )}
 
-      <p className="mt-2 text-[11px] text-t3">디자인 미리보기 · 실제 색상은 원단 견본 기준</p>
+      <p className="mt-2 text-[length:var(--fs-meta)] text-t3">디자인 미리보기 · 실제 색상은 원단 견본 기준</p>
     </div>
   );
 }

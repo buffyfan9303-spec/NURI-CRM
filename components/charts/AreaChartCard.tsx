@@ -188,7 +188,7 @@ export function AreaChartCard({
                 <span
                   key={i}
                   // 라벨 최소 11.5px. 불투명 sf 면을 깔아 "0원" 위로 추세선이 지나가도 글자가 읽힌다(검토 P2).
-                  className="pointer-events-none absolute left-0 -translate-y-1/2 rounded-[var(--r-xs)] bg-sf px-0.5 text-[11.5px] tabular-nums text-t3"
+                  className="pointer-events-none absolute left-0 -translate-y-1/2 rounded-[var(--r-xs)] bg-sf px-0.5 text-[length:var(--fs-meta)] tabular-nums text-t3"
                   style={{ top: `${(geo!.gridYs[i] / VH) * 100}%` }}
                 >
                   {label}
@@ -197,7 +197,7 @@ export function AreaChartCard({
             )}
             {hover !== null && (
               <div
-                className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-[8px] border border-[var(--bd)] bg-sf px-2.5 py-1.5 text-[11.5px] shadow-card"
+                className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-[8px] border border-[var(--bd)] bg-sf px-2.5 py-1.5 text-[length:var(--fs-meta)] shadow-card"
                 style={{
                   left: `${(geo!.xy[hover].x / VW) * 100}%`,
                   top: `${(geo!.xy[hover].y / VH) * 100}%`,
@@ -220,7 +220,7 @@ export function AreaChartCard({
                 <span
                   key={i}
                   className={
-                    "pointer-events-none absolute top-0 whitespace-nowrap text-[11.5px] tabular-nums text-t3 " +
+                    "pointer-events-none absolute top-0 whitespace-nowrap text-[length:var(--fs-meta)] tabular-nums text-t3 " +
                     (i === 0 ? "" : last ? "-translate-x-full" : "-translate-x-1/2")
                   }
                   style={{ left: `${(p.x / VW) * 100}%` }}
@@ -232,7 +232,7 @@ export function AreaChartCard({
           </div>
           <details className="mt-1">
             {/* WCAG 2.5.8 최소 24px(이전 17px 줄상자). list-item 은 min-h 를 무시하므로 inline-flex 로. */}
-            <summary className="inline-flex min-h-[24px] cursor-pointer items-center text-[11.5px] text-t3 hover:text-t2 [@media(pointer:coarse)]:min-h-[44px]">표로 보기</summary>
+            <summary className="inline-flex min-h-[24px] cursor-pointer items-center text-[length:var(--fs-meta)] text-t3 hover:text-t2 [@media(pointer:coarse)]:min-h-[44px]">표로 보기</summary>
             <table className="mt-1 w-full text-[12px]">
               <thead>
                 <tr className="text-t3">

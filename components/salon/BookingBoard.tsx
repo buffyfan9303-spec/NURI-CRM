@@ -263,7 +263,7 @@ export function BookingBoard({
                         <tr key={a.id} className={`${TR} h-[52px] hover:bg-sf2`}>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>
                             <span className="block font-medium text-t">{v.when}<span className="font-normal text-t3">–{v.until}</span></span>
-                            <span className="block text-[11.5px] text-t3">{v.durationMin}분</span>
+                            <span className="block text-[length:var(--fs-meta)] text-t3">{v.durationMin}분</span>
                           </td>
                           <td className={TD}>
                             <span className="flex items-center gap-1.5">
@@ -273,7 +273,7 @@ export function BookingBoard({
                           </td>
                           <td className={`${TD} text-t2`}>
                             <span className="block max-w-[220px] truncate text-t" title={v.service}>{v.service}</span>
-                            <span className="block text-[11.5px] text-t3">{v.staff}</span>
+                            <span className="block text-[length:var(--fs-meta)] text-t3">{v.staff}</span>
                           </td>
                           {canRevenue && <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{v.price}</td>}
                           <td className={TD}><Badge kind={SALON_STATUS_KIND[a.status] ?? "info"}>{a.status}</Badge></td>

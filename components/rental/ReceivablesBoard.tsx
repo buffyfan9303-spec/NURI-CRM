@@ -158,7 +158,7 @@ export function ReceivablesBoard({
                     {g.customerRef ? <Link href={`/w/${businessId}/customers/${g.customerRef}`} className="hover:underline">{g.name}</Link> : g.name}
                     <span className="ml-2 text-[12px] font-normal tabular-nums text-t2">{g.phone ?? "연락처 비공개"}</span>
                   </p>
-                  <p className="text-[11.5px] text-t3">{g.rows.length}건 · 최근 독촉 {g.lastContactAt ? formatInTz(g.lastContactAt, tz, D) : "없음"}</p>
+                  <p className="text-[length:var(--fs-meta)] text-t3">{g.rows.length}건 · 최근 독촉 {g.lastContactAt ? formatInTz(g.lastContactAt, tz, D) : "없음"}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge kind={bucketKind(g.worst)}>{AGING_BUCKET_LABEL[g.worst]}</Badge>
@@ -215,7 +215,7 @@ export function ReceivablesBoard({
                         <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.phone}</td>
                         <td className={`${TD} whitespace-nowrap`}>
                           <Link href={v.href} prefetch={false} className="font-medium text-[var(--accent-ink)] hover:underline">{v.period}</Link>
-                          <span className="ml-1.5 text-[11.5px] text-t3">{v.status}</span>
+                          <span className="ml-1.5 text-[length:var(--fs-meta)] text-t3">{v.status}</span>
                         </td>
                         <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.due}</td>
                         <td className={`${TD} whitespace-nowrap`}><Badge kind={bucketKind(r.bucket)}>{v.days}</Badge></td>
@@ -254,7 +254,7 @@ export function ReceivablesBoard({
         {msgTarget && (
           <>
             <MessageActions text={dunningText(businessName, msgTarget, tz)} phone={msgTarget.customerPhone ?? undefined} title="문구(수정 가능 · [계좌]를 실제 계좌로 바꾸세요)" />
-            {canWrite && <p className="mt-3 text-[11.5px] text-t3">보낸 뒤에는 &lsquo;독촉 기록&rsquo;으로 남겨 두면 다음 담당자도 알 수 있습니다.</p>}
+            {canWrite && <p className="mt-3 text-[length:var(--fs-meta)] text-t3">보낸 뒤에는 &lsquo;독촉 기록&rsquo;으로 남겨 두면 다음 담당자도 알 수 있습니다.</p>}
           </>
         )}
       </Modal>
@@ -279,7 +279,7 @@ function SummaryTile({ label, value, sub, tone = "neutral" }: { label: string; v
     <div className="rounded-[var(--r-lg)] border border-[var(--bd)] bg-sf px-4 py-3 shadow-card">
       <p className="text-[12px] text-t2">{label}</p>
       <p className={cn("mt-1 text-[22px] font-bold leading-none tabular-nums", tone === "alert" ? "text-et" : "text-t")}>{value}</p>
-      {sub && <p className="mt-1.5 text-[11.5px] text-t3">{sub}</p>}
+      {sub && <p className="mt-1.5 text-[length:var(--fs-meta)] text-t3">{sub}</p>}
     </div>
   );
 }

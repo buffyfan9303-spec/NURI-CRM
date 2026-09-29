@@ -89,7 +89,7 @@ function VisualPicker({
   const withImg = !!schematicKey;
   return (
     <div className="mb-3">
-      <div className="mb-1 text-[11px] font-medium text-t3">{label}</div>
+      <div className="mb-1 text-[length:var(--fs-meta)] font-medium text-t3">{label}</div>
       {/* 카드 72px: 62px에서는 "큐큐(플라워홀)"·"갈매기반안감" 같은 값이 …로 잘렸다(QA 2026-09-25). 라벨은 자르지 않고 줄바꿈. */}
       <div className={withImg ? "grid grid-cols-[repeat(auto-fill,minmax(72px,1fr))] gap-1.5" : "flex flex-wrap gap-1.5"}>
         {choices.map((c) => {
@@ -103,7 +103,7 @@ function VisualPicker({
               title={c}
               onClick={() => onChange(c)}
               className={cn(
-                "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-[6px] border-2 text-[10px] leading-tight",
+                "flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-[6px] border-2 text-[length:var(--fs-meta)] leading-tight",
                 withImg ? "p-0.5" : "px-1.5 py-1",
                 on ? "border-[var(--accent)] text-t" : "border-[var(--bd)] text-t2 hover:border-[var(--bd2)]"
               )}
@@ -113,7 +113,7 @@ function VisualPicker({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={sc.src} alt="" className="aspect-square w-full rounded-[4px] bg-white object-cover object-top" style={{ clipPath: "inset(0 0 10% 0)" }} />
               ) : withImg ? (
-                <span className="flex aspect-square w-full items-center justify-center rounded-[4px] bg-sf2 text-[9.5px] text-t3">
+                <span className="flex aspect-square w-full items-center justify-center rounded-[4px] bg-sf2 text-[length:var(--fs-meta)] text-t3">
                   {icon ? icon(c) : "도식 없음"}
                 </span>
               ) : (
@@ -256,8 +256,7 @@ export function GarmentWorkspace({
     });
   };
 
-  const threeCol = width >= 1120;
-  const twoCol = !threeCol && width >= 760;
+  const threeCol = width >= 1120; // details 초기 펼침에만 쓴다(레이아웃은 CSS 컨테이너 쿼리).
 
   const itemTabs: { key: GarmentItem; label: string; count: number }[] = [
     { key: "jacket", label: "재킷", count: qty.s ?? 0 },
@@ -270,7 +269,7 @@ export function GarmentWorkspace({
   const applyCompareB = () => { if (compareB) applySnapshot(compareB); setCompareB(null); };
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-3">
+    <div ref={containerRef} className="flex flex-col gap-3 [container-type:inline-size]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-1">
           {itemTabs.map((t) => (
@@ -288,22 +287,22 @@ export function GarmentWorkspace({
           ))}
         </div>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={undo} disabled={histPos.index <= 0} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2 disabled:opacity-40">
+          <button type="button" onClick={undo} disabled={histPos.index <= 0} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[length:var(--fs-meta)] text-t2 hover:bg-sf2 disabled:opacity-40">
             <Undo2 size={14} />되돌리기
           </button>
-          <button type="button" onClick={redo} disabled={histPos.index >= histPos.length - 1} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2 disabled:opacity-40">
+          <button type="button" onClick={redo} disabled={histPos.index >= histPos.length - 1} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[length:var(--fs-meta)] text-t2 hover:bg-sf2 disabled:opacity-40">
             <Redo2 size={14} />다시적용
           </button>
           {serverOptions && (
-            <button type="button" onClick={revertToConfirmed} className="min-h-[44px] rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2">확정본으로</button>
+            <button type="button" onClick={revertToConfirmed} className="min-h-[44px] rounded-[6px] px-2 text-[length:var(--fs-meta)] text-t2 hover:bg-sf2">확정본으로</button>
           )}
           {!compareB ? (
-            <button type="button" onClick={compareSnapshot} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[11.5px] text-t2 hover:bg-sf2">
+            <button type="button" onClick={compareSnapshot} className="flex min-h-[44px] items-center gap-1 rounded-[6px] px-2 text-[length:var(--fs-meta)] text-t2 hover:bg-sf2">
               <Columns2 size={14} />비교(B) 저장
             </button>
           ) : (
             <>
-              <button type="button" onClick={applyCompareB} className="min-h-[44px] rounded-[6px] px-2 text-[11.5px] font-semibold text-[var(--accent-ink)] hover:bg-sf2">B 적용</button>
+              <button type="button" onClick={applyCompareB} className="min-h-[44px] rounded-[6px] px-2 text-[length:var(--fs-meta)] font-semibold text-[var(--accent-ink)] hover:bg-sf2">B 적용</button>
               <button type="button" onClick={() => setCompareB(null)} aria-label="비교 닫기" className="flex h-[44px] w-[44px] items-center justify-center rounded-[6px] text-t3 hover:bg-sf2"><X size={14} /></button>
             </>
           )}
@@ -316,10 +315,11 @@ export function GarmentWorkspace({
         </div>
       )}
 
-      <div className={cn("grid gap-3", threeCol ? "grid-cols-[300px_1fr_280px]" : twoCol ? "grid-cols-[280px_1fr]" : "grid-cols-1")}>
+      {/* 열 수는 컨테이너 쿼리(CSS)로 정한다 — 폭 측정 후 재배치하던 JS 판정은 첫 paint 가 1열이라 CLS 0.30 이었다(D5). 경계값은 그대로 760/1120. */}
+      <div className="grid grid-cols-1 gap-3 [@container(min-width:760px)_and_(max-width:1119.98px)]:grid-cols-[280px_1fr] [@container(min-width:1120px)]:grid-cols-[300px_1fr_280px]">
         {/* 태블릿 세로/모바일(1열 스택)에서는 미리보기를 옵션보다 먼저 보여준다(요청 §6:
             "위 미리보기 / 아래 옵션"). 3열/2열 배치에서는 원래 좌→중→우 DOM 순서를 유지한다. */}
-        <div className={cn("flex flex-col gap-4 rounded-[var(--r-lg)] border border-[var(--bd)] p-3", !threeCol && !twoCol && "order-2")}>
+        <div className={cn("flex flex-col gap-4 rounded-[var(--r-lg)] border border-[var(--bd)] p-3 order-2 [@container(min-width:760px)]:order-none")}>
           <FabricGrid kind="fabric" label="원단" options={fabrics} value={materials.fabricId ?? ""} onChange={(id) => pickMaterial("fabric", id)} />
           <FabricGrid kind="lining" label="안감" options={linings} value={materials.liningId ?? ""} onChange={(id) => pickMaterial("lining", id)} />
           <FabricGrid kind="button" label="단추" options={buttons} value={materials.buttonId ?? ""} onChange={(id) => pickMaterial("button", id)} />
@@ -356,7 +356,7 @@ export function GarmentWorkspace({
           )}
 
           <div className="border-t border-[var(--bd)] pt-3">
-            <div className="mb-1 text-[11px] font-medium text-t3">세부 사양(41항목)</div>
+            <div className="mb-1 text-[length:var(--fs-meta)] font-medium text-t3">세부 사양(41항목)</div>
             <OptionTabs
               options={options}
               qty={qty}
@@ -370,11 +370,11 @@ export function GarmentWorkspace({
 
         {/* 2·3열에서는 미리보기를 sticky 로 붙여 긴 옵션 목록을 내려도 선택 결과가 바로 보인다. self-start 가 없으면
             grid 가 이 칸을 왼쪽 옵션 열 높이(수천 px)로 늘려 h-full 스테이지가 거대해졌다(QA 2026-09-25). */}
-        <div className={cn("rounded-[var(--r-lg)] border border-[var(--bd)] p-3", !threeCol && !twoCol ? "order-1" : "sticky top-3 self-start")}>
+        <div className={cn("rounded-[var(--r-lg)] border border-[var(--bd)] p-3 order-1 [@container(min-width:760px)]:order-none [@container(min-width:760px)]:sticky [@container(min-width:760px)]:top-3 [@container(min-width:760px)]:self-start")}>
           {compareB ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <div className="mb-1 text-center text-[11px] font-semibold text-t3">A (현재)</div>
+                <div className="mb-1 text-center text-[length:var(--fs-meta)] font-semibold text-t3">A (현재)</div>
                 <GarmentStage
                   item={item} view={view} onViewChange={setView}
                   jacket={jacketSpec} pants={pantsSpec} vest={vestSpec}
@@ -383,7 +383,7 @@ export function GarmentWorkspace({
                 />
               </div>
               <div>
-                <div className="mb-1 text-center text-[11px] font-semibold text-t3">B (비교 저장본)</div>
+                <div className="mb-1 text-center text-[length:var(--fs-meta)] font-semibold text-t3">B (비교 저장본)</div>
                 <GarmentStage
                   item={item} view={view} onViewChange={setView}
                   jacket={buildJacketSpec(compareB.options)} pants={buildPantsSpec(compareB.options)} vest={buildVestSpec(compareB.options)}
@@ -402,12 +402,12 @@ export function GarmentWorkspace({
               onFocusField={focusField}
               backNotice={backNotice}
               onDismissBackNotice={() => setBackNotice(null)}
-              compactVh={!threeCol && !twoCol ? 40 : undefined}
+              compactVh={40}
             />
           )}
         </div>
 
-        <div className={cn("rounded-[var(--r-lg)] border border-[var(--bd)] p-3", !threeCol && "order-last")}>
+        <div className={cn("rounded-[var(--r-lg)] border border-[var(--bd)] p-3 order-last [@container(min-width:1120px)]:order-none")}>
           <h4 className="mb-2 text-[12.5px] font-semibold text-t">현재 제작 사양</h4>
           <div className="mb-2 flex flex-col gap-1 text-[12px]">
             <div><span className="text-t3">원단: </span>{materials.fabricLabel ?? <span className="text-wt">미선택</span>}</div>

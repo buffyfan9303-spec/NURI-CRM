@@ -10,7 +10,8 @@
  */
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, INDUSTRY_ICON } from "@/lib/icons";
+import { ChevronDown } from "@/lib/icons";
+import { INDUSTRY_ICON } from "@/lib/icons-map";
 import { cn } from "@/lib/utils/cn";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { LoginCard } from "@/components/auth/LoginCard";

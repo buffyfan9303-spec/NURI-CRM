@@ -111,7 +111,7 @@ export function DateRangeField({
       >
         <CalendarDays size={16} className="shrink-0 text-t3" aria-hidden />
         <span className={cn("min-w-0 flex-1 truncate", !summary && "text-t3")}>{summary || "달력에서 기간 선택"}</span>
-        {n > 0 && <span className="shrink-0 rounded-full bg-sf2 px-2 py-0.5 text-[11.5px] text-t2">{n}박</span>}
+        {n > 0 && <span className="shrink-0 rounded-full bg-sf2 px-2 py-0.5 text-[length:var(--fs-meta)] text-t2">{n}박</span>}
       </button>
 
       <Modal
@@ -168,7 +168,7 @@ export function DateRangeField({
             nav: "rdp-nav [&>button]:rounded-[var(--r-sm)] [&>button]:text-t2 [&>button:hover]:bg-sf2",
           }}
         />
-        <p className="mt-2 text-[11.5px] text-t3">빨강 = 일요일·공휴일, 파랑 = 토요일</p>
+        <p className="mt-2 text-[length:var(--fs-meta)] text-t3">빨강 = 일요일·공휴일, 파랑 = 토요일</p>
       </Modal>
     </div>
   );

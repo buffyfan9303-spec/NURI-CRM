@@ -28,6 +28,7 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
   const titleId = React.useId();
   const isDesktopDialog = open && phone === false;
   useDialogA11y(dialogRef, isDesktopDialog, onClose);
+  // autoFocus: vaul 기본값은 열 때 초점 이동을 막는다(D6) — 켜야 시트 안 첫 요소로 들어간다.
   // 휴대폰 시트는 닫히면 바로 언마운트돼 Radix 의 포커스 복귀가 돌지 않는다 — 연 버튼으로 직접 돌려준다.
   React.useEffect(() => {
     if (!open || phone !== true) return;
@@ -43,7 +44,7 @@ export function Modal({ open, onClose, title, children, footer, className }: Mod
 
   if (phone) {
     return (
-      <Drawer.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <Drawer.Root open={open} autoFocus onOpenChange={(o) => { if (!o) onClose(); }}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 z-50 bg-black/45" />
           <Drawer.Content

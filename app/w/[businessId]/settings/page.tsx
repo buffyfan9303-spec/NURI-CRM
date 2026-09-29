@@ -13,6 +13,8 @@ import { FeatureToggle } from "@/components/settings/FeatureToggle";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { CardHead } from "@/components/rental/listkit";
 import { RentalMoneySettings } from "@/components/rental/RentalMoneySettings";
+import { BuildingFeatureSwitches } from "@/components/building-ops/FeatureSwitches";
+import { resolveBuildingFeatures } from "@/lib/domain/building";
 import { getFeePolicy, getCancelPolicy } from "@/lib/domain/rental-money";
 import { getAccess } from "../access";
 
@@ -126,6 +128,8 @@ export default async function SettingsPage({ params }: { params: { businessId: s
           })}
         </ul>
       </Card>
+
+      {access.industry === "building" && <BuildingFeatureSwitches businessId={access.businessId} status={resolveBuildingFeatures(access.settings)} />}
 
       {access.industry === "rental" && (
         <RentalMoneySettings

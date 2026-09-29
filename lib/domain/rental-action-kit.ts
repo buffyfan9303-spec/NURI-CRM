@@ -103,7 +103,14 @@ export async function withCap<T>(
   fn: () => Promise<ActionResult<T>>
 ): Promise<ActionResult<T>> {
   try {
-    for (const c of Array.isArray(cap) ? cap : [cap]) await requireCap(businessId, c);
+    for (const c of Array.isArray(cap) ? cap : [cap]) {
+      const a = await requireCap(businessId, c);
+      // 렌탈 액션은 렌탈 업종 사업장에서만. 공장 고객 상세가 렌탈 부품을 쓰던 결함(D22, 2026-09-29)에서
+      // 다른 업종 사업장에 렌탈 예약이 저장되는 경로를 서버에서 막는다.
+      if (a.industry !== "rental") {
+        return { ok: false, message: "이 기능은 의류렌탈 업종 사업장에서만 쓸 수 있습니다." };
+      }
+    }
   } catch (e) {
     if (e instanceof AccessDenied) return { ok: false, message: accessMessage(e.detail).detail };
     throw e;

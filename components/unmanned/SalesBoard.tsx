@@ -303,7 +303,7 @@ export function SalesBoard({ businessId, canWrite, canReadRevenue, products, rec
                 <tr key={i} className={`${TR} h-[40px]`}><td className={`${TD} font-mono`}>{r.sku}</td><td className={`${TD} text-right tabular-nums`}>{r.qty}</td><td className={`${TD} text-right tabular-nums`}>{r.amount.toLocaleString()}</td><td className={`${TD} tabular-nums`}>{r.soldAt}</td></tr>
               ))}</tbody>
             </table>
-            <p className="border-t border-[var(--bd)] px-3 py-2 text-[11.5px] text-t3">미리보기 {Math.min(20, preview.length)}/{preview.length}행 · 파일: {fileName}</p>
+            <p className="border-t border-[var(--bd)] px-3 py-2 text-[length:var(--fs-meta)] text-t3">미리보기 {Math.min(20, preview.length)}/{preview.length}행 · 파일: {fileName}</p>
           </div>
         )}
       </Modal>

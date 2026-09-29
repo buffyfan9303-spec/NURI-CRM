@@ -12,8 +12,9 @@ import { accessMessage } from "@/lib/auth/access";
 import { getReceivables, getDepositsHeld } from "@/lib/domain/rental-money";
 import { getAccess } from "../access";
 import { ReceivablesBoard } from "@/components/rental/ReceivablesBoard";
+import { BldReceivablesView } from "@/components/building-ops/BldReceivablesView";
 
-export default async function ReceivablesPage({ params }: { params: { businessId: string } }) {
+export default async function ReceivablesPage({ params, searchParams }: { params: { businessId: string }; searchParams: { [k: string]: string | string[] | undefined } }) {
   const access = await getAccess(params.businessId, "revenue.read");
   if (!access.ok) {
     if (access.reason === "unauthenticated") return null;
@@ -24,6 +25,8 @@ export default async function ReceivablesPage({ params }: { params: { businessId
       </PageBody>
     );
   }
+  // 건물 관리비 업종은 별도 분기(연령 30·60·90, 독촉 기록). 렌탈 분기는 아래 그대로다.
+  if (access.industry === "building") return BldReceivablesView({ businessId: access.businessId, searchParams });
   if (access.industry !== "rental") {
     return (
       <PageBody>

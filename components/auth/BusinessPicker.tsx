@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, MailQuestion, Search, TriangleAlert, INDUSTRY_ICON, FALLBACK_ICON } from "@/lib/icons";
+import { ChevronRight, MailQuestion, Search, TriangleAlert } from "@/lib/icons";
+import { INDUSTRY_ICON, FALLBACK_ICON } from "@/lib/icons-map";
 import { Spinner } from "@/components/ui/Spinner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { signOut } from "@/lib/auth/actions";
@@ -139,10 +140,10 @@ export function BusinessPicker({ businesses, onPick, loading = false, error, onR
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13.5px] font-medium text-auth-tx">{b.name}</span>
                     <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-full bg-[var(--auth-field-bd)] px-2 py-0.5 text-[11px] font-medium text-auth-tx">
+                      <span className="rounded-full bg-[var(--auth-field-bd)] px-2 py-0.5 text-[length:var(--fs-meta)] font-medium text-auth-tx">
                         {INDUSTRY_LABEL[b.industry] ?? b.industry}
                       </span>
-                      <span className="text-[11.5px] text-auth-tx2">{ROLE_LABEL[b.role] ?? b.role}</span>
+                      <span className="text-[length:var(--fs-meta)] text-auth-tx2">{ROLE_LABEL[b.role] ?? b.role}</span>
                     </span>
                   </span>
                   <ChevronRight size={16} className="mt-1.5 shrink-0 text-auth-tx2" aria-hidden />

@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Building2, CircleAlert, INDUSTRY_ICON } from "@/lib/icons";
+import { Building2, CircleAlert } from "@/lib/icons";
+import { INDUSTRY_ICON } from "@/lib/icons-map";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { IndustryPicker, type IndustryOption } from "@/components/auth/IndustryPicker";

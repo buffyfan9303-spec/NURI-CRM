@@ -42,7 +42,7 @@ import { CancelPenaltyButton } from "./CancelPenaltyButton";
 import { ReturnInspectionPanel, NoticeButton, ClaimsCard } from "./ReservationTools";
 import { confirmAndChargeAction } from "@/lib/domain/rental-money-actions";
 import type { CancelPolicy } from "@/lib/domain/rental-money-types";
-import { CardHead, Alert, BackLink, SelectField, SummaryStrip, CONTROL, PILL, TABLE, THEAD, TH, TR, TD } from "./listkit";
+import { CardHead, Alert, BackLink, SelectField, SummaryStrip, CONTROL, PILL, TABLE, THEAD, TH, TR, TD, ScrollTable } from "./listkit";
 
 /** 개체 교환이 허용되는 예약 상태(crm.swap_reservation_unit의 상태 검사와 동일). */
 const SWAPPABLE_STATUS = ["confirmed", "out", "partial_return"];
@@ -338,18 +338,14 @@ export function ReservationDetail({
                 rows={reservation.items}
                 keyOf={(i) => i.id}
                 table={
-                  <div className="relative -mx-4 overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:-mx-5 sm:px-5" tabIndex={0} role="region" aria-label="구성 항목 표(가로 스크롤)">
-                    <table className={`${TABLE} min-w-[880px]`}>
+                  <ScrollTable label="구성 항목 표(가로 스크롤)">
+                    <table className={`${TABLE} min-w-[520px]`}>
                       <thead>
                         <tr className={THEAD}>
                           <th className="w-9 px-2 py-2.5"><span className="sr-only">선택</span></th>
-                          <th className={TH}>상품</th>
-                          <th className={TH}>SKU</th>
-                          <th className={TH}>개체</th>
-                          <th className={`${TH} text-right`}>수량</th>
-                          {canRevenueRead && <th className={`${TH} text-right`}>대여료</th>}
-                          {canRevenueRead && <th className={`${TH} text-right`}>할인</th>}
-                          <th className={TH}>항목 상태</th>
+                          <th className={TH}>상품 · SKU · 수량</th>
+                          <th className={TH}>개체 · 항목 상태</th>
+                          {canRevenueRead && <th className={`${TH} text-right`}>대여료 · 할인</th>}
                           {canWrite && <th className={TH}>동작</th>}
                         </tr>
                       </thead>
@@ -359,20 +355,27 @@ export function ReservationDetail({
                           return (
                             <tr key={i.id} className={`${TR} h-[52px]`}>
                               <td className="px-2 py-2 align-middle">{v.checkbox}</td>
-                              <td className={`${TD} font-medium text-t`}><span className="block max-w-[260px] truncate" title={i.productName}>{i.productName}</span></td>
-                              <td className={`${TD} whitespace-nowrap text-t2`}>{v.sku}</td>
-                              <td className={`${TD} whitespace-nowrap font-mono text-t2`}>{v.unit}</td>
-                              <td className={`${TD} text-right tabular-nums text-t2`}>{i.qty}</td>
-                              {canRevenueRead && <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{v.fee}</td>}
-                              {canRevenueRead && <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t2`}>{v.discount}</td>}
-                              <td className={`${TD} whitespace-nowrap`}>{v.status}</td>
+                              <td className={`${TD} font-medium text-t`}>
+                                <span className="block max-w-[220px] truncate" title={i.productName}>{i.productName}</span>
+                                <span className="block whitespace-nowrap text-[length:var(--fs-meta)] font-normal text-t3">{v.sku} · 수량 {i.qty}</span>
+                              </td>
+                              <td className={`${TD} whitespace-nowrap`}>
+                                <span className="block font-mono text-t2">{v.unit}</span>
+                                <span className="mt-0.5 block">{v.status}</span>
+                              </td>
+                              {canRevenueRead && (
+                                <td className={`${TD} whitespace-nowrap text-right tabular-nums`}>
+                                  <span className="block text-t">{v.fee}</span>
+                                  <span className="block text-[length:var(--fs-meta)] text-t3">할인 {v.discount}</span>
+                                </td>
+                              )}
                               {canWrite && <td className={TD}>{v.actions}</td>}
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
-                  </div>
+                  </ScrollTable>
                 }
                 card={(i) => {
                   const v = itemView(i);
@@ -473,7 +476,7 @@ export function ReservationDetail({
               <CardHead title="고객·메모" />
               <dl className="flex flex-col gap-3 text-[length:var(--fs-body)]">
                 <div>
-                  <dt className="text-[11.5px] text-t3">고객</dt>
+                  <dt className="text-[length:var(--fs-meta)] text-t3">고객</dt>
                   <dd className="mt-0.5 flex flex-wrap items-center text-t">
                     {reservation.customerRef ? (
                       <Link href={`/w/${businessId}/customers/${reservation.customerRef}`} className="inline-flex min-h-[32px] items-center font-medium text-[var(--accent-ink)] hover:underline [@media(pointer:coarse)]:min-h-[44px]">
@@ -486,7 +489,7 @@ export function ReservationDetail({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[11.5px] text-t3">메모</dt>
+                  <dt className="text-[length:var(--fs-meta)] text-t3">메모</dt>
                   <dd className="mt-0.5 whitespace-pre-wrap text-t">{reservation.notes || <span className="text-t3">없음</span>}</dd>
                 </div>
               </dl>
@@ -501,7 +504,7 @@ export function ReservationDetail({
 function PeriodRow({ label, value, alert }: { label: string; value: string; alert?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <dt className="flex w-[52px] shrink-0 items-center gap-1 text-[11.5px] text-t3"><CalendarClock size={13} aria-hidden />{label}</dt>
+      <dt className="flex w-[52px] shrink-0 items-center gap-1 text-[length:var(--fs-meta)] text-t3"><CalendarClock size={13} aria-hidden />{label}</dt>
       <dd className={alert ? "font-medium tabular-nums text-et" : "font-medium tabular-nums text-t"}>{value}</dd>
     </div>
   );

@@ -3,16 +3,21 @@
  *
  * 계약 준수:
  *  - §5.1/§5.3: 상위 layout.tsx가 이미 checkAccess를 통과시켰더라도 여기서 다시
- *    checkAccess()를 부른다(레이아웃 통과를 믿지 않는다 — 프롬프트 지시사항).
+ *    부른다(레이아웃 통과를 믿지 않는다 — 프롬프트 지시사항). getAccess 는 같은 요청 안에서만 캐시하므로
+ *    판정은 매 요청 새로 하되 layout 과의 DB 왕복 3회 중복(my_caps·businesses·memberships)은 없앤다(2026-09-29 성능).
  *  - §5.5: 미인증/소속없음/권한부족/서버오류를 서로 다른 화면으로 보여준다.
  *  - URL 쿼리(view/date/kinds/assignee/status/q)가 상태의 단일 출처다 — 새로고침·
  *    공유해도 같은 화면이 복원된다.
  */
 import { redirect } from "next/navigation";
-import { checkAccess, accessMessage } from "@/lib/auth/access";
+import { accessMessage } from "@/lib/auth/access";
+import { getAccess } from "../access";
 import { INDUSTRY_DEFS } from "@/lib/industry/config";
 import { listEvents, listAssignableMembers, computeRange, type CalendarView } from "@/lib/domain/calendar";
 import { todayKeyInTz, isValidDateKey } from "@/lib/utils/datetime";
+import Link from "next/link";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { resolveBuildingFeatures } from "@/lib/domain/building";
 import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { RetryError } from "@/components/calendar/RetryError";
 import { CalendarClient, type EventsState } from "@/components/calendar/CalendarClient";
@@ -30,7 +35,7 @@ export default async function CalendarPage({
   params: { businessId: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const access = await checkAccess(params.businessId, "view");
+  const access = await getAccess(params.businessId, "view");
 
   if (!access.ok) {
     if (access.reason === "unauthenticated") redirect("/login");
@@ -42,6 +47,19 @@ export default async function CalendarPage({
         ) : (
           <ForbiddenState title={msg.title} description={msg.detail} />
         )}
+      </div>
+    );
+  }
+
+  // 건물 관리비: 점검·일정 메뉴는 선택 기능(inspections)이 켜져 있을 때만 쓴다. 다른 업종 동작은 그대로다.
+  if (access.industry === "building" && resolveBuildingFeatures(access.settings).inspections !== "on") {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <EmptyState
+          title="점검·일정 기능이 꺼져 있습니다."
+          description="선택 기능에서 법정 점검·용역 일정을 켜면 이 화면을 쓸 수 있습니다."
+          action={<Link href={`/w/${access.businessId}/settings`} className="text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link>}
+        />
       </div>
     );
   }

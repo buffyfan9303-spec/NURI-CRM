@@ -184,9 +184,9 @@ export function ConsultationsBoard({ businessId, canWrite, canReadPii, consultat
                       const v = rowView(c);
                       return (
                         <tr key={c.id} className={`${TR} h-[52px] hover:bg-sf2`}>
-                          <td className={TD}><CellName max={160}>{v.name}</CellName>{c.memo && <span className="block max-w-[200px] truncate text-[11.5px] text-t3" title={c.memo}>{c.memo}</span>}</td>
+                          <td className={TD}><CellName max={160}>{v.name}</CellName>{c.memo && <span className="block max-w-[200px] truncate text-[length:var(--fs-meta)] text-t3" title={c.memo}>{c.memo}</span>}</td>
                           <td className={`${TD} whitespace-nowrap text-t2`}>{v.guardian}</td>
-                          <td className={`${TD} text-t2`}>{v.source}<span className="block text-[11.5px] text-t3">{v.subject}</span></td>
+                          <td className={`${TD} text-t2`}>{v.source}<span className="block text-[length:var(--fs-meta)] text-t3">{v.subject}</span></td>
                           <td className={`${TD} whitespace-nowrap tabular-nums text-t2`}>{v.consultedAt}</td>
                           <td className={TD}><Badge kind={STATUS_KIND[c.status]}>{c.status}</Badge></td>
                           <td className={`${TD} text-right`}>{actionsOf(c, v)}</td>

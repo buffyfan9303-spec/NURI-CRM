@@ -144,7 +144,7 @@ export default async function ClaimPrintPage({ params }: { params: { businessId:
           </dl>
         </section>
 
-        <footer className="mt-10 border-t pt-4 text-[11.5px]" style={{ borderColor: "#e3e6e8", color: "#5d646b" }}>
+        <footer className="mt-10 border-t pt-4 text-[length:var(--fs-meta)]" style={{ borderColor: "#e3e6e8", color: "#5d646b" }}>
           <p>보증금은 대여료와 별도로 관리되며, 청구액은 보증금에서 먼저 차감됩니다. 미수금이 있으면 추가 납부가 필요합니다.</p>
           <p className="mt-1">문의: {c.business.name}</p>
         </footer>

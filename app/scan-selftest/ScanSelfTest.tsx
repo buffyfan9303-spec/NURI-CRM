@@ -75,8 +75,8 @@ export function ScanSelfTest() {
               <IconCircleX size={16} aria-hidden />
             )}
             <span className="font-semibold">{r.format}</span>
-            <span className="font-mono text-[11.5px]">{r.text}</span>
-            {results !== null && !r.pass && <span className="text-[11.5px]">{("error" in r && r.error) || `디코딩 결과: ${r.decoded ?? "없음"}`}</span>}
+            <span className="font-mono text-[length:var(--fs-meta)]">{r.text}</span>
+            {results !== null && !r.pass && <span className="text-[length:var(--fs-meta)]">{("error" in r && r.error) || `디코딩 결과: ${r.decoded ?? "없음"}`}</span>}
           </div>
         ))}
       </div>

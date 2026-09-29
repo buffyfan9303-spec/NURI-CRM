@@ -51,6 +51,16 @@ export function memberLabel(userId: string | null, members: MemberOption[]): str
   return m.isSelf ? `나 (${m.role})` : `${name} · ${m.role}`;
 }
 
+/**
+ * 휴대폰 달력 칸(안쪽 폭 약 44px, 12px 글자 3~4자/줄)용 짧은 공휴일 이름.
+ * "대체공휴일(개천절)" → "개천절(대체)" — keep-all 로 "개천절" / "(대체)" 두 줄에 들어간다.
+ * 그 밖의 이름("추석 다음 날" 등)은 띄어쓰기에서 줄이 바뀌므로 그대로 둔다. aria-label 은 항상 원래 이름.
+ */
+export function shortHolidayLabel(label: string): string {
+  const m = label.match(/^대체\s?공휴일\s?\((.+)\)$/);
+  return m ? `${m[1]}(대체)` : label;
+}
+
 export function formatEventTimeLabel(e: CalendarEvent, tz: string): string {
   if (e.allDay) return "종일";
   const start = e.startsAt ? formatInTz(e.startsAt, tz, "HH:mm") : "--:--";

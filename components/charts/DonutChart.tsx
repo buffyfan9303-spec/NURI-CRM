@@ -84,7 +84,7 @@ export function DonutChart({
             </svg>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-[22px] font-bold tabular-nums text-t">{formatCount(total, "")}</span>
-              <span className="text-[11.5px] text-t3">전체 {unit}</span>
+              <span className="text-[length:var(--fs-meta)] text-t3">전체 {unit}</span>
             </div>
           </div>
           <ul className="flex w-full flex-col gap-1.5">

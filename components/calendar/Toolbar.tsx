@@ -226,7 +226,7 @@ export function Toolbar({
           </Button>
           <Button size="sm" variant="secondary" onClick={() => setSheetOpen(true)} className="sm:hidden" aria-haspopup="dialog">
             <Filter size={15} aria-hidden />
-            필터{activeCount > 0 && <span className="rounded-full bg-[var(--accent-strong)] px-1.5 text-[11.5px] font-bold text-[var(--accent-contrast)]">{activeCount}</span>}
+            필터{activeCount > 0 && <span className="rounded-full bg-[var(--accent-strong)] px-1.5 text-[12px] font-bold text-[var(--accent-contrast)]">{activeCount}</span>}
           </Button>
         </div>
       </div>

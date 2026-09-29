@@ -108,8 +108,8 @@ export function StudentsBoard({ businessId, canWrite, canReadPii, students, guar
                         {canReadPii ? (
                           gs.length === 0 ? <span className="text-t3">없음</span> : (
                             <span className="flex flex-col">
-                              {gs.slice(0, 2).map((g) => <span key={g.id} className="whitespace-nowrap"><span className="text-t">{g.name}</span>{g.relation ? <span className="text-[11.5px] text-t3"> {g.relation}</span> : null} <span className="tabular-nums">{g.phone}</span></span>)}
-                              {gs.length > 2 && <span className="text-[11.5px] text-t3">외 {gs.length - 2}명</span>}
+                              {gs.slice(0, 2).map((g) => <span key={g.id} className="whitespace-nowrap"><span className="text-t">{g.name}</span>{g.relation ? <span className="text-[length:var(--fs-meta)] text-t3"> {g.relation}</span> : null} <span className="tabular-nums">{g.phone}</span></span>)}
+                              {gs.length > 2 && <span className="text-[length:var(--fs-meta)] text-t3">외 {gs.length - 2}명</span>}
                             </span>
                           )
                         ) : (

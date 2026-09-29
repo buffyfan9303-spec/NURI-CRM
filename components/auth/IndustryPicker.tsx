@@ -99,12 +99,12 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13.5px] font-semibold text-auth-tx">{ind.name}</span>
-                    <span className="block truncate text-[11.5px] leading-snug text-auth-tx2">{ind.desc}</span>
+                    <span className="block truncate text-[length:var(--fs-meta)] leading-snug text-auth-tx2">{ind.desc}</span>
                   </span>
                   {selected && <Check size={16} className="shrink-0 text-auth-tx" aria-hidden />}
                 </button>
                 {selected && flow && (
-                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 px-3.5 pb-1 pt-2 text-[11.5px] text-auth-tx2">
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 px-3.5 pb-1 pt-2 text-[length:var(--fs-meta)] text-auth-tx2">
                     {flow.map((step, si) => (
                       <React.Fragment key={step}>
                         {si > 0 && <ArrowRight size={11} className="text-auth-tx2" aria-hidden />}
@@ -117,7 +117,7 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
             );
           })}
         </div>
-        <p className="mt-3 text-[11px] leading-snug text-auth-tx2">
+        <p className="mt-3 text-[length:var(--fs-meta)] leading-snug text-auth-tx2">
           업종 선택은 진입 의도일 뿐이며, 실제 권한은 로그인 후 사업장 소속으로 결정됩니다.
         </p>
       </div>
@@ -155,12 +155,12 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
               )}
               <Icon size={20} className={selected ? "text-auth-tx" : "text-auth-tx2"} />
               <span className="text-[13px] font-semibold text-auth-tx">{ind.name}</span>
-              <span className="text-[11.5px] leading-snug text-auth-tx2">{ind.desc}</span>
+              <span className="text-[length:var(--fs-meta)] leading-snug text-auth-tx2">{ind.desc}</span>
             </button>
           );
         })}
       </div>
-      <p className="mt-3 text-[11.5px] leading-snug text-auth-tx2">
+      <p className="mt-3 text-[length:var(--fs-meta)] leading-snug text-auth-tx2">
         업종 선택은 진입 의도일 뿐이며, 실제 권한은 로그인 후 사업장 소속으로 결정됩니다.
       </p>
     </div>

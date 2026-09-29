@@ -14,6 +14,7 @@ import { Badge, type BadgeKind } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TableOrCards, MobileCard } from "@/components/ui/ResponsiveTable";
+import { HintedScroll } from "@/components/ui/ScrollHint";
 import { BackLink, CardHead, Alert, TABLE, THEAD, TH, TR, TR_CLICK, TD, CONTROL } from "@/components/rental/listkit";
 import type { AcadStudent, AcadGuardian, AcadEnrollmentDetail, AcadAttendanceDetail, AcadInvoiceBalance, AcadClass } from "@/lib/domain/academy";
 import { enrollStudent, setStudentCheckinCode } from "@/lib/domain/academy-actions";
@@ -201,6 +202,7 @@ export function StudentDetail({
           {attendance.length === 0 ? (
             <EmptyState title="출결 기록이 없습니다." description="이 학생의 출결이 아직 기록되지 않았습니다." />
           ) : (
+            <HintedScroll>
             <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
               <table className={`${TABLE} min-w-[360px]`}>
                 <thead>
@@ -221,6 +223,7 @@ export function StudentDetail({
                 </tbody>
               </table>
             </div>
+            </HintedScroll>
           )}
         </Card>
 
@@ -232,6 +235,7 @@ export function StudentDetail({
             ) : invoices.length === 0 ? (
               <EmptyState title="발행된 청구서가 없습니다." />
             ) : (
+              <HintedScroll>
               <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
                 <table className={`${TABLE} min-w-[520px]`}>
                   <thead>
@@ -245,8 +249,8 @@ export function StudentDetail({
                   <tbody>
                     {invoices.map((inv) => (
                       <tr key={inv.invoiceId} className={`${TR} h-[52px]`}>
-                        <td className={`${TD} whitespace-nowrap tabular-nums text-t`}>{inv.period}<span className="block text-[11.5px] text-t3">기한 {inv.dueDate}</span></td>
-                        <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{formatKRW(inv.amount)}<span className="block text-[11.5px] text-t3">납부 {formatKRW(inv.paid)}</span></td>
+                        <td className={`${TD} whitespace-nowrap tabular-nums text-t`}>{inv.period}<span className="block text-[length:var(--fs-meta)] text-t3">기한 {inv.dueDate}</span></td>
+                        <td className={`${TD} whitespace-nowrap text-right tabular-nums text-t`}>{formatKRW(inv.amount)}<span className="block text-[length:var(--fs-meta)] text-t3">납부 {formatKRW(inv.paid)}</span></td>
                         <td className={`${TD} whitespace-nowrap text-right tabular-nums ${inv.outstanding > 0 ? "font-semibold text-et" : "text-t3"}`}>{formatKRW(inv.outstanding)}</td>
                         <td className={`${TD} text-right`}>
                           <span className="inline-flex items-center justify-end gap-1.5">
@@ -261,6 +265,7 @@ export function StudentDetail({
                   </tbody>
                 </table>
               </div>
+              </HintedScroll>
             )}
           </Card>
         ) : (

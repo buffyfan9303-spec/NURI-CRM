@@ -56,11 +56,11 @@ export function WorkList({
               <span className="block truncate font-medium text-t">{r.title}</span>
               {r.subtitle && <span className="block truncate text-[12px] text-t3">{r.subtitle}</span>}
             </span>
-            <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2 py-[2px] text-[11.5px] font-semibold leading-[16px]", STATUS_CLASS[r.statusTone ?? "neutral"])}>
+            <span className={cn("shrink-0 whitespace-nowrap rounded-full px-2 py-[2px] text-[length:var(--fs-meta)] font-semibold leading-[16px]", STATUS_CLASS[r.statusTone ?? "neutral"])}>
               {r.statusLabel}
             </span>
             {r.action && (
-              <span className="hidden shrink-0 rounded-[6px] border border-[var(--bd2)] px-2 py-1 text-[11.5px] text-t2 sm:inline-block">
+              <span className="hidden shrink-0 rounded-[6px] border border-[var(--bd2)] px-2 py-1 text-[length:var(--fs-meta)] text-t2 sm:inline-block">
                 {r.action}
               </span>
             )}

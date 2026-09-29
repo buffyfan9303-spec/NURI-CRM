@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TableOrCards, MobileCard } from "@/components/ui/ResponsiveTable";
-import { BackLink, StatusTab, FilterRow, CardHead, Alert, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
+import { BackLink, StatusTab, FilterRow, CardHead, Alert, TABLE, THEAD, TH, TR, TD, ScrollTable } from "@/components/rental/listkit";
 import type { CustomerRow, CustomerMeasurementRow } from "@/lib/domain/rental-types";
 import { addCustomerMeasurement } from "@/lib/domain/rental-actions";
 import type { TreatmentHistoryRow } from "@/lib/domain/salon";
@@ -153,8 +153,8 @@ export function SalonCustomerDetail({
               rows={rows}
               keyOf={(a) => a.id}
               table={
-                <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
-                  <table className={`${TABLE} min-w-[640px]`}>
+                <ScrollTable label="시술 이력 표(가로 스크롤)">
+                  <table className={`${TABLE} min-w-[520px]`}>
                     <thead>
                       <tr className={THEAD}>
                         <th className={TH}>일시</th>
@@ -176,7 +176,7 @@ export function SalonCustomerDetail({
                             {a.amount === null ? <span className="text-t3">—</span> : (
                               <>
                                 {formatKRW(a.amount)}
-                                {a.outstanding !== null && a.outstanding > 0 && <span className="block text-[11px] font-medium text-et">미수 {formatKRW(a.outstanding)}</span>}
+                                {a.outstanding !== null && a.outstanding > 0 && <span className="block text-[length:var(--fs-meta)] font-medium text-et">미수 {formatKRW(a.outstanding)}</span>}
                               </>
                             )}
                           </td>
@@ -185,7 +185,7 @@ export function SalonCustomerDetail({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </ScrollTable>
               }
               card={(a) => (
                 <MobileCard
@@ -233,7 +233,7 @@ export function SalonCustomerDetail({
                 <p className="text-[length:var(--fs-meta)] text-t3">기록된 신체 치수가 없습니다.</p>
               ) : (
                 <div className="rounded-[var(--r-md)] bg-[var(--accent-soft)] p-3.5">
-                  <p className="mb-2 text-[11.5px] font-semibold text-[var(--accent-ink)]">최신 기록 · {formatInTz(latest.measuredAt, DEFAULT_TZ, "yyyy.MM.dd HH:mm")}</p>
+                  <p className="mb-2 text-[length:var(--fs-meta)] font-semibold text-[var(--accent-ink)]">최신 기록 · {formatInTz(latest.measuredAt, DEFAULT_TZ, "yyyy.MM.dd HH:mm")}</p>
                   <MeasurementValues values={latest.values} />
                   {latest.note && <p className="mt-2 text-[12px] text-t2">메모: {latest.note}</p>}
                 </div>
@@ -268,8 +268,8 @@ function MeasurementValues({ values }: { values: Record<string, number | string>
     <dl className="grid grid-cols-3 gap-x-3 gap-y-2 text-[length:var(--fs-meta)]">
       {entries.map((f) => (
         <div key={f.key}>
-          <dt className="text-[11px] text-t3">{f.label.replace("(cm)", "")}</dt>
-          <dd className="font-semibold tabular-nums text-t">{values[f.key]}<span className="ml-0.5 text-[11px] font-normal text-t3">cm</span></dd>
+          <dt className="text-[length:var(--fs-meta)] text-t3">{f.label.replace("(cm)", "")}</dt>
+          <dd className="font-semibold tabular-nums text-t">{values[f.key]}<span className="ml-0.5 text-[length:var(--fs-meta)] font-normal text-t3">cm</span></dd>
         </div>
       ))}
     </dl>

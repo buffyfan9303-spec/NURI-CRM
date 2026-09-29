@@ -41,8 +41,8 @@ export function PageHeader({
               <h1 className="text-[20px] font-bold leading-tight tracking-[var(--tr-tight)] text-t sm:text-[length:var(--fs-page)]">{title}</h1>
               {meta}
             </div>
-            {/* 휴대폰은 한 줄 말줄임(C1) — 전체 문구는 title 로. */}
-            {description && <p className="mt-1 text-[length:var(--fs-body)] leading-snug text-t2 max-sm:line-clamp-1" title={description}>{description}</p>}
+            {/* 휴대폰은 두 줄까지(D10: 한 줄 말줄임은 "…확정 시 서버가 다시 합니다" 같은 안내를 숨겼고, 터치는 title 을 볼 수 없다). */}
+            {description && <p className="mt-1 break-keep text-[length:var(--fs-body)] leading-snug text-t2 max-sm:line-clamp-2" title={description}>{description}</p>}
           </div>
           {settingsHref && <SettingsIconLink href={settingsHref} />}
         </div>

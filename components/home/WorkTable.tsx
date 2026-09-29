@@ -73,10 +73,10 @@ export function WorkTable({
         <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-sf2">
           <span className="block h-full rounded-full bg-[var(--accent-strong)]" style={{ width: `${Math.max(0, Math.min(100, r.progressPct))}%` }} />
         </span>
-        <span className="w-9 shrink-0 tabular-nums text-[11.5px] text-t3">{Math.round(r.progressPct)}%</span>
+        <span className="w-9 shrink-0 tabular-nums text-[length:var(--fs-meta)] text-t3">{Math.round(r.progressPct)}%</span>
       </span>
     ) : (
-      <span className={cn("inline-block whitespace-nowrap rounded-full px-2 py-[2px] text-[11.5px] font-semibold leading-[16px]", STATUS_CLASS[r.statusTone ?? "neutral"])}>{r.statusLabel}</span>
+      <span className={cn("inline-block whitespace-nowrap rounded-full px-2 py-[2px] text-[length:var(--fs-meta)] font-semibold leading-[16px]", STATUS_CLASS[r.statusTone ?? "neutral"])}>{r.statusLabel}</span>
     );
   const amount = (r: WorkTableRow) => (r.amount == null ? "—" : formatKRW(r.amount));
 
@@ -95,7 +95,7 @@ export function WorkTable({
               <col className="w-[120px]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-[var(--bd)] text-[11.5px] text-t3">
+              <tr className="border-b border-[var(--bd)] text-[length:var(--fs-meta)] text-t3">
                 <th className="py-2 text-left font-normal">#</th>
                 <th className="py-2 text-left font-normal">이름</th>
                 {showQty && <th className="py-2 text-right font-normal">수량</th>}
@@ -117,12 +117,12 @@ export function WorkTable({
                       onClick={(e) => e.stopPropagation()}
                       className="flex min-h-[44px] items-center gap-2.5 rounded-[var(--r-sm)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sf2 text-[11px] font-semibold text-t2">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sf2 text-[length:var(--fs-meta)] font-semibold text-t2">
                         {initialsOf(r.title)}
                       </span>
                       <span className="min-w-0">
                         <span className="block truncate font-medium text-t">{r.title}</span>
-                        {r.subtitle && <span className="block truncate text-[11.5px] text-t3">{r.subtitle}</span>}
+                        {r.subtitle && <span className="block truncate text-[length:var(--fs-meta)] text-t3">{r.subtitle}</span>}
                       </span>
                     </Link>
                   </td>
