@@ -7,6 +7,7 @@
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CONTROL } from "@/components/rental/listkit";
+import { cn } from "@/lib/utils/cn";
 import type { PeriodStatus } from "@/lib/domain/building-types";
 import { PeriodStatusPill } from "./StatusPill";
 import { periodLabel, periodOptions } from "./period";
@@ -41,7 +42,7 @@ export function BuildingPeriodBar({
     next.set(key, value);
     router.push(`${pathname}?${next.toString()}`);
   };
-  const sel = `${CONTROL} w-auto min-w-[160px] max-w-[280px] pr-8`;
+  const sel = cn(CONTROL, "w-auto min-w-[160px] max-w-[280px] pr-8");
   return (
     <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[length:var(--fs-body)] text-t2">
       <label htmlFor={bId} className="sr-only">건물</label>

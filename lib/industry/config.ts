@@ -231,8 +231,8 @@ export const INDUSTRY_DEFS: Record<Industry, IndustryDef> = {
     ],
   },
 
-  // 0031: 건물 관리비(CAM). 메뉴 순서 = 월 업무 순서(조사 A절). tax·requests·calendar 는 features.tax_invoice/work_orders/inspections 가
-  // 켜질 때만 보인다(buildingNav()). 돈 확정·발행은 신규 cap(billing.configure/approve, payment.allocate, tax.issue — role_template 데이터).
+  // 0031: 건물 관리비(CAM). 메뉴 순서 = 월 업무 순서(조사 A절). requests·calendar 는 features.work_orders/inspections 가
+  // 켜질 때만 보인다(buildingNav()). 세금계산서 일괄발행은 항상 보이는 메뉴다(꺼져 있으면 화면에서 켜는 버튼이 나온다). 돈 확정·발행은 신규 cap(billing.configure/approve, payment.allocate, tax.issue — role_template 데이터).
   building: {
     key: "building",
     name: "건물 관리비",
@@ -246,18 +246,18 @@ export const INDUSTRY_DEFS: Record<Industry, IndustryDef> = {
     nav: [
       { key: "dash", path: "", label: "이번 달 할 일", cap: "view" },
       { key: "units", path: "units", label: "호실·입주자", cap: "view" },
-      { key: "meters", path: "meters", label: "검침 입력", cap: "write" },
+      { key: "meters", path: "meters", label: "계량기 숫자 입력", cap: "write" },
       { key: "expenses", path: "expenses", label: "비용 입력", cap: "write" },
-      { key: "billing", path: "billing", label: "관리비 계산·확인", cap: "revenue.read" },
+      { key: "billing", path: "billing", label: "관리비 계산·확정", cap: "revenue.read" },
       { key: "statements", path: "statements", label: "명세서 보내기", cap: "revenue.read" },
-      { key: "payments", path: "payments", label: "입금 확인", cap: "revenue.read" },
-      { key: "receivables", path: "receivables", label: "미납·독촉", cap: "revenue.read" },
-      { key: "tax", path: "tax", label: "세금계산서", cap: "revenue.read" }, // features.tax_invoice
+      { key: "payments", path: "payments", label: "받은 돈 확인", cap: "revenue.read" },
+      { key: "receivables", path: "receivables", label: "못 받은 돈", cap: "revenue.read" },
+      { key: "tax", path: "tax", label: "세금계산서 일괄발행", cap: "revenue.read" }, // 항상 표시. 발행 기록은 tax.issue, 서버 RPC 는 features.tax_invoice 를 요구
       { key: "requests", path: "requests", label: "민원·수리", cap: "view" }, // features.work_orders
       { key: "calendar", path: "calendar", label: "점검·일정", cap: "view" }, // features.inspections
-      { key: "reports", path: "reports", label: "보고서", cap: "revenue.read" },
-      { key: "charges", path: "charges", label: "관리비 항목 설정", cap: "billing.configure" },
-      { key: "imports", path: "imports", label: "외부 파일 가져오기", cap: "write" },
+      { key: "reports", path: "reports", label: "월별 정산 보고서", cap: "revenue.read" },
+      { key: "charges", path: "charges", label: "관리비 항목 정하기", cap: "billing.configure" },
+      { key: "imports", path: "imports", label: "엑셀 파일 가져오기", cap: "write" },
       { key: "staff", path: "staff", label: "직원·권한", cap: "staff.manage" },
     ],
     eventKinds: [
@@ -270,7 +270,7 @@ export const INDUSTRY_DEFS: Record<Industry, IndustryDef> = {
 };
 
 /** 선택 메뉴 → 켜져 있어야 하는 기능 키(0031 bld_feature_defs). 서버 RPC 도 같은 키로 거부한다. */
-export const BUILDING_NAV_FEATURE: Record<string, string> = { tax: "tax_invoice", requests: "work_orders", calendar: "inspections" };
+export const BUILDING_NAV_FEATURE: Record<string, string> = { requests: "work_orders", calendar: "inspections" };
 
 /** 건물 관리비 메뉴: 선택 기능이 꺼진 메뉴는 숨긴다. features 는 사업장 settings.features(없으면 기본값: 전부 끔). */
 export function buildingNav(settings: Record<string, unknown> | null | undefined): IndustryNav[] {

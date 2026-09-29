@@ -7,17 +7,17 @@ import { unitLabel } from "./format";
 import { getAging, lastDunning, listParties, listReceivables, listUnits } from "@/lib/domain/building";
 
 export async function BldReceivablesView({ businessId, searchParams }: { businessId: string; searchParams: SearchParams }) {
-  const g = await buildingGate(businessId, "revenue.read", searchParams, "미수금");
+  const g = await buildingGate(businessId, "revenue.read", searchParams, "못 받은 돈");
   if (!g.ctx) return g.node;
   const { ctx } = g;
   const [aRes, rRes, uRes, pRes] = await Promise.all([getAging(ctx.building.id), listReceivables(ctx.building.id, { openOnly: true }), listUnits(ctx.building.id, { includeInactive: true }), listParties(businessId)]);
-  const head = <BuildingHeader ctx={ctx} title="미수금" description="납기가 지난 관리비를 연령별로 보고 독촉 단계를 기록합니다." showPeriod={false} />;
+  const head = <BuildingHeader ctx={ctx} title="못 받은 돈" description="납부기한이 지난 관리비를 밀린 날수로 나눠 보고, 입주자에게 연락한 기록을 남깁니다." showPeriod={false} />;
   if (!aRes.ok || !rRes.ok || !uRes.ok || !pRes.ok) {
     const m = !aRes.ok ? aRes.message : !rRes.ok ? rRes.message : !uRes.ok ? uRes.message : !pRes.ok ? pRes.message : "";
-    return <PageBody>{head}<ReadFail title="미수금을 불러오지 못했습니다." message={m} /></PageBody>;
+    return <PageBody>{head}<ReadFail title="못 받은 돈을 불러오지 못했습니다." message={m} /></PageBody>;
   }
   const dRes = await lastDunning(rRes.data.map((r) => r.id));
-  if (!dRes.ok) return <PageBody>{head}<ReadFail title="독촉 기록을 불러오지 못했습니다." message={dRes.message} /></PageBody>;
+  if (!dRes.ok) return <PageBody>{head}<ReadFail title="재촉 기록을 불러오지 못했습니다." message={dRes.message} /></PageBody>;
 
   const uName = new Map(uRes.data.map((u) => [u.id, unitLabel(u)]));
   const party = new Map(pRes.data.map((p) => [p.id, p.name]));

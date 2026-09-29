@@ -276,10 +276,26 @@ export async function upsertDirectCharge(businessId: string, buildingId: string,
 export async function ensurePeriod(businessId: string, buildingId: string, period: string, input: { due_date?: string; usage_from?: string; usage_to?: string; notice?: string } = {}): Promise<ActionResult<{ id: string }>> {
   return withCap(businessId, "write", async () => {
     const b = await assertBuilding(businessId, buildingId); if (!b.ok) return b;
-    const { data, error } = await crm().from("bld_periods").upsert({ business_id: businessId, building_id: buildingId, period, ...input }, { onConflict: "building_id,period" }).select("id").single();
-    if (error) return err(error);
+    // upsert 금지: 0033 이 bld_periods 의 UPDATE 를 4개 열(due_date·usage_from·usage_to·notice)로 제한해서
+    // on conflict do update 가 business_id·period 열까지 SET 하면 permission denied(=화면의 "권한 없음") 가 된다.
+    // 그래서 조회 → 없으면 insert(상태는 트리거가 collecting 으로 고정) → 있으면 허용 열만 update.
+    const find = () => crm().from("bld_periods").select("id").eq("building_id", buildingId).eq("business_id", businessId).eq("period", period).maybeSingle();
+    let cur = await find();
+    if (cur.error) return err(cur.error);
+    if (!cur.data) {
+      const ins = await crm().from("bld_periods").insert({ business_id: businessId, building_id: buildingId, period, ...input }).select("id").single();
+      if (!ins.error) { reval(businessId); return { ok: true, data: { id: ins.data.id as string } }; }
+      if (ins.error.code !== "23505") return err(ins.error); // 동시에 다른 사람이 만들었으면 다시 조회
+      cur = await find();
+      if (cur.error) return err(cur.error);
+      if (!cur.data) return err(ins.error);
+    }
+    if (Object.keys(input).length > 0) {
+      const up = await mustAffect(crm().from("bld_periods").update(input).eq("id", cur.data.id));
+      if (!up.ok) return up.error ? err(up.error) : { ok: false, message: NO_ROWS_MESSAGE };
+    }
     reval(businessId);
-    return { ok: true, data: { id: data.id as string } };
+    return { ok: true, data: { id: cur.data.id as string } };
   });
 }
 
@@ -331,6 +347,43 @@ export async function recordPayment(businessId: string, buildingId: string, inpu
     p_building: buildingId, p_amount: input.amount, p_paid_at: paidAt, p_method: input.method ?? "transfer",
     p_payer_name: input.payer_name ?? null, p_external_key: input.external_key ?? null, p_unit: input.unit_id ?? null, p_memo: input.memo ?? null, p_auto_allocate: input.auto_allocate ?? true,
   });
+}
+/** 은행 엑셀 일괄 등록의 한 줄 결과. duplicate=이미 같은 거래키가 있어 건너뜀. */
+export type BulkPaymentOutcome = { index: number; status: "ok" | "duplicate" | "failed"; unit_id: string | null; allocated: number; credit: number; message?: string };
+/**
+ * 은행 엑셀 입금 일괄 등록(한 번에 최대 50건, 화면이 나눠 보낸다). 각 줄은 recordPayment 와 같은 RPC(bld_record_payment)라
+ * 배정 규칙(오래된 미납부터·부분납·선납)과 거래키 중복 거부(duplicate_payment)를 서버가 그대로 적용한다. 호실이 없으면 미배정으로 남는다.
+ * 줄 하나가 실패해도 나머지는 계속한다(각 줄이 독립 트랜잭션).
+ */
+export async function recordPaymentsBulk(
+  businessId: string, buildingId: string,
+  rows: { amount: number; paid_at: string; payer_name?: string; memo?: string; external_key: string; unit_id?: string | null }[],
+): Promise<ActionResult<{ results: BulkPaymentOutcome[] }>> {
+  if (rows.length === 0 || rows.length > 50) return { ok: false, message: "한 번에 1~50건까지 등록할 수 있습니다.", hint: "bulk_size" };
+  try { await requireCap(businessId, "payment.allocate"); } catch (e) {
+    if (e instanceof AccessDenied) return { ok: false, message: accessMessage(e.detail).detail, hint: e.detail.reason };
+    throw e;
+  }
+  const b = await assertBuilding(businessId, buildingId); if (!b.ok) return b;
+  const results: BulkPaymentOutcome[] = [];
+  for (const [index, r] of rows.entries()) {
+    const unit = r.unit_id || null;
+    const paidAt = /^\d{4}-\d{2}-\d{2}T/.test(r.paid_at) && !Number.isNaN(Date.parse(r.paid_at)) ? new Date(r.paid_at).toISOString() : null;
+    if (!paidAt || !Number.isInteger(r.amount) || r.amount <= 0 || !r.external_key) { results.push({ index, status: "failed", unit_id: unit, allocated: 0, credit: 0, message: "일시·금액·거래키를 확인하세요." }); continue; }
+    const { data, error } = await crm().rpc("bld_record_payment", {
+      p_building: buildingId, p_amount: r.amount, p_paid_at: paidAt, p_method: "transfer", p_payer_name: r.payer_name?.slice(0, 40) || null,
+      p_external_key: r.external_key, p_unit: unit, p_memo: r.memo?.slice(0, 120) || null, p_auto_allocate: true,
+    });
+    if (error) {
+      const e = pgError(error);
+      results.push({ index, status: e.hint === "duplicate_payment" ? "duplicate" : "failed", unit_id: unit, allocated: 0, credit: 0, message: e.message });
+      continue;
+    }
+    const d = data as PaymentResult;
+    results.push({ index, status: "ok", unit_id: unit, allocated: d.allocated.reduce((s, a) => s + a.amount, 0), credit: d.credit_amount });
+  }
+  reval(businessId);
+  return { ok: true, data: { results } };
 }
 /** 0032: 호실 없이 등록한 입금에 호실을 사후 지정(배정·선납 크레딧이 생기기 전만). null 이면 미지정으로. */
 export async function setPaymentUnit(businessId: string, paymentId: string, unitId: string | null): Promise<ActionResult<{ payment_id: string; unit_id: string | null; previous_unit_id: string | null }>> {

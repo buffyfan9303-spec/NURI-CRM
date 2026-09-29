@@ -3,17 +3,20 @@
  * analyze  : 파일 읽기, 머리글 찾기, 열 자동 매핑(저장된 양식 템플릿이 있으면 그것 우선). DB 쓰기 없음.
  * validate : 매핑대로 행 검사(호실 매칭·형식·합계 대조). DB 쓰기 없음.
  * stage    : 오류 0 일 때만 스테이징 저장(파일 해시 중복은 서버가 거부). 확정은 화면이 commitImport 로 따로 부른다.
+ * match    : (은행 전용) 입금 행만 골라 호실 자동 매칭한 미리보기. DB 쓰기 없음. 확정은 화면이 recordPaymentsBulk 로 부른다.
  * 권한은 write(은행 확정은 서버가 payment.allocate 를 다시 검사). 서버 함수가 권한과 금액을 다시 확인한다.
  */
 import { createHash } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { checkAccess } from "@/lib/auth/access";
-import { getBuilding, getImportMapping, listUnits, resolveBuildingFeatures } from "@/lib/domain/building";
+import { getBuilding, getImportMapping, listContracts, listParties, listPayments, listUnits, resolveBuildingFeatures } from "@/lib/domain/building";
 import { stageImport } from "@/lib/domain/building-actions";
 import { checkBatchTotal, detectHeaderRow, parseSpreadsheet, suggestMapping, toStagingRows, txnLocalToIso, validateRows } from "@/lib/import";
 import { fingerprint } from "@/lib/import/normalize";
+import { buildMatchUnits, matchUnit } from "@/lib/import/match-units";
 import { ImportParseError, type MappingResult, type RowIssue, type SourceKind } from "@/lib/import/types";
 import { isPeriod } from "@/components/building/period";
+import type { BankMatchResult, BankMatchRow } from "@/components/building-ops/bank-import-types";
 import { TOTAL_FIELD, sheetRowNo, type AnalyzeResult, type ImportKind, type Mapping, type ValidateResult } from "@/components/building-ops/import-ui";
 
 export const runtime = "nodejs";
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest) {
   try { form = await req.formData(); } catch { return bad("요청 형식이 올바르지 않습니다."); }
   const businessId = str(form.get("businessId")), buildingId = str(form.get("b")), step = str(form.get("step")), kind = str(form.get("sourceKind")) as ImportKind;
   const file = form.get("file");
-  if (!businessId || !buildingId || !["analyze", "validate", "stage"].includes(step) || !KINDS.includes(kind)) return bad("businessId, b, step, sourceKind 값이 올바르지 않습니다.");
+  if (!businessId || !buildingId || !["analyze", "validate", "stage", "match"].includes(step) || !KINDS.includes(kind)) return bad("businessId, b, step, sourceKind 값이 올바르지 않습니다.");
   if (!(file instanceof File) || file.size === 0) return bad("파일을 선택하세요.");
   if (file.size > MAX_BYTES) return bad("파일이 4MB를 넘습니다. 시트를 나누거나 필요한 열만 남겨 다시 올리세요.", 413);
 
@@ -61,6 +64,39 @@ export async function POST(req: NextRequest) {
   const headers = rows[hr0] ?? [];
   if (headers.length === 0) return bad("머리글 행을 찾지 못했습니다. 머리글이 있는 행 번호를 직접 입력하세요.", 422);
   const sm = suggestMapping(headers, kind as SourceKind);
+
+  if (step === "match") {
+    if (kind !== "bank") return bad("호실 자동 매칭은 은행 입출금 파일에만 씁니다.");
+    const mp = sm.mapping;
+    if (mp.depositAmount == null || mp.txnDatetime == null) {
+      return bad(`${mp.txnDatetime == null ? "거래일시" : "입금액"} 열을 찾지 못했습니다. 머리글에 '거래일시'·'입금액'(또는 '입금')이 있는 은행 내역 파일인지 확인하세요. 열 이름이 특이하면 '파일로 가져오기'에서 열을 직접 지정할 수 있습니다.`, 422);
+    }
+    const [uRes2, cRes, pRes, payRes] = await Promise.all([listUnits(buildingId), listContracts(buildingId), listParties(access.businessId), listPayments(buildingId)]);
+    if (!uRes2.ok || !cRes.ok || !pRes.ok || !payRes.ok) return bad("호실·계약 정보를 불러오지 못했습니다.", 500);
+    const mus = buildMatchUnits(uRes2.data, cRes.data, pRes.data);
+    const known = new Set(payRes.data.map((x) => (x.external_key ?? "").toLowerCase()).filter(Boolean));
+    const validated2 = validateRows(rows.slice(hr0 + 1), { sourceKind: "bank", mapping: mp, fieldConfidence: {}, confidence: 1, fingerprint: sm.fingerprint }, {});
+    const seen = new Map<string, number>();
+    const stats = { withdraw: 0, duplicateInFile: 0, noDate: 0, other: 0 };
+    const out: BankMatchRow[] = [];
+    for (const r of validated2) {
+      const n = r.normalized;
+      if (r.excluded) { if (Object.keys(n).length > 0) stats.duplicateInFile++; continue; }
+      const amount = typeof n.depositAmount === "number" ? n.depositAmount : 0;
+      if (amount <= 0) { if (typeof n.withdrawAmount === "number" && n.withdrawAmount > 0) stats.withdraw++; else stats.other++; continue; }
+      const iso = typeof n.txnDatetime === "string" ? txnLocalToIso(n.txnDatetime, access.timezone) : null;
+      if (!iso) { stats.noDate++; continue; }
+      const payer = (r.values.depositor ?? "").trim(), memo = (r.values.memo ?? "").trim();
+      const txnId = (r.values.txnId ?? "").trim();
+      const base = txnId ? `bk:${buildingId.slice(0, 8)}:${txnId}` : `bk:${createHash("sha1").update([buildingId, iso, amount, payer].join("|")).digest("hex").slice(0, 24)}`;
+      const nth = (seen.get(base) ?? 0) + 1; seen.set(base, nth);
+      const key = (nth === 1 ? base : `${base}#${nth}`).toLowerCase();
+      const mt = matchUnit({ depositor: payer, memo, amount }, mus);
+      out.push({ row: sheetRowNo(hr0 + 1, r.rowIndex), paidAt: iso, amount, payer, memo, key, status: mt.status, unitIds: mt.unitIds, by: mt.by, existing: known.has(key) });
+      if (out.length > 1000) return bad("한 번에 1,000건까지 처리할 수 있습니다. 기간을 나눠 올려 주세요.", 413);
+    }
+    return NextResponse.json({ fileName: file.name, rows: out, stats } satisfies BankMatchResult);
+  }
 
   if (step === "analyze") {
     let mapping: Mapping = sm.mapping, template = false;

@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/toast";
 import { Alert, SelectField } from "@/components/rental/listkit";
 import { Input } from "@/components/ui/Input";
 import { createBuilding } from "@/lib/domain/building-actions";
+import { FW, FORM_ROW, FORM_ACTIONS } from "@/components/building/FieldWidths";
 import type { ActionResult } from "@/lib/domain/building-actions";
 
 /** 서버 액션 한 번 실행: 진행 중 표시, 서버 오류 문구 그대로 노출, 성공 시 화면 새로고침. */
@@ -59,26 +60,29 @@ export function CreateBuildingCard({ businessId, canCreate }: { businessId: stri
   const [address, setAddress] = React.useState("");
   const [dueDay, setDueDay] = React.useState("25");
   if (!canCreate) {
-    return <Card><EmptyState title="등록된 건물이 없습니다." description="건물은 관리비 항목 설정 권한이 있는 담당자가 먼저 등록합니다. 사업장 관리자에게 요청하세요." /></Card>;
+    return <Card><EmptyState title="등록된 건물이 없습니다." description="건물은 관리비 항목을 정할 권한이 있는 담당자가 먼저 등록합니다. 사업장 관리자에게 부탁하세요." /></Card>;
   }
   return (
-    <Card className="mx-auto max-w-[560px] p-5">
+    <Card className="mx-auto max-w-[640px] p-5">
       <h2 className="mb-1 text-[length:var(--fs-h3,18px)] font-semibold text-t">첫 건물을 등록하세요</h2>
-      <p className="mb-4 text-[length:var(--fs-body)] text-t2">건물을 등록하면 호실·검침·비용을 입력할 수 있습니다. 납부 기한일은 나중에 바꿀 수 있습니다.</p>
+      <p className="mb-4 text-[length:var(--fs-body)] text-t2">건물을 등록하면 호실·검침·비용을 입력할 수 있습니다. 납부기한 날짜는 나중에 바꿀 수 있습니다.</p>
       <form
+        className={FORM_ROW}
         onSubmit={(e) => {
           e.preventDefault();
           void run(() => createBuilding(businessId, { name: name.trim(), kind, address: address.trim() || undefined, due_day: Number(dueDay) }), { success: "건물을 등록했습니다." });
         }}
       >
-        <Input label="건물 이름" value={name} onChange={(e) => setName(e.target.value)} required maxLength={60} placeholder="예: 누리타워" />
-        <SelectField label="건물 종류" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
+        <Input label="건물 이름" value={name} onChange={(e) => setName(e.target.value)} required maxLength={60} placeholder="예: 누리타워" wrapperClassName={FW.name} />
+        <SelectField label="건물 종류" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} wrapperClassName={FW.select}>
           {KINDS.map((k) => <option key={k.v} value={k.v}>{k.l}</option>)}
         </SelectField>
-        <Input label="주소" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={120} />
-        <Input label="납부 기한일(매월 며칠)" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required className="tabular-nums" />
-        {error && <Alert kind="error" className="mb-3">{error}</Alert>}
-        <Button type="submit" loading={pending} disabled={!name.trim()}>건물 등록</Button>
+        <Input label="주소" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={120} wrapperClassName={FW.memo} />
+        <Input label="납부기한(매달 며칠)" type="number" min={1} max={31} value={dueDay} onChange={(e) => setDueDay(e.target.value)} required className="tabular-nums" wrapperClassName={FW.short} />
+        <div className={FORM_ACTIONS}>
+          {error && <Alert kind="error" className="w-full">{error}</Alert>}
+          <Button type="submit" loading={pending} disabled={!name.trim()}>건물 등록</Button>
+        </div>
       </form>
     </Card>
   );

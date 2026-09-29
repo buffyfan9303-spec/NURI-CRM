@@ -56,10 +56,10 @@ export type LateRateUnit = "annual" | "monthly" | "daily";
 export type LateMethod = "simple" | "compound_monthly";
 
 export const PERIOD_STATUS_LABEL: Record<PeriodStatus, string> = {
-  collecting: "자료 수집", draft: "계산 초안", review: "검토", approved: "승인", finalized: "명세 확정", closed: "마감",
+  collecting: "자료 모으는 중", draft: "계산해 봄", review: "확인 중", approved: "금액 확정", finalized: "명세서 확정", closed: "마감",
 };
 export const TAX_ISSUE_STATUS_LABEL: Record<TaxIssueStatus, string> = {
-  blocked: "차단(사유 확인)", ready: "발행용 파일 준비 가능", file_generated: "파일 생성됨 — 홈택스 발행 확인 필요", issued: "발행 완료(승인번호)", failed: "실패",
+  blocked: "막힘(이유 확인)", ready: "엑셀로 만들 수 있음", file_generated: "엑셀 만듦 - 홈택스 발행 확인 필요", issued: "발행 완료(승인번호)", failed: "실패",
 };
 
 export interface BuildingRow {

@@ -1,6 +1,6 @@
 /** 미수 연령 구간. 서버 bld_aging(0032)과 같은 경계다. 납기 전(연체 0일)은 따로 두고 연체일 1~30 / 31~60 / 61~90 / 90 초과로 나눈다. 표시용 재분류다. */
 export type Bucket = "not_due" | "d0_30" | "d31_60" | "d61_90" | "d90p";
-export const BUCKET_LABEL: Record<Bucket, string> = { not_due: "납기 전", d0_30: "1~30일", d31_60: "31~60일", d61_90: "61~90일", d90p: "90일 초과" };
+export const BUCKET_LABEL: Record<Bucket, string> = { not_due: "납부기한 전", d0_30: "1~30일", d31_60: "31~60일", d61_90: "61~90일", d90p: "90일 넘음" };
 const DAY = 86_400_000;
 
 /** asof·due 는 YYYY-MM-DD. due 가 없거나 asof 보다 늦으면 0. */

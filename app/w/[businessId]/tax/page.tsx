@@ -1,22 +1,21 @@
-/** 세금계산서·계산서 발행 도움(building 전용): 대상 확인 → 홈택스 파일 → 승인번호 기록. 화면 접근은 revenue.read, 쓰기는 tax.issue(서버 재검사). */
-import Link from "next/link";
+/** 세금계산서 일괄발행(building 전용): 이번 달 목록 → 홈택스 엑셀 → 올리는 방법 → 승인번호. 화면 접근은 revenue.read, 쓰기는 tax.issue(서버 재검사). */
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageBody } from "@/components/ui/PageHeader";
 import { BuildingHeader, ReadFail, buildingGate, isLockedStatus, type SearchParams } from "@/components/building-ops/gate";
-import { TaxBoard, type TaxLine } from "@/components/building-ops/TaxBoard";
+import { EnableTaxButton, TaxBoard, type TaxLine } from "@/components/building-ops/TaxBoard";
 import { getLatestRun, getPeriod, listTaxTargets } from "@/lib/domain/building";
 
 export default async function TaxPage({ params, searchParams }: { params: { businessId: string }; searchParams: SearchParams }) {
-  const g = await buildingGate(params.businessId, "revenue.read", searchParams, "세금계산서");
+  const g = await buildingGate(params.businessId, "revenue.read", searchParams, "세금계산서 일괄발행");
   if (!g.ctx) return g.node;
   const { ctx } = g;
-  const head = <BuildingHeader ctx={ctx} title="세금계산서·계산서" description="승인된 청구에서 홈택스 발급용 파일을 준비하고, 발급한 뒤 승인번호를 기록합니다." />;
+  const head = <BuildingHeader ctx={ctx} title="세금계산서 일괄발행" description="이번 달 발행할 목록을 확인하고, 홈택스에 올릴 엑셀을 내려받고, 발행이 끝나면 승인번호를 넣습니다. 파일을 내려받는 것만으로는 발행되지 않습니다." />;
   if (ctx.features.tax_invoice !== "on") {
     return (
       <PageBody>
         {head}
-        <Card><EmptyState title="발행 도움 기능이 꺼져 있습니다." description={ctx.can("staff.manage") ? "선택 기능에서 세금계산서 발행 도움을 켜면 이 화면을 쓸 수 있습니다." : "사업장 대표(관리자)가 선택 기능에서 세금계산서 발행 도움을 켜면 이 화면을 쓸 수 있습니다. 필요하면 대표에게 요청하세요."} action={ctx.can("staff.manage") ? <Link href={`/w/${ctx.businessId}/settings`} className="inline-flex min-h-[44px] items-center text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link> : undefined} /></Card>
+        <Card><EmptyState title="세금계산서 발행 도움이 아직 꺼져 있습니다." description={ctx.can("staff.manage") ? "아래 버튼으로 켜면 이 화면에서 바로 목록 만들기, 홈택스용 엑셀 내려받기, 승인번호 넣기를 할 수 있습니다. 이미 입력한 자료는 바뀌지 않습니다." : "사업장 대표가 켜야 쓸 수 있습니다. 대표에게 세금계산서 발행 도움을 켜 달라고 요청하세요."} action={ctx.can("staff.manage") ? <EnableTaxButton businessId={ctx.businessId} /> : undefined} /></Card>
       </PageBody>
     );
   }

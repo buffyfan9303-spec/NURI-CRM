@@ -18,14 +18,14 @@ import { BillingBoard } from "@/components/building/BillingBoard";
 import { LinkButton } from "@/components/building/StepCard";
 import { getAccess } from "../access";
 
-const TITLE = "관리비 계산·확인";
+const TITLE = "관리비 계산·확정";
 
 export default async function BillingPage({ params, searchParams }: { params: { businessId: string }; searchParams?: { b?: string; p?: string } }) {
   const access = await getAccess(params.businessId, "revenue.read");
   if (!access.ok) {
     if (access.reason === "unauthenticated") return null;
     const msg = accessMessage(access);
-    return <PageBody><Card>{access.reason === "forbidden" ? <ForbiddenState title={msg.title} description={`${msg.detail} (필요 권한: revenue.read)`} /> : <ErrorState title={msg.title} description={msg.detail} />}</Card></PageBody>;
+    return <PageBody><Card>{access.reason === "forbidden" ? <ForbiddenState title={msg.title} description={`${msg.detail} (매출을 볼 권한이 필요합니다)`} /> : <ErrorState title={msg.title} description={msg.detail} />}</Card></PageBody>;
   }
   if (access.industry !== "building") {
     return <PageBody><PageHeader title={TITLE} /><Card><EmptyState title="이 업종에는 관리비 계산 화면이 없습니다." /></Card></PageBody>;

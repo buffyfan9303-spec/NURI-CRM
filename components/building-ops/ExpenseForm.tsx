@@ -1,6 +1,6 @@
 "use client";
 
-/** 비용 입력: 항목 선택 → 공급가액·부가세 → 저장(createExpense). 삭제는 delete 권한(deleteExpense, 서버 재검사). */
+/** 비용 입력: 항목 선택 → 부가세 빼기 전 금액·부가세 → 저장(createExpense). 칸 폭은 FieldWidths(한 줄에 흐름). 삭제는 delete 권한(deleteExpense, 서버 재검사). */
 import * as React from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Alert, SelectField, CardHead, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import { createExpense, deleteExpense } from "@/lib/domain/building-actions";
+import { FW, FORM_ROW, FORM_ACTIONS, MONEY_INPUT } from "@/components/building/FieldWidths";
 import { useRunAction } from "./client-common";
 import { won } from "./format";
 
@@ -46,25 +47,25 @@ export function ExpenseForm({
 
   return (
     <div className="space-y-4">
-      {locked && <Alert kind="warning">이 청구월은 승인·확정돼 비용을 바꿀 수 없습니다. 정정은 관리비 계산·확인 화면에서 새 수정본으로 처리합니다.</Alert>}
+      {locked && <Alert kind="warning">이 달 금액은 이미 확정돼 비용을 바꿀 수 없습니다. 고칠 일이 있으면 관리비 계산 화면에서 "금액 고치기"로 다시 확정하세요.</Alert>}
       <Card className="p-4 sm:p-5">
-        <CardHead title="비용 입력" description="한전·수도·청소 용역 등 이번 달 건물이 쓴 비용을 항목별로 입력합니다." />
+        <CardHead title="비용 입력" description="한전 전기요금·수도요금·청소 용역비처럼 이번 달 건물이 낸 돈을 항목별로 적습니다." />
         {types.length === 0 ? (
-          <EmptyState title="비용을 넣을 항목이 없습니다." description="관리비 항목 설정에서 '비용 배분' 방식의 항목을 먼저 만드세요." />
+          <EmptyState title="비용을 넣을 항목이 없습니다." description="관리비 항목 정하기 화면에서 '매달 실제로 낸 돈'으로 계산하는 항목을 먼저 만드세요." />
         ) : (
-          <form onSubmit={submit} className="grid gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
-            <SelectField label="항목" required value={typeId} onChange={(e) => setTypeId(e.target.value)} disabled={locked}>
+          <form onSubmit={submit} className={FORM_ROW}>
+            <SelectField label="항목" required value={typeId} onChange={(e) => setTypeId(e.target.value)} disabled={locked} wrapperClassName={FW.select}>
               <option value="">선택</option>
               {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </SelectField>
-            <Input label="공급가액(원)" inputMode="numeric" required value={supply} onChange={(e) => setSupply(e.target.value)} disabled={locked} className="text-right tabular-nums" error={supply && !validSupply ? "1원 이상의 정수를 입력하세요." : undefined} />
-            <Input label="부가세(원)" inputMode="numeric" value={vat} placeholder={String(suggestVat)} onChange={(e) => setVat(e.target.value)} disabled={locked} className="text-right tabular-nums" hint={type?.taxable ? "비워 두면 10%를 넣습니다." : "면세 항목은 0원입니다."} error={vat && !validVat ? "0원 이상의 정수를 입력하세요." : undefined} />
-            <Input label="거래처" value={vendor} onChange={(e) => setVendor(e.target.value)} disabled={locked} maxLength={60} />
-            <Input label="증빙 번호(세금계산서·영수증)" value={docNo} onChange={(e) => { setDocNo(e.target.value); setDupAsked(false); }} disabled={locked} maxLength={60} />
-            <div className="flex flex-col justify-end sm:col-span-2 lg:col-span-3">
-              {error && <Alert kind="error" className="mb-3">{error}</Alert>}
-              {dupDoc && <Alert kind="warning" className="mb-3">같은 증빙 번호({docNo.trim()})로 이번 달에 이미 입력한 비용이 있습니다. 중복 입력이 아니라면 &quot;그래도 저장&quot;을 누르세요.</Alert>}
-              <div><Button type="submit" loading={pending} disabled={locked || !typeId || !validSupply || !validVat}>{dupDoc && dupAsked ? "그래도 저장" : "비용 저장"}</Button></div>
+            <Input label="부가세 빼기 전 금액(원)" inputMode="numeric" required value={supply} onChange={(e) => setSupply(e.target.value)} disabled={locked} wrapperClassName={FW.money} className={MONEY_INPUT} error={supply && !validSupply ? "1원 이상, 소수점 없이 적으세요." : undefined} />
+            <Input label="부가세(원)" inputMode="numeric" value={vat} placeholder={String(suggestVat)} onChange={(e) => setVat(e.target.value)} disabled={locked} wrapperClassName={FW.money} className={MONEY_INPUT} hint={type?.taxable ? "비워 두면 10%를 넣습니다." : "부가세 없는 항목은 0원입니다."} error={vat && !validVat ? "0원 이상, 소수점 없이 적으세요." : undefined} />
+            <Input label="낸 곳(거래처)" value={vendor} onChange={(e) => setVendor(e.target.value)} disabled={locked} maxLength={60} wrapperClassName={FW.name} />
+            <Input label="영수증 번호" hint="세금계산서·영수증에 적힌 번호(선택)" wrapperClassName={FW.doc} value={docNo} onChange={(e) => { setDocNo(e.target.value); setDupAsked(false); }} disabled={locked} maxLength={60} />
+            <div className={`${FORM_ACTIONS} flex-col items-stretch sm:items-start`}>
+              {error && <Alert kind="error">{error}</Alert>}
+              {dupDoc && <Alert kind="warning">같은 영수증 번호({docNo.trim()})로 이번 달에 이미 입력한 비용이 있습니다. 중복 입력이 아니라면 &quot;그래도 저장&quot;을 누르세요.</Alert>}
+              <div className="flex items-center gap-2"><Button type="submit" loading={pending} disabled={locked || !typeId || !validSupply || !validVat}>{dupDoc && dupAsked ? "그래도 저장" : "비용 저장"}</Button>{type && validSupply && validVat && <span className="text-[length:var(--fs-body)] text-t2 tabular-nums">합계 {won(supplyNum + vatNum)}</span>}</div>
             </div>
           </form>
         )}
@@ -72,12 +73,12 @@ export function ExpenseForm({
       <Card className="p-4 sm:p-5">
         <CardHead title="이번 달 입력한 비용" action={<Badge kind="info">{rows.length}건</Badge>} />
         {rows.length === 0 ? (
-          <EmptyState title="이번 달에 입력한 비용이 없습니다." description="위에서 항목을 고르고 금액을 입력하세요." />
+          <EmptyState title="이번 달에 입력한 비용이 없습니다." description="위에서 항목을 고르고 금액을 적으세요." />
         ) : (
           <div className="overflow-x-auto">
             <table className={TABLE}>
               <thead className={THEAD}>
-                <tr><th className={TH}>항목</th><th className={TH}>거래처</th><th className={`${TH} text-right`}>공급가액</th><th className={`${TH} text-right`}>부가세</th><th className={`${TH} text-right`}>합계</th><th className={TH}><span className="sr-only">삭제</span></th></tr>
+                <tr><th className={TH}>항목</th><th className={TH}>낸 곳</th><th className={`${TH} text-right`}>부가세 빼기 전</th><th className={`${TH} text-right`}>부가세</th><th className={`${TH} text-right`}>합계</th><th className={TH}><span className="sr-only">삭제</span></th></tr>
               </thead>
               <tbody>
                 {rows.map((r) => <ExpenseRowView key={r.id} r={r} businessId={businessId} canDelete={canDelete && !locked} />)}

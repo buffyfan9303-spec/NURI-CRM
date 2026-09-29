@@ -12,12 +12,12 @@ export default async function RequestsPage({ params, searchParams }: { params: {
   const g = await buildingGate(params.businessId, "view", searchParams, "민원·수리");
   if (!g.ctx) return g.node;
   const { ctx } = g;
-  const head = <BuildingHeader ctx={ctx} title="민원·수리" description="입주자 민원과 수리 작업을 접수하고 처리 상태를 관리합니다." showPeriod={false} />;
+  const head = <BuildingHeader ctx={ctx} title="민원·수리" description="입주자가 알려 온 불편과 고칠 일을 적고 끝날 때까지 봅니다." showPeriod={false} />;
   if (ctx.features.work_orders !== "on") {
     return (
       <PageBody>
         {head}
-        <Card><EmptyState title="민원·수리 기능이 꺼져 있습니다." description="선택 기능에서 민원·수리 작업지시를 켜면 이 화면을 쓸 수 있습니다." action={<Link href={`/w/${ctx.businessId}/settings`} className="text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link>} /></Card>
+        <Card><EmptyState title="민원·수리 기능이 꺼져 있습니다." description="설정의 선택 기능에서 민원·수리를 켜면 이 화면을 쓸 수 있습니다." action={<Link href={`/w/${ctx.businessId}/settings`} className="text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link>} /></Card>
       </PageBody>
     );
   }

@@ -391,6 +391,28 @@ body.dk[data-accent="teal"] {
 [data-industry="building"] :is(main, [role="dialog"]) tbody td { height: var(--row-h); }
 /* listkit 정렬 머리글 버튼(28px, 디자인 시스템 §5.1 의 미해결)은 건물에서 포인터와 무관하게 44 로. */
 [data-industry="building"] :is(main, [role="dialog"]) th button { min-height: var(--ctl); }
+/* 월별 정산 보고서(2026-09-30): 호실 수십 줄 × 항목 열 표라 행 52px 이면 한 화면에 안 들어간다 — 표 안에서만 40px. */
+[data-industry="building"] main .bld-dense tbody td,
+[data-industry="building"] main .bld-dense tfoot td { height: 40px; padding-top: 6px; padding-bottom: 6px; }
+[data-industry="building"] main .bld-dense :is(th, td) { padding-left: 5px; padding-right: 5px; }
+[data-industry="building"] main .bld-dense thead th { white-space: normal; word-break: keep-all; line-height: 1.3; vertical-align: bottom; }
+/* 인쇄: A4 가로 한 장. 용지(@page)는 보고서 page.tsx 가 자기 화면에서만 넣는다. #print-area 규칙(아래 인쇄 블록)이 보고서만 남긴다. */
+@media print {
+  #print-area.bld-report { padding: 0 !important; }
+  .bld-report, .bld-report * { font-size: 7pt !important; line-height: 1.2 !important; letter-spacing: 0 !important; }
+  .bld-report h2 + p { display: none !important; }
+  .bld-report dl > div { padding: 2px 6px !important; }
+  .bld-report h1 { font-size: 11pt !important; }
+  .bld-report th, .bld-report td { height: auto !important; padding: 0.5px 3px !important; }
+  .bld-report .overflow-x-auto { overflow: visible !important; margin: 0 !important; padding: 0 !important; }
+  .bld-report .shadow-card, .bld-report [class*="shadow"] { box-shadow: none !important; }
+  .bld-report [class*="p-4"], .bld-report [class*="p-5"] { padding: 4px !important; }
+  .bld-report [class*="mb-4"] { margin-bottom: 4px !important; }
+  .bld-report .sticky { position: static !important; }
+  .bld-report tr { break-inside: avoid; }
+  .bld-report td > span.block { display: inline !important; margin-right: 4px; }
+  .bld-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 
 /* ──────────────────────────────────────────────────────────────
    글로벌 리셋 + 폰트

@@ -7,9 +7,9 @@ import { PERIOD_STATUS_LABEL, TAX_ISSUE_STATUS_LABEL, type PeriodStatus, type Ru
 
 const PERIOD_KIND: Record<PeriodStatus, BadgeKind> = { collecting: "info", draft: "info", review: "warning", approved: "success", finalized: "success", closed: "info" };
 const RUN_KIND: Record<RunStatus, BadgeKind> = { draft: "info", approved: "success", void: "error" };
-const RUN_LABEL: Record<RunStatus, string> = { draft: "계산 초안", approved: "승인됨", void: "무효" };
+const RUN_LABEL: Record<RunStatus, string> = { draft: "계산해 봄", approved: "확정됨", void: "취소됨" };
 const TAX_KIND: Record<TaxIssueStatus, BadgeKind> = { blocked: "error", ready: "info", file_generated: "info", issued: "success", failed: "error" };
-const TAX_SHORT: Record<TaxIssueStatus, string> = { blocked: "차단", ready: "준비 가능", file_generated: "파일 준비됨", issued: "발행 완료", failed: "실패" };
+const TAX_SHORT: Record<TaxIssueStatus, string> = { blocked: "막힘", ready: "파일 만들 수 있음", file_generated: "파일 만듦", issued: "발행 끝", failed: "실패" };
 
 export function PeriodStatusPill({ status, className }: { status: PeriodStatus; className?: string }) {
   return <Badge kind={PERIOD_KIND[status]} className={className}>{PERIOD_STATUS_LABEL[status]}</Badge>;
@@ -23,5 +23,5 @@ export function TaxStatusPill({ status, short = true, className }: { status: Tax
 }
 /** 행 상태(계산 결과): 정상 / 경고 / 오류. */
 export function RowStatusPill({ level, className }: { level: "ok" | "warn" | "error"; className?: string }) {
-  return level === "ok" ? <Badge kind="success" className={className}>정상</Badge> : level === "warn" ? <Badge kind="warning" className={className}>경고</Badge> : <Badge kind="error" className={className}>오류</Badge>;
+  return level === "ok" ? <Badge kind="success" className={className}>정상</Badge> : level === "warn" ? <Badge kind="warning" className={className}>확인할 것</Badge> : <Badge kind="error" className={className}>고쳐야 함</Badge>;
 }

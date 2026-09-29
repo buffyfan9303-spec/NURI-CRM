@@ -130,7 +130,7 @@ function StatementPage({ d: raw }: { d: StatementData }) {
           <Text style={s.partyName}>{d.unitNo}호</Text>
         </View>
         <View style={{ flex: 2 }}>
-          <Text style={s.colHead}>청구받는 분</Text>
+          <Text style={s.colHead}>내는 분</Text>
           <Text style={s.partyName}>{d.payerName}</Text>
         </View>
       </View>
@@ -149,11 +149,11 @@ function StatementPage({ d: raw }: { d: StatementData }) {
 
       <View style={s.four} wrap={false}>
         <View style={s.fourBox}>
-          <View style={s.fourRow}><Text style={s.fourLabel}>당월 부과</Text><Text style={s.fourValue}>{won(d.currentCharge)}</Text></View>
-          <View style={s.fourRow}><Text style={s.fourLabel}>{d.priorUnpaid > 0 ? "* 전월 미납" : "전월 미납"}</Text><Text style={[s.fourValue, d.priorUnpaid > 0 ? s.bold : {}]}>{won(d.priorUnpaid)}</Text></View>
+          <View style={s.fourRow}><Text style={s.fourLabel}>이번 달 관리비</Text><Text style={s.fourValue}>{won(d.currentCharge)}</Text></View>
+          <View style={s.fourRow}><Text style={s.fourLabel}>{d.priorUnpaid > 0 ? "* 지난달까지 안 낸 돈" : "지난달까지 안 낸 돈"}</Text><Text style={[s.fourValue, d.priorUnpaid > 0 ? s.bold : {}]}>{won(d.priorUnpaid)}</Text></View>
           {d.lateFee != null && <View style={s.fourRow}><Text style={s.fourLabel}>연체료</Text><Text style={s.fourValue}>{won(d.lateFee)}</Text></View>}
-          <View style={s.fourRow}><Text style={s.fourLabel}>선납·감면</Text><Text style={s.fourValue}>{won(-d.credit)}</Text></View>
-          <View style={s.fourGrand}><Text style={s.fourGrandText}>납부 요청액</Text><Text style={s.fourGrandText}>{won(d.amountDue)}</Text></View>
+          <View style={s.fourRow}><Text style={s.fourLabel}>미리 낸 돈·깎은 돈</Text><Text style={s.fourValue}>{won(-d.credit)}</Text></View>
+          <View style={s.fourGrand}><Text style={s.fourGrandText}>이번 달 낼 돈</Text><Text style={s.fourGrandText}>{won(d.amountDue)}</Text></View>
         </View>
       </View>
 
@@ -161,10 +161,10 @@ function StatementPage({ d: raw }: { d: StatementData }) {
       <View style={s.table}>
         <View style={s.thRow}>
           <Text style={[s.th, { flex: 2.6 }]}>항목</Text>
-          <Text style={[s.th, s.right, { flex: 1.3 }]}>당월</Text>
-          <Text style={[s.th, s.right, { flex: 1.3 }]}>전월</Text>
-          <Text style={[s.th, s.right, { flex: 1.2 }]}>증감</Text>
-          <Text style={[s.th, { flex: 2.6, paddingLeft: 8 }]}>산출근거</Text>
+          <Text style={[s.th, s.right, { flex: 1.3 }]}>이번 달</Text>
+          <Text style={[s.th, s.right, { flex: 1.3 }]}>지난달</Text>
+          <Text style={[s.th, s.right, { flex: 1.2 }]}>차이</Text>
+          <Text style={[s.th, { flex: 2.6, paddingLeft: 8 }]}>계산 방법</Text>
         </View>
         {d.lines.map((l, i) => (
           <View key={i} style={s.tr} wrap={false}>
@@ -186,12 +186,12 @@ function StatementPage({ d: raw }: { d: StatementData }) {
 
       {d.meters.length > 0 && (
         <View wrap={false}>
-          <Text style={s.sectionHead}>검침</Text>
+          <Text style={s.sectionHead}>계량기 숫자</Text>
           <View style={s.table}>
             <View style={s.thRow}>
               <Text style={[s.th, { flex: 1.6 }]}>종류</Text>
-              <Text style={[s.th, s.right, { flex: 1.4 }]}>전월 지침</Text>
-              <Text style={[s.th, s.right, { flex: 1.4 }]}>당월 지침</Text>
+              <Text style={[s.th, s.right, { flex: 1.4 }]}>지난달 숫자</Text>
+              <Text style={[s.th, s.right, { flex: 1.4 }]}>이번 달 숫자</Text>
               <Text style={[s.th, s.right, { flex: 1.6 }]}>사용량</Text>
               <Text style={[s.th, s.right, { flex: 1.6 }]}>금액</Text>
               <Text style={[s.th, { flex: 1.6, paddingLeft: 8 }]}>비고</Text>
@@ -211,11 +211,11 @@ function StatementPage({ d: raw }: { d: StatementData }) {
       )}
 
       <View wrap={false}>
-        <Text style={s.sectionHead}>세금 구분</Text>
+        <Text style={s.sectionHead}>부가세 나눠 보기</Text>
         <View style={s.taxRow}>
-          <Text>공급가액 {won(d.supply)}</Text>
+          <Text>부가세 빼기 전 {won(d.supply)}</Text>
           <Text>부가세 {won(d.vat)}</Text>
-          <Text>면세 {won(d.exempt)}</Text>
+          <Text>부가세 없는 금액 {won(d.exempt)}</Text>
         </View>
         <Text style={s.notTax}>이 문서는 세금계산서가 아닙니다.</Text>
       </View>
@@ -229,7 +229,7 @@ function StatementPage({ d: raw }: { d: StatementData }) {
 
       {chart && (
         <View wrap={false}>
-          <Text style={s.sectionHead}>최근 {chart.length}개월 당월 부과액 (단위 만원)</Text>
+          <Text style={s.sectionHead}>최근 {chart.length}개월 관리비 (단위 만원)</Text>
           <View style={s.chartLabels}>
             {chart.map((c, i) => <Text key={i} style={s.chartValue}>{(c.amount / 10000).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}</Text>)}
           </View>

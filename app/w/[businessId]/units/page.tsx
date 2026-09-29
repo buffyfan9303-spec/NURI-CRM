@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageBody } from "@/components/ui/PageHeader";
-import { TABLE, THEAD, TH, TR, TD, PILL } from "@/components/rental/listkit";
+import { TABLE, THEAD, TH, TR, TD, PILL } from "@/components/building/table-kit";
 import { BuildingHeader, ReadFail, buildingGate, type SearchParams } from "@/components/building-ops/gate";
 import { UnitTools } from "@/components/building-ops/UnitTools";
 import { USE_KIND_LABEL, parseRange } from "@/components/building-ops/unit-parse";

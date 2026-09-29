@@ -13,24 +13,24 @@ import { fmtMoney } from "./Money";
 /** 코드별 이동 화면(base 기준 nav path). 없으면 링크 없이 문장만. */
 const FIX_NAV: Record<string, { path: string; label: string }> = {
   no_units: { path: "units", label: "호실 등록으로" },
-  no_charge_types: { path: "charges", label: "항목 설정으로" },
+  no_charge_types: { path: "charges", label: "항목 정하기로" },
   vacant_no_payer: { path: "units", label: "호실에서 고치기" },
-  missing_reading: { path: "meters", label: "검침 입력으로" },
+  missing_reading: { path: "meters", label: "계량기 숫자 적으러" },
   no_meter: { path: "units", label: "호실 계량기로" },
   no_expense: { path: "expenses", label: "비용 입력으로" },
-  zero_denominator: { path: "charges", label: "항목 설정으로" },
-  rate_missing: { path: "charges", label: "항목 설정으로" },
-  association_payer: { path: "charges", label: "항목 설정으로" },
+  zero_denominator: { path: "charges", label: "항목 정하기로" },
+  rate_missing: { path: "charges", label: "항목 정하기로" },
+  association_payer: { path: "charges", label: "항목 정하기로" },
   feature_off: { path: "settings", label: "선택 기능으로" },
-  late_terms_unapproved: { path: "units", label: "계약 조건으로" },
+  late_terms_unapproved: { path: "units", label: "계약 보러 가기" },
   big_change: { path: "billing", label: "표에서 확인" },
   // 0033
   partial_month_contract: { path: "units", label: "계약 기간 맞추기" },
   partial_month_unit: { path: "units", label: "호실 확인" },
-  owner_payer_excluded: { path: "charges", label: "항목 설정으로" },
+  owner_payer_excluded: { path: "charges", label: "항목 정하기로" },
   expense_excluded: { path: "expenses", label: "비용 입력으로" },
   direct_excluded: { path: "expenses", label: "비용 입력으로" },
-  other_party_unpaid: { path: "receivables", label: "미납·독촉으로" },
+  other_party_unpaid: { path: "receivables", label: "못 받은 돈으로" },
   already_approved: { path: "billing", label: "" },
 };
 
@@ -38,7 +38,7 @@ const FIX_NAV: Record<string, { path: string; label: string }> = {
 function issueText(i: RunIssue): string {
   const who = i.unit_no ? `${i.unit_no}호 ` : "";
   const what = i.name ? `${i.name} ` : "";
-  if (i.code === "big_change" && i.prev != null && i.current != null) return `${who}전월 ${fmtMoney(i.prev)} → 당월 ${fmtMoney(i.current)} (±50% 이상)`;
+  if (i.code === "big_change" && i.prev != null && i.current != null) return `${who}지난달 ${fmtMoney(i.prev)} → 이번 달 ${fmtMoney(i.current)} (절반 넘게 달라짐)`;
   const extra = [i.amount != null ? fmtMoney(i.amount) : null, i.count != null ? `${i.count}건` : null].filter(Boolean).join(" · ");
   return `${who}${what}${i.message}${extra ? ` (${extra})` : ""}`.trim();
 }
@@ -86,13 +86,13 @@ export function BlockWarnList({
     <div className={cn("flex flex-col gap-3", className)}>
       {blocks.length > 0 && (
         <section role="alert" className="rounded-[var(--r-md)] border-l-[3px] border-l-[var(--et)] bg-eb/60 px-4 py-3">
-          <h3 className="mb-1.5 text-[length:var(--fs-body)] font-semibold text-et">차단 {blocks.length}건 — 고치기 전에는 승인할 수 없습니다</h3>
+          <h3 className="mb-1.5 text-[length:var(--fs-body)] font-semibold text-et">고쳐야 할 것 {blocks.length}건 — 고치기 전에는 금액을 확정할 수 없습니다</h3>
           {render(blocks, "error")}
         </section>
       )}
       {warnings.length > 0 && (
         <section role="status" className="rounded-[var(--r-md)] border-l-[3px] border-l-[var(--wt)] bg-wb/60 px-4 py-3">
-          <h3 className="mb-1.5 text-[length:var(--fs-body)] font-semibold text-wt">경고 {warnings.length}건 — 확인하고 진행하세요</h3>
+          <h3 className="mb-1.5 text-[length:var(--fs-body)] font-semibold text-wt">확인할 것 {warnings.length}건 — 보고 맞으면 그대로 진행해도 됩니다</h3>
           {render(warnings, "warn")}
         </section>
       )}

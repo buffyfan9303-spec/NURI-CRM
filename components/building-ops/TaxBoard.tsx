@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 세금계산서·계산서 발행 도움(building): 1 발행 대상 확인 → 2 홈택스 업로드 파일 → 3 승인번호 기록.
+ * 세금계산서 일괄발행(building): 1 이번 달 발행할 목록 → 2 홈택스 업로드 엑셀 → 3 홈택스에 올리는 방법 → 4 승인번호 넣기.
  * 파일을 만들거나 내려받아도 발행으로 보지 않는다. 발행 완료는 승인번호를 기록했을 때만 표시한다.
  */
 import * as React from "react";
@@ -9,10 +9,11 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { FW } from "@/components/building/FieldWidths";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Alert, CardHead, SummaryStrip, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import { TaxStatusPill } from "@/components/building/StatusPill";
-import { buildTaxTargets, markTaxFailed, markTaxFileGenerated, markTaxIssued } from "@/lib/domain/building-actions";
+import { buildTaxTargets, markTaxFailed, markTaxFileGenerated, markTaxIssued, setBuildingFeature } from "@/lib/domain/building-actions";
 import type { TaxIssueStatus, TaxKind } from "@/lib/domain/building-types";
 import { useRunAction } from "./client-common";
 import { approvalNoNote, fileCount, tally } from "./tax-ui";
@@ -43,6 +44,7 @@ export function TaxBoard(p: TaxBoardProps) {
       />
       <TargetsStep {...p} />
       <FilesStep {...p} />
+      <HowToCard />
       <ApprovalStep {...p} />
     </div>
   );
@@ -54,10 +56,10 @@ function TargetsStep(p: TaxBoardProps) {
   return (
     <Card className="p-4 sm:p-5">
       <CardHead
-        title="1단계. 발행 대상 확인"
-        description="승인된 청구에서 세금계산서와 계산서를 낼 대상을 만듭니다. 차단된 건은 사유를 고친 뒤 다시 만드세요."
+        title="1. 이번 달 발행할 목록"
+        description="승인된 청구에서 세금계산서와 계산서를 낼 곳을 모두 모았습니다. 막힌 건은 사유를 고친 뒤 목록을 다시 만드세요."
         action={p.canIssue && p.runId && p.runApproved ? (
-          <Button type="button" size="sm" loading={pending} onClick={async () => { setNote(null); const r = await run(() => buildTaxTargets(p.businessId, p.runId!), { success: "발행 대상을 만들었습니다." }); if (r.ok) setNote(`파일 준비 가능 ${r.data.ready}건, 차단 ${r.data.blocked}건입니다.`); }}>{p.lines.length ? "발행 대상 다시 만들기" : "발행 대상 만들기"}</Button>
+          <Button type="button" size="sm" loading={pending} onClick={async () => { setNote(null); const r = await run(() => buildTaxTargets(p.businessId, p.runId!), { success: "발행할 목록을 만들었습니다." }); if (r.ok) setNote(`엑셀로 만들 수 있는 건 ${r.data.ready}건, 막힌 건 ${r.data.blocked}건입니다.`); }}>{p.lines.length ? "목록 다시 만들기" : "이번 달 발행 목록 만들기"}</Button>
         ) : undefined}
       />
       {error && <Alert kind="error" className="mb-3">{error}</Alert>}
@@ -71,7 +73,7 @@ function TargetsStep(p: TaxBoardProps) {
       ) : (
         <div className="overflow-x-auto">
           <table className={TABLE}>
-            <thead className={THEAD}><tr><th className={TH}>종류</th><th className={TH}>공급받는자</th><th className={`${TH} text-right`}>공급가액</th><th className={`${TH} text-right`}>세액</th><th className={`${TH} text-right`}>합계</th><th className={TH}>작성일자</th><th className={TH}>상태</th><th className={TH}>차단 사유·메모</th></tr></thead>
+            <thead className={THEAD}><tr><th className={TH}>종류</th><th className={TH}>받는 곳</th><th className={`${TH} text-right`}>공급가액</th><th className={`${TH} text-right`}>세액</th><th className={`${TH} text-right`}>합계</th><th className={TH}>작성일자</th><th className={TH}>상태</th><th className={TH}>막힌 이유·메모</th></tr></thead>
             <tbody>
               {p.lines.map((l) => (
                 <tr key={l.id} className={TR}>
@@ -135,7 +137,7 @@ function FilesStep(p: TaxBoardProps) {
 
   return (
     <Card className="p-4 sm:p-5">
-      <CardHead title="2단계. 홈택스 업로드 파일" description="홈택스 일괄발급 양식(.xls)을 100건씩 나눠 만듭니다. 이 단계는 파일 준비까지이고 발행은 아닙니다." />
+      <CardHead title="2. 홈택스에 올릴 엑셀 내려받기" description="홈택스 일괄발급 양식(.xls)입니다. 100건이 넘으면 1/2, 2/2처럼 자동으로 나눕니다. 내려받기만으로는 발행되지 않습니다." />
       <ol className="mb-4 list-decimal space-y-1 pl-5 text-[length:var(--fs-body)] text-t">
         <li>아래 버튼으로 파일을 내려받습니다. 파일이 여러 개면 모두 내려받으세요.</li>
         <li>홈택스에 로그인해 전자(세금)계산서 일괄 발급 메뉴에서 파일을 올립니다.</li>
@@ -148,7 +150,7 @@ function FilesStep(p: TaxBoardProps) {
         </ul>
       )}
       {!p.canIssue ? (
-        <Alert kind="warning">세무 발행 권한이 없어 파일을 만들 수 없습니다.</Alert>
+        <Alert kind="warning">세금계산서 발행 권한이 없어 엑셀을 만들 수 없습니다. 목록은 볼 수 있습니다.</Alert>
       ) : kinds.length === 0 ? (
         <EmptyState title="파일로 만들 대상이 없습니다." description="1단계에서 파일 준비 가능한 대상이 생기면 여기에 나타납니다." />
       ) : (
@@ -158,7 +160,7 @@ function FilesStep(p: TaxBoardProps) {
               <p className="mb-2 text-[length:var(--fs-body)] font-medium text-t">{KIND_LABEL[k]} <span className="tabular-nums text-t2">{n}건, 파일 {fileCount(n)}개</span></p>
               <div className="flex flex-wrap gap-2">
                 {Array.from({ length: fileCount(n) }, (_, i) => (
-                  <Button key={i} type="button" variant="secondary" loading={busy === `${k}-${i}`} disabled={busy !== null && busy !== `${k}-${i}`} onClick={() => download(k, i)}>파일 {i + 1}/{fileCount(n)} 만들어 내려받기</Button>
+                  <Button key={i} type="button" variant="secondary" loading={busy === `${k}-${i}`} disabled={busy !== null && busy !== `${k}-${i}`} onClick={() => download(k, i)}>엑셀 {i + 1}/{fileCount(n)} 내려받기</Button>
                 ))}
               </div>
             </div>
@@ -173,11 +175,11 @@ function ApprovalStep(p: TaxBoardProps) {
   const open = p.lines.filter((l) => l.status === "ready" || l.status === "file_generated");
   return (
     <Card className="p-4 sm:p-5">
-      <CardHead title="3단계. 승인번호 기록" description="홈택스에서 발급을 마친 건만 기록하세요. 승인번호를 기록해야 발행 완료가 됩니다." />
+      <CardHead title="4. 발행을 마쳤으면 승인번호 넣기" description="홈택스에서 발급을 마친 건만 넣으세요. 승인번호를 넣어야 발행 완료로 바뀝니다." />
       {open.length === 0 ? (
         <EmptyState title="승인번호를 기록할 건이 없습니다." description="파일을 만든 뒤 홈택스에서 발급하면 여기서 기록합니다." />
       ) : !p.canIssue ? (
-        <Alert kind="warning">세무 발행 권한이 없어 승인번호를 기록할 수 없습니다.</Alert>
+        <Alert kind="warning">세금계산서 발행 권한이 없어 승인번호를 넣을 수 없습니다.</Alert>
       ) : (
         <div className="space-y-3">{open.map((l) => <ApprovalRow key={l.id} businessId={p.businessId} l={l} />)}</div>
       )}
@@ -201,17 +203,42 @@ function ApprovalRow({ businessId, l }: { businessId: string; l: TaxLine }) {
       {error && <Alert kind="error" className="mb-2">{error}</Alert>}
       {!failing ? (
         <div className="flex flex-wrap items-end gap-2">
-          <Input label="국세청 승인번호" wrapperClassName="!mb-0 min-w-[280px] flex-1" value={no} onChange={(e) => setNo(e.target.value)} className="tabular-nums" hint={note ?? undefined} />
-          <Button type="button" loading={pending} disabled={!/^[0-9A-Za-z-]{20,32}$/.test(no.trim())} onClick={() => run(() => markTaxIssued(businessId, l.id, no.trim()), { success: "승인번호를 기록했습니다. 발행 완료로 표시됩니다." })}>승인번호 기록</Button>
+          <Input label="국세청 승인번호" wrapperClassName={FW.memo} value={no} onChange={(e) => setNo(e.target.value)} className="tabular-nums" hint={note ?? undefined} />
+          <Button type="button" loading={pending} disabled={!/^[0-9A-Za-z-]{20,32}$/.test(no.trim())} onClick={() => run(() => markTaxIssued(businessId, l.id, no.trim()), { success: "승인번호를 넣었습니다. 발행 완료로 표시됩니다." })}>승인번호 넣기</Button>
           <Button type="button" variant="ghost" onClick={() => setFailing(true)}>발급 실패로 기록</Button>
         </div>
       ) : (
         <div className="flex flex-wrap items-end gap-2">
-          <Input label="실패 사유" wrapperClassName="!mb-0 min-w-[280px] flex-1" value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} />
+          <Input label="실패 사유" wrapperClassName={FW.memo} value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} />
           <Button type="button" variant="secondary" loading={pending} disabled={!reason.trim()} onClick={() => run(() => markTaxFailed(businessId, l.id, reason.trim()), { success: "실패로 기록했습니다." })}>실패 기록</Button>
           <Button type="button" variant="ghost" onClick={() => setFailing(false)}>돌아가기</Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** 홈택스에 올리는 방법: 번호 목록 3단계. 홈택스 메뉴 이름은 바뀔 수 있어 큰 흐름만 적는다. */
+function HowToCard() {
+  return (
+    <Card className="p-4 sm:p-5">
+      <CardHead title="3. 홈택스에 올리는 방법" description="엑셀을 내려받은 다음 홈택스 사이트에서 하는 일입니다." />
+      <ol className="list-decimal space-y-1.5 pl-5 text-[length:var(--fs-body)] text-t">
+        <li>홈택스(hometax.go.kr)에 공동인증서로 로그인합니다.</li>
+        <li>전자(세금)계산서 발급 메뉴에서 &quot;일괄 발급(엑셀 업로드)&quot;을 열고, 위에서 내려받은 엑셀을 올립니다. 엑셀이 여러 개면 하나씩 올립니다.</li>
+        <li>내용을 확인하고 발급을 누릅니다. 발급이 끝나면 건마다 국세청 승인번호가 나옵니다. 그 번호를 아래 4번에 넣으면 발행 완료가 됩니다.</li>
+      </ol>
+    </Card>
+  );
+}
+
+/** 발행 도움이 꺼진 사업장에서 대표가 이 화면에서 바로 켠다(서버 액션이 staff.manage 를 다시 검사). */
+export function EnableTaxButton({ businessId }: { businessId: string }) {
+  const { run, pending, error } = useRunAction();
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <Button type="button" loading={pending} onClick={() => run(() => setBuildingFeature(businessId, "tax_invoice", true), { success: "세금계산서 발행 도움을 켰습니다." })}>발행 도움 켜기</Button>
+      {error && <Alert kind="error">{error}</Alert>}
     </div>
   );
 }

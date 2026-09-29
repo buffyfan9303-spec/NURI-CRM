@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Alert, CardHead, SelectField, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
 import { approveChargeTypeTax, createChargeType, updateChargeType } from "@/lib/domain/building-actions";
 import { STD_CATEGORIES, STD_CATEGORY_LABEL, type AllocMethod, type ChargeTypeRow, type MeterKind, type Payer, type SourceKindCharge, type TaxTreatment } from "@/lib/domain/building-types";
+import { MONEY_INPUT } from "@/components/building/FieldWidths";
 import { useRunAction } from "./client-common";
 import { METER_KIND_LABEL, won } from "./format";
 import { ALLOC_LABEL, PAYER_LABEL, SOURCE_LABEL, STEPS, TAX_LABEL, allocOptions, draftFrom, draftToInput, emptyDraft, firstBadStep, previewOf, stepError, type ChargeDraft, type PreviewUnit } from "./charge-wizard";
@@ -41,9 +42,9 @@ function Choice<T extends string>({ legend, value, options, onChange, hint }: { 
 }
 
 const SOURCE_HINT: Record<SourceKindCharge, string> = {
-  expense: "비용 입력 화면에 넣은 그 달 실제 금액을 호실에 나눕니다.",
+  expense: "비용 입력 화면에 적은 그 달 실제 금액을 호실에 나눕니다.",
   rate: "계약이나 고정 요금처럼 정해진 단가·정액으로 계산합니다.",
-  direct: "호실마다 금액을 따로 넣습니다. 나누는 방법은 직접 입력으로 고정됩니다.",
+  direct: "호실마다 금액을 따로 적습니다. 나누는 방법은 '직접 적음'으로 정해집니다.",
 };
 
 export function ChargesBoard(p: ChargesProps) {
@@ -59,20 +60,20 @@ export function ChargesBoard(p: ChargesProps) {
         <Card className="p-4 sm:p-5">
           <CardHead
             title="관리비 항목"
-            description="청구에 들어가는 항목입니다. 과세·공급자를 바꾸면 세무 승인이 풀립니다."
+            description="관리비에 들어가는 항목입니다. 부가세 여부나 공급자를 바꾸면 부가세 확인을 다시 받아야 합니다."
             action={
               <>
-                <Button type="button" size="sm" variant="ghost" aria-pressed={showOff} onClick={() => setShowOff((v) => !v)}>{showOff ? "사용 중지 항목 숨기기" : "사용 중지 항목 보기"}</Button>
+                <Button type="button" size="sm" variant="ghost" aria-pressed={showOff} onClick={() => setShowOff((v) => !v)}>{showOff ? "안 쓰는 항목 숨기기" : "안 쓰는 항목 보기"}</Button>
                 {p.canConfigure && <Button type="button" size="sm" onClick={() => setEditing({ id: null })}>항목 추가</Button>}
               </>
             }
           />
           {rows.length === 0 ? (
-            <EmptyState title="등록된 항목이 없습니다." description={p.canConfigure ? "항목 추가 단계에 따라 첫 항목을 만드세요. 청구 계산은 항목이 있어야 시작됩니다." : "관리자가 항목을 등록하면 여기에 나타납니다."} />
+            <EmptyState title="등록된 항목이 없습니다." description={p.canConfigure ? "'항목 추가'를 눌러 차례대로 첫 항목을 만드세요. 항목이 있어야 관리비를 계산할 수 있습니다." : "관리자가 항목을 만들면 여기에 나타납니다."} />
           ) : (
             <div className="relative overflow-x-auto">
               <table className={TABLE}>
-                <thead className={THEAD}><tr><th className={TH}>항목</th><th className={TH}>분류</th><th className={TH}>출처</th><th className={TH}>나누는 방법</th><th className={TH}>부담</th><th className={TH}>세무</th><th className={TH}>세무 승인</th><th className={TH}><span className="sr-only">작업</span></th></tr></thead>
+                <thead className={THEAD}><tr><th className={TH}>항목</th><th className={TH}>분류</th><th className={TH}>금액이 어디서</th><th className={TH}>나누는 방법</th><th className={TH}>누가 내나</th><th className={TH}>부가세</th><th className={TH}>부가세 확인</th><th className={TH}><span className="sr-only">작업</span></th></tr></thead>
                 <tbody>{rows.map((r) => <ChargeRow key={r.id} r={r} p={p} onEdit={() => setEditing({ id: r.id })} />)}</tbody>
               </table>
             </div>
@@ -92,20 +93,20 @@ function ChargeRow({ r, p, onEdit }: { r: ChargeTypeRow; p: ChargesProps; onEdit
   return (
     <>
       <tr className={TR}>
-        <td className={TD}>{r.name}{!r.active && <> <Badge kind="warning">사용 중지</Badge></>}</td>
+        <td className={TD}>{r.name}{!r.active && <> <Badge kind="warning">안 씀</Badge></>}</td>
         <td className={TD}>{STD_CATEGORY_LABEL[r.std_category]}</td>
         <td className={TD}>{SOURCE_LABEL[r.source_kind].split("(")[0]}</td>
         <td className={TD}>{ALLOC_LABEL[r.alloc_method]}{r.meter_kind ? ` · ${METER_KIND_LABEL[r.meter_kind]}` : ""}</td>
         <td className={TD}>{PAYER_LABEL[r.payer].split("(")[0]}</td>
         <td className={TD}>{TAX_LABEL[r.tax_treatment].split("(")[0]}</td>
-        <td className={TD}>{!needsApproval ? <span className="text-t3">해당 없음</span> : approved ? <Badge kind="success">승인됨</Badge> : <Badge kind="warning">승인 대기</Badge>}</td>
+        <td className={TD}>{!needsApproval ? <span className="text-t3">해당 없음</span> : approved ? <Badge kind="success">확인됨</Badge> : <Badge kind="warning">확인 기다림</Badge>}</td>
         <td className={`${TD} whitespace-nowrap text-right`}>
           {p.canApproveTax && needsApproval && !approved && r.active && <Button type="button" size="sm" variant="secondary" loading={pending} onClick={async () => {
             setHint(undefined);
-            const x = await run(() => approveChargeTypeTax(p.businessId, r.id, reason?.trim() || undefined), { success: "세무를 승인했습니다." });
-            if (!x.ok) { setHint(x.hint); if (x.hint === "reason_required") { setReason((v) => v ?? ""); setError("1인 승인이라 사유가 필요합니다. 아래에 사유를 적고 다시 승인하세요."); } }
-          }}>세무 승인</Button>}{" "}
-          {p.canConfigure && r.active && <Button type="button" size="sm" variant="ghost" loading={pending} onClick={() => { if (window.confirm(`"${r.name}" 항목을 사용 중지할까요? 이미 승인된 청구는 그대로 두고, 다음 계산부터 빠집니다.`)) void run(() => updateChargeType(p.businessId, r.id, { active: false }), { success: "항목을 사용 중지했습니다." }); }}>사용 중지</Button>}{" "}
+            const x = await run(() => approveChargeTypeTax(p.businessId, r.id, reason?.trim() || undefined), { success: "부가세 처리를 확인했습니다." });
+            if (!x.ok) { setHint(x.hint); if (x.hint === "reason_required") { setReason((v) => v ?? ""); setError("만든 사람이 직접 확인하는 경우라 이유가 필요합니다. 아래에 이유를 적고 다시 누르세요."); } }
+          }}>부가세 확인</Button>}{" "}
+          {p.canConfigure && r.active && <Button type="button" size="sm" variant="ghost" loading={pending} onClick={() => { if (window.confirm(`"${r.name}" 항목을 그만 쓸까요? 이미 확정된 관리비는 그대로 두고, 다음 계산부터 빠집니다.`)) void run(() => updateChargeType(p.businessId, r.id, { active: false }), { success: "항목을 그만 씁니다." }); }}>그만 쓰기</Button>}{" "}
           {p.canConfigure && !r.active && <Button type="button" size="sm" variant="ghost" loading={pending} onClick={() => run(() => updateChargeType(p.businessId, r.id, { active: true }), { success: "항목을 다시 사용합니다." })}>다시 사용</Button>}{" "}
           {p.canConfigure && <Button type="button" size="sm" variant="ghost" onClick={onEdit}>수정</Button>}
         </td>
@@ -114,10 +115,10 @@ function ChargeRow({ r, p, onEdit }: { r: ChargeTypeRow; p: ChargesProps; onEdit
         <tr><td colSpan={8} className="px-3 pb-3">
           {error && <Alert kind="error">{error}
             {hint === "approver_must_differ" && (
-              <span className="mt-1 block">소규모 사업장은 <Link href={`/w/${p.businessId}/settings`} className="font-medium underline">선택 기능 설정</Link>에서 「혼자 승인 허용(self_approve)」을 켜면 만든 사람이 사유를 남기고 직접 승인할 수 있습니다.</span>
+              <span className="mt-1 block">담당자가 한 명뿐이면 <Link href={`/w/${p.businessId}/settings`} className="font-medium underline">선택 기능 설정</Link>에서 「혼자 확정 허용」을 켜면 만든 사람이 이유를 남기고 직접 확인할 수 있습니다.</span>
             )}
           </Alert>}
-          {reason !== null && <Input label="1인 승인 사유(필수)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} wrapperClassName="mt-2 max-w-[480px]" />}
+          {reason !== null && <Input label="직접 확인하는 이유(필수)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} wrapperClassName="mt-2 w-full sm:w-[360px]" />}
         </td></tr>
       )}
     </>
@@ -159,57 +160,57 @@ function Wizard(p: ChargesProps & { row?: ChargeTypeRow; onClose: () => void }) 
       <div className="max-w-[720px]">
         {step === 0 && (
           <>
-            <Input label="항목 이름" required value={d.name} maxLength={60} onChange={(e) => set("name", e.target.value)} />
-            <SelectField label="분류" required value={d.std_category} onChange={(e) => set("std_category", e.target.value as ChargeDraft["std_category"])} hint="법정 분류 기준으로 보고서와 명세서에 묶입니다.">
+            <Input label="항목 이름" required value={d.name} maxLength={60} onChange={(e) => set("name", e.target.value)} wrapperClassName="w-full sm:w-[240px]" />
+            <SelectField label="분류" required value={d.std_category} onChange={(e) => set("std_category", e.target.value as ChargeDraft["std_category"])} hint="법에서 정한 분류입니다. 보고서와 명세서에서 이 분류로 묶입니다." wrapperClassName="w-full sm:w-auto sm:min-w-[200px] sm:max-w-[280px]">
               <option value="">선택하세요</option>
               {STD_CATEGORIES.map((c) => <option key={c} value={c}>{STD_CATEGORY_LABEL[c]}</option>)}
             </SelectField>
-            <Input label="메모(선택)" value={d.memo} maxLength={200} onChange={(e) => set("memo", e.target.value)} />
+            <Input label="메모(선택)" value={d.memo} maxLength={200} onChange={(e) => set("memo", e.target.value)} wrapperClassName="w-full sm:w-[360px]" />
           </>
         )}
         {step === 1 && (
-          <Choice legend="금액은 어디서 나옵니까" value={d.source_kind} onChange={(v) => setD((o) => ({ ...o, source_kind: v, alloc_method: allocOptions(v).includes(o.alloc_method as AllocMethod) ? o.alloc_method : v === "direct" ? "direct" : "" }))}
+          <Choice legend="금액은 어디서 나오나요" value={d.source_kind} onChange={(v) => setD((o) => ({ ...o, source_kind: v, alloc_method: allocOptions(v).includes(o.alloc_method as AllocMethod) ? o.alloc_method : v === "direct" ? "direct" : "" }))}
             options={(["expense", "rate", "direct"] as const).map((v) => ({ v, label: SOURCE_LABEL[v], hint: SOURCE_HINT[v] }))} />
         )}
         {step === 2 && (
-          <Choice legend="누가 부담합니까" value={d.payer} onChange={(v: Payer) => set("payer", v)}
+          <Choice legend="누가 내나요" value={d.payer} onChange={(v: Payer) => set("payer", v)}
             options={(["tenant", "owner", "association"] as const).map((v) => ({ v, label: PAYER_LABEL[v] }))}
-            hint="관리단 부담은 호실 청구에 넣지 않습니다. 금액을 호실에 나누려면 입주자나 소유자를 고르세요." />
+            hint="관리단이 내는 돈은 호실 관리비에 넣지 않습니다. 호실에 나누려면 입주자나 소유자를 고르세요." />
         )}
         {step === 3 && (
           <>
-            <Choice legend="어떻게 나눕니까" value={d.alloc_method} onChange={(v: AllocMethod) => set("alloc_method", v)}
+            <Choice legend="어떻게 나누나요" value={d.alloc_method} onChange={(v: AllocMethod) => set("alloc_method", v)}
               options={allocOptions(d.source_kind).map((v) => ({ v, label: ALLOC_LABEL[v] }))}
-              hint={d.source_kind === "direct" ? "직접 입력 항목은 나누는 방법을 바꿀 수 없습니다." : undefined} />
+              hint={d.source_kind === "direct" ? "직접 적는 항목은 나누는 방법을 바꿀 수 없습니다." : undefined} />
             {d.alloc_method === "meter_usage" && (
-              <SelectField label="어떤 계량기입니까" required value={d.meter_kind} onChange={(e) => set("meter_kind", e.target.value as MeterKind)} hint="그 달 검침 사용량이 모든 호실에 입력돼야 계산됩니다.">
+              <SelectField label="어떤 계량기인가요" required value={d.meter_kind} onChange={(e) => set("meter_kind", e.target.value as MeterKind)} hint="그 달 모든 호실의 계량기 숫자를 적어야 계산됩니다." wrapperClassName="w-full sm:w-auto sm:min-w-[128px] sm:max-w-[280px]">
                 <option value="">선택하세요</option>
                 {(Object.keys(METER_KIND_LABEL) as MeterKind[]).map((k) => <option key={k} value={k}>{METER_KIND_LABEL[k]}</option>)}
               </SelectField>
             )}
-            {d.source_kind === "rate" && d.alloc_method === "fixed" && <Input label="호실마다 정액(원)" required inputMode="numeric" value={d.fixed_amount} onChange={(e) => set("fixed_amount", e.target.value.replace(/[^\d]/g, ""))} className="tabular-nums" />}
+            {d.source_kind === "rate" && d.alloc_method === "fixed" && <Input label="호실마다 정액(원)" required inputMode="numeric" value={d.fixed_amount} onChange={(e) => set("fixed_amount", e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} wrapperClassName="w-full sm:w-[200px]" />}
             {d.source_kind === "rate" && d.alloc_method && d.alloc_method !== "fixed" && (
               <>
-                <Input label={d.alloc_method === "meter_usage" ? "사용량 1단위당 단가(원)" : "기준 1단위당 단가(원)"} required inputMode="decimal" value={d.unit_rate} onChange={(e) => set("unit_rate", e.target.value.replace(/[^\d.]/g, ""))} className="tabular-nums" />
-                <label className="mb-4 flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t"><input type="checkbox" checked={d.rate_includes_vat} onChange={(e) => set("rate_includes_vat", e.target.checked)} />단가에 부가세가 이미 들어 있음</label>
+                <Input label={d.alloc_method === "meter_usage" ? "사용량 1만큼의 값(원)" : "기준 1만큼의 값(원)"} required inputMode="decimal" value={d.unit_rate} onChange={(e) => set("unit_rate", e.target.value.replace(/[^\d.]/g, ""))} className={MONEY_INPUT} wrapperClassName="w-full sm:w-[200px]" />
+                <label className="mb-4 flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t"><input type="checkbox" checked={d.rate_includes_vat} onChange={(e) => set("rate_includes_vat", e.target.checked)} />이 값에 부가세가 이미 들어 있음</label>
               </>
             )}
           </>
         )}
         {step === 4 && (
           <>
-            <Choice legend="세무 처리" value={d.tax_treatment} onChange={(v: TaxTreatment) => set("tax_treatment", v)} options={(["taxable", "exempt", "non_taxable", "pass_through"] as const).map((v) => ({ v, label: TAX_LABEL[v] }))} />
-            <SelectField label="공급자(선택)" value={d.supplier_party_id} onChange={(e) => set("supplier_party_id", e.target.value)} hint="세금계산서를 낼 때 공급자로 쓰이는 거래처입니다.">
-              <option value="">지정 안 함</option>
+            <Choice legend="부가세가 있나요" value={d.tax_treatment} onChange={(v: TaxTreatment) => set("tax_treatment", v)} options={(["taxable", "exempt", "non_taxable", "pass_through"] as const).map((v) => ({ v, label: TAX_LABEL[v] }))} />
+            <SelectField label="세금계산서 보내는 곳(선택)" value={d.supplier_party_id} onChange={(e) => set("supplier_party_id", e.target.value)} hint="세금계산서에 '공급자'로 적히는 곳입니다." wrapperClassName="w-full sm:w-auto sm:min-w-[128px] sm:max-w-[320px]">
+              <option value="">정하지 않음</option>
               {p.parties.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
             </SelectField>
             {(d.tax_treatment === "taxable" || d.tax_treatment === "exempt") && (
-              <Alert kind="warning" className="mb-4">과세·면세 항목은 저장 뒤 세무 권한이 있는 다른 사람이 승인해야 발행 대상에 들어갑니다. 작성자 본인은 승인할 수 없습니다.</Alert>
+              <Alert kind="warning" className="mb-4">부가세 있음·없음 항목은 저장한 뒤, 만든 사람이 아닌 다른 담당자가 확인해야 세금계산서 대상에 들어갑니다.</Alert>
             )}
-            {taxChanged && <Alert kind="warning" className="mb-4">세무 처리, 공급자 또는 부가세 포함 여부를 바꾸면 기존 세무 승인이 풀리고 다시 승인받아야 합니다.</Alert>}
-            <h3 className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">배분 미리보기 <Badge kind="info">참고용</Badge></h3>
+            {taxChanged && <Alert kind="warning" className="mb-4">부가세 여부, 보내는 곳, 부가세 포함 여부를 바꾸면 부가세 확인을 다시 받아야 합니다.</Alert>}
+            <h3 className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">호실에 나누면 이렇게 됩니다 <Badge kind="info">참고용</Badge></h3>
             {d.source_kind === "expense" && d.payer !== "association" && d.alloc_method !== "meter_usage" && (
-              <Input label="예시 총액(원)" inputMode="numeric" value={sample} onChange={(e) => setSample(e.target.value.replace(/[^\d]/g, ""))} className="tabular-nums" hint="실제 총액은 비용 입력 화면의 값입니다. 여기 숫자는 나누는 모습을 보기 위한 예시입니다." />
+              <Input label="예시 총액(원)" inputMode="numeric" value={sample} onChange={(e) => setSample(e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} wrapperClassName="w-full sm:w-[200px]" hint="나누는 모습을 보려는 예시 숫자입니다. 실제 금액은 비용 입력에서 적습니다." />
             )}
             {preview?.kind === "note" && <Alert kind="warning">{preview.text}</Alert>}
             {preview?.kind === "rows" && (

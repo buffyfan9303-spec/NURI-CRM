@@ -24,7 +24,7 @@ export default async function StatementsPage({ params, searchParams }: { params:
   if (!access.ok) {
     if (access.reason === "unauthenticated") return null;
     const msg = accessMessage(access);
-    return <PageBody><Card>{access.reason === "forbidden" ? <ForbiddenState title={msg.title} description={`${msg.detail} (필요 권한: revenue.read)`} /> : <ErrorState title={msg.title} description={msg.detail} />}</Card></PageBody>;
+    return <PageBody><Card>{access.reason === "forbidden" ? <ForbiddenState title={msg.title} description={`${msg.detail} (매출을 볼 권한이 필요합니다)`} /> : <ErrorState title={msg.title} description={msg.detail} />}</Card></PageBody>;
   }
   if (access.industry !== "building") {
     return <PageBody><PageHeader title={TITLE} /><Card><EmptyState title="이 업종에는 명세서 화면이 없습니다." /></Card></PageBody>;
@@ -52,7 +52,7 @@ export default async function StatementsPage({ params, searchParams }: { params:
       bills = b.data;
       if (bills.length) {
         const { data, error } = await getServerSupabase().schema("crm").from("bld_deliveries").select("bill_id,channel,status,note,created_at").in("bill_id", bills.map((x) => x.id)).order("created_at", { ascending: false });
-        if (error) return fail("발송 이력을 불러오지 못했습니다.");
+        if (error) return fail("보낸 기록을 불러오지 못했습니다.");
         deliveries = (data ?? []) as DeliveryRow[];
       }
     }

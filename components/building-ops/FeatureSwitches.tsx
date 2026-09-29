@@ -45,7 +45,7 @@ function Row({ businessId, k, status }: { businessId: string; k: BuildingFeature
       <div className="flex items-center justify-between gap-3">
         <label htmlFor={id} className="min-w-0 text-[length:var(--fs-body)] text-t2" style={{ wordBreak: "keep-all" }}>
           {info.label}
-          <span className="ml-1.5 text-[length:var(--fs-meta)] text-t3" aria-hidden>{pending ? "저장 중" : on ? "사용" : "미사용"}</span>
+          <span className="ml-1.5 text-[length:var(--fs-meta)] text-t3" aria-hidden>{pending ? "저장 중" : on ? "켬" : "끔"}</span>
         </label>
         <button
           id={id}
@@ -68,7 +68,7 @@ function Row({ businessId, k, status }: { businessId: string; k: BuildingFeature
         <div className="flex flex-wrap items-center gap-1.5 text-[length:var(--fs-meta)] text-t3">
           {needsContract && <Badge kind="warning">외부 계약 필요</Badge>}
           {status === "external_contract_required" && <span>켜져 있지만 계약 전이라 동작하지 않습니다.</span>}
-          {info.approval && <Badge kind="info">승인 후 동작</Badge>}
+          {info.approval && <Badge kind="info">확정한 뒤 동작</Badge>}
           {info.note && <span style={{ wordBreak: "keep-all" }}>{info.note}</span>}
         </div>
       )}

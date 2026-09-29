@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { FW, FORM_ROW, MONEY_INPUT } from "@/components/building/FieldWidths";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Alert, CardHead, SelectField, TABLE, THEAD, TH, TR, TD } from "@/components/rental/listkit";
@@ -134,19 +135,19 @@ function Wizard(p: ImportsProps) {
 
       {step === 0 && (
         <div className="max-w-[720px]">
-          <SelectField label="어떤 파일입니까" value={kind} onChange={(e) => { setKind(e.target.value as ImportKind); setChargeTypeId(""); }} hint={IMPORT_KIND_NOTE[kind]}>
+          <SelectField wrapperClassName={FW.select} label="어떤 파일입니까" value={kind} onChange={(e) => { setKind(e.target.value as ImportKind); setChargeTypeId(""); }} hint={IMPORT_KIND_NOTE[kind]}>
             {(Object.keys(IMPORT_KIND_LABEL) as ImportKind[]).filter((k) => k !== "bank" || p.canBank).map((k) => <option key={k} value={k}>{IMPORT_KIND_LABEL[k]}</option>)}
           </SelectField>
           {!p.canBank && <p className="-mt-2 mb-4 text-[length:var(--fs-meta)] text-t3">은행 입금 가져오기는 수납 배정 권한이 있어야 보입니다.</p>}
-          {kind !== "bank" && <Input label="청구월" type="month" value={period} onChange={(e) => setPeriod(e.target.value)} className="tabular-nums" />}
+          {kind !== "bank" && <Input wrapperClassName={FW.date} label="청구월" type="month" value={period} onChange={(e) => setPeriod(e.target.value)} className="tabular-nums" />}
           {kind === "meter" && (
-            <SelectField label="검침 종류" required value={meterKind} onChange={(e) => setMeterKind(e.target.value)} hint={p.meterKinds.length < 5 ? "가스·난방·온수는 선택 기능을 켜야 고를 수 있습니다." : undefined}>
+            <SelectField wrapperClassName={FW.select} label="검침 종류" required value={meterKind} onChange={(e) => setMeterKind(e.target.value)} hint={p.meterKinds.length < 5 ? "가스·난방·온수는 선택 기능을 켜야 고를 수 있습니다." : undefined}>
               <option value="">선택하세요</option>
               {p.meterKinds.map((k) => <option key={k} value={k}>{METER_KIND_LABEL[k]}</option>)}
             </SelectField>
           )}
           {(kind === "bill" || kind === "expense") && (
-            <SelectField label="비용을 넣을 항목" required value={chargeTypeId} onChange={(e) => setChargeTypeId(e.target.value)} hint={p.chargeTypes.length === 0 ? "지출액 또는 직접 입력 항목이 없습니다. 관리비 항목에서 먼저 만드세요." : "고른 항목의 비용으로 들어갑니다."}>
+            <SelectField wrapperClassName={FW.select} label="비용을 넣을 항목" required value={chargeTypeId} onChange={(e) => setChargeTypeId(e.target.value)} hint={p.chargeTypes.length === 0 ? "지출액 또는 직접 입력 항목이 없습니다. 관리비 항목에서 먼저 만드세요." : "고른 항목의 비용으로 들어갑니다."}>
               <option value="">선택하세요</option>
               {p.chargeTypes.map((c) => <option key={c.id} value={c.id}>{c.name}{c.direct ? " (호실별 직접 입력)" : ""}</option>)}
             </SelectField>
@@ -165,18 +166,18 @@ function Wizard(p: ImportsProps) {
             <span className="font-medium">{an.fileName}</span> <span className="tabular-nums text-t2">데이터 {num(an.dataRows)}행</span>{" "}
             {an.template ? <Badge kind="success">저장된 양식 적용</Badge> : an.detected ? <Badge kind="info">머리글 자동 인식</Badge> : <Badge kind="warning">머리글을 직접 확인하세요</Badge>}
           </p>
-          <div className="grid gap-x-4 sm:grid-cols-2 lg:max-w-[720px]">
+          <div className={`${FORM_ROW} mb-2`}>
             {an.sheets.length > 1 && (
-              <SelectField label="시트" value={an.sheetIndex} onChange={(e) => analyze({ sheet: e.target.value, headerRow: "" })}>
+              <SelectField wrapperClassName={FW.select} label="시트" value={an.sheetIndex} onChange={(e) => analyze({ sheet: e.target.value, headerRow: "" })}>
                 {an.sheets.map((s, i) => <option key={i} value={i}>{s.name} ({num(s.rows)}행)</option>)}
               </SelectField>
             )}
-            <Input label="머리글이 있는 행 번호" type="number" min={1} defaultValue={an.headerRow} key={`${an.sheetIndex}-${an.headerRow}`} className="tabular-nums" hint="바꾸면 열을 다시 찾습니다." onBlur={(e) => { const v = Number(e.target.value); if (Number.isInteger(v) && v >= 1 && v !== an.headerRow) analyze({ sheet: String(an.sheetIndex), headerRow: String(v) }); }} />
+            <Input wrapperClassName={FW.short} label="머리글이 있는 행 번호" type="number" min={1} defaultValue={an.headerRow} key={`${an.sheetIndex}-${an.headerRow}`} className="tabular-nums" hint="바꾸면 열을 다시 찾습니다." onBlur={(e) => { const v = Number(e.target.value); if (Number.isInteger(v) && v >= 1 && v !== an.headerRow) analyze({ sheet: String(an.sheetIndex), headerRow: String(v) }); }} />
           </div>
           <h3 className="mb-2 mt-1 text-[length:var(--fs-body)] font-semibold text-t">열 지정 <span className="font-normal text-t3">빨간 별표는 꼭 필요한 열입니다. 한 열은 한 항목에만 지정됩니다.</span></h3>
-          <div className="grid gap-x-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={FORM_ROW}>
             {fields.map((f) => (
-              <SelectField key={f} label={`${FIELD_LABEL[f] ?? f}${REQUIRED_FIELDS[kind].includes(f) ? " *" : ""}`} value={mapping[f] ?? ""} onChange={(e) => setMapping((m) => assignColumn(m, f, e.target.value === "" ? null : Number(e.target.value)))}
+              <SelectField key={f} wrapperClassName={FW.select} label={`${FIELD_LABEL[f] ?? f}${REQUIRED_FIELDS[kind].includes(f) ? " *" : ""}`} value={mapping[f] ?? ""} onChange={(e) => setMapping((m) => assignColumn(m, f, e.target.value === "" ? null : Number(e.target.value)))}
                 hint={mapping[f] !== undefined && an.fieldConfidence[f] !== undefined && an.fieldConfidence[f] < 0.8 ? "자동 추정이 확실하지 않습니다. 확인하세요." : undefined}>
                 <option value="">사용 안 함</option>
                 {an.headers.map((h, i) => <option key={i} value={i}>{colLetter(i)}열 {h || "(빈 머리글)"}</option>)}
@@ -206,8 +207,8 @@ function Wizard(p: ImportsProps) {
           </p>
           {(kind === "bill" || kind === "expense" || kind === "bank") && (
             <div className="flex flex-wrap items-end gap-2">
-              <Input label="원본 고지서·내역 합계(원, 선택)" inputMode="numeric" wrapperClassName="min-w-[260px]" value={expected} onChange={(e) => setExpected(e.target.value.replace(/[^\d]/g, ""))} className="tabular-nums" hint="넣으면 파일 금액 합계와 맞는지 대조합니다." />
-              <Button type="button" variant="secondary" loading={busy} className="mb-4" onClick={validate}>다시 검사</Button>
+              <Input label="원본 고지서·내역 합계(원, 선택)" inputMode="numeric" wrapperClassName={FW.money} value={expected} onChange={(e) => setExpected(e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} hint="넣으면 파일 금액 합계와 맞는지 대조합니다." />
+              <Button type="button" variant="secondary" loading={busy} onClick={validate}>다시 검사</Button>
             </div>
           )}
           {val.issues.length > 0 && (
@@ -303,7 +304,7 @@ function CancelPanel({ businessId, b, onDone }: { businessId: string; b: ImportB
   return (
     <div className="max-w-[560px]">
       <p className="mb-2 text-[length:var(--fs-body)] text-t">{b.status === "committed" ? "이 파일이 만든 검침·비용·입금·호실을 되돌립니다." : "아직 확정 전인 가져오기를 취소합니다."}</p>
-      <Input label="취소 사유(선택)" value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} />
+      <Input wrapperClassName={FW.memo} label="취소 사유(선택)" value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} />
       {error && <Alert kind="error" className="mb-3">{error}</Alert>}
       <div className="flex gap-2">
         <Button type="button" variant="danger" loading={pending} onClick={async () => { const r = await run(() => cancelImport(businessId, b.id, reason.trim() || undefined), { success: "가져오기를 취소했습니다." }); if (r.ok) onDone(); }}>가져오기 취소</Button>

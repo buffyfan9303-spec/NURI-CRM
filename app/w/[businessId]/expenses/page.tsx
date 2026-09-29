@@ -22,7 +22,7 @@ export default async function ExpensesPage({ params, searchParams }: { params: {
   const names = new Map(tRes.data.map((t) => [t.id, t.name]));
   return (
     <PageBody wide>
-      <BuildingHeader ctx={ctx} title="비용 입력" description="이번 달 건물이 쓴 비용을 항목별로 입력합니다." />
+      <BuildingHeader ctx={ctx} title="비용 입력" description="이번 달 건물이 낸 돈(전기·수도·청소 등)을 항목별로 적습니다." />
       <ExpenseForm
         businessId={ctx.businessId}
         buildingId={ctx.building.id}

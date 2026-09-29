@@ -48,6 +48,7 @@ export default async function PaymentsPage({ params, searchParams }: { params: {
         allocUnit={allocUnit}
         canAllocate={ctx.can("payment.allocate")}
         today={today}
+        tz={ctx.access.timezone}
       />
     </PageBody>
   );
