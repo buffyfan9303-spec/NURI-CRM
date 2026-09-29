@@ -52,14 +52,14 @@ export function BldReceivablesBoard(p: BldReceivablesProps) {
       {p.topUnits.length > 0 && (
         <Card className="p-4 sm:p-5">
           <CardHead title="오래된 미수 호실" description="납기가 지난 금액이 있는 호실을 가장 오래 밀린 순서로 최대 5곳 보여 줍니다." />
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className={TABLE}>
               <thead className={THEAD}><tr><th className={TH}>호실</th><th className={TH}>입주자</th><th className={`${TH} text-right`}>연체액</th><th className={`${TH} text-right`}>납기 전</th><th className={`${TH} text-right`}>가장 오래된 연체</th><th className={`${TH} text-right`}>건수</th></tr></thead>
               <tbody>
                 {p.topUnits.map((u) => (
                   <tr key={u.unit_id} className={TR}>
                     <td className={TD}>{u.label}</td><td className={TD}>{u.party ?? "-"}</td>
-                    <td className={`${TD} text-right tabular-nums`}>{won(u.overdue_balance)}</td><td className={`${TD} text-right tabular-nums`}>{won(u.not_due_balance)}</td>
+                    <td className={`${TD} text-right tabular-nums`}>{won(u.overdue_balance)}</td><td className={`${TD} text-right tabular-nums`}>{won(u.not_due_balance ?? 0)}</td>
                     <td className={`${TD} text-right tabular-nums`}>{u.max_age}일 {u.max_age > 60 && <Badge kind="error">장기 미수</Badge>}</td>
                     <td className={`${TD} text-right tabular-nums`}>{u.count}건</td>
                   </tr>
@@ -86,7 +86,7 @@ export function BldReceivablesBoard(p: BldReceivablesProps) {
         {rows.length === 0 ? (
           <EmptyState title={p.rows.length === 0 ? "미수금이 없습니다." : "이 구간에 해당하는 미수가 없습니다."} description={p.rows.length === 0 ? "승인된 관리비가 모두 수납됐습니다." : undefined} />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className={TABLE}>
               <thead className={THEAD}>
                 <tr><th className={TH}>호실</th><th className={TH}>입주자</th><th className={TH}>청구월</th><th className={TH}>구분</th><th className={TH}>납기</th><th className={`${TH} text-right`}>남은 금액</th><th className={`${TH} text-right`}>연령</th><th className={TH}>독촉</th><th className={TH}><span className="sr-only">작업</span></th></tr>

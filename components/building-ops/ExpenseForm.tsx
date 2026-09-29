@@ -26,6 +26,9 @@ export function ExpenseForm({
   const [vat, setVat] = React.useState("");
   const [vendor, setVendor] = React.useState("");
   const [docNo, setDocNo] = React.useState("");
+  // 같은 증빙번호가 이번 달에 이미 있으면 한 번 경고한다(나눠 결제한 경우가 있어 막지는 않는다).
+  const [dupAsked, setDupAsked] = React.useState(false);
+  const dupDoc = docNo.trim() !== "" && rows.some((r) => r.docNo?.trim() === docNo.trim());
   const type = types.find((t) => t.id === typeId);
   const supplyNum = Number(supply.replace(/,/g, ""));
   const validSupply = supply.trim() !== "" && Number.isInteger(supplyNum) && supplyNum > 0;
@@ -36,8 +39,9 @@ export function ExpenseForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (dupDoc && !dupAsked) { setDupAsked(true); return; }
     const r = await run(() => createExpense(businessId, buildingId, { period, charge_type_id: typeId, supply: supplyNum, vat: vatNum, vendor: vendor.trim() || undefined, doc_no: docNo.trim() || undefined }), { success: "비용을 저장했습니다." });
-    if (r.ok) { setSupply(""); setVat(""); setVendor(""); setDocNo(""); }
+    if (r.ok) { setSupply(""); setVat(""); setVendor(""); setDocNo(""); setDupAsked(false); }
   }
 
   return (
@@ -56,10 +60,11 @@ export function ExpenseForm({
             <Input label="공급가액(원)" inputMode="numeric" required value={supply} onChange={(e) => setSupply(e.target.value)} disabled={locked} className="text-right tabular-nums" error={supply && !validSupply ? "1원 이상의 정수를 입력하세요." : undefined} />
             <Input label="부가세(원)" inputMode="numeric" value={vat} placeholder={String(suggestVat)} onChange={(e) => setVat(e.target.value)} disabled={locked} className="text-right tabular-nums" hint={type?.taxable ? "비워 두면 10%를 넣습니다." : "면세 항목은 0원입니다."} error={vat && !validVat ? "0원 이상의 정수를 입력하세요." : undefined} />
             <Input label="거래처" value={vendor} onChange={(e) => setVendor(e.target.value)} disabled={locked} maxLength={60} />
-            <Input label="증빙 번호(세금계산서·영수증)" value={docNo} onChange={(e) => setDocNo(e.target.value)} disabled={locked} maxLength={60} />
+            <Input label="증빙 번호(세금계산서·영수증)" value={docNo} onChange={(e) => { setDocNo(e.target.value); setDupAsked(false); }} disabled={locked} maxLength={60} />
             <div className="flex flex-col justify-end sm:col-span-2 lg:col-span-3">
               {error && <Alert kind="error" className="mb-3">{error}</Alert>}
-              <div><Button type="submit" loading={pending} disabled={locked || !typeId || !validSupply || !validVat}>비용 저장</Button></div>
+              {dupDoc && <Alert kind="warning" className="mb-3">같은 증빙 번호({docNo.trim()})로 이번 달에 이미 입력한 비용이 있습니다. 중복 입력이 아니라면 &quot;그래도 저장&quot;을 누르세요.</Alert>}
+              <div><Button type="submit" loading={pending} disabled={locked || !typeId || !validSupply || !validVat}>{dupDoc && dupAsked ? "그래도 저장" : "비용 저장"}</Button></div>
             </div>
           </form>
         )}

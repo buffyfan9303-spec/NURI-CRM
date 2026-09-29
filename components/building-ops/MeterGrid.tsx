@@ -17,7 +17,7 @@ import { Alert, CONTROL_SM, TABLE, THEAD, TH, TR, TD, PILL, SelectField, CardHea
 import { upsertMeterReading, createMeter } from "@/lib/domain/building-actions";
 import type { MeterKind, ReadingReason } from "@/lib/domain/building-types";
 import { useRunAction } from "./client-common";
-import { num } from "./format";
+import { METER_KIND_LABEL, num } from "./format";
 import { parsePasteColumn, readingState, suggestOverride, usageOf } from "./meter-calc";
 
 export interface MeterLine {
@@ -32,8 +32,10 @@ export interface MeterLine {
   prev: number;
   saved: { curr: number; reason: ReadingReason | null; usageOverride: number | null } | null;
 }
-export const METER_KIND_LABEL: Record<MeterKind, string> = { electric: "전기", water: "수도", gas: "가스", heat: "난방", hotwater: "온수" };
 const REASON_LABEL: Record<ReadingReason, string> = { replaced: "계량기 교체", typo: "오입력 정정", estimated: "추정 검침", rollover: "지침 한 바퀴(자릿수 초과)" };
+
+/** 저장 뒤 서버 값으로 다시 그릴 때(remount) 저장하지 못한 역전 줄 입력이 사라지지 않게 잠시 들고 있는다. */
+const carry = new Map<string, { val: string; reason: ReadingReason | ""; override: string }>();
 
 export function MeterGrid({
   businessId, buildingId, period, lines, locked, units,
@@ -43,9 +45,9 @@ export function MeterGrid({
   const router = useRouter();
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [vals, setVals] = React.useState<Record<string, string>>(() => Object.fromEntries(lines.map((l) => [l.meterId, l.saved ? String(l.saved.curr) : ""])));
-  const [reasons, setReasons] = React.useState<Record<string, ReadingReason | "">>(() => Object.fromEntries(lines.map((l) => [l.meterId, l.saved?.reason ?? ""])));
-  const [overrides, setOverrides] = React.useState<Record<string, string>>(() => Object.fromEntries(lines.map((l) => [l.meterId, l.saved?.usageOverride != null ? String(l.saved.usageOverride) : ""])));
+  const [vals, setVals] = React.useState<Record<string, string>>(() => Object.fromEntries(lines.map((l) => [l.meterId, carry.get(l.meterId)?.val ?? (l.saved ? String(l.saved.curr) : "")])));
+  const [reasons, setReasons] = React.useState<Record<string, ReadingReason | "">>(() => Object.fromEntries(lines.map((l) => [l.meterId, carry.get(l.meterId)?.reason ?? l.saved?.reason ?? ""])));
+  const [overrides, setOverrides] = React.useState<Record<string, string>>(() => Object.fromEntries(lines.map((l) => [l.meterId, carry.get(l.meterId)?.override ?? (l.saved?.usageOverride != null ? String(l.saved.usageOverride) : "")])));
   const [rowErr, setRowErr] = React.useState<Record<string, string>>({});
   const refs = React.useRef<Record<string, HTMLInputElement | null>>({});
   const [kindFilter, setKindFilter] = React.useState<MeterKind | "all">("all");
@@ -69,6 +71,7 @@ export function MeterGrid({
     return false;
   };
   const saveable = lines.filter((l) => dirty(l) && !blocked(l));
+  const held = lines.filter((l) => dirty(l) && blocked(l) && readingState(l.prev, vals[l.meterId] ?? "", l.maxReading) === "reversed");
 
   function focusRow(i: number) {
     const l = shown[i];
@@ -111,8 +114,10 @@ export function MeterGrid({
     }
     setRowErr(errs);
     setSaving(false);
+    carry.clear();
+    for (const l of held) carry.set(l.meterId, { val: vals[l.meterId] ?? "", reason: reasons[l.meterId] ?? "", override: overrides[l.meterId] ?? "" });
     if (ok > 0) {
-      toast.success(`${ok}건 저장했습니다.`);
+      toast.success(held.length > 0 ? `${ok}건 저장했습니다. 지침이 역전된 ${held.length}건은 사유와 사용량을 넣어야 저장돼 남겨 두었습니다.` : `${ok}건 저장했습니다.`);
       router.refresh();
     }
     if (Object.keys(errs).length > 0) setError(`${Object.keys(errs).length}건은 저장하지 못했습니다. 줄마다 표시된 사유를 확인하세요.`);
@@ -189,7 +194,7 @@ export function MeterGrid({
                                 className={`${CONTROL_SM} w-[110px] text-right tabular-nums`}
                                 value={overrides[l.meterId] ?? ""}
                                 disabled={locked}
-                                placeholder="사용량"
+                                placeholder="사용량 입력"
                                 onChange={(e) => setOverrides((p) => ({ ...p, [l.meterId]: e.target.value }))}
                               />
                             : "-"}
@@ -197,7 +202,7 @@ export function MeterGrid({
                       <td className={TD}>
                         {st === "reversed" ? (
                           <div className="flex flex-col gap-1">
-                            <Badge kind="warning">지침 역전</Badge>
+                            {l.saved && !dirty(l) ? <Badge kind="success">저장됨 (역전)</Badge> : <Badge kind="warning">지침 역전 - 사유 필요</Badge>}
                             <select
                               aria-label={`${l.unitLabel} 역전 사유`}
                               className={CONTROL_SM}

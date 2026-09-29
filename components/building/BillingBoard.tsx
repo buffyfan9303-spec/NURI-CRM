@@ -87,7 +87,7 @@ export function BillingBoard({
     setBusy(kind); setError(null); save.saving();
     try {
       const r = await fn();
-      if (!r.ok) { setError(r.message); save.failed("저장 실패"); return false; }
+      if (!r.ok) { setError(r.hint === "inputs_changed" ? `${r.message} 위의 "계산 다시 하기"를 누르세요.` : r.message); save.failed(r.hint === "inputs_changed" ? "입력이 바뀜 - 다시 계산 필요" : "저장 실패"); return false; }
       save.saved(); onOk(r.data); router.refresh(); return true;
     } catch {
       setError("서버와 통신하지 못했습니다. 잠시 후 다시 시도하세요."); save.failed("저장 실패"); return false;
@@ -206,7 +206,7 @@ export function BillingBoard({
             <th className={cn(TH, "text-right max-lg:hidden")} scope="col">연체료</th>
             <th className={cn(TH, "text-right max-lg:hidden")} scope="col">선납·감면</th>
             <th className={cn(TH, "text-right")} scope="col">청구액</th>
-            <th className={cn(TH, "text-right max-xl:hidden")} scope="col">전월 대비</th>
+            <th className={cn(TH, "text-right max-xl:hidden")} scope="col">전월 대비(원)</th>
             <th className={TH} scope="col">상태</th>
             <th className={cn(TH, "text-right")} scope="col">동작</th>
           </tr>
@@ -320,7 +320,7 @@ export function BillingBoard({
                     ["전월 미납", <Money key="u" value={b.prior_unpaid} tone={b.prior_unpaid ? "unpaid" : "default"} />],
                     ["선납·감면", <Money key="c" value={b.credit ? -b.credit : 0} />],
                     ["청구액", <Money key="d" value={b.amount_due} strong className="text-[length:var(--fs-money)]" />],
-                    ["전월 대비", fmtDiff(diff)],
+                    ["전월 대비(원)", fmtDiff(diff)],
                   ]}
                   actions={<>
                     <Button size="sm" variant="secondary" onClick={() => setTraceFor(b)}>왜 이 금액인가</Button>

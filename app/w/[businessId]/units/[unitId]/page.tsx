@@ -10,8 +10,7 @@ import { BackLink, CardHead, TABLE, THEAD, TH, TR, TD } from "@/components/renta
 import { BuildingHeader, ReadFail, buildingGate, type BuildingCtx, type SearchParams } from "@/components/building-ops/gate";
 import { ContractCard, ContractCreate, PartyForm, UnitBasicForm } from "@/components/building-ops/UnitForms";
 import { parseRange } from "@/components/building-ops/unit-parse";
-import { METER_KIND_LABEL } from "@/components/building-ops/MeterGrid";
-import { num, unitLabel, won } from "@/components/building-ops/format";
+import { METER_KIND_LABEL, num, unitLabel, won } from "@/components/building-ops/format";
 import { periodLabel } from "@/components/building/period";
 import { getPeriod, listContracts, listCredits, listMeterReadings, listMeters, listParties, listReceivables, listUnitHistory, listUnits } from "@/lib/domain/building";
 

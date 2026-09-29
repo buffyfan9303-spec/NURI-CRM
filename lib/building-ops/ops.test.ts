@@ -205,3 +205,16 @@ describe("feature-labels", () => {
     expect(BUILDING_FEATURE_KEYS).toHaveLength(31);
   });
 });
+
+import { METER_KIND_LABEL, fmtLocal } from "@/components/building-ops/format";
+
+describe("QA 수정 회귀 (D1·D6)", () => {
+  it("계량기 종류 표시명은 클라이언트 파일이 아닌 format 에서 온다(D1)", () => {
+    expect(METER_KIND_LABEL.electric).toBe("전기");
+    expect(Object.keys(METER_KIND_LABEL)).toHaveLength(5);
+  });
+  it("UTC 시각을 사업장 시간대로 바꾼다(D6)", () => {
+    expect(fmtLocal("2026-09-29T10:49:00.000+00:00", "Asia/Seoul")).toBe("2026-09-29 19:49");
+    expect(fmtLocal("2026-09-29T23:30:00Z", "Asia/Seoul")).toBe("2026-09-30 08:30");
+  });
+});

@@ -15,5 +15,5 @@ export function approvalNoNote(raw: string): string | null {
   const t = raw.trim();
   if (!t) return "승인번호를 입력하세요.";
   const digits = t.replace(/[-\s]/g, "");
-  return /^\d{24}$/.test(digits) ? null : "국세청 승인번호는 보통 숫자 24자리입니다. 홈택스에 표시된 번호와 같은지 확인하세요.";
+  return /^\d{24}$/.test(digits) ? null : "국세청 승인번호는 보통 숫자 24자리입니다. 저장은 영문·숫자·하이픈 20~32자만 됩니다. 홈택스에 표시된 번호와 같은지 확인하세요.";
 }

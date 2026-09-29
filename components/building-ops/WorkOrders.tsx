@@ -40,7 +40,7 @@ export function WorkOrdersBoard(p: WorkOrdersProps) {
       {shown.length === 0 ? (
         <EmptyState title={p.rows.length === 0 ? "등록된 민원·수리가 없습니다." : "이 상태의 건이 없습니다."} description={p.canWrite && p.rows.length === 0 ? "오른쪽 위 버튼으로 첫 건을 등록하세요." : undefined} />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className={TABLE}>
             <thead className={THEAD}><tr><th className={TH}>접수일</th><th className={TH}>내용</th><th className={TH}>호실</th><th className={TH}>담당자</th><th className={TH}>상태</th>{p.canCost && <th className={`${TH} text-right`}>처리 비용</th>}<th className={TH}><span className="sr-only">작업</span></th></tr></thead>
             <tbody>{shown.map((r) => <Row key={r.id} r={r} p={p} unit={r.unit_id ? unitName.get(r.unit_id) ?? "-" : "공용"} who={r.assignee ? memberName.get(r.assignee) ?? "(알 수 없음)" : "미배정"} />)}</tbody>

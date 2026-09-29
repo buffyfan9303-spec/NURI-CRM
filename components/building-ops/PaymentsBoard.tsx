@@ -27,6 +27,8 @@ export interface PaymentsBoardProps {
   payments: PaymentLine[];
   recs: (OpenRec & { unitLabel: string })[];
   partyNames: Record<string, string>;
+  /** 호실 없이 등록했지만 채권에 배정된 입금 → 배정된 호실 id */
+  allocUnit: Record<string, string>;
   canAllocate: boolean;
   today: string;
 }
@@ -67,7 +69,7 @@ export function PaymentsBoard(p: PaymentsBoardProps) {
         {rows.length === 0 ? (
           <EmptyState title={filter === "all" ? "등록된 입금이 없습니다." : "조건에 맞는 입금이 없습니다."} description={filter === "all" && p.canAllocate ? "위 입금 등록에서 첫 입금을 등록하세요." : undefined} />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className={TABLE}>
               <thead className={THEAD}>
                 <tr>
@@ -85,14 +87,14 @@ export function PaymentsBoard(p: PaymentsBoardProps) {
                       <tr className={TR}>
                         <td className={`${TD} tabular-nums`}>{x.paid_at.slice(0, 10)}</td>
                         <td className={TD}>
-                          {p.units.find((u) => u.id === x.unit_id)?.label ?? (
+                          {p.units.find((u) => u.id === x.unit_id)?.label ?? (p.allocUnit[x.id] ? <span>{p.units.find((u) => u.id === p.allocUnit[x.id])?.label ?? "배정 호실"}<span className="ml-1 text-[length:var(--fs-meta)] text-t3">(배정)</span></span> : (
                             <span className="inline-flex items-center gap-1">
                               <span className="text-t3">미지정</span>
                               {p.canAllocate && live && !x.unit_id && x.allocated === 0 && x.credit === 0 && (
                                 <Button type="button" size="sm" variant="ghost" aria-expanded={isOpen && openRow?.mode === "unit"} onClick={() => setOpenRow(isOpen && openRow?.mode === "unit" ? null : { id: x.id, mode: "unit" })}>호실 지정</Button>
                               )}
                             </span>
-                          )}
+                          ))}
                         </td>
                         <td className={TD}>{x.payer_name ?? "—"}</td>
                         <td className={TD}>{METHOD_LABEL[x.method]}</td>

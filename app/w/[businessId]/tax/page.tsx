@@ -16,7 +16,7 @@ export default async function TaxPage({ params, searchParams }: { params: { busi
     return (
       <PageBody>
         {head}
-        <Card><EmptyState title="발행 도움 기능이 꺼져 있습니다." description="선택 기능에서 세금계산서 발행 도움을 켜면 이 화면을 쓸 수 있습니다." action={<Link href={`/w/${ctx.businessId}/settings`} className="text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link>} /></Card>
+        <Card><EmptyState title="발행 도움 기능이 꺼져 있습니다." description={ctx.can("staff.manage") ? "선택 기능에서 세금계산서 발행 도움을 켜면 이 화면을 쓸 수 있습니다." : "사업장 대표(관리자)가 선택 기능에서 세금계산서 발행 도움을 켜면 이 화면을 쓸 수 있습니다. 필요하면 대표에게 요청하세요."} action={ctx.can("staff.manage") ? <Link href={`/w/${ctx.businessId}/settings`} className="inline-flex min-h-[44px] items-center text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link> : undefined} /></Card>
       </PageBody>
     );
   }

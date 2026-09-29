@@ -25,7 +25,7 @@ import { SalonHome } from "@/components/home/SalonHome";
 import { AcademyHome } from "@/components/home/AcademyHome";
 import { BuildingHome } from "@/components/building/BuildingHome";
 import { resolveBuildingContext } from "@/components/building/context";
-import { getTodo } from "@/lib/domain/building";
+import { getTodo, resolveBuildingFeatures } from "@/lib/domain/building";
 import { getAccess } from "./access";
 
 export default async function WorkspaceDashboardPage({
@@ -142,7 +142,7 @@ export default async function WorkspaceDashboardPage({
       const ctx = await resolveBuildingContext(access.businessId, tz, searchParams);
       if (!ctx.ok) return <BuildingHome base={base} tz={tz} ctx={{ buildings: [], building: null, period: "", periodRow: null, qs: "" }} todo={ctx} />;
       const todo = ctx.data.building ? await getTodo(ctx.data.building.id, ctx.data.period) : null;
-      return <BuildingHome base={base} tz={tz} ctx={ctx.data} todo={todo} />;
+      return <BuildingHome base={base} tz={tz} ctx={ctx.data} todo={todo} lateFeeOn={resolveBuildingFeatures(access.settings).late_fee === "on"} />;
     }
     default:
       return null;

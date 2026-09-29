@@ -15,13 +15,12 @@ import { Alert, CardHead, SelectField, TABLE, THEAD, TH, TR, TD } from "@/compon
 import { cancelImport, commitImport } from "@/lib/domain/building-actions";
 import type { ImportBatchRow, ImportBatchStatus, ImportStageResult, MeterKind } from "@/lib/domain/building-types";
 import { useRunAction } from "./client-common";
-import { METER_KIND_LABEL } from "./MeterGrid";
-import { num, won } from "./format";
+import { METER_KIND_LABEL, fmtLocal, num, won } from "./format";
 import { FIELD_LABEL, IMPORT_KIND_LABEL, IMPORT_KIND_NOTE, REQUIRED_FIELDS, assignColumn, colLetter, missingRequired, type AnalyzeResult, type ImportKind, type Mapping, type ValidateResult } from "./import-ui";
 import { SOURCE_FIELDS } from "@/lib/import/types";
 
 export interface ImportsProps {
-  businessId: string; buildingId: string; period: string; canBank: boolean; meterKinds: MeterKind[];
+  businessId: string; buildingId: string; period: string; tz: string; canBank: boolean; meterKinds: MeterKind[];
   chargeTypes: { id: string; name: string; direct: boolean }[]; batches: (ImportBatchRow & { chargeName: string | null })[];
 }
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -272,14 +271,14 @@ function History(p: ImportsProps) {
       {p.batches.length === 0 ? (
         <EmptyState title="가져오기 내역이 없습니다." description="위에서 첫 파일을 올려 보세요." />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className={TABLE}>
             <thead className={THEAD}><tr><th className={TH}>시각</th><th className={TH}>종류</th><th className={TH}>파일</th><th className={TH}>청구월</th><th className={`${TH} text-right`}>행</th><th className={`${TH} text-right`}>오류</th><th className={`${TH} text-right`}>합계</th><th className={TH}>상태</th><th className={TH}><span className="sr-only">작업</span></th></tr></thead>
             <tbody>
               {p.batches.map((b) => (
                 <React.Fragment key={b.id}>
                   <tr className={TR}>
-                    <td className={`${TD} whitespace-nowrap tabular-nums`}>{b.created_at.slice(0, 16).replace("T", " ")}</td>
+                    <td className={`${TD} whitespace-nowrap tabular-nums`}>{fmtLocal(b.created_at, p.tz)}</td>
                     <td className={TD}>{b.source_kind === "units" ? "호실" : IMPORT_KIND_LABEL[b.source_kind].split("(")[0]}{b.chargeName ? ` · ${b.chargeName}` : ""}</td>
                     <td className={TD}>{b.file_name}</td><td className={`${TD} tabular-nums`}>{b.period ?? "-"}</td>
                     <td className={`${TD} text-right tabular-nums`}>{num(b.row_count)}</td><td className={`${TD} text-right tabular-nums`}>{num(b.error_count)}</td>

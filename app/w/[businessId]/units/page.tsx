@@ -63,7 +63,7 @@ export default async function UnitsPage({ params, searchParams }: { params: { bu
                   const due = owed.get(u.id) ?? 0;
                   return (
                     <tr key={u.id} className={TR}>
-                      <td className={`${TD} font-medium`}><Link href={`/w/${ctx.businessId}/units/${u.id}${q}`} className="text-t underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">{unitLabel(u)}</Link></td>
+                      <td className={`${TD} font-medium`}><Link href={`/w/${ctx.businessId}/units/${u.id}${q}`} className="-my-2 inline-flex min-h-[44px] min-w-[44px] items-center text-t underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">{unitLabel(u)}</Link></td>
                       <td className={TD}>{USE_KIND_LABEL[u.use_kind]}</td>
                       <td className={`${TD} text-right tabular-nums`}>{num(u.area_exclusive)}</td>
                       <td className={TD}>{c ? parties.get(c.tenant_party_id) ?? "(확인 필요)" : <Badge kind="info">공실</Badge>}</td>

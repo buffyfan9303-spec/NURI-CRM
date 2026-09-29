@@ -382,7 +382,11 @@ export async function markTaxFileGenerated(businessId: string, targetIds: string
 }
 /** 홈택스에서 발급한 뒤 승인번호 입력 → issued. */
 export async function markTaxIssued(businessId: string, targetId: string, ntsApprovalNo: string, issuedAt?: string): Promise<ActionResult<{ id: string; issue_status: string }>> {
-  return withCap(businessId, "tax.issue", () => rpc(businessId, "bld_mark_tax_issued", { p_id: targetId, p_nts_approval_no: ntsApprovalNo, p_issued_at: issuedAt ?? new Date().toISOString() }));
+  return withCap(businessId, "tax.issue", async () => {
+    const r = await rpc<{ id: string; issue_status: string }>(businessId, "bld_mark_tax_issued", { p_id: targetId, p_nts_approval_no: ntsApprovalNo, p_issued_at: issuedAt ?? new Date().toISOString() });
+    // 공용 check_violation 문구는 검침용이라 승인번호에는 맞지 않는다.
+    return !r.ok && r.hint === "check_violation" ? { ...r, message: "승인번호 형식이 맞지 않습니다. 홈택스에 표시된 번호를 그대로(영문·숫자·하이픈, 20~32자) 입력하세요." } : r;
+  });
 }
 export async function markTaxFailed(businessId: string, targetId: string, reason: string): Promise<ActionResult<{ id: string }>> {
   return withCap(businessId, "tax.issue", () => rpc(businessId, "bld_mark_tax_failed", { p_id: targetId, p_reason: reason }));

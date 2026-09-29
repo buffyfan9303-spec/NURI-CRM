@@ -13,45 +13,46 @@ const GREY = "#5d646b";
 const LINE = "#c9cdd1";
 
 const s = StyleSheet.create({
-  page: { fontFamily: "NotoSansKR", fontSize: 11, color: INK, paddingTop: 36, paddingBottom: 44, paddingHorizontal: 40, lineHeight: 1.45 },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", borderBottomWidth: 2, borderBottomColor: INK, paddingBottom: 10, marginBottom: 12 },
+  page: { fontFamily: "NotoSansKR", fontSize: 11, color: INK, paddingTop: 24, paddingBottom: 36, paddingHorizontal: 40, lineHeight: 1.2 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", borderBottomWidth: 2, borderBottomColor: INK, paddingBottom: 8, marginBottom: 8 },
   kicker: { fontSize: 9.5, color: GREY, marginBottom: 2 },
   h1: { fontSize: 18, fontWeight: "bold" },
   metaRight: { textAlign: "right", fontSize: 9.5 },
   metaLabel: { color: GREY },
-  partyRow: { flexDirection: "row", gap: 24, marginBottom: 12 },
+  partyRow: { flexDirection: "row", gap: 24, marginBottom: 8 },
   colHead: { fontSize: 9.5, color: GREY, marginBottom: 2, fontWeight: "bold" },
   partyName: { fontSize: 14, fontWeight: "bold" },
   partySub: { fontSize: 11 },
-  summaryBox: { borderWidth: 2, borderColor: INK, padding: 12, marginBottom: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  summaryBox: { borderWidth: 2, borderColor: INK, padding: 10, marginBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   dueLabel: { fontSize: 11, color: GREY },
-  dueValue: { fontSize: 26, fontWeight: "bold" },
+  dueValue: { fontSize: 22, fontWeight: "bold" },
   dueDate: { fontSize: 14, fontWeight: "bold" },
   bank: { fontSize: 11, marginTop: 2 },
-  four: { marginBottom: 14, alignItems: "flex-end" },
+  four: { marginBottom: 8, alignItems: "flex-end" },
   fourBox: { width: 300 },
-  fourRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
+  fourRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 1 },
   fourLabel: { fontSize: 11, color: GREY },
   fourValue: { fontSize: 11 },
   fourGrand: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1.5, borderTopColor: INK, marginTop: 3, paddingTop: 4 },
   fourGrandText: { fontSize: 12.5, fontWeight: "bold" },
   sectionHead: { fontSize: 9.5, color: GREY, fontWeight: "bold", marginBottom: 4, marginTop: 4 },
-  table: { borderTopWidth: 1, borderTopColor: INK, marginBottom: 12 },
+  table: { borderTopWidth: 1, borderTopColor: INK, marginBottom: 8 },
   thRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: INK, paddingVertical: 3 },
   th: { fontSize: 9.5, fontWeight: "bold" },
-  tr: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: LINE, paddingVertical: 4 },
+  tr: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: LINE, paddingVertical: 2 },
   td: { fontSize: 11 },
   tdSub: { fontSize: 9.5, color: GREY },
   right: { textAlign: "right" },
   totalRow: { flexDirection: "row", borderTopWidth: 1, borderTopColor: INK, paddingVertical: 5 },
   bold: { fontWeight: "bold" },
   taxRow: { flexDirection: "row", gap: 18, marginBottom: 4 },
-  notTax: { fontSize: 11, fontWeight: "bold", marginBottom: 12 },
-  notice: { borderWidth: 1, borderColor: LINE, padding: 8, fontSize: 10, marginBottom: 12 },
-  chart: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 60, marginBottom: 4 },
+  notTax: { fontSize: 11, fontWeight: "bold", marginBottom: 8 },
+  notice: { borderWidth: 1, borderColor: LINE, padding: 6, fontSize: 10, marginBottom: 8 },
+  chart: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 44, marginBottom: 2 },
   bar: { flex: 1, backgroundColor: INK },
   barCur: { flex: 1, backgroundColor: GREY },
-  chartLabels: { flexDirection: "row", gap: 4, marginBottom: 12 },
+  chartLabels: { flexDirection: "row", gap: 4, marginBottom: 2 },
+  chartValue: { flex: 1, fontSize: 7.5, textAlign: "center" },
   chartLabel: { flex: 1, fontSize: 7.5, color: GREY, textAlign: "center" },
   stub: { borderTopWidth: 1, borderTopColor: INK, borderStyle: "dashed", marginTop: 8, paddingTop: 8 },
   stubRow: { flexDirection: "row", justifyContent: "space-between", fontSize: 10 },
@@ -167,7 +168,7 @@ function StatementPage({ d: raw }: { d: StatementData }) {
         </View>
         {d.lines.map((l, i) => (
           <View key={i} style={s.tr} wrap={false}>
-            <View style={{ flex: 2.6 }}><Text style={s.td}>{l.name}</Text><Text style={s.tdSub}>{l.category}</Text></View>
+            <View style={{ flex: 2.6 }}><Text style={s.td}>{l.name}</Text>{l.category !== l.name && <Text style={s.tdSub}>{l.category}</Text>}</View>
             <Text style={[s.td, s.right, { flex: 1.3 }]}>{won(l.amount)}</Text>
             <Text style={[s.td, s.right, { flex: 1.3 }]}>{l.prev == null ? "—" : won(l.prev)}</Text>
             <Text style={[s.td, s.right, { flex: 1.2 }]}>{diff(l.prev == null ? null : l.amount - l.prev)}</Text>
@@ -228,10 +229,13 @@ function StatementPage({ d: raw }: { d: StatementData }) {
 
       {chart && (
         <View wrap={false}>
-          <Text style={s.sectionHead}>최근 {chart.length}개월 당월 부과액</Text>
+          <Text style={s.sectionHead}>최근 {chart.length}개월 당월 부과액 (단위 만원)</Text>
+          <View style={s.chartLabels}>
+            {chart.map((c, i) => <Text key={i} style={s.chartValue}>{(c.amount / 10000).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}</Text>)}
+          </View>
           <View style={s.chart}>
             {chart.map((c, i) => (
-              <View key={i} style={[i === chart.length - 1 ? s.barCur : s.bar, { height: Math.max(2, (c.amount / max) * 60) }]} />
+              <View key={i} style={[i === chart.length - 1 ? s.barCur : s.bar, { height: Math.max(2, (c.amount / max) * 44) }]} />
             ))}
           </View>
           <View style={s.chartLabels}>

@@ -21,6 +21,7 @@ export default async function ImportsPage({ params, searchParams }: { params: { 
         businessId={ctx.businessId}
         buildingId={ctx.building.id}
         period={ctx.period}
+        tz={ctx.access.timezone}
         canBank={ctx.can("payment.allocate")}
         meterKinds={meterKinds}
         chargeTypes={tRes.data.filter((t) => t.source_kind === "expense" || t.source_kind === "direct").map((t) => ({ id: t.id, name: t.name, direct: t.source_kind === "direct" }))}

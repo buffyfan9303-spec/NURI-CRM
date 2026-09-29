@@ -67,11 +67,14 @@ export function BuildingHome({
   tz,
   ctx,
   todo,
+  lateFeeOn = false,
 }: {
   base: string;
   tz: string;
   ctx: BuildingContext;
   todo: { ok: true; data: TodoSummary } | { ok: false; message: string } | null;
+  /** 연체료 기능 스위치. 꺼져 있으면 연체 문구를 숨긴다. */
+  lateFeeOn?: boolean;
 }) {
   const bar = (
     <BuildingPeriodBar buildings={ctx.buildings} buildingId={ctx.building?.id ?? null} period={ctx.period} tz={tz} status={ctx.periodRow?.status ?? (todo?.ok ? todo.data.status : null)} />
@@ -109,12 +112,12 @@ export function BuildingHome({
   const attention: { text: string; href: string; label: string }[] = [];
   // 0033: 정정은 초안으로 만들어지고 다른 담당자가 승인해야 채권·크레딧이 생긴다.
   if (t.pending_corrections > 0) attention.push({ text: `승인 대기 정정 ${t.pending_corrections}건 — 입력한 사람과 다른 담당자가 승인해야 반영됩니다`, href: `${base}/billing${ctx.qs}`, label: "관리비 계산·확인으로" });
-  if (t.late_terms_unapproved > 0) attention.push({ text: `연체 조건이 승인되지 않은 계약 ${t.late_terms_unapproved}건 — 연체료가 0원으로 계산됩니다`, href: `${base}/units${ctx.qs}`, label: "계약 조건으로" });
+  if (lateFeeOn && t.late_terms_unapproved > 0) attention.push({ text: `연체 조건이 승인되지 않은 계약 ${t.late_terms_unapproved}건 — 연체료가 0원으로 계산됩니다`, href: `${base}/units${ctx.qs}`, label: "계약 조건으로" });
   if (t.tax_unapproved_charge_types > 0) attention.push({ text: `세무(과세/면세·공급자) 승인이 없는 항목 ${t.tax_unapproved_charge_types}개`, href: `${base}/charges${ctx.qs}`, label: "항목 설정으로" });
   if (t.unallocated_payments > 0) attention.push({ text: `호실을 못 찾은 입금 ${t.unallocated_payments}건`, href: `${base}/payments${ctx.qs}`, label: "입금 확인으로" });
   if (t.tax_blocked > 0) attention.push({ text: `세금계산서 발행이 막힌 대상 ${t.tax_blocked}건`, href: `${base}/tax${ctx.qs}`, label: "세금계산서로" });
   // 0033: 연체료는 별도 채권(kind late_fee)이라 건수에 함께 잡힌다. 금액은 revenue.read 없으면 null → 건수만.
-  if (t.unpaid_count > 0) attention.push({ text: `미납 채권 ${t.unpaid_count}건(연체료 채권 포함)${t.unpaid_total != null ? ` · ${fmtMoney(t.unpaid_total)}` : " · 금액은 매출 열람 권한 필요"}`, href: `${base}/receivables${ctx.qs}`, label: "미납·독촉으로" });
+  if (t.unpaid_count > 0) attention.push({ text: `미납 채권 ${t.unpaid_count}건${lateFeeOn ? "(연체료 채권 포함)" : ""}${t.unpaid_total != null ? ` · ${fmtMoney(t.unpaid_total)}` : " · 금액은 매출 열람 권한 필요"}`, href: `${base}/receivables${ctx.qs}`, label: "미납·독촉으로" });
 
   return (
     <PageBody>

@@ -47,7 +47,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
           action={
             <div className="flex flex-wrap gap-2">
               <a className={LINK} href={`/api/building/report-xlsx?${q}&kind=report`} download>엑셀 내려받기</a>
-              {ctx.can("export") && <a className={LINK} href={`/api/building/report-xlsx?${q}&kind=ledger`} download>월 원장 엑셀(7시트)</a>}
+              {ctx.can("export") && <a className={LINK} href={`/api/building/report-xlsx?${q}&kind=ledger`} download>월 원장 엑셀(9시트)</a>}
             </div>
           }
         />

@@ -40,3 +40,4 @@ next-env.d.ts
 
 # Serena MCP 프로젝트 캐시(세션별)
 .serena/
+__pycache__/

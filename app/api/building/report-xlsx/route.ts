@@ -1,6 +1,6 @@
 /**
  * 건물 관리비 보고서 Excel. `?businessId=&b=<건물>&p=<YYYY-MM>&kind=report|ledger`.
- * report = 분류별 집계(revenue.read). ledger = 집계 + 월 원장 7시트(revenue.read + export, 서버 RPC 도 같은 권한을 다시 검사).
+ * report = 분류별 집계(revenue.read). ledger = 집계 + 월 원장 9시트(revenue.read + export, 서버 RPC 도 같은 권한을 다시 검사).
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { checkAccess } from "@/lib/auth/access";

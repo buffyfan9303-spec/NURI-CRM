@@ -5,6 +5,7 @@
  * 저장과 승인은 서버 액션이 권한·작성자≠승인자를 다시 검사한다. 미리보기는 표시용이며 확정 금액은 청구 계산이 낸다.
  */
 import * as React from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -14,13 +15,12 @@ import { Alert, CardHead, SelectField, TABLE, THEAD, TH, TR, TD } from "@/compon
 import { approveChargeTypeTax, createChargeType, updateChargeType } from "@/lib/domain/building-actions";
 import { STD_CATEGORIES, STD_CATEGORY_LABEL, type AllocMethod, type ChargeTypeRow, type MeterKind, type Payer, type SourceKindCharge, type TaxTreatment } from "@/lib/domain/building-types";
 import { useRunAction } from "./client-common";
-import { METER_KIND_LABEL } from "./MeterGrid";
-import { won } from "./format";
+import { METER_KIND_LABEL, won } from "./format";
 import { ALLOC_LABEL, PAYER_LABEL, SOURCE_LABEL, STEPS, TAX_LABEL, allocOptions, draftFrom, draftToInput, emptyDraft, firstBadStep, previewOf, stepError, type ChargeDraft, type PreviewUnit } from "./charge-wizard";
 
 export interface ChargesProps {
   businessId: string; buildingId: string; rows: ChargeTypeRow[]; units: PreviewUnit[];
-  parties: { id: string; name: string }[]; canConfigure: boolean; canApproveTax: boolean;
+  parties: { id: string; name: string }[]; canConfigure: boolean; canApproveTax: boolean; selfApprove: boolean;
 }
 
 function Choice<T extends string>({ legend, value, options, onChange, hint }: { legend: string; value: T | ""; options: { v: T; label: string; hint?: string }[]; onChange: (v: T) => void; hint?: string }) {
@@ -70,7 +70,7 @@ export function ChargesBoard(p: ChargesProps) {
           {rows.length === 0 ? (
             <EmptyState title="등록된 항목이 없습니다." description={p.canConfigure ? "항목 추가 단계에 따라 첫 항목을 만드세요. 청구 계산은 항목이 있어야 시작됩니다." : "관리자가 항목을 등록하면 여기에 나타납니다."} />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
               <table className={TABLE}>
                 <thead className={THEAD}><tr><th className={TH}>항목</th><th className={TH}>분류</th><th className={TH}>출처</th><th className={TH}>나누는 방법</th><th className={TH}>부담</th><th className={TH}>세무</th><th className={TH}>세무 승인</th><th className={TH}><span className="sr-only">작업</span></th></tr></thead>
                 <tbody>{rows.map((r) => <ChargeRow key={r.id} r={r} p={p} onEdit={() => setEditing({ id: r.id })} />)}</tbody>
@@ -84,7 +84,9 @@ export function ChargesBoard(p: ChargesProps) {
 }
 
 function ChargeRow({ r, p, onEdit }: { r: ChargeTypeRow; p: ChargesProps; onEdit: () => void }) {
-  const { run, pending, error } = useRunAction();
+  const { run, pending, error, setError } = useRunAction();
+  const [reason, setReason] = React.useState<string | null>(null);
+  const [hint, setHint] = React.useState<string | undefined>();
   const needsApproval = r.tax_treatment === "taxable" || r.tax_treatment === "exempt";
   const approved = !!r.tax_approved_at;
   return (
@@ -98,11 +100,26 @@ function ChargeRow({ r, p, onEdit }: { r: ChargeTypeRow; p: ChargesProps; onEdit
         <td className={TD}>{TAX_LABEL[r.tax_treatment].split("(")[0]}</td>
         <td className={TD}>{!needsApproval ? <span className="text-t3">해당 없음</span> : approved ? <Badge kind="success">승인됨</Badge> : <Badge kind="warning">승인 대기</Badge>}</td>
         <td className={`${TD} whitespace-nowrap text-right`}>
-          {p.canApproveTax && needsApproval && !approved && r.active && <Button type="button" size="sm" variant="secondary" loading={pending} onClick={() => run(() => approveChargeTypeTax(p.businessId, r.id), { success: "세무를 승인했습니다." })}>세무 승인</Button>}{" "}
+          {p.canApproveTax && needsApproval && !approved && r.active && <Button type="button" size="sm" variant="secondary" loading={pending} onClick={async () => {
+            setHint(undefined);
+            const x = await run(() => approveChargeTypeTax(p.businessId, r.id, reason?.trim() || undefined), { success: "세무를 승인했습니다." });
+            if (!x.ok) { setHint(x.hint); if (x.hint === "reason_required") { setReason((v) => v ?? ""); setError("1인 승인이라 사유가 필요합니다. 아래에 사유를 적고 다시 승인하세요."); } }
+          }}>세무 승인</Button>}{" "}
+          {p.canConfigure && r.active && <Button type="button" size="sm" variant="ghost" loading={pending} onClick={() => { if (window.confirm(`"${r.name}" 항목을 사용 중지할까요? 이미 승인된 청구는 그대로 두고, 다음 계산부터 빠집니다.`)) void run(() => updateChargeType(p.businessId, r.id, { active: false }), { success: "항목을 사용 중지했습니다." }); }}>사용 중지</Button>}{" "}
+          {p.canConfigure && !r.active && <Button type="button" size="sm" variant="ghost" loading={pending} onClick={() => run(() => updateChargeType(p.businessId, r.id, { active: true }), { success: "항목을 다시 사용합니다." })}>다시 사용</Button>}{" "}
           {p.canConfigure && <Button type="button" size="sm" variant="ghost" onClick={onEdit}>수정</Button>}
         </td>
       </tr>
-      {error && <tr><td colSpan={8} className="px-3 pb-3"><Alert kind="error">{error}</Alert></td></tr>}
+      {(error || reason !== null) && (
+        <tr><td colSpan={8} className="px-3 pb-3">
+          {error && <Alert kind="error">{error}
+            {hint === "approver_must_differ" && (
+              <span className="mt-1 block">소규모 사업장은 <Link href={`/w/${p.businessId}/settings`} className="font-medium underline">선택 기능 설정</Link>에서 「혼자 승인 허용(self_approve)」을 켜면 만든 사람이 사유를 남기고 직접 승인할 수 있습니다.</span>
+            )}
+          </Alert>}
+          {reason !== null && <Input label="1인 승인 사유(필수)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} wrapperClassName="mt-2 max-w-[480px]" />}
+        </td></tr>
+      )}
     </>
   );
 }

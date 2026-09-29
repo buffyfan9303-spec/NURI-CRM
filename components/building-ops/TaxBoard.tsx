@@ -36,7 +36,8 @@ export function TaxBoard(p: TaxBoardProps) {
         items={[
           { label: "발행 대상", value: `${p.lines.length}건` },
           { label: "차단", value: `${t.blocked}건`, tone: t.blocked > 0 ? "danger" : "default", hint: t.blocked > 0 ? "사유를 해결해야 파일에 들어갑니다." : undefined },
-          { label: "파일 준비 가능", value: `${t.ready + t.file_generated}건` },
+          { label: "파일 만들기 전", value: `${t.ready}건`, hint: "파일을 아직 내려받지 않은 대상" },
+          { label: "파일 생성됨(발행 확인 대기)", value: `${t.file_generated}건`, hint: "홈택스에서 발급한 뒤 승인번호를 기록하세요." },
           { label: "발행 완료(승인번호 기록)", value: `${t.issued}건`, tone: t.issued > 0 ? "success" : "default" },
         ]}
       />
@@ -201,7 +202,7 @@ function ApprovalRow({ businessId, l }: { businessId: string; l: TaxLine }) {
       {!failing ? (
         <div className="flex flex-wrap items-end gap-2">
           <Input label="국세청 승인번호" wrapperClassName="!mb-0 min-w-[280px] flex-1" value={no} onChange={(e) => setNo(e.target.value)} className="tabular-nums" hint={note ?? undefined} />
-          <Button type="button" loading={pending} disabled={!no.trim()} onClick={() => run(() => markTaxIssued(businessId, l.id, no.trim()), { success: "승인번호를 기록했습니다. 발행 완료로 표시됩니다." })}>승인번호 기록</Button>
+          <Button type="button" loading={pending} disabled={!/^[0-9A-Za-z-]{20,32}$/.test(no.trim())} onClick={() => run(() => markTaxIssued(businessId, l.id, no.trim()), { success: "승인번호를 기록했습니다. 발행 완료로 표시됩니다." })}>승인번호 기록</Button>
           <Button type="button" variant="ghost" onClick={() => setFailing(true)}>발급 실패로 기록</Button>
         </div>
       ) : (

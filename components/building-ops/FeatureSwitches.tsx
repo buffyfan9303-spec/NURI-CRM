@@ -54,7 +54,7 @@ function Row({ businessId, k, status }: { businessId: string; k: BuildingFeature
           aria-checked={on}
           aria-busy={pending}
           disabled={disabled}
-          onClick={() => run(() => setBuildingFeature(businessId, k, !on), { success: `${info.label}을 ${on ? "껐습니다" : "켰습니다"}.` })}
+          onClick={() => run(() => setBuildingFeature(businessId, k, !on), { success: `${info.label}: ${on ? "껐습니다" : "켰습니다"}.` })}
           className="group -m-[10px] inline-flex shrink-0 items-center rounded-full p-[10px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className={cn("relative inline-flex h-[24px] w-[40px] items-center rounded-full border transition-colors duration-2 ease-out", on ? "border-[var(--accent-strong)] bg-[var(--accent-strong)]" : "border-[var(--bd-strong)] bg-sf3")} aria-hidden>
