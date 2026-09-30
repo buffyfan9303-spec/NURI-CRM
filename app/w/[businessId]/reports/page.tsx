@@ -160,7 +160,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[3fr_2fr] print:grid-cols-[3fr_2fr]">
           <Card className="p-4 sm:p-5">
-            <CardHead title="② 항목별 지난달 비교" description={hasPrev ? `${periodLabel(ctx.period)}와 ${periodLabel(prevP)}를 항목마다 비교합니다.` : `${periodLabel(prevP)}는 확정된 금액이 없어 지난달 칸이 0원입니다.`} />
+            <CardHead title="② 항목별 지난달 비교" description={hasPrev ? `${periodLabel(ctx.period)}과 ${periodLabel(prevP)}을 항목마다 비교합니다.` : `${periodLabel(prevP)}은 확정된 금액이 없어 지난달 칸이 0원입니다.`} />
             <div className="bld-dense overflow-x-auto">
               <table className={cn(TABLE, "text-[length:var(--fs-meta)]")}>
                 <thead className={THEAD}><tr><th className={TH}>항목</th><th className={NUMH}>이번 달</th><th className={NUMH}>지난달</th><th className={NUMH}>차이(차이율)</th></tr></thead>

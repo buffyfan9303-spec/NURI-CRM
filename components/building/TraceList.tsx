@@ -8,7 +8,7 @@ import { STD_CATEGORY_LABEL } from "@/lib/domain/building-types";
 import { cn } from "@/lib/utils/cn";
 import { FourNumbers, Money, fmtMoney } from "./Money";
 
-const TAX_LABEL: Record<string, string> = { taxable: "부가세 있음", exempt: "부가세 없음", non_taxable: "부가세 대상 아님", pass_through: "대납(실비)" };
+const TAX_LABEL: Record<string, string> = { taxable: "과세", exempt: "면세", non_taxable: "과세 대상 아님", pass_through: "대납(실비)" };
 const METHOD_LABEL: Record<string, string> = { fixed: "정액", area: "면적", share: "지분", weight: "가중치", equal: "균등", meter_usage: "계량기 사용량", direct: "직접 입력" };
 
 const num = (v: unknown) => (typeof v === "number" ? v.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : v == null ? "" : String(v));

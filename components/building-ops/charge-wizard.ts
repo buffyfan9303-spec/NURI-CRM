@@ -21,7 +21,7 @@ export const STEPS = ["이름·분류", "금액 출처", "부담 주체", "배�
 export const SOURCE_LABEL: Record<SourceKindCharge, string> = { expense: "매달 실제 지출 비용(매달 적음)", rate: "정해진 단가 또는 정액(계약·고정 요금)", direct: "호실마다 직접 입력" };
 export const ALLOC_LABEL: Record<AllocMethod, string> = { fixed: "호실마다 같은 금액(정액)", area: "전용면적만큼", share: "지분만큼", weight: "가중치만큼", equal: "호실 수로 균등하게", meter_usage: "계량기 사용량만큼", direct: "호실마다 직접 입력" };
 export const PAYER_LABEL: Record<Payer, string> = { tenant: "입주자 부담", owner: "소유자 부담", association: "관리단 부담(호실에 배분하지 않음)" };
-export const TAX_LABEL: Record<TaxTreatment, string> = { taxable: "부가세 있음(세금계산서)", exempt: "부가세 없음(계산서)", non_taxable: "부가세 대상 아님", pass_through: "대납(실비, 세금 없음)" };
+export const TAX_LABEL: Record<TaxTreatment, string> = { taxable: "과세(세금계산서)", exempt: "면세(계산서)", non_taxable: "과세 대상 아님", pass_through: "대납(실비, 세금 없음)" };
 
 /** 원천별로 고를 수 있는 배분. 직접 입력 원천은 배분도 직접뿐이다(DB 제약). */
 export function allocOptions(source: SourceKindCharge | ""): AllocMethod[] {

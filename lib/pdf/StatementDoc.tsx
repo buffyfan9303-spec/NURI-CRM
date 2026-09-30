@@ -350,9 +350,9 @@ function StatementPage({ d: raw }: { d: StatementData }) {
         </View>
       )}
 
-      {d.commercial && (
+      {d.commercial && !(d.law14 && !d.law14.amountsHidden) && (
         <View style={s.footer} fixed>
-          <Text>{d.law14 && !d.law14.amountsHidden ? "관리비 14개 항목별 금액은 본문 표와 같습니다" : "관리비 14개 항목별 금액은 요청하시면 제공합니다"}(상가건물 임대차보호법 시행령 제8조).</Text>
+          <Text>관리비 14개 항목별 금액은 요청하시면 제공합니다(상가건물 임대차보호법 시행령 제8조).</Text>
         </View>
       )}
     </Page>

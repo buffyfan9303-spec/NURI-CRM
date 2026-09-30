@@ -24,5 +24,5 @@ export const PRIMARY_ACTION: Record<Industry, PrimaryAction> = {
   unmanned: { label: "재고 등록", navKey: "stock" },
   salon: { label: "새 예약", navKey: "calendar" },
   academy: { label: "수강 등록", navKey: "classes" },
-  building: { label: "검침 입력", navKey: "meters" },
+  building: { label: "검침값 입력", navKey: "meters" },
 };

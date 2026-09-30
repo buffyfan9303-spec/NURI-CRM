@@ -118,7 +118,7 @@ export const BUILDING_ISSUE_TEXT: Record<string, string> = {
   association_payer: "관리단이 부담하는 항목이라 호실에는 나누지 않습니다.",
   missing_reading: "검침값이 없습니다.",
   no_meter: "계량기가 없어 0으로 계산합니다.",
-  no_expense: "이 달 비용이 입력되지 않았습니다.",
+  no_expense: "이번 달 비용이 입력되지 않았습니다.",
   zero_denominator: "나누는 기준(면적·지분·사용량)의 합이 0입니다.",
   late_terms_unapproved: "연체료 조건이 확정되지 않아 연체료를 0원으로 둡니다(확인 대기).",
   zero_bill: "이번 달 관리비가 0원입니다.",

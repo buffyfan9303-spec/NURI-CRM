@@ -132,7 +132,7 @@ export function BillingBoard({
       {locked && (
         <Alert kind="warning" className="mb-3">
           <Lock size={14} className="mr-1 inline-block align-[-2px]" aria-hidden />
-          {periodLabel(ctx.period)} 금액은 확정되어 잠겼습니다. 정정하려면 해당 줄의 &quot;금액 정정&quot;으로 달라진 만큼만 다시 청구하세요(정정 후 다시 확정).
+          {periodLabel(ctx.period)} 금액은 확정되어 잠겼습니다. {canApprove ? <>정정하려면 해당 줄의 &quot;금액 정정&quot;으로 달라진 만큼만 다시 청구하세요(정정 후 다시 확정).</> : <>금액 정정은 확정 권한이 있는 담당자가 합니다. 정정이 필요하면 그 담당자에게 요청하세요.</>}
         </Alert>
       )}
     </>
@@ -165,7 +165,7 @@ export function BillingBoard({
         </p>
         <div className="flex flex-wrap gap-2">
           {!approved && canWrite && status === "draft" && (
-            <Button size="lg" variant="secondary" loading={busy === "status"} disabled={busy !== null} onClick={() => transition("review", "확인 부탁")}>다른 담당자에게 확인 부탁</Button>
+            <Button size="lg" variant="secondary" loading={busy === "status"} disabled={busy !== null} onClick={() => transition("review", "확인 요청")}>다른 담당자에게 확인 요청</Button>
           )}
           {!approved && (
             <Button size="lg" disabled={!!approveDisabledReason || busy !== null} aria-describedby="approve-hint" onClick={() => setApproveOpen(true)}>

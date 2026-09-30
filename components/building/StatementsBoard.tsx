@@ -276,9 +276,8 @@ export function StatementsBoard({
         <CardHead title="③ 확인하고 보내기" />
         <p className="break-keep text-[length:var(--fs-card)] leading-relaxed text-t">
           <strong className="tabular-nums">{picked.length}호실</strong>, 합계 <strong className="tabular-nums">{fmtMoney(pickedTotal)}</strong>
-          {picked.length > 0 && <> — {Object.entries(counts).map(([c, n]) => `${CHANNEL_LABEL[c]} ${n}`).join(" · ")}</>}
-          {" "}을 보냅니다.
-          {(counts.sms || counts.copy || counts.email) ? <span className="block text-[length:var(--fs-body)] text-t2">문자·이메일·복사로 고른 {(counts.sms ?? 0) + (counts.copy ?? 0) + (counts.email ?? 0)}건은 표의 줄마다 있는 버튼으로 한 건씩 보냅니다.</span> : null}
+          {picked.length > 0 && <> — {Object.entries(counts).map(([c, n]) => `${CHANNEL_LABEL[c]} ${n}건`).join(" · ")}을 발송합니다.</>}
+          {(counts.sms || counts.copy || counts.email) ? <span className="block text-[length:var(--fs-body)] text-t2">{(["sms", "email", "copy"] as const).filter((c) => counts[c]).map((c) => CHANNEL_LABEL[c]).join("·")}로 고른 {(counts.sms ?? 0) + (counts.copy ?? 0) + (counts.email ?? 0)}건은 자동으로 발송되지 않습니다. 표의 각 줄에 있는 버튼을 눌러 한 건씩 발송하세요.</span> : null}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button size="lg" disabled={!approved || !canWrite || picked.length === 0 || busy} loading={busy} onClick={() => sendAll()}>

@@ -27,24 +27,24 @@ export function buildSteps(t: TodoSummary, base: string, qs: string): Step[] {
   const sendDone = approved && t.bills > 0 && t.delivered >= t.bills;
   const raw: Omit<Step, "state">[] = [
     {
-      title: "검침값 적기",
-      detail: t.meters_total === 0 ? "계량기가 없습니다(호실 상세에서 추가)" : metersDone ? `완료 ${t.meters_read}/${t.meters_total}대` : `${t.meters_total - t.meters_read}대 남음 · ${t.meters_read}/${t.meters_total}`,
-      cta: { label: "검침값 적기", href: `${base}/meters${qs}` }, href: `${base}/meters${qs}`,
+      title: "검침값 입력",
+      detail: t.meters_total === 0 ? "계량기가 없습니다(호실 상세에서 추가)" : metersDone ? `완료 ${t.meters_read}/${t.meters_total}개` : `${t.meters_total - t.meters_read}개 남음 · ${t.meters_read}/${t.meters_total}`,
+      cta: { label: "검침값 입력", href: `${base}/meters${qs}` }, href: `${base}/meters${qs}`,
     },
     {
-      title: "비용 적기",
+      title: "비용 입력",
       detail: t.expense_charge_types === 0 ? "매달 비용을 적는 항목이 없습니다" : expensesDone ? `완료 ${t.expense_charge_types_filled}건` : `${t.expense_charge_types - t.expense_charge_types_filled}개 항목의 비용을 아직 입력하지 않았습니다`,
-      cta: { label: "비용 적기", href: `${base}/expenses${qs}` }, href: `${base}/expenses${qs}`,
+      cta: { label: "비용 입력", href: `${base}/expenses${qs}` }, href: `${base}/expenses${qs}`,
     },
     {
-      title: "관리비 계산하기",
+      title: "관리비 계산",
       detail: !t.run ? "검침값·비용을 다 적으면 계산할 수 있습니다" : t.run.blocks > 0 ? `수정할 사항 ${t.run.blocks}건 · 확인할 것 ${t.run.warnings}건 — 수정한 뒤 다시 계산` : `완료 · ${t.bills}호실${t.run.warnings > 0 ? ` · 확인할 것 ${t.run.warnings}건` : ""}`,
-      cta: { label: t.run && t.run.blocks > 0 ? "수정하고 다시 계산하기" : "관리비 계산하기", href: `${base}/billing${qs}` }, href: `${base}/billing${qs}`,
+      cta: { label: t.run && t.run.blocks > 0 ? "수정 후 다시 계산" : "관리비 계산", href: `${base}/billing${qs}` }, href: `${base}/billing${qs}`,
     },
     {
-      title: "이번 달 금액 확정하기",
+      title: "이번 달 금액 확정",
       detail: approved ? `${periodLabel(t.period)} 확정됨${t.pending_corrections > 0 ? ` · 정정 금액 ${t.pending_corrections}건 승인 대기` : ""}` : calcDone ? "표에서 금액을 보고 확정하세요(계산한 사람이 아닌 다른 담당자)" : "계산을 마친 뒤 할 수 있음",
-      cta: { label: "이번 달 금액 확정하기", href: `${base}/billing${qs}` }, href: `${base}/billing${qs}`,
+      cta: { label: "이번 달 금액 확정", href: `${base}/billing${qs}` }, href: `${base}/billing${qs}`,
     },
     {
       title: "명세서 발송",

@@ -39,7 +39,7 @@ export function law14Table(lines: { std_category: StdCategory; amount: number }[
   return { rows, outside, monthlyFee, amountsHidden: monthlyFee > 0 && monthlyFee < LAW14_MIN_TOTAL };
 }
 
-export const TAX_LABEL: Record<TaxTreatment, string> = { taxable: "부가세 있음", exempt: "부가세 없음", non_taxable: "부가세 대상 아님", pass_through: "대납(실비)" };
+export const TAX_LABEL: Record<TaxTreatment, string> = { taxable: "과세", exempt: "면세", non_taxable: "과세 대상 아님", pass_through: "대납(실비)" };
 export const USE_LABEL: Record<UnitUseKind, string> = { retail: "상가", office: "사무실", residential: "주거", parking: "주차", common: "공용", other: "기타" };
 
 /** 관리주체(세금계산서 보내는 곳) 머리 줄. 값이 없는 조각은 줄에서 뺀다. 전부 없으면 빈 배열. */
