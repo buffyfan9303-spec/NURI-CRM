@@ -8,7 +8,7 @@ import { AuthInput } from "@/components/auth/AuthInput";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { IndustryPicker, type IndustryOption } from "@/components/auth/IndustryPicker";
 import { checkBusinessNumber, createBusiness, signOut } from "@/lib/auth/actions";
-import { INDUSTRIES, INDUSTRY_DEFS } from "@/lib/industry/config";
+import { INDUSTRIES, INDUSTRY_DEFS, isIndustryReady } from "@/lib/industry/config";
 import { formatBizRegNo, isValidBizRegNo, normalizeBizRegNo } from "@/lib/external/bizno";
 import type { NtsStatus } from "@/lib/external/nts";
 
@@ -22,10 +22,13 @@ function ntsBadge(nts: NtsStatus | null | undefined): { text: string; warn: bool
   return { text: `${nts.status}${tax}${nts.endDate ? ` (${nts.endDate})` : ""}`, warn: nts.statusCode !== "01" };
 }
 
-const INDUSTRY_OPTIONS: IndustryOption[] = INDUSTRIES.map((key) => {
-  const def = INDUSTRY_DEFS[key];
-  return { key: def.key, name: def.name, desc: def.desc, icon: INDUSTRY_ICON[key] };
-});
+// 운영 중 업종을 앞에, 준비 중 업종은 뒤에 고를 수 없게 둔다.
+const INDUSTRY_OPTIONS: IndustryOption[] = [...INDUSTRIES]
+  .sort((a, b) => Number(!isIndustryReady(a)) - Number(!isIndustryReady(b)))
+  .map((key) => {
+    const def = INDUSTRY_DEFS[key];
+    return { key: def.key, name: def.name, desc: def.desc, icon: INDUSTRY_ICON[key], soon: !isIndustryReady(key) };
+  });
 
 /**
  * 방어적 언랩 — lib/auth/actions.ts의 createBusiness() 반환 타입 버그는 메인이 근본 수정했다.

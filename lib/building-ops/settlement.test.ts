@@ -1,6 +1,8 @@
 /** 월별 정산 보고서 순수 계산(components/building/settlement.ts) 자가검사. */
 import { describe, expect, it } from "vitest";
+import ExcelJS from "exceljs";
 import { buildSettlement } from "@/components/building/settlement";
+import { buildReportWorkbook } from "@/components/building-ops/report-xlsx";
 import type { BillRow, ReceivableRow } from "@/lib/domain/building-types";
 
 const bill = (unit: string, lines: [string, number][], x: Partial<BillRow> = {}): BillRow => ({
@@ -38,5 +40,19 @@ describe("buildSettlement", () => {
     expect(s.compare.find((c) => c.name === "승강기")).toMatchObject({ cur: 0, prev: 200, diff: -200 });
     expect(s.compare.find((c) => c.name === "청소")!.pct).toBeNull();
     expect(s.compareTotal.cur).toBe(3400);
+  });
+  it("엑셀 첫 시트 '월별 정산'이 화면과 같은 합계를 숫자 셀로 담는다", async () => {
+    const report = { period: "2026-09", prev_period: "2026-08", total: 0, prev_total: 0, categories: [] };
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load((await buildReportWorkbook({ buildingName: "누리타워", period: "2026-09", report, settlement: s })) as unknown as ArrayBuffer);
+    expect(wb.worksheets.map((w) => w.name)).toEqual(["월별 정산", "분류별 집계"]);
+    const ws = wb.getWorksheet("월별 정산")!;
+    const head = ws.getRow(3).values as unknown[];
+    const total = ws.getRow(6);
+    expect(total.getCell(1).value).toBe("합계 2호실");
+    expect(total.getCell(head.indexOf("전기")).value).toBe(2900);
+    expect(total.getCell(head.indexOf("이번 달 관리비")).value).toBe(3400);
+    expect(total.getCell(head.indexOf("남은 돈")).value).toBe(800);
+    expect(head).not.toContain("연체료");
   });
 });

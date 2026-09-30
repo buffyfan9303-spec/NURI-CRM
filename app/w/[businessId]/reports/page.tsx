@@ -2,6 +2,7 @@
  * 월별 정산 보고서(building). 원본 엑셀 관리집계표·관리비비교표 구성을 한 화면에:
  * ① 이번 달 요약 ② 호실별 정산표(항목 열 + 합계 행) ③ 항목별 지난달 비교 ④ 받을 돈 나이.
  * 확정된 청구만 센다. revenue.read 필요. A4 가로 한 장 인쇄(globals.css .bld-report).
+ * ④ 건물 전체 12개월 흐름·전년 같은 달 비교(TrendCard, 화면 전용). 다른 보기는 ?view=owners|budget|repair|law14(report-views·Law14View).
  * 구조 근거: docs/design-references/2026-09-30-cam-report-from-excel.md
  */
 import { Card } from "@/components/ui/Card";
@@ -10,35 +11,19 @@ import { PageBody } from "@/components/ui/PageHeader";
 import { CardHead, SummaryStrip, PrintButton } from "@/components/rental/listkit";
 import { TABLE, THEAD, TH, TD } from "@/components/building/table-kit";
 import { BuildingHeader, ReadFail, buildingGate, type SearchParams } from "@/components/building-ops/gate";
-import { num, unitLabel, won } from "@/components/building-ops/format";
+import { num, won } from "@/components/building-ops/format";
 import { addMonths, periodLabel } from "@/components/building/period";
-import { buildSettlement } from "@/components/building/settlement";
-import { getAging, getLatestRun, getPeriod, listBills, listCorrectionRuns, listParties, listReceivables, listUnits } from "@/lib/domain/building";
-import type { AgingReport, BillRow } from "@/lib/domain/building-types";
+import { loadSettlement } from "@/components/building/settlement-load";
+import { BudgetView, OwnersView, RepairView, ReportTabs, parseView } from "@/components/building-ops/report-views";
+import { Law14View } from "@/components/building-ops/Law14View";
+import { TrendCard } from "@/components/building-ops/TrendCard";
+import { getAging } from "@/lib/domain/building";
+import type { AgingReport } from "@/lib/domain/building-types";
 import { cn } from "@/lib/utils/cn";
 
 const LINK = "inline-flex min-h-[44px] items-center rounded-[var(--r-md)] border border-[var(--bd-strong)] bg-sf px-4 text-[length:var(--fs-body)] font-medium text-t shadow-card hover:bg-sf2";
 const NUM = `${TD} text-right tabular-nums whitespace-nowrap`;
 const NUMH = `${TH} text-right`;
-
-type ReadR<T> = { ok: true; data: T } | { ok: false; message: string };
-
-/** 그 달 확정본 청구(정기 + 확정된 고침). 확정 전이면 null. */
-async function approvedBills(buildingId: string, period: string): Promise<ReadR<BillRow[] | null>> {
-  const p = await getPeriod(buildingId, period);
-  if (!p.ok) return p;
-  if (!p.data) return { ok: true, data: null };
-  const r = await getLatestRun(p.data.id);
-  if (!r.ok) return r;
-  if (!r.data || r.data.status !== "approved") return { ok: true, data: null };
-  const [b, cr] = await Promise.all([listBills(r.data.id), listCorrectionRuns(p.data.id)]);
-  if (!b.ok) return b;
-  if (!cr.ok) return cr;
-  const cb = await Promise.all(cr.data.filter((x) => x.status === "approved").map((x) => listBills(x.id)));
-  const bad = cb.find((x) => !x.ok);
-  if (bad && !bad.ok) return bad;
-  return { ok: true, data: [...b.data.filter((x) => x.bill_kind === "regular"), ...cb.flatMap((x) => (x.ok ? x.data : []))] };
-}
 
 function Diff({ n, pct }: { n: number; pct?: number | null }) {
   if (n === 0) return <span className="text-t3">같음</span>;
@@ -62,6 +47,11 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
   const g = await buildingGate(params.businessId, "revenue.read", searchParams, "월별 정산 보고서");
   if (!g.ctx) return g.node;
   const { ctx } = g;
+  const view = parseView(searchParams.view);
+  if (view === "owners") return <OwnersView ctx={ctx} />;
+  if (view === "budget") return <BudgetView ctx={ctx} />;
+  if (view === "repair") return <RepairView ctx={ctx} />;
+  if (view === "law14") return <Law14View ctx={ctx} unitId={typeof searchParams.unit === "string" ? searchParams.unit : undefined} />;
   const prevP = addMonths(ctx.period, -1);
   const q = `businessId=${ctx.businessId}&b=${ctx.building.id}&p=${ctx.period}`;
   const actions = (ready: boolean) => (
@@ -71,18 +61,14 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
       {ctx.can("export") && <a className={LINK} href={`/api/building/report-xlsx?${q}&kind=ledger`} download>한 달 전체 기록 엑셀</a>}
     </div>
   );
-  const header = (ready: boolean) => <BuildingHeader ctx={ctx} title="월별 정산 보고서" description="금액을 확정한 달의 호실별 관리비와 받은 돈·못 받은 돈을 원래 쓰던 관리집계표처럼 한 장에 봅니다." actions={actions(ready)} />;
+  const header = (ready: boolean) => <><BuildingHeader ctx={ctx} title="월별 정산 보고서" description="금액을 확정한 달의 호실별 관리비와 받은 돈·못 받은 돈을 원래 쓰던 관리집계표처럼 한 장에 봅니다." actions={actions(ready)} /><ReportTabs ctx={ctx} view="settle" /></>;
 
-  const [cur, prev, uRes, pRes, rRes, aRes] = await Promise.all([
-    approvedBills(ctx.building.id, ctx.period), approvedBills(ctx.building.id, prevP),
-    listUnits(ctx.building.id, { includeInactive: true }), listParties(ctx.businessId),
-    listReceivables(ctx.building.id, { openOnly: false }), getAging(ctx.building.id),
-  ]);
-  const fail = [cur, prev, uRes, pRes, rRes, aRes].find((x) => !x.ok);
+  const [sRes, aRes] = await Promise.all([loadSettlement(ctx.businessId, ctx.building.id, ctx.period), getAging(ctx.building.id)]);
+  const fail = [sRes, aRes].find((x) => !x.ok);
   if (fail && !fail.ok) return <PageBody>{header(false)}<ReadFail title="보고서를 불러오지 못했습니다." message={fail.message} /></PageBody>;
-  if (!cur.ok || !prev.ok || !uRes.ok || !pRes.ok || !rRes.ok || !aRes.ok) return null;
+  if (!sRes.ok || !aRes.ok) return null;
 
-  if (!cur.data) {
+  if (!sRes.data) {
     return (
       <PageBody wide>
         {header(false)}
@@ -93,12 +79,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
     );
   }
 
-  const units = new Map(uRes.data.map((u) => [u.id, unitLabel(u)]));
-  const parties = new Map(pRes.data.map((p) => [p.id, p.name]));
-  const s = buildSettlement({
-    period: ctx.period, bills: cur.data, prevBills: prev.data ?? [], receivables: rRes.data,
-    unitLabel: (id) => units.get(id) ?? "(호실)", partyName: (id) => (id ? parties.get(id) ?? "—" : "내는 분 없음"),
-  });
+  const { s, hasPrev } = sRes.data;
   const t = s.total;
   const hasLate = t.lateFee !== 0;
   const prevTotal = s.compareTotal.prev;
@@ -116,7 +97,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
             { label: "이번 달 관리비 합계", value: won(t.current) },
             { label: "받은 돈", value: won(t.paid), tone: "success" },
             { label: "못 받은 돈(오늘 기준)", value: won(t.left), tone: t.left > 0 ? "danger" : "muted" },
-            { label: prev.data ? `지난달(${periodLabel(prevP)})보다` : "지난달보다", value: prev.data ? <Diff n={s.compareTotal.diff} pct={s.compareTotal.pct} /> : <span className="text-t3">지난달 확정 없음</span> },
+            { label: hasPrev ? `지난달(${periodLabel(prevP)})보다` : "지난달보다", value: hasPrev ? <Diff n={s.compareTotal.diff} pct={s.compareTotal.pct} /> : <span className="text-t3">지난달 확정 없음</span> },
             { label: "호실 수", value: `${s.rows.length}호실` },
           ]}
         />
@@ -179,7 +160,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[3fr_2fr] print:grid-cols-[3fr_2fr]">
           <Card className="p-4 sm:p-5">
-            <CardHead title="② 항목별 지난달 비교" description={prev.data ? `${periodLabel(ctx.period)}와 ${periodLabel(prevP)}를 항목마다 비교합니다.` : `${periodLabel(prevP)}는 확정된 금액이 없어 지난달 칸이 0원입니다.`} />
+            <CardHead title="② 항목별 지난달 비교" description={hasPrev ? `${periodLabel(ctx.period)}와 ${periodLabel(prevP)}를 항목마다 비교합니다.` : `${periodLabel(prevP)}는 확정된 금액이 없어 지난달 칸이 0원입니다.`} />
             <div className="bld-dense overflow-x-auto">
               <table className={cn(TABLE, "text-[length:var(--fs-meta)]")}>
                 <thead className={THEAD}><tr><th className={TH}>항목</th><th className={NUMH}>이번 달</th><th className={NUMH}>지난달</th><th className={NUMH}>차이(차이율)</th></tr></thead>
@@ -227,6 +208,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
           </Card>
         </div>
       </div>
+      <TrendCard buildingId={ctx.building.id} period={ctx.period} />
     </PageBody>
   );
 }

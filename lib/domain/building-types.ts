@@ -154,9 +154,24 @@ export interface DunningLast { receivable_id: string; stage: 1 | 2 | 3; channel:
 export type WorkOrderStatus = "open" | "in_progress" | "done" | "cancelled";
 /** cost 는 revenue.read 없으면 null(뷰). 쓰기도 revenue.read(0032 트리거). */
 export interface WorkOrderRow { id: string; business_id: string; building_id: string; unit_id: string | null; title: string; status: WorkOrderStatus; assignee: string | null; cost: number | null; expense_id: string | null; done_at: string | null; memo: string | null; created_by: string | null; created_at: string; }
+/** 연 예산(분류별). amount 는 revenue.read 없으면 null(뷰 v_bld_budgets). */
+export interface BudgetRow { id: string; business_id: string; building_id: string; year: number; std_category: string; amount: number | null; }
+/** 장기수선충당금 장부. contribution·interest·spend 는 양수로 적고, adjust 만 부호가 있다. amount 는 revenue.read 없으면 null(뷰 v_bld_repair_fund). */
+export type RepairFundKind = "contribution" | "spend" | "interest" | "adjust";
+export interface RepairFundRow { id: string; business_id: string; building_id: string; period: string; kind: RepairFundKind; amount: number | null; memo: string | null; created_by: string | null; created_at: string; }
 export interface UnitsBulkResult { dry_run: boolean; valid: number; errors: { row: number; code: string; message: string }[]; created: number; }
 export interface ImportStageResult { batch_id: string; rows: number; errors: number; warnings: number; unmatched: number; }
 /** 정정 입력 줄(차액). 음수 허용. */
 export interface CorrectionLine { charge_type_id?: string; std_category: StdCategory; name: string; supply: number; vat: number; exempt: number; }
 /** 호실 일괄 등록 입력 행 */
 export interface UnitBulkInput { dong?: string; floor?: string; unit_no: string; use_kind?: UnitUseKind; area_exclusive?: number; area_common?: number; share?: number; weight?: number; valid_from?: string; }
+/** 호실별 따로 넣는 금액(v_bld_direct_charges). amount 는 revenue.read 없으면 null. 음수 = 감면. */
+export interface DirectChargeRow { id: string; business_id: string; building_id: string; period: string; charge_type_id: string; unit_id: string; amount: number | null; reason: string | null; created_at: string; }
+export type DisputeKind = "dispute" | "correction_request" | "info_request" | "note";
+export type DisputeStatus = "open" | "resolved" | "rejected";
+/**
+ * 입주자 문의·이의(v_bld_disputes, 0035) + 화면용으로 붙인 청구서의 호실·달.
+ * source='tenant' = 입주자가 QR 조회 화면에서 직접 낸 것(처리 내용이 입주자 화면에 그대로 보인다, 삭제 불가).
+ * contact 는 pii.read 없으면 null(뷰가 가린다). charge_type_id = 입주자가 고른 항목(선택).
+ */
+export interface DisputeRow { id: string; bill_id: string; kind: DisputeKind; status: DisputeStatus; note: string; resolution: string | null; resolved_at: string | null; created_at: string; unit_id: string | null; period: string | null; source: "staff" | "tenant"; charge_type_id: string | null; contact: string | null; }

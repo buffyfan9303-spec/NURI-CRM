@@ -11,6 +11,12 @@
 
 export const INDUSTRIES = ["factory", "rental", "unmanned", "salon", "academy", "building"] as const;
 export type Industry = (typeof INDUSTRIES)[number];
+/**
+ * 실제 운영 중인 업종(2026-09-30 사용자 지시: 공장(MTM)·건물관리 외에는 전부 준비 중으로 닫는다).
+ * 준비 중 업종은 새 사업장을 만들 수 없고, 기존 사업장 작업공간도 "준비 중" 화면만 보인다. 다시 열려면 여기에 넣는다.
+ */
+export const READY_INDUSTRIES: readonly Industry[] = ["factory", "building"];
+export const isIndustryReady = (v: string): boolean => (READY_INDUSTRIES as readonly string[]).includes(v);
 
 /** 사업장 설정으로 덮어쓸 수 있는 기능 스위치. 여기 값은 업종 기본값이다. */
 export interface IndustryFeatures {
@@ -235,8 +241,8 @@ export const INDUSTRY_DEFS: Record<Industry, IndustryDef> = {
   // 켜질 때만 보인다(buildingNav()). 세금계산서 일괄발행은 항상 보이는 메뉴다(꺼져 있으면 화면에서 켜는 버튼이 나온다). 돈 확정·발행은 신규 cap(billing.configure/approve, payment.allocate, tax.issue — role_template 데이터).
   building: {
     key: "building",
-    name: "건물 관리비",
-    desc: "호실·검침·비용 → 관리비 계산·승인 → 명세서·입금·미납 → 홈택스 세금계산서 파일",
+    name: "건물관리",
+    desc: "상가·오피스 관리비 — 호실·검침·비용 → 계산·확정 → 명세서·입금·미납 → 홈택스 세금계산서 파일",
     icon: "IconBuilding",
     features: base({
       attendance: false,
@@ -252,6 +258,7 @@ export const INDUSTRY_DEFS: Record<Industry, IndustryDef> = {
       { key: "statements", path: "statements", label: "명세서 보내기", cap: "revenue.read" },
       { key: "payments", path: "payments", label: "받은 돈 확인", cap: "revenue.read" },
       { key: "receivables", path: "receivables", label: "못 받은 돈", cap: "revenue.read" },
+      { key: "disputes", path: "disputes", label: "입주자 문의·이의", cap: "view" },
       { key: "tax", path: "tax", label: "세금계산서 일괄발행", cap: "revenue.read" }, // 항상 표시. 발행 기록은 tax.issue, 서버 RPC 는 features.tax_invoice 를 요구
       { key: "requests", path: "requests", label: "민원·수리", cap: "view" }, // features.work_orders
       { key: "calendar", path: "calendar", label: "점검·일정", cap: "view" }, // features.inspections

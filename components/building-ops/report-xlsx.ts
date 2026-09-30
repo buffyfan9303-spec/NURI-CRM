@@ -1,9 +1,11 @@
 /**
- * 보고서 Excel 생성(서버 전용, exceljs). 시트 1 = 분류별 집계·전월 대비, 원장 데이터가 있으면 이어서 7시트(+감사).
+ * 보고서 Excel 생성(서버 전용, exceljs). 확정된 달이면 첫 시트 = 월별 정산(화면과 같은 표), 이어서 분류별 집계·전월 대비,
+ * 원장 데이터가 있으면 이어서 7시트(+감사).
  * 금액 셀은 숫자(정수 KRW)로 넣고 서식만 천 단위 쉼표를 쓴다. 문자열 합성 금액은 만들지 않는다.
  */
 import ExcelJS from "exceljs";
 import { STD_CATEGORIES, STD_CATEGORY_LABEL, type CategoryReport } from "@/lib/domain/building-types";
+import type { SettleRow, Settlement } from "@/components/building/settlement";
 
 export interface ReportRow { key: string; label: string; supply: number; vat: number; exempt: number; amount: number; prev: number; diff: number }
 export interface ReportTable { rows: ReportRow[]; total: number; prevTotal: number; prevOnly: number }
@@ -38,8 +40,36 @@ function cell(v: unknown): string | number | boolean | null {
   return String(v);
 }
 
-export async function buildReportWorkbook(input: { buildingName: string; period: string; report: CategoryReport; ledger?: Record<string, unknown> | null }): Promise<Buffer> {
+/** 화면 "월별 정산 보고서"와 같은 표: ① 호실별 정산(항목 열 + 합계 행) ② 항목별 지난달 비교. */
+function addSettlementSheet(wb: ExcelJS.Workbook, title: string, s: Settlement) {
+  const ws = wb.addWorksheet("월별 정산");
+  ws.addRow([title]).font = { bold: true, size: 13 };
+  ws.addRow([]);
+  const hasLate = s.total.lateFee !== 0;
+  const tail = (r: Omit<SettleRow, "unitId" | "unitLabel" | "party">) =>
+    [r.supply + r.exempt, r.vat, r.current, r.priorUnpaid, ...(hasLate ? [r.lateFee] : []), r.due, r.paid, r.left];
+  ws.addRow(["호실", "입주자", ...s.items, "부가세 빼기 전", "부가세", "이번 달 관리비", "밀린 돈", ...(hasLate ? ["연체료"] : []), "이번 달 낼 돈", "낸 돈", "남은 돈"]).font = { bold: true };
+  for (const r of s.rows) ws.addRow([r.unitLabel, r.party, ...s.items.map((k) => r.items[k] ?? 0), ...tail(r)]);
+  ws.addRow([`합계 ${s.rows.length}호실`, null, ...s.items.map((k) => s.total.items[k] ?? 0), ...tail(s.total)]).font = { bold: true };
+  const width = 2 + s.items.length + (hasLate ? 8 : 7);
+  ws.addRow([]);
+  ws.addRow(["항목별 지난달 비교"]).font = { bold: true };
+  ws.addRow(["항목", "이번 달", "지난달", "차이", "차이율"]).font = { bold: true };
+  for (const c of [...s.compare, s.compareTotal]) {
+    const row = ws.addRow([c.name, c.cur, c.prev, c.diff, c.pct]);
+    row.getCell(5).numFmt = "0.0%";
+    if (c === s.compareTotal) row.font = { bold: true };
+  }
+  ws.getColumn(1).width = 14;
+  ws.getColumn(2).width = 18;
+  for (let c = 3; c <= width; c++) ws.getColumn(c).width = 13;
+  ws.eachRow((row) => row.eachCell((cl, i) => { if (i > 1 && typeof cl.value === "number" && !cl.numFmt?.includes("%")) cl.numFmt = "#,##0"; }));
+  ws.views = [{ state: "frozen", xSplit: 2, ySplit: 3 }];
+}
+
+export async function buildReportWorkbook(input: { buildingName: string; period: string; report: CategoryReport; ledger?: Record<string, unknown> | null; settlement?: Settlement | null }): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
+  if (input.settlement) addSettlementSheet(wb, `${input.buildingName} ${input.period} 관리비 월별 정산`, input.settlement);
   const t = tableFromReport(input.report);
   const ws = wb.addWorksheet("분류별 집계");
   ws.addRow([`${input.buildingName} ${input.period} 관리비 분류별 집계`]).font = { bold: true, size: 13 };

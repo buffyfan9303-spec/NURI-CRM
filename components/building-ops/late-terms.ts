@@ -11,6 +11,20 @@ export interface LateForm {
 }
 export const emptyLateForm = (): LateForm => ({ rate: "", unit: "", method: "", grace: "", basis: "", order: "", capPct: "", capNone: false });
 
+/**
+ * 기준 연체 조건(2026-09-30 사용자 지시 "연에 몇 %를 정해서 기입해 쓸 수 있게"). 화면이 저절로 채우지 않고,
+ * 사람이 "기준 조건으로 채우기"를 눌렀을 때만 들어간다. 저장 후에도 다른 담당자의 확정을 받아야 계산된다.
+ * 근거(docs/design-references/2026-09-30-kr-cam-law-fulltext.md §6):
+ *  - 법무부 집합건물(상가) 표준관리규약(2023.9.27) 별표 11: 연체 1년 이하 연 12%, 일할 계산(원금 × 12% × 일수/365)
+ *  - 이자제한법 최고이자율 연 20% 이하, 소송촉진법 법정이율 12%와 같음 → 약관규제법 제8조 '과중'으로 볼 여지가 작다
+ *  - 충당 순서: 규약에 정함이 없으면 민법 제479조(비용·이자 → 원본) = 연체료부터
+ *  - 연체료에는 부가세가 없다(부가가치세법 제29조⑤5호)
+ * 관리규약·계약서에 이율이 따로 있으면 그 값이 우선이다(민법 제397조). 표준규약의 '1년 초과 연 15%' 구간은
+ * 지금 계산이 단일 이율만 지원해 넣지 않았다(장기 연체분은 표준보다 낮게 = 안전한 쪽).
+ */
+export const STANDARD_LATE_FORM: LateForm = { rate: "12", unit: "annual", method: "simple", grace: "0", basis: "principal", order: "fee_first", capPct: "", capNone: true };
+export const STANDARD_LATE_NOTE = "법무부 상가 표준관리규약 기준: 연 12%, 안 낸 관리비에만 하루 단위(일수/365) 단리, 납부기한 다음 날부터, 일부만 내면 연체료부터 갚음. 관리규약·계약서에 다른 이율이 있으면 그 값으로 고치세요.";
+
 export function lateFormFrom(t: Partial<LateTerms> | null | undefined): LateForm {
   if (!t) return emptyLateForm();
   return {

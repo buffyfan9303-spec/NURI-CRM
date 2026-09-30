@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ChevronRight } from "@/lib/icons";
 import { STATUS_ICON } from "@/lib/icons-map";
 import type { RunIssue } from "@/lib/domain/building-types";
+import { plainIssueMessage } from "@/lib/domain/building-errors";
 import { cn } from "@/lib/utils/cn";
 import { fmtMoney } from "./Money";
 
@@ -40,7 +41,7 @@ function issueText(i: RunIssue): string {
   const what = i.name ? `${i.name} ` : "";
   if (i.code === "big_change" && i.prev != null && i.current != null) return `${who}지난달 ${fmtMoney(i.prev)} → 이번 달 ${fmtMoney(i.current)} (절반 넘게 달라짐)`;
   const extra = [i.amount != null ? fmtMoney(i.amount) : null, i.count != null ? `${i.count}건` : null].filter(Boolean).join(" · ");
-  return `${who}${what}${i.message}${extra ? ` (${extra})` : ""}`.trim();
+  return `${who}${what}${plainIssueMessage(i.code, i.message)}${extra ? ` (${extra})` : ""}`.trim();
 }
 
 export function BlockWarnList({

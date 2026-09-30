@@ -10,7 +10,7 @@ import { ForbiddenState } from "@/components/ui/ForbiddenState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { accessMessage } from "@/lib/auth/access";
 import { listMyBusinesses } from "@/lib/auth/actions";
-import { INDUSTRY_DEFS, buildingNav } from "@/lib/industry/config";
+import { INDUSTRY_DEFS, buildingNav, isIndustryReady } from "@/lib/industry/config";
 import { WorkspaceShell } from "@/components/shell/WorkspaceShell";
 import { getAccess } from "./access";
 import { ROLE_LABEL } from "@/lib/auth/roles";
@@ -76,6 +76,24 @@ export default async function WorkspaceLayout({
   }
 
   const def = INDUSTRY_DEFS[access.industry];
+  if (!isIndustryReady(access.industry)) {
+    return (
+      <AuthShell>
+        <div className="flex flex-col items-center gap-3 px-6 py-4 text-center">
+          <h1 className="text-[20px] font-bold text-auth-tx">{def.name} 업종은 준비 중입니다</h1>
+          <p className="max-w-[340px] text-[13px] leading-relaxed text-auth-tx2">지금은 의류공장과 건물관리만 운영합니다. 입력해 둔 자료는 지워지지 않았고, 준비가 끝나면 다시 열립니다.</p>
+          <form action={async () => { "use server"; redirect("/select"); }} className="mt-2">
+            <button
+              type="submit"
+              className="min-h-[44px] rounded-full border border-auth-field-bd bg-auth-field px-6 text-[14px] font-medium text-auth-tx transition-colors hover:bg-white/20"
+            >
+              내 사업장 목록으로
+            </button>
+          </form>
+        </div>
+      </AuthShell>
+    );
+  }
   // 건물: 세금계산서·민원·점검 메뉴는 선택 기능이 켜졌을 때만(buildingNav).
   const baseNav = access.industry === "building" ? buildingNav(access.settings) : def.nav;
   const nav = baseNav.filter((item) => access.caps.includes(item.cap as (typeof access.caps)[number]));

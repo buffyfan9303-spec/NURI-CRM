@@ -27,6 +27,7 @@ const EXPLICIT_GROUP: Partial<Record<string, NavGroupKey>> = {
   // 돈 관련 + 인력 근태 — 운영 관리.
   settlement: "ops",
   receivables: "ops",
+  disputes: "ops", // 건물관리 입주자 문의·이의(못 받은 돈 옆)
   sales: "ops",
   tuition: "ops",
   "staff-shift": "ops",

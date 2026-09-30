@@ -16,7 +16,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { getAuthUser } from "@/lib/auth/user";
 import { isTransientAuthError } from "@/lib/auth/transient";
 import type { Industry } from "@/lib/industry/config";
-import { isIndustry } from "@/lib/industry/config";
+import { isIndustry, isIndustryReady } from "@/lib/industry/config";
 import { formatBizRegNo, isValidBizRegNo, normalizeBizRegNo } from "@/lib/external/bizno";
 import { fetchNtsStatus, ntsConfigured, type NtsStatus } from "@/lib/external/nts";
 
@@ -203,6 +203,7 @@ export async function createBusiness(
   const n = name.trim();
   if (!n) return { ok: false, message: "사업장 이름을 입력하세요" };
   if (!isIndustry(industry)) return { ok: false, message: "업종을 선택하세요" };
+  if (!isIndustryReady(industry)) return { ok: false, message: "이 업종은 준비 중입니다. 지금은 의류공장·건물관리만 만들 수 있습니다." };
   const bno = normalizeBizRegNo(bizRegNo ?? "");
   if (bno && !isValidBizRegNo(bno)) return { ok: false, message: "사업자등록번호 형식이 올바르지 않습니다" };
 

@@ -2,7 +2,7 @@
  * 메뉴 key → 아이콘 맵. 셸(WorkspaceShell·CommandPalette)만 쓴다. lib/icons.ts 에서 분리 — 로그인 등 다른 화면이
  * 메뉴 아이콘 35개를 같이 내려받지 않게 하기 위함(분리 이유는 lib/icons.ts 머리말).
  */
-import { Banknote, BookOpen, Boxes, Building2, CalendarClock, CalendarDays, CircleDot, ClipboardCheck, ClipboardList, Clock, FileText, HandCoins, LayoutDashboard, ListChecks, MailCheck, Package, Receipt, Ruler, ScanLine, Scissors, Settings, TrendingUp, Upload, UserCog, UserPlus, Users, Wrench } from "@/lib/icons";
+import { Banknote, BookOpen, Boxes, Building2, CalendarClock, CalendarDays, CircleDot, ClipboardCheck, ClipboardList, Clock, FileText, HandCoins, LayoutDashboard, ListChecks, MailCheck, MessageSquare, Package, Receipt, Ruler, ScanLine, Scissors, Settings, TrendingUp, Upload, UserCog, UserPlus, Users, Wrench } from "@/lib/icons";
 
 /**
  * 메뉴 key → 아이콘.
@@ -48,6 +48,7 @@ export const NAV_ICON: Record<string, typeof LayoutDashboard> = {
   reports: TrendingUp,
   charges: ListChecks,
   imports: Upload,
+  disputes: MessageSquare,
 };
 
 export const navIcon = (key: string) => NAV_ICON[key] ?? CircleDot;

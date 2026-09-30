@@ -11,6 +11,8 @@ export interface IndustryOption {
   name: string;
   icon: React.ComponentType<{ size?: number | string; className?: string }>;
   desc: string;
+  /** 준비 중 업종: 보이지만 고를 수 없다(lib/industry/config READY_INDUSTRIES). */
+  soon?: boolean;
 }
 
 export interface IndustryPickerProps {
@@ -31,11 +33,16 @@ export interface IndustryPickerProps {
 export function IndustryPicker({ industries, value, onChange, layout = "grid" }: IndustryPickerProps) {
   const refs = React.useRef<Array<HTMLButtonElement | null>>([]);
 
-  const focusAt = (index: number) => {
+  // 방향키는 준비 중 업종을 건너뛴다(고를 수 없는 칸에 선택이 멈추지 않게).
+  const focusAt = (index: number, step = 1) => {
     const len = industries.length;
-    const next = ((index % len) + len) % len;
-    refs.current[next]?.focus();
-    onChange(industries[next].key);
+    for (let k = 0; k < len; k++) {
+      const next = (((index + k * step) % len) + len) % len;
+      if (industries[next].soon) continue;
+      refs.current[next]?.focus();
+      onChange(industries[next].key);
+      return;
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
@@ -48,7 +55,7 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
       case "ArrowLeft":
       case "ArrowUp":
         e.preventDefault();
-        focusAt(index - 1);
+        focusAt(index - 1, -1);
         break;
       case "Home":
         e.preventDefault();
@@ -56,7 +63,7 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
         break;
       case "End":
         e.preventDefault();
-        focusAt(industries.length - 1);
+        focusAt(industries.length - 1, -1);
         break;
     }
   };
@@ -78,11 +85,13 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
                   type="button"
                   role="radio"
                   aria-checked={selected}
+                  aria-disabled={ind.soon || undefined}
+                  disabled={ind.soon}
                   tabIndex={selected || (value === null && i === 0) ? 0 : -1}
                   onClick={() => onChange(ind.key)}
                   onKeyDown={(e) => handleKeyDown(e, i)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-[14px] border px-3.5 py-2.5 text-left transition-colors",
+                    "flex w-full items-center gap-3 rounded-[14px] border px-3.5 py-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-55",
                     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-tx)]",
                     selected
                       ? "border-[var(--auth-tx)] bg-[var(--auth-field-bd)]"
@@ -98,7 +107,7 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
                     <Icon size={18} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13.5px] font-semibold text-auth-tx">{ind.name}</span>
+                    <span className="block text-[13.5px] font-semibold text-auth-tx">{ind.name}{ind.soon && <span className="ml-1.5 text-[length:var(--fs-meta)] font-medium text-auth-tx2">준비 중</span>}</span>
                     <span className="block truncate text-[length:var(--fs-meta)] leading-snug text-auth-tx2">{ind.desc}</span>
                   </span>
                   {selected && <Check size={16} className="shrink-0 text-auth-tx" aria-hidden />}
@@ -139,11 +148,13 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
               type="button"
               role="radio"
               aria-checked={selected}
+              aria-disabled={ind.soon || undefined}
+              disabled={ind.soon}
               tabIndex={selected || (value === null && i === 0) ? 0 : -1}
               onClick={() => onChange(ind.key)}
               onKeyDown={(e) => handleKeyDown(e, i)}
               className={cn(
-                "relative flex flex-col items-start gap-1.5 rounded-[16px] border px-3.5 py-3 text-left transition-colors",
+                "relative flex flex-col items-start gap-1.5 rounded-[16px] border px-3.5 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-55",
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--auth-tx)]",
                 selected
                   ? "border-[var(--auth-tx)] bg-[var(--auth-field-bd)]"
@@ -154,7 +165,7 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
                 <Check size={15} className="absolute right-2.5 top-2.5 text-auth-tx" aria-hidden />
               )}
               <Icon size={20} className={selected ? "text-auth-tx" : "text-auth-tx2"} />
-              <span className="text-[13px] font-semibold text-auth-tx">{ind.name}</span>
+              <span className="text-[13px] font-semibold text-auth-tx">{ind.name}{ind.soon && <span className="ml-1.5 text-[length:var(--fs-meta)] font-medium text-auth-tx2">준비 중</span>}</span>
               <span className="text-[length:var(--fs-meta)] leading-snug text-auth-tx2">{ind.desc}</span>
             </button>
           );

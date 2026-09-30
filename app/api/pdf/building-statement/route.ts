@@ -2,14 +2,17 @@
  * 건물 관리비 명세서 PDF. `?businessId=&bill=<id>` 한 장 또는 `?businessId=&bills=<id,id,…>` 여러 장(한 문서, 인쇄용).
  * revenue.read 게이트(명세서 화면과 같다). 승인 여부는 화면이 안내하고 여기서는 미리보기를 위해 초안도 그린다(문서 No. 에 "초안" 표시).
  * 선택 구역은 features(statement_notice·statement_chart·statement_stub·late_fee)에 따른다. QR(statement_qr)은 PDF 인코더가 없어 계좌 문자열로 대체(§미해결).
+ * P0 보강(2026-09-30): 관리주체·호실 면적·항목별 부가세·상가 14항목·밀린 돈 달별·연체료 산식·이의 안내. 금액은 서버가 준 값만(계산 없음), 순수 함수는 lib/pdf/statement-p0.ts.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { checkAccess } from "@/lib/auth/access";
-import { getBill, getBuilding, getLatestRun, getPeriod, listBills, listChargeTypes, listMeterReadings, listMeters, listParties, listUnitHistory, listUnits, resolveBuildingFeatures } from "@/lib/domain/building";
+import { getBill, getBuilding, getLatestRun, getPeriod, listBills, listChargeTypes, listMeterReadings, listMeters, listParties, listReceivables, listUnitHistory, listUnits, resolveBuildingFeatures } from "@/lib/domain/building";
 import { STD_CATEGORY_LABEL, type BillRow, type BillTraceLine } from "@/lib/domain/building-types";
 import { StatementDoc, type StatementData, type StatementMeter } from "@/lib/pdf/StatementDoc";
 import { addMonths, periodLabel } from "@/components/building/period";
+import { avgFor, avgText, meterUnitPrice, usageAverages } from "@/lib/pdf/statement-meter";
+import { disputeNotice, law14Table, lateFeeFormulaLines, priorUnpaidRows, statementDensity, supplierLines, TAX_LABEL, unitInfoLine } from "@/lib/pdf/statement-p0";
 
 export const runtime = "nodejs";
 
@@ -48,16 +51,23 @@ export async function GET(req: NextRequest) {
   const period = bills[0].period;
 
   const features = resolveBuildingFeatures(access.settings);
-  const [building, periodRow, units, parties, chargeTypes, meters, readings] = await Promise.all([
+  const [building, periodRow, units, parties, chargeTypes, meters, readings, receivables] = await Promise.all([
     getBuilding(buildingId), getPeriod(buildingId, period), listUnits(buildingId, { includeInactive: true }), listParties(access.businessId), listChargeTypes(buildingId, { includeInactive: true }), listMeters(buildingId), listMeterReadings(access.businessId, period),
+    listReceivables(buildingId),
   ]);
   if (!building.ok || !building.data) return NextResponse.json({ error: "건물을 찾을 수 없습니다." }, { status: 404 });
   const b = building.data;
   const unitNo = new Map(units.ok ? units.data.map((u) => [u.id, u.unit_no]) : []);
+  const unitById = new Map(units.ok ? units.data.map((u) => [u.id, u]) : []);
+  const supplier = supplierLines(parties.ok ? parties.data.find((p) => p.id === b.supplier_party_id) : null);
+  const ctTax = new Map(chargeTypes.ok ? chargeTypes.data.map((c) => [c.id, c.tax_treatment]) : []);
   const partyName = new Map(parties.ok ? parties.data.map((p) => [p.id, p.name]) : []);
   const ctMeterKind = new Map(chargeTypes.ok ? chargeTypes.data.map((c) => [c.id, c.meter_kind]) : []);
   const readingByMeter = new Map(readings.ok ? readings.data.map((r) => [r.meter_id, r]) : []);
   const pr = periodRow.ok ? periodRow.data : null;
+  // 사용량 = 서버 검침 자료(usage_override 또는 (이번−전월)×배율). 평균은 이 값들의 평균만 쓰고 다른 호실 정보는 내보내지 않는다.
+  const usageOf = (r: { usage_override: number | null; curr_reading: number; prev_reading: number }, m: { multiplier: number }) => r.usage_override ?? Math.max(0, (r.curr_reading - r.prev_reading) * (m.multiplier || 1));
+  const usageAvg = usageAverages(meters.ok ? meters.data.flatMap((m) => { const r = readingByMeter.get(m.id); return r ? [{ kind: m.kind, unitLabel: m.unit_label, usage: usageOf(r, m) }] : []; }) : []);
   // 전월 승인본의 항목별 금액(전월·증감 열) — 전월 청구가 있을 때만.
   const prevLines = new Map<string, Map<string, number>>();
   const prevPeriod = await getPeriod(buildingId, addMonths(period, -1));
@@ -76,15 +86,21 @@ export async function GET(req: NextRequest) {
   for (const bill of bills) {
     const t = bill.trace;
     const prev = prevLines.get(bill.unit_id);
-    const lines = (t?.lines ?? []).map((l) => ({ name: l.name, category: STD_CATEGORY_LABEL[l.std_category], amount: l.amount, prev: prev ? prev.get(l.charge_type_id) ?? null : null, basis: basisText(l) }));
+    const lines = (t?.lines ?? []).map((l) => ({
+      name: l.name, category: STD_CATEGORY_LABEL[l.std_category], amount: l.amount, prev: prev ? prev.get(l.charge_type_id) ?? null : null, basis: basisText(l),
+      supply: l.supply, vat: l.vat, exempt: l.exempt, tax: TAX_LABEL[ctTax.get(l.charge_type_id) ?? "taxable"] ?? "",
+    }));
+    const prior = priorUnpaidRows(bill, receivables.ok ? receivables.data.filter((r) => r.unit_id === bill.unit_id) : []);
+    const lateOn = features.late_fee === "on" && (bill.late_fee ?? 0) > 0;
+    const lateFormula = lateOn ? lateFeeFormulaLines(t?.late_fee.items) : null;
     const meterRows: StatementMeter[] = [];
     if (meters.ok) {
       for (const m of meters.data.filter((m) => m.unit_id === bill.unit_id)) {
         const r = readingByMeter.get(m.id);
         if (!r) continue;
-        const usage = r.usage_override ?? Math.max(0, (r.curr_reading - r.prev_reading) * (m.multiplier || 1));
+        const usage = usageOf(r, m);
         const amount = (t?.lines ?? []).filter((l) => ctMeterKind.get(l.charge_type_id) === m.kind).reduce((a, l) => a + l.amount, 0);
-        meterRows.push({ label: `${METER_LABEL[m.kind] ?? m.kind}${m.serial ? ` ${m.serial}` : ""}`, prev: r.prev_reading, curr: r.curr_reading, usage, unit: m.unit_label, amount: amount || null, note: r.reason === "replaced" ? "* 계량기 교체" : r.reason === "estimated" ? "* 추정" : r.reason === "typo" ? "* 정정" : r.reason === "rollover" ? "* 지침 순환" : undefined });
+        meterRows.push({ label: `${METER_LABEL[m.kind] ?? m.kind}${m.serial ? ` ${m.serial}` : ""}`, prev: r.prev_reading, curr: r.curr_reading, usage, unit: m.unit_label, multiplier: m.multiplier || 1, price: meterUnitPrice(t?.lines ?? [], (id) => ctMeterKind.get(id) === m.kind), avg: avgText(usage, avgFor(usageAvg, m.kind, m.unit_label), m.unit_label), amount: amount || null, note: r.reason === "replaced" ? "* 계량기 교체" : r.reason === "estimated" ? "* 추정" : r.reason === "typo" ? "* 정정" : r.reason === "rollover" ? "* 지침 순환" : undefined });
       }
     }
     let chart: StatementData["chart"] = null;
@@ -92,6 +108,8 @@ export async function GET(req: NextRequest) {
       const h = await listUnitHistory(bill.unit_id, 12);
       if (h.ok && h.data.length >= 2) chart = h.data.map((x) => ({ label: `${Number(x.period.slice(5))}월`, amount: x.current_charge ?? 0 }));
     }
+    const commercial = b.kind === "commercial";
+    const noticeText = features.statement_notice === "on" ? pr?.notice ?? null : null;
     items.push({
       buildingName: b.name,
       periodLabel: periodLabel(period),
@@ -112,11 +130,19 @@ export async function GET(req: NextRequest) {
       exempt: bill.exempt ?? 0,
       lines,
       meters: meterRows,
-      notice: features.statement_notice === "on" ? pr?.notice ?? null : null,
+      notice: noticeText,
+      buildingAddress: b.address,
+      supplier,
+      unitInfo: unitInfoLine(unitById.get(bill.unit_id)),
+      law14: commercial ? law14Table(t?.lines ?? []) : null,
+      priorRows: prior.rows,
+      priorMismatch: prior.sum !== (bill.prior_unpaid ?? 0),
+      lateFormula,
+      dispute: disputeNotice(office),
+      dense: statementDensity({ lines: lines.length, law14: commercial, prior: prior.rows.length, late: lateFormula?.lines.length ?? 0, meters: meterRows.length, notice: !!noticeText, chart: !!chart, stub: features.statement_stub === "on", supplier: supplier.length }),
       chart,
       stub: features.statement_stub === "on",
-      office,
-      commercial: b.kind === "commercial",
+      commercial,
     });
   }
 

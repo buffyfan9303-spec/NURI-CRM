@@ -75,7 +75,7 @@ export function ExpenseForm({
         {rows.length === 0 ? (
           <EmptyState title="이번 달에 입력한 비용이 없습니다." description="위에서 항목을 고르고 금액을 적으세요." />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className={TABLE}>
               <thead className={THEAD}>
                 <tr><th className={TH}>항목</th><th className={TH}>낸 곳</th><th className={`${TH} text-right`}>부가세 빼기 전</th><th className={`${TH} text-right`}>부가세</th><th className={`${TH} text-right`}>합계</th><th className={TH}><span className="sr-only">삭제</span></th></tr>

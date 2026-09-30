@@ -24,6 +24,8 @@ const PUBLIC_PREFIXES = [
   // 개발·검증용 페이지. 사업장 데이터를 전혀 읽지 않으므로 인증 없이 연다.
   "/ui-preview",
   "/scan-selftest",
+  // 건물관리 입주자 셀프 조회(QR). 로그인 계정이 없는 입주자용 — 권한은 crm.portal_* RPC(anon 전용)가 토큰·접속코드·세션으로 판정한다.
+  "/tenant",
 ];
 
 /**

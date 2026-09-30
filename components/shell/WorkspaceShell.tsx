@@ -20,7 +20,8 @@
  */
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { reportTitle } from "@/components/building-ops/report-tabs";
 import {
   Menu,
   X,
@@ -127,6 +128,7 @@ export function WorkspaceShell({
   children,
 }: WorkspaceShellProps) {
   const pathname = usePathname();
+  const view = useSearchParams().get("view");
   const base = `/w/${businessId}`;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [switcherOpen, setSwitcherOpen] = React.useState(false);
@@ -274,6 +276,9 @@ export function WorkspaceShell({
     }
     return best;
   }, [fullNav, base, pathname]);
+
+  // 건물 보고서는 한 메뉴(reports) 안에 탭 5개라 맨 위 경로 표시가 탭 이름을 따른다(다른 화면은 메뉴 이름 그대로).
+  const placeLabel = industry === "building" && activeItem?.key === "reports" ? reportTitle(view) : activeItem?.label;
 
   // 업종별 주요 CTA(§4.2) — 서버가 이미 권한으로 걸러 보낸 nav에 실제로 있을 때만 그린다.
   const primaryAction = PRIMARY_ACTION[industry];
@@ -573,7 +578,7 @@ export function WorkspaceShell({
               <span className="hidden text-t3 sm:inline" aria-hidden>
                 /
               </span>
-              <span className="truncate text-[14px] font-semibold text-t sm:text-[13px] sm:font-medium sm:text-t2">{activeItem.label}</span>
+              <span className="truncate text-[14px] font-semibold text-t sm:text-[13px] sm:font-medium sm:text-t2" title={placeLabel}>{placeLabel}</span>
             </span>
           )}
 

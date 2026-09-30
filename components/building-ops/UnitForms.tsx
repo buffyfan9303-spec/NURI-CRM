@@ -14,7 +14,7 @@ import { approveLateTerms, createContract, createParty, updateContract, updatePa
 import type { ContractRow, LateMethod, LateRateUnit, PartyRow, UnitRow, UnitUseKind } from "@/lib/domain/building-types";
 import { FW, FORM_ROW, FORM_ACTIONS, MONEY_INPUT } from "@/components/building/FieldWidths";
 import { useRunAction } from "./client-common";
-import { emptyLateForm, lateFormComplete, lateFormFrom, lateFormToPatch, lateStatusOf, type LateForm } from "./late-terms";
+import { STANDARD_LATE_FORM, STANDARD_LATE_NOTE, emptyLateForm, lateFormComplete, lateFormFrom, lateFormToPatch, lateStatusOf, type LateForm } from "./late-terms";
 import { USE_KIND_LABEL, parseRange } from "./unit-parse";
 
 export function UnitBasicForm({ businessId, unit, canWrite }: { businessId: string; unit: UnitRow; canWrite: boolean }) {
@@ -58,6 +58,10 @@ export function LateTermsFields({ value, onChange, disabled }: { value: LateForm
   return (
     <fieldset className={`${FORM_ROW} mb-4`} disabled={disabled}>
       <legend className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">늦게 내면 붙는 돈(연체료) — 계약서에 적힌 대로</legend>
+      <div className="mb-1 flex w-full flex-wrap items-center gap-2">
+        <Button type="button" variant="secondary" size="sm" onClick={() => onChange({ ...STANDARD_LATE_FORM })}>기준 조건으로 채우기(연 12%)</Button>
+        <p className="min-w-0 flex-1 text-[length:var(--fs-meta)] text-t3" style={{ wordBreak: "keep-all" }}>{STANDARD_LATE_NOTE}</p>
+      </div>
       <Input label="이율(%)" type="number" step="any" min={0} value={value.rate} onChange={(e) => set("rate", e.target.value)} className={MONEY_INPUT} wrapperClassName={FW.short} />
       <SelectField label="이율 기준" wrapperClassName={FW.select} value={value.unit} onChange={(e) => set("unit", e.target.value as LateForm["unit"])}>
         <option value="">선택</option>{(Object.keys(RATE_UNIT) as LateRateUnit[]).map((k) => <option key={k} value={k}>{RATE_UNIT[k]} 이율</option>)}

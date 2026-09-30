@@ -17,13 +17,16 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { LoginCard } from "@/components/auth/LoginCard";
 import { IndustryPicker, type IndustryOption } from "@/components/auth/IndustryPicker";
 import { signIn } from "@/lib/auth/actions";
-import { INDUSTRIES, INDUSTRY_DEFS } from "@/lib/industry/config";
+import { INDUSTRIES, INDUSTRY_DEFS, isIndustryReady } from "@/lib/industry/config";
 import { ENTRY_INDUSTRY_KEY } from "@/components/shell/entryIndustry";
 
-const INDUSTRY_OPTIONS: IndustryOption[] = INDUSTRIES.map((key) => {
-  const def = INDUSTRY_DEFS[key];
-  return { key: def.key, name: def.name, desc: def.desc, icon: INDUSTRY_ICON[key] };
-});
+// 운영 중 업종을 앞에, 준비 중 업종은 뒤에 고를 수 없게 둔다.
+const INDUSTRY_OPTIONS: IndustryOption[] = [...INDUSTRIES]
+  .sort((a, b) => Number(!isIndustryReady(a)) - Number(!isIndustryReady(b)))
+  .map((key) => {
+    const def = INDUSTRY_DEFS[key];
+    return { key: def.key, name: def.name, desc: def.desc, icon: INDUSTRY_ICON[key], soon: !isIndustryReady(key) };
+  });
 
 export function LoginClient() {
   const router = useRouter();

@@ -2,7 +2,7 @@
 
 /**
  * 건물 관리비 선택 기능 스위치 31개. 켜고 끄는 권한(staff.manage)은 서버 액션이 다시 검사한다.
- * 외부 계약이 필요한 5개는 꺼진 상태에서는 켤 수 없다(스위치 비활성 + "외부 계약 필요" 표시). 이미 켜져 있으면 끌 수는 있다.
+ * 외부 계약이 필요한 5개와 아직 화면이 없는 기능(feature-labels soon)은 꺼진 상태에서는 켤 수 없다(스위치 비활성 + 표시). 이미 켜져 있으면 끌 수는 있다.
  */
 import * as React from "react";
 import { Card } from "@/components/ui/Card";
@@ -18,7 +18,7 @@ import { FEATURE_GROUPS, FEATURE_INFO } from "./feature-labels";
 export function BuildingFeatureSwitches({ businessId, status }: { businessId: string; status: Record<BuildingFeatureKey, BuildingFeatureStatus> }) {
   return (
     <Card className="p-4 sm:p-5">
-      <CardHead title="건물 관리비 선택 기능" description="필요한 기능만 켭니다. 켜면 해당 메뉴와 계산이 열리고, 끄면 메뉴에서 사라집니다. 이미 입력한 자료는 지워지지 않습니다." />
+      <CardHead title="건물관리 선택 기능" description="필요한 기능만 켭니다. 켜면 해당 메뉴와 계산이 열리고, 끄면 메뉴에서 사라집니다. 이미 입력한 자료는 지워지지 않습니다." />
       <div className="flex flex-col gap-5">
         {FEATURE_GROUPS.map((g) => (
           <section key={g.title} aria-label={g.title}>
@@ -39,7 +39,7 @@ function Row({ businessId, k, status }: { businessId: string; k: BuildingFeature
   const info = FEATURE_INFO[k];
   const on = status === "on" || status === "external_contract_required";
   const needsContract = BUILDING_FEATURE_NEEDS_CONTRACT.includes(k);
-  const disabled = pending || (needsContract && !on);
+  const disabled = pending || ((needsContract || !!info.soon) && !on);
   return (
     <li className="flex flex-col gap-1 rounded-[var(--r-md)] border border-[var(--bd)] px-3 py-2">
       <div className="flex items-center justify-between gap-3">
@@ -64,9 +64,11 @@ function Row({ businessId, k, status }: { businessId: string; k: BuildingFeature
           </span>
         </button>
       </div>
-      {(needsContract || info.approval || info.note) && (
+      {(needsContract || info.soon || info.approval || info.note) && (
         <div className="flex flex-wrap items-center gap-1.5 text-[length:var(--fs-meta)] text-t3">
           {needsContract && <Badge kind="warning">외부 계약 필요</Badge>}
+          {info.soon && <Badge kind="info">준비 중</Badge>}
+          {info.soon && <span style={{ wordBreak: "keep-all" }}>{on ? "켜져 있지만 아직 이 기능의 화면이 없습니다." : "아직 화면이 없어 켤 수 없습니다."}</span>}
           {status === "external_contract_required" && <span>켜져 있지만 계약 전이라 동작하지 않습니다.</span>}
           {info.approval && <Badge kind="info">확정한 뒤 동작</Badge>}
           {info.note && <span style={{ wordBreak: "keep-all" }}>{info.note}</span>}

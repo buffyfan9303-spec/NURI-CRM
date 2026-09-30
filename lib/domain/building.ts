@@ -8,8 +8,8 @@ import { checkAccess, type AccessResult } from "@/lib/auth/access";
 import { buildingNav } from "@/lib/industry/config";
 import type {
   AgingReport, BillLineRow, BillRow, BillingRunRow, BuildingFeatureKey, BuildingFeatureStatus, BuildingRow, CategoryReport, ChargeTypeRow,
-  ContractRow, ExpenseRow, ImportBatchRow, ImportRowRow, MeterReadingRow, MeterRow, PartyRow, PaymentRow, PeriodRow, ReceivableRow,
-  TaxTargetRow, TodoSummary, UnitRow, CreditRow, HometaxRow,
+  ContractRow, DirectChargeRow, DisputeRow, ExpenseRow, ImportBatchRow, ImportRowRow, MeterReadingRow, MeterRow, PartyRow, PaymentRow, PeriodRow, ReceivableRow,
+  TaxTargetRow, TodoSummary, UnitRow, CreditRow, HometaxRow, BudgetRow, RepairFundRow,
   PaymentAllocationRow, PaymentLine, DunningRow, DunningLast, WorkOrderRow, WorkOrderStatus, CorrectionRunRow,
 } from "@/lib/domain/building-types";
 import { BUILDING_FEATURE_DEFAULT_ON, BUILDING_FEATURE_KEYS, BUILDING_FEATURE_NEEDS_CONTRACT } from "@/lib/domain/building-types";
@@ -84,6 +84,11 @@ export async function listMeterReadings(businessId: string, period: string): Pro
 export async function listExpenses(buildingId: string, period: string): Promise<ReadResult<ExpenseRow[]>> {
   const { data, error } = await crm().from("v_bld_expenses").select("*").eq("building_id", buildingId).eq("period", period).order("created_at");
   return error ? fail(error) : { ok: true, data: (data ?? []) as ExpenseRow[] };
+}
+/** 호실별 따로 넣는 금액(감면·일회성). amount 는 revenue.read 없으면 null(뷰 v_bld_direct_charges). */
+export async function listDirectCharges(buildingId: string, period: string): Promise<ReadResult<DirectChargeRow[]>> {
+  const { data, error } = await crm().from("v_bld_direct_charges").select("*").eq("building_id", buildingId).eq("period", period).order("created_at");
+  return error ? fail(error) : { ok: true, data: (data ?? []) as DirectChargeRow[] };
 }
 export async function getPeriod(buildingId: string, period: string): Promise<ReadResult<PeriodRow | null>> {
   const { data, error } = await crm().from("bld_periods").select("*").eq("building_id", buildingId).eq("period", period).maybeSingle();
@@ -260,6 +265,42 @@ export async function listWorkOrders(buildingId: string, opts: { status?: WorkOr
   if (opts.status) q = q.eq("status", opts.status);
   const { data, error } = await q;
   return error ? fail(error) : { ok: true, data: (data ?? []) as WorkOrderRow[] };
+}
+
+/** 입주자 문의·이의(최신순, 최대 300). 이 건물 청구서에 붙은 것만 — 호실·달은 청구서에서 가져온다. */
+export async function listDisputes(businessId: string, buildingId: string): Promise<ReadResult<DisputeRow[]>> {
+  // 0035: 표에서 contact 를 select 하면 42501 — 연락처(pii.read 게이트)는 뷰로 읽는다.
+  const { data, error } = await crm().from("v_bld_disputes").select("id,bill_id,kind,status,note,resolution,resolved_at,created_at,source,charge_type_id,contact").eq("business_id", businessId).order("created_at", { ascending: false }).limit(300);
+  if (error) return fail(error);
+  const rows = (data ?? []) as Omit<DisputeRow, "unit_id" | "period">[];
+  const bills = new Map<string, { unit_id: string; period: string; building_id: string }>();
+  for (const part of chunk(Array.from(new Set(rows.map((r) => r.bill_id))), 80)) {
+    const b = await crm().from("bld_bills").select("id,unit_id,period,building_id").in("id", part);
+    if (b.error) return fail(b.error);
+    for (const x of b.data ?? []) bills.set(x.id as string, { unit_id: x.unit_id as string, period: x.period as string, building_id: x.building_id as string });
+  }
+  return { ok: true, data: rows.filter((r) => bills.get(r.bill_id)?.building_id === buildingId).map((r) => ({ ...r, unit_id: bills.get(r.bill_id)?.unit_id ?? null, period: bills.get(r.bill_id)?.period ?? null })) };
+}
+
+/** 연 예산(분류별). amount 는 revenue.read 없으면 null. 기능 게이트(budget)는 화면·액션이 본다. */
+export async function listBudgets(buildingId: string, year: number): Promise<ReadResult<BudgetRow[]>> {
+  const { data, error } = await crm().from("v_bld_budgets").select("*").eq("building_id", buildingId).eq("year", year);
+  return error ? fail(error) : { ok: true, data: (data ?? []) as BudgetRow[] };
+}
+/** 장기수선충당금 장부(달·입력 순). upToPeriod 를 주면 그 달까지만. amount 는 revenue.read 없으면 null. */
+export async function listRepairFund(buildingId: string, opts: { upToPeriod?: string } = {}): Promise<ReadResult<RepairFundRow[]>> {
+  let q = crm().from("v_bld_repair_fund").select("*").eq("building_id", buildingId).order("period", { ascending: false }).order("created_at", { ascending: false });
+  if (opts.upToPeriod) q = q.lte("period", opts.upToPeriod);
+  const { data, error } = await q;
+  return error ? fail(error) : { ok: true, data: (data ?? []) as RepairFundRow[] };
+}
+/** 그 해 1월 ~ upToPeriod 달까지 달마다 분류별 확정 금액(서버 RPC 결과 그대로). 연 누계는 화면이 더한다. */
+export async function listYearCategoryReports(buildingId: string, upToPeriod: string): Promise<ReadResult<CategoryReport[]>> {
+  const year = upToPeriod.slice(0, 4), last = Number(upToPeriod.slice(5, 7));
+  const rs = await Promise.all(Array.from({ length: last }, (_, i) => getCategoryReport(buildingId, `${year}-${String(i + 1).padStart(2, "0")}`)));
+  const bad = rs.find((r) => !r.ok);
+  if (bad && !bad.ok) return bad;
+  return { ok: true, data: rs.flatMap((r) => (r.ok ? [r.data] : [])) };
 }
 
 export async function getFeatureStatus(businessId: string, key: BuildingFeatureKey): Promise<ReadResult<BuildingFeatureStatus>> {

@@ -62,7 +62,7 @@ export async function buildingGate(
     };
   }
   if (access.industry !== "building") {
-    return { node: <Blocked title={title}><EmptyState title="이 화면은 건물 관리비 업종 전용입니다." description="다른 업종은 각 업종 메뉴를 이용하세요." /></Blocked> };
+    return { node: <Blocked title={title}><EmptyState title="이 화면은 건물관리 업종 전용입니다." description="다른 업종은 각 업종 메뉴를 이용하세요." /></Blocked> };
   }
   const bl = await listBuildings(businessId);
   if (!bl.ok) {

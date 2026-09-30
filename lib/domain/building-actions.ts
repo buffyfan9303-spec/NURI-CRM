@@ -10,6 +10,8 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { requireCap, AccessDenied, accessMessage, type Cap } from "@/lib/auth/access";
 import { mustAffect, NO_ROWS_MESSAGE } from "@/lib/db/mustAffect";
 import { localDateTimeToUtcIso } from "@/lib/utils/datetime";
+import { BUILDING_ERROR_TEXT, plainBuildingError } from "@/lib/domain/building-errors";
+import { STD_CATEGORIES } from "@/lib/domain/building-types";
 import type {
   BuildingFeatureKey, BuildingKind, ChargeTypeRow, ContractRow, CorrectionLine, ImportSourceKind, ImportStageResult, LateTerms, MeterKind,
   PartyRow, PaymentMethod, PaymentResult, PeriodStatus, ReadingReason, RunSummary, UnitBulkInput, UnitRow, UnitsBulkResult, BuildingStagingRowInput,
@@ -18,71 +20,11 @@ import type {
 
 export type ActionResult<T = undefined> = { ok: true; data: T } | { ok: false; message: string; hint?: string };
 
-/** RPC 오류 힌트 → 사용자 문구. Postgres 원문은 콘솔에만. */
+/** RPC 오류 힌트 → 사용자 문구(쉬운 말 표는 building-errors.ts). Postgres 원문은 콘솔에만. */
 function pgError(e: { code?: string; message: string; hint?: string | null }): { message: string; hint?: string } {
-  const msg = e.message ?? "";
-  const hint = e.hint ?? /^([a-z_]+):/.exec(msg)?.[1] ?? undefined;
-  const map: Record<string, string> = {
-    forbidden: "이 작업을 수행할 권한이 없습니다.",
-    feature_off: "이 기능은 사업장 설정에서 꺼져 있습니다. 설정에서 켠 뒤 다시 시도하세요.",
-    external_contract_required: "이 기능은 외부 계약(ASP·PG·알림톡·은행) 후 사용할 수 있습니다.",
-    unknown_feature: "설정할 수 없는 기능입니다.",
-    period_locked: "승인된 청구월입니다. 다시 계산할 수 없고 정정(새 revision)으로 처리합니다.",
-    blocked: "차단 오류가 남아 있어 승인할 수 없습니다. 오류 목록을 먼저 해결하세요.",
-    approver_must_differ: "계산·입력한 사람은 승인할 수 없습니다(2인 분리). 다른 담당자가 승인해야 합니다.",
-    reason_required: "사유를 입력해야 합니다.",
-    inputs_changed: "계산 뒤 입력(호실·계약·항목·비용·검침·수납)이 바뀌었습니다. 다시 계산한 뒤 승인하세요.",
-    invalid_transition: "현재 상태에서는 할 수 없는 처리입니다.",
-    not_approved: "승인된 계산이 아닙니다.",
-    bill_frozen: "확정된 청구 금액은 덮어쓸 수 없습니다. 정정(새 revision)으로 처리하세요.",
-    zero_denominator: "배분 기준(면적·지분·사용량) 합이 0 입니다.",
-    allocation_mismatch: "원천 합계와 배분 합계가 다릅니다. 항목 설정을 확인하세요.",
-    late_terms_unapproved: "연체 조건(이율·단위·기산일·방식·상한)이 전부 승인되지 않아 연체료를 계산할 수 없습니다.",
-    late_terms_incomplete: "연체 조건이 전부 입력돼야 승인할 수 있습니다.",
-    late_approval_via_rpc: "연체 조건 승인은 승인 버튼으로만 할 수 있습니다.",
-    tax_approval_via_rpc: "세무 승인은 승인 버튼으로만 할 수 있습니다.",
-    supplier_required: "과세 항목은 공급자(사업장)가 있어야 승인할 수 있습니다.",
-    duplicate_payment: "같은 거래(외부 거래키)가 이미 등록돼 있습니다.",
-    duplicate_import: "이 파일은 이미 가져왔습니다(같은 파일 해시).",
-    has_errors: "오류 행이 남아 있습니다. 고치거나 제외한 뒤 확정하세요.",
-    payment_reversed: "취소된 입금은 배정할 수 없습니다.",
-    already_reversed: "이미 취소된 입금입니다.",
-    credit_used: "이 입금의 선납 크레딧이 이미 사용돼 취소할 수 없습니다. 정정으로 처리하세요.",
-    over_allocation: "미배정 잔액을 넘는 배정입니다.",
-    overpayment: "채권 잔액을 넘는 배정입니다. 초과분은 선납 크레딧으로 두세요.",
-    receivable_closed: "이미 완납·무효 처리된 채권입니다.",
-    payment_allocated: "이미 배정된 입금이 있어 취소할 수 없습니다. 입금 역분개를 먼저 하세요.",
-    approval_no_required: "국세청 승인번호가 필요합니다.",
-    invalid_amount: "금액은 양의 정수여야 합니다.",
-    invalid_period: "청구월은 YYYY-MM 형식이어야 합니다.",
-    unit_not_in_building: "이 건물의 호실이 아닙니다.",
-    party_not_in_business: "다른 사업장의 당사자는 연결할 수 없습니다.",
-    building_not_in_business: "이 사업장의 건물이 아닙니다.",
-    invalid_biz_reg_no: "사업자등록번호 형식(10자리·검증숫자)이 올바르지 않습니다.",
-    meter_kind_required: "검침 종류(전기·수도 등)가 필요합니다.",
-    charge_type_required: "비용을 넣을 항목이 필요합니다.",
-    period_required: "청구월이 필요합니다.",
-    // 0033
-    cross_business: "다른 사업장의 건물·호실·당사자·항목은 연결할 수 없습니다.",
-    cross_building: "다른 건물의 호실·항목·청구월은 연결할 수 없습니다.",
-    status_via_rpc: "청구월 상태는 계산·승인·상태 전이 버튼으로만 바뀝니다.",
-    run_frozen: "승인된 계산은 되돌릴 수 없습니다. 정정(새 revision)으로 처리하세요.",
-    already_approved: "이 청구월에는 이미 승인된 계산이 있습니다. 정정(새 revision)으로 처리하세요.",
-    older_receivable_open: "같은 당사자의 더 오래된 미수가 있습니다. 오래된 채권부터 배정하거나, 사유와 함께 건너뛰기를 허용하세요.",
-    invalid_vat: "세액이 공급가액의 10%와 맞지 않거나 면세 항목에 세액이 있습니다.",
-    charge_type_not_in_building: "이 건물의 관리비 항목이 아닙니다.",
-    amount_not_positive: "금액은 0보다 커야 합니다(감면은 직접 배정 항목으로).",
-    payment_not_found: "입금을 찾을 수 없습니다.",
-    skip_reason_required: "오래된 미수를 건너뛰는 배정에는 사유가 필요합니다.",
-  };
-  if (hint && map[hint]) return { message: map[hint], hint };
-  if (e.code === "42501") return { message: map.forbidden, hint: "forbidden" };
-  if (e.code === "23P01") return { message: "기간이 겹칩니다(같은 호실의 활성 번호·계약 기간은 겹칠 수 없습니다).", hint: "overlap" };
-  if (e.code === "23505") return { message: "이미 같은 항목이 있습니다.", hint: "duplicate" };
-  if (e.code === "23514") return { message: "입력값이 규칙에 맞지 않습니다(역전 검침은 사유 필요, 사업자번호 검증숫자 등).", hint: "check_violation" };
-  if (e.code === "P0002" || /not_found/.test(msg)) return { message: "대상을 찾을 수 없습니다.", hint: "not_found" };
-  console.error("[building pgError] unmapped:", e.code, msg);
-  return { message: "처리 중 오류가 발생했습니다. 입력값을 다시 확인해 주세요." };
+  const r = plainBuildingError(e);
+  if (r.hint === undefined) console.error("[building pgError] unmapped:", e.code, e.message);
+  return r;
 }
 const err = (e: { code?: string; message: string; hint?: string | null }): ActionResult<never> => ({ ok: false, ...pgError(e) });
 
@@ -97,14 +39,14 @@ async function withCap<T>(businessId: string, cap: Cap | Cap[], fn: () => Promis
 }
 const crm = () => getServerSupabase().schema("crm");
 function reval(businessId: string) {
-  for (const seg of ["", "units", "meters", "expenses", "billing", "statements", "payments", "receivables", "tax", "reports", "charges", "imports", "settings"])
+  for (const seg of ["", "units", "meters", "expenses", "billing", "statements", "payments", "receivables", "tax", "reports", "charges", "imports", "settings", "disputes"])
     revalidatePath(`/w/${businessId}${seg ? `/${seg}` : ""}`);
 }
 /** 클라이언트가 보낸 건물 id 가 이 사업장 것인지 서버가 다시 확인한다. */
 async function assertBuilding(businessId: string, buildingId: string): Promise<ActionResult<undefined>> {
   const { data, error } = await crm().from("bld_buildings").select("id").eq("id", buildingId).eq("business_id", businessId).maybeSingle();
   if (error) return err(error);
-  if (!data) return { ok: false, message: "이 사업장의 건물이 아닙니다.", hint: "building_not_in_business" };
+  if (!data) return { ok: false, message: BUILDING_ERROR_TEXT.building_not_in_business, hint: "building_not_in_business" };
   return { ok: true, data: undefined };
 }
 async function rpc<T>(businessId: string, name: string, args: Record<string, unknown>): Promise<ActionResult<T>> {
@@ -265,11 +207,40 @@ export async function deleteExpense(businessId: string, expenseId: string): Prom
 /** 호실별 직접 배정 금액(선납·감면·직접 입력 항목). */
 export async function upsertDirectCharge(businessId: string, buildingId: string, input: { period: string; charge_type_id: string; unit_id: string; amount: number; reason?: string }): Promise<ActionResult<{ id: string }>> {
   return withCap(businessId, "write", async () => {
+    if (!Number.isSafeInteger(input.amount) || input.amount === 0) return { ok: false, message: "금액은 0이 아닌 원 단위 숫자여야 합니다. 깎아 주는 돈이면 앞에 −를 붙이세요.", hint: "invalid_amount" };
     const b = await assertBuilding(businessId, buildingId); if (!b.ok) return b;
-    const { data, error } = await crm().from("bld_direct_charges").upsert({ ...input, business_id: businessId, building_id: buildingId }, { onConflict: "charge_type_id,period,unit_id" }).select("id").single();
-    if (error) return err(error);
+    // 계산은 '직접 입력' 항목만 이 표를 읽는다. 다른 방식 항목에 넣으면 조용히 무시되므로 여기서 막는다.
+    const ct = await crm().from("bld_charge_types").select("source_kind").eq("id", input.charge_type_id).eq("building_id", buildingId).maybeSingle();
+    if (ct.error) return err(ct.error);
+    if (ct.data?.source_kind !== "direct") return { ok: false, message: BUILDING_ERROR_TEXT.not_direct_type, hint: "not_direct_type" };
+    // upsert(ON CONFLICT)는 금액 표의 SELECT 권한(가려진 표)을 요구해 일반 담당자가 거부된다 → 마스킹 뷰로 기존 행을 찾아 고치거나 새로 넣는다.
+    const find = async () => crm().from("v_bld_direct_charges").select("id").eq("charge_type_id", input.charge_type_id).eq("period", input.period).eq("unit_id", input.unit_id).eq("building_id", buildingId).maybeSingle();
+    const patch = async (id: string): Promise<ActionResult<{ id: string }>> => {
+      const u = await mustAffect(crm().from("bld_direct_charges").update({ amount: input.amount, reason: input.reason ?? null }).eq("id", id).eq("business_id", businessId));
+      if (!u.ok) return u.error ? err(u.error) : { ok: false, message: NO_ROWS_MESSAGE };
+      reval(businessId);
+      return { ok: true, data: { id } };
+    };
+    const f = await find();
+    if (f.error) return err(f.error);
+    if (f.data) return patch(f.data.id as string);
+    const ins = await crm().from("bld_direct_charges").insert({ ...input, business_id: businessId, building_id: buildingId }).select("id").single();
+    if (ins.error?.code === "23505") { // 동시에 같은 칸을 넣은 경우 → 방금 생긴 행을 고친다
+      const again = await find();
+      if (again.data) return patch(again.data.id as string);
+    }
+    if (ins.error) return err(ins.error);
     reval(businessId);
-    return { ok: true, data: { id: data.id as string } };
+    return { ok: true, data: { id: ins.data.id as string } };
+  });
+}
+/** 호실별 따로 넣는 금액 삭제(delete cap). 확정된 청구월은 DB 트리거가 거부(period_locked). */
+export async function deleteDirectCharge(businessId: string, id: string): Promise<ActionResult> {
+  return withCap(businessId, "delete", async () => {
+    const r = await mustAffect(crm().from("bld_direct_charges").delete().eq("id", id).eq("business_id", businessId));
+    if (!r.ok) return r.error ? err(r.error) : { ok: false, message: NO_ROWS_MESSAGE };
+    reval(businessId);
+    return { ok: true, data: undefined };
   });
 }
 /** 청구월 열기(없으면 생성). */
@@ -341,7 +312,7 @@ export async function recordPayment(businessId: string, buildingId: string, inpu
     throw e;
   }
   const paidAt = resolvePaidAt(input.paid_at, tz);
-  if (!paidAt) return { ok: false, message: "입금 일시 형식이 올바르지 않습니다(YYYY-MM-DD HH:mm 또는 오프셋 포함 ISO).", hint: "invalid_paid_at" };
+  if (!paidAt) return { ok: false, message: BUILDING_ERROR_TEXT.invalid_paid_at, hint: "invalid_paid_at" };
   const b = await assertBuilding(businessId, buildingId); if (!b.ok) return b;
   return rpc(businessId, "bld_record_payment", {
     p_building: buildingId, p_amount: input.amount, p_paid_at: paidAt, p_method: input.method ?? "transfer",
@@ -359,7 +330,7 @@ export async function recordPaymentsBulk(
   businessId: string, buildingId: string,
   rows: { amount: number; paid_at: string; payer_name?: string; memo?: string; external_key: string; unit_id?: string | null }[],
 ): Promise<ActionResult<{ results: BulkPaymentOutcome[] }>> {
-  if (rows.length === 0 || rows.length > 50) return { ok: false, message: "한 번에 1~50건까지 등록할 수 있습니다.", hint: "bulk_size" };
+  if (rows.length === 0 || rows.length > 50) return { ok: false, message: BUILDING_ERROR_TEXT.bulk_size, hint: "bulk_size" };
   try { await requireCap(businessId, "payment.allocate"); } catch (e) {
     if (e instanceof AccessDenied) return { ok: false, message: accessMessage(e.detail).detail, hint: e.detail.reason };
     throw e;
@@ -369,7 +340,7 @@ export async function recordPaymentsBulk(
   for (const [index, r] of rows.entries()) {
     const unit = r.unit_id || null;
     const paidAt = /^\d{4}-\d{2}-\d{2}T/.test(r.paid_at) && !Number.isNaN(Date.parse(r.paid_at)) ? new Date(r.paid_at).toISOString() : null;
-    if (!paidAt || !Number.isInteger(r.amount) || r.amount <= 0 || !r.external_key) { results.push({ index, status: "failed", unit_id: unit, allocated: 0, credit: 0, message: "일시·금액·거래키를 확인하세요." }); continue; }
+    if (!paidAt || !Number.isInteger(r.amount) || r.amount <= 0 || !r.external_key) { results.push({ index, status: "failed", unit_id: unit, allocated: 0, credit: 0, message: "입금 날짜·금액·거래 번호를 확인하세요." }); continue; }
     const { data, error } = await crm().rpc("bld_record_payment", {
       p_building: buildingId, p_amount: r.amount, p_paid_at: paidAt, p_method: "transfer", p_payer_name: r.payer_name?.slice(0, 40) || null,
       p_external_key: r.external_key, p_unit: unit, p_memo: r.memo?.slice(0, 120) || null, p_auto_allocate: true,
@@ -503,9 +474,17 @@ export async function recordDisclosureRequest(businessId: string, buildingId: st
     return { ok: true, data: { id: data.id as string } };
   });
 }
-export async function recordDispute(businessId: string, billId: string, input: { kind: "dispute" | "correction_request" | "note"; note: string }): Promise<ActionResult<{ id: string }>> {
+export async function recordDispute(businessId: string, billId: string, input: { kind: "dispute" | "correction_request" | "info_request" | "note"; note: string }): Promise<ActionResult<{ id: string }>> {
   return withCap(businessId, "write", async () => {
-    const { data, error } = await crm().from("bld_disputes").insert({ ...input, business_id: businessId, bill_id: billId }).select("id").single();
+    const note = input.note?.trim() ?? "";
+    if (!note || note.length > 1000) return { ok: false, message: BUILDING_ERROR_TEXT.note_required, hint: "note_required" };
+    // 확정(승인)된 계산의 청구서에만 남긴다. 확정 전이면 계산·입력 화면에서 바로 고치면 된다.
+    const bill = await crm().from("bld_bills").select("run_id").eq("id", billId).eq("business_id", businessId).maybeSingle();
+    if (bill.error) return err(bill.error);
+    const run = bill.data ? await crm().from("bld_billing_runs").select("status").eq("id", bill.data.run_id).maybeSingle() : null;
+    if (run?.error) return err(run.error);
+    if (run?.data?.status !== "approved") return { ok: false, message: BUILDING_ERROR_TEXT.bill_not_approved, hint: "bill_not_approved" };
+    const { data, error } = await crm().from("bld_disputes").insert({ ...input, note, business_id: businessId, bill_id: billId }).select("id").single();
     if (error) return err(error);
     reval(businessId);
     return { ok: true, data: { id: data.id as string } };
@@ -513,33 +492,56 @@ export async function recordDispute(businessId: string, billId: string, input: {
 }
 export async function resolveDispute(businessId: string, id: string, status: "resolved" | "rejected", resolution: string): Promise<ActionResult> {
   return withCap(businessId, "write", async () => {
-    const r = await mustAffect(crm().from("bld_disputes").update({ status, resolution, resolved_at: new Date().toISOString() }).eq("id", id).eq("business_id", businessId));
+    const text = resolution?.trim() ?? "";
+    if (!text || text.length > 1000) return { ok: false, message: BUILDING_ERROR_TEXT.resolution_required, hint: "resolution_required" };
+    // 아직 열려 있는 건만 처리한다(이미 처리된 기록을 덮어쓰지 않는다).
+    const r = await mustAffect(crm().from("bld_disputes").update({ status, resolution: text, resolved_at: new Date().toISOString() }).eq("id", id).eq("business_id", businessId).eq("status", "open"));
     if (!r.ok) return r.error ? err(r.error) : { ok: false, message: NO_ROWS_MESSAGE };
     reval(businessId);
     return { ok: true, data: undefined };
   });
 }
+/** 장기수선충당금 장부 한 줄. 적립·이자·사용은 양수로 적고(사용은 잔액에서 빼서 계산), 바로잡기(adjust)만 −도 허용한다. */
 export async function addRepairFundEntry(businessId: string, buildingId: string, input: { period: string; kind: "contribution" | "spend" | "interest" | "adjust"; amount: number; memo?: string }): Promise<ActionResult<{ id: string }>> {
   return withCap(businessId, ["write", "revenue.read"], async () => {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(input.period)) return { ok: false, message: "월은 2026-09 처럼 적어 주세요.", hint: "invalid_period" };
+    if (!["contribution", "spend", "interest", "adjust"].includes(input.kind)) return { ok: false, message: "종류를 골라 주세요.", hint: "invalid_kind" };
+    if (!Number.isSafeInteger(input.amount) || input.amount === 0 || (input.kind !== "adjust" && input.amount < 0)) return { ok: false, message: input.kind === "adjust" ? "바로잡을 금액은 0이 아닌 원 단위 숫자여야 합니다. 줄이는 돈이면 앞에 −를 붙이세요." : "금액은 0보다 큰 원 단위 숫자여야 합니다.", hint: "invalid_amount" };
     const f = await crm().rpc("bld_feature_status", { p_business: businessId, p_key: "long_term_repair" });
     if (f.error) return err(f.error);
     if (f.data !== "on") return { ok: false, message: pgError({ message: "feature_off:" }).message, hint: "feature_off" };
     const b = await assertBuilding(businessId, buildingId); if (!b.ok) return b;
-    const { data, error } = await crm().from("bld_repair_fund").insert({ ...input, business_id: businessId, building_id: buildingId }).select("id").single();
+    const memo = input.memo?.trim() ? input.memo.trim().slice(0, 200) : null;
+    const { data, error } = await crm().from("bld_repair_fund").insert({ period: input.period, kind: input.kind, amount: input.amount, memo, business_id: businessId, building_id: buildingId }).select("id").single();
     if (error) return err(error);
     reval(businessId);
     return { ok: true, data: { id: data.id as string } };
   });
 }
+/** 연 예산(분류별) 저장. 금액 표는 가려져 있어 upsert(ON CONFLICT)를 못 쓴다 → 뷰로 찾아 고치거나 새로 넣는다. */
 export async function upsertBudget(businessId: string, buildingId: string, input: { year: number; std_category: string; amount: number }): Promise<ActionResult<{ id: string }>> {
   return withCap(businessId, "billing.configure", async () => {
+    if (!Number.isInteger(input.year) || input.year < 2000 || input.year > 2100) return { ok: false, message: "연도는 2000~2100 사이로 적어 주세요.", hint: "invalid_year" };
+    if (!(STD_CATEGORIES as readonly string[]).includes(input.std_category)) return { ok: false, message: "분류를 골라 주세요.", hint: "invalid_category" };
+    if (!Number.isSafeInteger(input.amount) || input.amount < 0) return { ok: false, message: "예산은 0 이상의 원 단위 숫자여야 합니다.", hint: "invalid_amount" };
     const f = await crm().rpc("bld_feature_status", { p_business: businessId, p_key: "budget" });
     if (f.error) return err(f.error);
     if (f.data !== "on") return { ok: false, message: pgError({ message: "feature_off:" }).message, hint: "feature_off" };
     const b = await assertBuilding(businessId, buildingId); if (!b.ok) return b;
-    const { data, error } = await crm().from("bld_budgets").upsert({ ...input, business_id: businessId, building_id: buildingId }, { onConflict: "building_id,year,std_category" }).select("id").single();
-    if (error) return err(error);
+    const find = async () => crm().from("v_bld_budgets").select("id").eq("building_id", buildingId).eq("year", input.year).eq("std_category", input.std_category).maybeSingle();
+    const patch = async (id: string): Promise<ActionResult<{ id: string }>> => {
+      const u = await mustAffect(crm().from("bld_budgets").update({ amount: input.amount }).eq("id", id).eq("business_id", businessId));
+      if (!u.ok) return u.error ? err(u.error) : { ok: false, message: NO_ROWS_MESSAGE };
+      reval(businessId);
+      return { ok: true, data: { id } };
+    };
+    const cur = await find();
+    if (cur.error) return err(cur.error);
+    if (cur.data) return patch(cur.data.id as string);
+    const ins = await crm().from("bld_budgets").insert({ ...input, business_id: businessId, building_id: buildingId }).select("id").single();
+    if (ins.error?.code === "23505") { const again = await find(); if (again.data) return patch(again.data.id as string); }
+    if (ins.error) return err(ins.error);
     reval(businessId);
-    return { ok: true, data: { id: data.id as string } };
+    return { ok: true, data: { id: ins.data.id as string } };
   });
 }
