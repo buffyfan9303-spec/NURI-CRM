@@ -38,6 +38,7 @@ export default async function DisputesPage({ params, searchParams }: { params: {
           feature={ctx.features.tenant_portal}
           canWrite={ctx.can("write")}
           canBilling={ctx.can("revenue.read")}
+          canManage={ctx.can("staff.manage")}
           tz={ctx.access.timezone}
           unitNames={unitNames}
         />

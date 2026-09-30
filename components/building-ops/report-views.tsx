@@ -40,8 +40,9 @@ export function ReportTabs({ ctx, view }: { ctx: BuildingCtx; view: ReportView }
 
 function FeatureOff({ ctx, label }: { ctx: BuildingCtx; label: string }) {
   return (
-    <EmptyState title={`${label} 기능이 꺼져 있습니다.`} description="선택 기능에서 켜세요."
-      action={<Link href={`/w/${ctx.businessId}/settings`} className="text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link>} />
+    <EmptyState title={`${label} 기능이 꺼져 있습니다.`}
+      description={ctx.can("staff.manage") ? "선택 기능에서 켜세요." : "선택 기능은 사업장 대표(직원·권한 관리 권한)가 설정에서 켭니다. 대표에게 켜 달라고 요청하세요."}
+      action={ctx.can("staff.manage") ? <Link href={`/w/${ctx.businessId}/settings`} className="text-[length:var(--fs-body)] font-medium text-t underline">선택 기능 설정으로</Link> : undefined} />
   );
 }
 

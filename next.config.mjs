@@ -15,6 +15,15 @@ const nextConfig = {
   // ("Cannot find module ./vendor-chunks/…", 404/500). 로컬에서만 NEXT_DIST_DIR=.next-3012 처럼 분리한다.
   // 운영(Vercel)은 이 변수를 쓰지 않으므로 기본 .next 그대로다.
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  // PDF 라우트(@react-pdf → pdfkit 0.20): pdfkit 이 기본 글꼴을 package "imports"(#standard-fonts/*.cjs)로 불러
+  // 파일 추적이 놓친다 → Vercel 에서 "Cannot find module …/standard-fonts/Helvetica.cjs" 500(2026-09-30 운영 실측).
+  // 한글 글꼴도 lib/pdf/fonts.ts 가 public/fonts 를 디스크에서 읽으므로 함수 묶음에 넣는다.
+  experimental: {
+    outputFileTracingIncludes: {
+      "/api/pdf/**": ["./node_modules/pdfkit/js/**", "./public/fonts/**"],
+      "/tenant/pdf/**": ["./node_modules/pdfkit/js/**", "./public/fonts/**"],
+    },
+  },
   // 추후 이미지 도메인 추가 시 여기에
   images: {
     remotePatterns: [],

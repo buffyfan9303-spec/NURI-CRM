@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [error, setError] = React.useState<string | undefined>(undefined);
   const [pending, setPending] = React.useState(false);
   const [sentTo, setSentTo] = React.useState<string | null>(null);
+  const [signedIn, setSignedIn] = React.useState(false);
 
   const handleSubmit = async ({ name, email, password }: SignupInput) => {
     if (pending) return;
@@ -29,6 +30,7 @@ export default function SignupPage() {
         setError(result.detail ? `${result.message} — ${result.detail}` : result.message);
         return;
       }
+      setSignedIn(!!result.signedIn);
       setSentTo(email);
     } finally {
       setPending(false);
@@ -42,13 +44,15 @@ export default function SignupPage() {
           <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full border border-auth-field-bd bg-auth-field text-auth-tx">
             <MailCheck size={22} aria-hidden />
           </div>
-          <h1 className="text-[20px] font-semibold text-auth-tx">인증 메일을 확인하세요</h1>
+          <h1 className="text-[20px] font-semibold text-auth-tx">{signedIn ? "가입이 끝났습니다" : "인증 메일을 확인하세요"}</h1>
           <p className="max-w-[320px] text-[12.5px] leading-relaxed text-auth-tx2">
-            {sentTo}로 인증 메일을 보냈습니다. 메일의 링크를 눌러 인증을 완료한 뒤 로그인하세요.
-            사업장 소속·권한은 이후 관리자 승인으로 결정됩니다.
+            {signedIn
+              ? `${sentTo} 계정으로 로그인되었습니다. 사업장을 새로 만들거나, 초대받은 사업장이 있으면 목록에서 고르세요.`
+              : `${sentTo}로 인증 메일을 보냈습니다. 메일의 링크를 눌러 인증을 완료한 뒤 로그인하세요.`}
+            {" "}사업장 소속·권한은 사업장 대표의 초대·승인으로 정해집니다.
           </p>
-          <AuthButton variant="ghost" className="mt-3" onClick={() => router.push("/login")}>
-            로그인으로 이동
+          <AuthButton variant="ghost" className="mt-3" onClick={() => router.push(signedIn ? "/select" : "/login")}>
+            {signedIn ? "내 사업장으로" : "로그인으로 이동"}
           </AuthButton>
         </div>
       </AuthShell>

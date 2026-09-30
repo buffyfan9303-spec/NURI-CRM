@@ -21,7 +21,7 @@ import { formatBizRegNo, isValidBizRegNo, normalizeBizRegNo } from "@/lib/extern
 import { fetchNtsStatus, ntsConfigured, type NtsStatus } from "@/lib/external/nts";
 
 export type AuthActionResult =
-  | { ok: true }
+  | { ok: true; /** 가입 직후 로그인 세션이 생겼는가(= 이메일 인증 꺼짐). signUp 만 채운다. */ signedIn?: boolean }
   | { ok: false; code: AuthErrorCode; message: string; detail?: string };
 
 export type AuthErrorCode =
@@ -101,14 +101,15 @@ export async function signUp(
     };
   }
   const sb = getServerSupabase();
-  const { error } = await sb.auth.signUp({
+  const { data, error } = await sb.auth.signUp({
     email: id,
     password,
     // 이름은 표시용 메타데이터일 뿐 권한 근거가 아니다(계약 §5-1).
     options: { data: { name: name.trim().slice(0, 60) } },
   });
   if (error) return { ok: false, ...mapAuthError(error.message) };
-  return { ok: true };
+  // 이메일 인증이 꺼진 프로젝트는 가입과 동시에 세션을 준다 → 화면이 "인증 메일" 대신 "가입 완료"를 보여 준다(2026-09-30 운영 QA).
+  return { ok: true, signedIn: !!data.session };
 }
 
 export async function requestPasswordReset(email: string, origin: string): Promise<AuthActionResult> {

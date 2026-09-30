@@ -41,18 +41,13 @@ import { cn } from "@/lib/utils/cn";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { signOut } from "@/lib/auth/actions";
 import type { MyBusiness } from "@/lib/auth/actions";
-import type { Industry, IndustryNav } from "@/lib/industry/config";
+import { INDUSTRY_DEFS, type Industry, type IndustryNav } from "@/lib/industry/config";
 import { NAV_GROUP_ORDER, NAV_GROUP_LABEL, navGroupFor } from "@/components/shell/navGroups";
 import { PRIMARY_ACTION } from "@/components/shell/primaryAction";
 import { CommandPalette } from "@/components/shell/CommandPalette";
 
-const INDUSTRY_LABEL: Record<string, string> = {
-  factory: "의류공장",
-  rental: "의류렌탈",
-  unmanned: "무인매장",
-  salon: "미용실",
-  academy: "학원",
-};
+// 업종 이름은 lib/industry/config 한 곳에서(복제본이 새 업종 building 을 빠뜨려 "building" 이 그대로 보였다).
+const INDUSTRY_LABEL: Record<string, string> = Object.fromEntries(Object.values(INDUSTRY_DEFS).map((d) => [d.key, d.name]));
 
 const SIDEBAR_COLLAPSE_KEY = "nuri_crm_sidebar_collapsed";
 // CLS: 서버·첫 클라이언트 렌더는 viewport="wide" 라 960~1199(강제 rail)에서 라벨이 먼저 그려졌다가 hydration 뒤

@@ -41,6 +41,8 @@ export interface TenantPortalCardProps {
   canWrite: boolean;
   /** 코드 발급은 청구받는 사람 이름이 나오므로 revenue.read 도 필요. */
   canBilling: boolean;
+  /** 선택 기능 스위치(설정 화면)를 켤 수 있는가 = staff.manage. 없으면 설정 링크 대신 대표에게 요청하라는 안내. */
+  canManage?: boolean;
   tz: string;
   unitNames: Record<string, string>;
   api?: PortalAdminApi;
@@ -88,7 +90,7 @@ export function TenantPortalCard(p: TenantPortalCardProps) {
       <Card className="p-4 sm:p-5">
         {head}
         <Alert kind="warning">{FEATURE_TEXT[p.feature]}</Alert>
-        {p.feature === "off" && <p className="mt-3 text-[length:var(--fs-body)]"><Link href={`/w/${p.businessId}/settings`} className="font-medium text-[var(--accent-ink)] underline underline-offset-2">설정으로 가기</Link></p>}
+        {p.feature === "off" && (p.canManage ? <p className="mt-3 text-[length:var(--fs-body)]"><Link href={`/w/${p.businessId}/settings`} className="font-medium text-[var(--accent-ink)] underline underline-offset-2">설정으로 가기</Link></p> : <p className="mt-3 text-[length:var(--fs-meta)] text-t3">선택 기능은 사업장 대표(직원·권한 관리 권한)가 설정에서 켭니다. 대표에게 켜 달라고 요청하세요.</p>)}
       </Card>
     );
   }

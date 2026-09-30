@@ -6,7 +6,7 @@ import { INDUSTRY_ICON, FALLBACK_ICON } from "@/lib/icons-map";
 import { Spinner } from "@/components/ui/Spinner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { signOut } from "@/lib/auth/actions";
-import type { Industry } from "@/lib/industry/config";
+import { INDUSTRY_DEFS, type Industry } from "@/lib/industry/config";
 import { ROLE_LABEL } from "@/lib/auth/roles";
 
 export interface BusinessOption {
@@ -25,13 +25,8 @@ export interface BusinessPickerProps {
   onRetry?: () => void;
 }
 
-const INDUSTRY_LABEL: Record<string, string> = {
-  factory: "의류공장",
-  rental: "의류렌탈",
-  unmanned: "무인매장",
-  salon: "미용실",
-  academy: "학원",
-};
+// 업종 이름은 lib/industry/config 한 곳에서(복제본이 새 업종 building 을 빠뜨려 "building" 이 그대로 보였다).
+const INDUSTRY_LABEL: Record<string, string> = Object.fromEntries(Object.values(INDUSTRY_DEFS).map((d) => [d.key, d.name]));
 
 
 /**
