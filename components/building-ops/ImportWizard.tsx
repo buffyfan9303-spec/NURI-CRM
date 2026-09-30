@@ -111,9 +111,9 @@ function Wizard(p: ImportsProps) {
     setBusy(true); setError(null); setStaged(null);
     const s = await post<ImportStageResult>(form("stage"));
     setBusy(false);
-    if (!s.ok) { setError(s.hint === "duplicate_import" ? `${s.message} 같은 파일을 다시 넣으려면 내역에서 이전 가져오기를 취소하세요.` : s.message); return; }
+    if (!s.ok) { setError(s.hint === "duplicate_import" ? `${s.message} 같은 파일을 다시 가져오려면 내역에서 이전 가져오기를 취소하세요.` : s.message); return; }
     setStaged(s.data);
-    if (s.data.errors > 0) { setError(`서버 검사에서 오류 ${s.data.errors}행이 나와 확정하지 않았습니다. 내역에서 이 가져오기를 취소하고 파일을 고치세요.`); router.refresh(); return; }
+    if (s.data.errors > 0) { setError(`서버 검사에서 오류 ${s.data.errors}행이 나와 확정하지 않았습니다. 내역에서 이 가져오기를 취소하고 파일을 수정하세요.`); router.refresh(); return; }
     const c = await run(() => commitImport(p.businessId, s.data.batch_id), { success: "가져오기를 확정했습니다." });
     if (c.ok) setDone({ ...c.data, batchId: s.data.batch_id });
   };
@@ -207,7 +207,7 @@ function Wizard(p: ImportsProps) {
           </p>
           {(kind === "bill" || kind === "expense" || kind === "bank") && (
             <div className="flex flex-wrap items-end gap-2">
-              <Input label="원본 고지서·내역 합계(원, 선택)" inputMode="numeric" wrapperClassName={FW.money} value={expected} onChange={(e) => setExpected(e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} hint="넣으면 파일 금액 합계와 맞는지 대조합니다." />
+              <Input label="원본 고지서·내역 합계(원, 선택)" inputMode="numeric" wrapperClassName={FW.money} value={expected} onChange={(e) => setExpected(e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} hint="입력하면 파일 금액 합계와 맞는지 대조합니다." />
               <Button type="button" variant="secondary" loading={busy} onClick={validate}>다시 검사</Button>
             </div>
           )}
@@ -228,7 +228,7 @@ function Wizard(p: ImportsProps) {
             {val.rows > val.preview.length && <p className="mt-1 text-[length:var(--fs-meta)] text-t3">앞의 {val.preview.length}행만 보여 줍니다.</p>}
           </div>
           {kind === "bank" && mapping.txnDatetime === undefined && <Alert kind="warning" className="mb-3">거래일시 열을 지정하지 않았습니다. 일시가 없는 입금 행은 확정할 때 모두 건너뜁니다. 이전 단계에서 거래일시 열을 지정하세요.</Alert>}
-          {val.errorRows > 0 && <Alert kind="warning" className="mb-3">오류가 남은 파일은 저장하지 않습니다. 열 지정을 고치거나 파일을 고쳐 다시 올리세요.</Alert>}
+          {val.errorRows > 0 && <Alert kind="warning" className="mb-3">오류가 남은 파일은 저장하지 않습니다. 열 지정을 수정하거나 파일을 수정해 다시 올리세요.</Alert>}
           <div className="flex gap-2">
             <Button type="button" variant="ghost" onClick={() => setStep(1)}>이전</Button>
             <Button type="button" disabled={val.errorRows > 0 || val.rows === 0} onClick={() => setStep(3)}>다음</Button>
@@ -240,8 +240,8 @@ function Wizard(p: ImportsProps) {
         <div className="max-w-[720px]">
           {done ? (
             <>
-              <Alert kind="success" className="mb-3"><span className="tabular-nums">확정했습니다. 반영 {num(done.committed)}건, 건너뜀 {num(done.skipped)}건.</span>{kind === "bank" && done.skipped > 0 && <span className="mt-1 block">거래일시가 없거나 읽지 못한 입금은 가져온 시각으로 바꾸지 않고 건너뜁니다. 파일의 거래일시 열을 확인해 고친 파일로 다시 가져오세요.</span>}</Alert>
-              <p className="mb-3 text-[length:var(--fs-meta)] text-t3">잘못 넣었다면 아래 내역에서 이 가져오기를 취소하면 되돌립니다. 승인된 청구월이나 이미 배정된 입금은 되돌릴 수 없습니다.</p>
+              <Alert kind="success" className="mb-3"><span className="tabular-nums">확정했습니다. 반영 {num(done.committed)}건, 건너뜀 {num(done.skipped)}건.</span>{kind === "bank" && done.skipped > 0 && <span className="mt-1 block">거래일시가 없거나 읽지 못한 입금은 가져온 시각으로 바꾸지 않고 건너뜁니다. 파일의 거래일시 열을 확인해 수정한 파일로 다시 가져오세요.</span>}</Alert>
+              <p className="mb-3 text-[length:var(--fs-meta)] text-t3">잘못 가져왔다면 아래 내역에서 이 가져오기를 취소하면 되돌립니다. 승인된 청구월이나 이미 배정된 입금은 되돌릴 수 없습니다.</p>
               <Button type="button" onClick={reset}>새 가져오기</Button>
             </>
           ) : (

@@ -12,12 +12,12 @@ import { INDUSTRIES, INDUSTRY_DEFS, isIndustryReady } from "@/lib/industry/confi
 import { formatBizRegNo, isValidBizRegNo, normalizeBizRegNo } from "@/lib/external/bizno";
 import type { NtsStatus } from "@/lib/external/nts";
 
-const BIZNO_FORMAT_ERROR = "사업자등록번호 형식(10자리·검증숫자)이 올바르지 않습니다";
+const BIZNO_FORMAT_ERROR = "사업자등록번호 형식(10자리)이 올바르지 않습니다";
 
 /** 국세청 상태 배지 문구·강조. null = 배지 없음(키 없음/미조회). */
 function ntsBadge(nts: NtsStatus | null | undefined): { text: string; warn: boolean } | null {
   if (!nts) return null;
-  if (!nts.registered) return { text: "국세청 미등록 번호", warn: true };
+  if (!nts.registered) return { text: "미등록 번호", warn: true };
   const tax = nts.taxType ? ` · ${nts.taxType}` : "";
   return { text: `${nts.status}${tax}${nts.endDate ? ` (${nts.endDate})` : ""}`, warn: nts.statusCode !== "01" };
 }

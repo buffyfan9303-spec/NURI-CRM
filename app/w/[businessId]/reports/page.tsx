@@ -1,6 +1,6 @@
 /**
  * 월별 정산 보고서(building). 원본 엑셀 관리집계표·관리비비교표 구성을 한 화면에:
- * ① 이번 달 요약 ② 호실별 정산표(항목 열 + 합계 행) ③ 항목별 지난달 비교 ④ 받을 돈 나이.
+ * ① 이번 달 요약 ② 호실별 정산표(항목 열 + 합계 행) ③ 항목별 지난달 비교 ④ 미수금 경과 기간.
  * 확정된 청구만 센다. revenue.read 필요. A4 가로 한 장 인쇄(globals.css .bld-report).
  * ④ 건물 전체 12개월 흐름·전년 같은 달 비교(TrendCard, 화면 전용). 다른 보기는 ?view=owners|budget|repair|law14(report-views·Law14View).
  * 구조 근거: docs/design-references/2026-09-30-cam-report-from-excel.md
@@ -61,7 +61,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
       {ctx.can("export") && <a className={LINK} href={`/api/building/report-xlsx?${q}&kind=ledger`} download>한 달 전체 기록 엑셀</a>}
     </div>
   );
-  const header = (ready: boolean) => <><BuildingHeader ctx={ctx} title="월별 정산 보고서" description="금액을 확정한 달의 호실별 관리비와 받은 돈·못 받은 돈을 원래 쓰던 관리집계표처럼 한 장에 봅니다." actions={actions(ready)} /><ReportTabs ctx={ctx} view="settle" /></>;
+  const header = (ready: boolean) => <><BuildingHeader ctx={ctx} title="월별 정산 보고서" description="금액을 확정한 달의 호실별 관리비와 수납액·미수금을 원래 쓰던 관리집계표처럼 한 장에 봅니다." actions={actions(ready)} /><ReportTabs ctx={ctx} view="settle" /></>;
 
   const [sRes, aRes] = await Promise.all([loadSettlement(ctx.businessId, ctx.building.id, ctx.period), getAging(ctx.building.id)]);
   const fail = [sRes, aRes].find((x) => !x.ok);
@@ -95,8 +95,8 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
         <SummaryStrip
           items={[
             { label: "이번 달 관리비 합계", value: won(t.current) },
-            { label: "받은 돈", value: won(t.paid), tone: "success" },
-            { label: "못 받은 돈(오늘 기준)", value: won(t.left), tone: t.left > 0 ? "danger" : "muted" },
+            { label: "수납액", value: won(t.paid), tone: "success" },
+            { label: "미수금(오늘 기준)", value: won(t.left), tone: t.left > 0 ? "danger" : "muted" },
             { label: hasPrev ? `지난달(${periodLabel(prevP)})보다` : "지난달보다", value: hasPrev ? <Diff n={s.compareTotal.diff} pct={s.compareTotal.pct} /> : <span className="text-t3">지난달 확정 없음</span> },
             { label: "호실 수", value: `${s.rows.length}호실` },
           ]}
@@ -110,14 +110,14 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
                 <tr>
                   <th className={cn(TH, "sticky left-0 z-[1] bg-sf2")}>호실·입주자</th>
                   {s.items.map((k) => <th key={k} className={NUMH}>{k}</th>)}
-                  <th className={cn(NUMH, "border-l border-[var(--bd)]")}>부가세 빼기 전</th>
+                  <th className={cn(NUMH, "border-l border-[var(--bd)]")}>공급가액</th>
                   <th className={NUMH}>부가세</th>
                   <th className={NUMH}>이번 달 관리비</th>
-                  <th className={NUMH} title="지난달까지 안 낸 돈">밀린 돈</th>
+                  <th className={NUMH} title="전월까지 미납액">전월 미납액</th>
                   {hasLate && <th className={NUMH}>연체료</th>}
-                  <th className={NUMH}>이번 달 낼 돈</th>
-                  <th className={NUMH}>낸 돈</th>
-                  <th className={NUMH}>남은 돈</th>
+                  <th className={NUMH}>이번 달 납부액</th>
+                  <th className={NUMH}>수납액</th>
+                  <th className={NUMH}>미납액</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,7 +155,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
               </tfoot>
             </table>
           </div>
-          <p className="mt-2 text-[length:var(--fs-meta)] text-t3">낸 돈은 &ldquo;이번 달 낼 돈 − 오늘 남은 돈&rdquo;입니다. 남은 돈은 이 달까지 청구한 돈 중 아직 안 들어온 돈입니다.{!hasLate && " 이 달은 연체료가 없어 연체료 칸을 뺐습니다."}</p>
+          <p className="mt-2 text-[length:var(--fs-meta)] text-t3">수납액은 &ldquo;이번 달 납부액 − 오늘 미납액&rdquo;입니다. 미납액은 이 달까지 청구한 금액 중 아직 입금되지 않은 금액입니다.{!hasLate && " 이 달은 연체료가 없어 연체료 칸을 뺐습니다."}</p>
         </Card>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[3fr_2fr] print:grid-cols-[3fr_2fr]">
@@ -184,9 +184,9 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
           </Card>
 
           <Card className="p-4 sm:p-5">
-            <CardHead title="③ 받을 돈이 얼마나 밀렸나" description={`오늘(${aRes.data.asof}) 기준, 건물 전체의 아직 안 들어온 돈입니다.`} />
+            <CardHead title="③ 미수금 경과 기간(연령 분석)" description={`오늘(${aRes.data.asof}) 기준, 건물 전체의 아직 입금되지 않은 금액입니다.`} />
             <table className={cn(TABLE, "bld-dense text-[length:var(--fs-meta)]")}>
-              <thead className={THEAD}><tr><th className={TH}>밀린 기간</th><th className={NUMH}>금액</th><th className={cn(TH, "w-[40%]")}><span className="sr-only">비율 막대</span></th></tr></thead>
+              <thead className={THEAD}><tr><th className={TH}>경과 기간</th><th className={NUMH}>금액</th><th className={cn(TH, "w-[40%]")}><span className="sr-only">비율 막대</span></th></tr></thead>
               <tbody>
                 {AGE.map((a) => (
                   <tr key={a.k} className="border-b border-[var(--bd)]">
@@ -204,7 +204,7 @@ export default async function ReportsPage({ params, searchParams }: { params: { 
                 <tr className="border-t-2 border-[var(--t)] font-bold text-t"><td className={TD}>합계</td><td className={NUM}>{won(ag.total)}</td><td className={TD} /></tr>
               </tfoot>
             </table>
-            {ag.total !== t.left && <p className="mt-2 text-[length:var(--fs-meta)] text-t3">이 표는 모든 달을 합친 금액이라 위 정산표의 &ldquo;남은 돈&rdquo;(이 달까지)과 다를 수 있습니다.</p>}
+            {ag.total !== t.left && <p className="mt-2 text-[length:var(--fs-meta)] text-t3">이 표는 모든 달을 합친 금액이라 위 정산표의 &ldquo;미납액&rdquo;(이 달까지)과 다를 수 있습니다.</p>}
           </Card>
         </div>
       </div>

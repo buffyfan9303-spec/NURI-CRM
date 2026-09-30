@@ -28,7 +28,7 @@ export default async function ExpensesPage({ params, searchParams }: { params: {
   const locked = isLockedStatus(pRes.data?.status);
   return (
     <PageBody wide>
-      <BuildingHeader ctx={ctx} title="비용 입력" description="이번 달 건물이 낸 돈(전기·수도·청소 등)을 항목별로 적습니다." />
+      <BuildingHeader ctx={ctx} title="비용 입력" description="이번 달 건물이 지출한 비용(전기·수도·청소 등)을 항목별로 적습니다." />
       <ExpenseForm
         businessId={ctx.businessId}
         buildingId={ctx.building.id}

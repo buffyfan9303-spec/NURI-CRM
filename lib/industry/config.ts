@@ -252,18 +252,18 @@ export const INDUSTRY_DEFS: Record<Industry, IndustryDef> = {
     nav: [
       { key: "dash", path: "", label: "이번 달 할 일", cap: "view" },
       { key: "units", path: "units", label: "호실·입주자", cap: "view" },
-      { key: "meters", path: "meters", label: "계량기 숫자 입력", cap: "write" },
+      { key: "meters", path: "meters", label: "검침값 입력", cap: "write" },
       { key: "expenses", path: "expenses", label: "비용 입력", cap: "write" },
       { key: "billing", path: "billing", label: "관리비 계산·확정", cap: "revenue.read" },
-      { key: "statements", path: "statements", label: "명세서 보내기", cap: "revenue.read" },
-      { key: "payments", path: "payments", label: "받은 돈 확인", cap: "revenue.read" },
-      { key: "receivables", path: "receivables", label: "못 받은 돈", cap: "revenue.read" },
+      { key: "statements", path: "statements", label: "명세서 발송", cap: "revenue.read" },
+      { key: "payments", path: "payments", label: "수납 확인", cap: "revenue.read" },
+      { key: "receivables", path: "receivables", label: "미수금", cap: "revenue.read" },
       { key: "disputes", path: "disputes", label: "입주자 문의·이의", cap: "view" },
       { key: "tax", path: "tax", label: "세금계산서 일괄발행", cap: "revenue.read" }, // 항상 표시. 발행 기록은 tax.issue, 서버 RPC 는 features.tax_invoice 를 요구
       { key: "requests", path: "requests", label: "민원·수리", cap: "view" }, // features.work_orders
       { key: "calendar", path: "calendar", label: "점검·일정", cap: "view" }, // features.inspections
       { key: "reports", path: "reports", label: "월별 정산 보고서", cap: "revenue.read" },
-      { key: "charges", path: "charges", label: "관리비 항목 정하기", cap: "billing.configure" },
+      { key: "charges", path: "charges", label: "관리비 항목 설정", cap: "billing.configure" },
       { key: "imports", path: "imports", label: "엑셀 파일 가져오기", cap: "write" },
       { key: "staff", path: "staff", label: "직원·권한", cap: "staff.manage" },
     ],

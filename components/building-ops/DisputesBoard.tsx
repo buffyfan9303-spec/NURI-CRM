@@ -2,7 +2,7 @@
 
 /**
  * 입주자 문의·이의: 확정된 청구서(호실)를 골라 기록 → 열림/처리됨/거절 목록 → 처리(처리 내용 필수).
- * 금액을 고쳐야 하면 '관리비 계산·확정'의 '금액 고치기'로 간다(여기서는 기록만). 쓰기는 recordDispute/resolveDispute(서버가 확정 청구서·열린 건인지 다시 검사).
+ * 금액을 정정해야 하면 '관리비 계산·확정'의 '금액 정정'으로 간다(여기서는 기록만). 쓰기는 recordDispute/resolveDispute(서버가 확정 청구서·열린 건인지 다시 검사).
  */
 import * as React from "react";
 import Link from "next/link";
@@ -27,7 +27,7 @@ export interface DisputesProps {
   rows: DisputeRow[];
 }
 
-const KIND: Record<DisputeKind, string> = { dispute: "금액 이의", correction_request: "고쳐 달라는 요청", info_request: "정보 요청", note: "메모" };
+const KIND: Record<DisputeKind, string> = { dispute: "금액 이의", correction_request: "정정 요청", info_request: "정보 요청", note: "메모" };
 /** 담당자가 직접 기록할 때 고르는 종류(recordDispute 가 받는 값). 전화·방문으로 받은 정보 요청(14항목 금액 등)도 기록한다. */
 const STAFF_KINDS = ["dispute", "correction_request", "info_request", "note"] as const;
 const STATUS: Record<DisputeStatus, { label: string; kind: "warning" | "success" | "error" }> = {
@@ -82,7 +82,7 @@ function RecordCard(p: DisputesProps) {
       {!p.canWrite ? (
         <Alert kind="warning">기록은 쓰기 권한이 있는 담당자가 합니다. 아래 목록은 볼 수 있습니다.</Alert>
       ) : p.bills.length === 0 ? (
-        <Alert kind="warning">{p.period} 관리비는 아직 확정되지 않아 청구서가 없습니다. 위에서 확정된 달을 고르세요. 확정 전이라면 계산·입력 화면에서 바로 고치면 됩니다.</Alert>
+        <Alert kind="warning">{p.period} 관리비는 아직 확정되지 않아 청구서가 없습니다. 위에서 확정된 달을 고르세요. 확정 전이라면 계산·입력 화면에서 바로 수정하면 됩니다.</Alert>
       ) : (
         <form onSubmit={submit} className={FORM_ROW}>
           <SelectField label="호실(청구서)" required value={billId} onChange={(e) => setBillId(e.target.value)} wrapperClassName={FW.select}>
@@ -94,7 +94,7 @@ function RecordCard(p: DisputesProps) {
           </SelectField>
           <div className="w-full sm:max-w-[560px]">
             <label htmlFor="dispute-note" className="mb-1.5 block text-[length:var(--fs-body)] font-medium text-t2">내용<span className="ml-0.5 text-et" aria-hidden>*</span></label>
-            <textarea id="dispute-note" className={`${TEXTAREA} min-h-[80px]`} rows={3} required value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="예: 전기요금이 지난달보다 두 배라고 하십니다. 계량기 숫자를 다시 확인해 달라고 요청." />
+            <textarea id="dispute-note" className={`${TEXTAREA} min-h-[80px]`} rows={3} required value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="예: 전기요금이 지난달보다 두 배라고 하십니다. 검침값을 다시 확인해 달라고 요청." />
           </div>
           <div className={FORM_ACTIONS}>
             {error && <Alert kind="error" className="w-full">{error}</Alert>}
@@ -147,7 +147,7 @@ function Resolve({ r, p, billingHref, onDone }: { r: DisputeRow; p: DisputesProp
     <div>
       {r.kind !== "note" && p.canBilling && (
         <p className="mb-3 text-[length:var(--fs-body)] text-t2">
-          관리비 금액을 고쳐야 한다면 <Link href={billingHref} className="font-medium text-t underline">관리비 계산·확정 화면의 &apos;금액 고치기&apos;</Link>로 고친 뒤, 여기에 처리 내용을 남기세요.
+          관리비 금액을 정정해야 한다면 <Link href={billingHref} className="font-medium text-t underline">관리비 계산·확정 화면의 &apos;금액 정정&apos;</Link>로 정정한 뒤, 여기에 처리 내용을 남기세요.
         </p>
       )}
       <div className={`${FORM_ROW} mb-3`}>
@@ -156,7 +156,7 @@ function Resolve({ r, p, billingHref, onDone }: { r: DisputeRow; p: DisputesProp
         </SelectField>
         <div className="w-full sm:max-w-[560px]">
           <label htmlFor={`resolution-${r.id}`} className="mb-1.5 block text-[length:var(--fs-body)] font-medium text-t2">처리 내용<span className="ml-0.5 text-et" aria-hidden>*</span></label>
-          <textarea id={`resolution-${r.id}`} className={`${TEXTAREA} min-h-[72px]`} rows={2} value={text} maxLength={1000} onChange={(e) => setText(e.target.value)} aria-describedby={r.source === "tenant" ? `resolution-note-${r.id}` : undefined} placeholder="예: 계량기 숫자 다시 확인, 이상 없음을 입주자에게 설명함" />
+          <textarea id={`resolution-${r.id}`} className={`${TEXTAREA} min-h-[72px]`} rows={2} value={text} maxLength={1000} onChange={(e) => setText(e.target.value)} aria-describedby={r.source === "tenant" ? `resolution-note-${r.id}` : undefined} placeholder="예: 검침값 다시 확인, 이상 없음을 입주자에게 설명함" />
           {r.source === "tenant" && (
             <p id={`resolution-note-${r.id}`} className="mt-1.5 text-[length:var(--fs-meta)] font-medium text-wt">
               입주자에게 보입니다 — 이 처리 내용은 입주자 조회 화면에 그대로 나옵니다. 다른 호실 이야기나 내부 메모는 적지 마세요.

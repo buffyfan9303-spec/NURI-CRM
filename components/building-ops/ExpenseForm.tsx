@@ -1,6 +1,6 @@
 "use client";
 
-/** 비용 입력: 항목 선택 → 부가세 빼기 전 금액·부가세 → 저장(createExpense). 칸 폭은 FieldWidths(한 줄에 흐름). 삭제는 delete 권한(deleteExpense, 서버 재검사). */
+/** 비용 입력: 항목 선택 → 공급가액·부가세 → 저장(createExpense). 칸 폭은 FieldWidths(한 줄에 흐름). 삭제는 delete 권한(deleteExpense, 서버 재검사). */
 import * as React from "react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -47,20 +47,20 @@ export function ExpenseForm({
 
   return (
     <div className="space-y-4">
-      {locked && <Alert kind="warning">이 달 금액은 이미 확정돼 비용을 바꿀 수 없습니다. 고칠 일이 있으면 관리비 계산 화면에서 "금액 고치기"로 다시 확정하세요.</Alert>}
+      {locked && <Alert kind="warning">이 달 금액은 이미 확정돼 비용을 바꿀 수 없습니다. 고칠 일이 있으면 관리비 계산 화면에서 "금액 정정"으로 다시 확정하세요.</Alert>}
       <Card className="p-4 sm:p-5">
-        <CardHead title="비용 입력" description="한전 전기요금·수도요금·청소 용역비처럼 이번 달 건물이 낸 돈을 항목별로 적습니다." />
+        <CardHead title="비용 입력" description="한전 전기요금·수도요금·청소 용역비처럼 이번 달 건물이 지출한 비용을 항목별로 적습니다." />
         {types.length === 0 ? (
-          <EmptyState title="비용을 넣을 항목이 없습니다." description="관리비 항목 정하기 화면에서 '매달 실제로 낸 돈'으로 계산하는 항목을 먼저 만드세요." />
+          <EmptyState title="비용을 넣을 항목이 없습니다." description="관리비 항목 설정 화면에서 '매달 실제 지출 비용'으로 계산하는 항목을 먼저 만드세요." />
         ) : (
           <form onSubmit={submit} className={FORM_ROW}>
             <SelectField label="항목" required value={typeId} onChange={(e) => setTypeId(e.target.value)} disabled={locked} wrapperClassName={FW.select}>
               <option value="">선택</option>
               {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </SelectField>
-            <Input label="부가세 빼기 전 금액(원)" inputMode="numeric" required value={supply} onChange={(e) => setSupply(e.target.value)} disabled={locked} wrapperClassName={FW.money} className={MONEY_INPUT} error={supply && !validSupply ? "1원 이상, 소수점 없이 적으세요." : undefined} />
+            <Input label="공급가액(원)" inputMode="numeric" required value={supply} onChange={(e) => setSupply(e.target.value)} disabled={locked} wrapperClassName={FW.money} className={MONEY_INPUT} error={supply && !validSupply ? "1원 이상, 소수점 없이 적으세요." : undefined} />
             <Input label="부가세(원)" inputMode="numeric" value={vat} placeholder={String(suggestVat)} onChange={(e) => setVat(e.target.value)} disabled={locked} wrapperClassName={FW.money} className={MONEY_INPUT} hint={type?.taxable ? "비워 두면 10%를 넣습니다." : "부가세 없는 항목은 0원입니다."} error={vat && !validVat ? "0원 이상, 소수점 없이 적으세요." : undefined} />
-            <Input label="낸 곳(거래처)" value={vendor} onChange={(e) => setVendor(e.target.value)} disabled={locked} maxLength={60} wrapperClassName={FW.name} />
+            <Input label="지급처(거래처)" value={vendor} onChange={(e) => setVendor(e.target.value)} disabled={locked} maxLength={60} wrapperClassName={FW.name} />
             <Input label="영수증 번호" hint="세금계산서·영수증에 적힌 번호(선택)" wrapperClassName={FW.doc} value={docNo} onChange={(e) => { setDocNo(e.target.value); setDupAsked(false); }} disabled={locked} maxLength={60} />
             <div className={`${FORM_ACTIONS} flex-col items-stretch sm:items-start`}>
               {error && <Alert kind="error">{error}</Alert>}
@@ -78,7 +78,7 @@ export function ExpenseForm({
           <div className="relative overflow-x-auto">
             <table className={TABLE}>
               <thead className={THEAD}>
-                <tr><th className={TH}>항목</th><th className={TH}>낸 곳</th><th className={`${TH} text-right`}>부가세 빼기 전</th><th className={`${TH} text-right`}>부가세</th><th className={`${TH} text-right`}>합계</th><th className={TH}><span className="sr-only">삭제</span></th></tr>
+                <tr><th className={TH}>항목</th><th className={TH}>지급처</th><th className={`${TH} text-right`}>공급가액</th><th className={`${TH} text-right`}>부가세</th><th className={`${TH} text-right`}>합계</th><th className={TH}><span className="sr-only">삭제</span></th></tr>
               </thead>
               <tbody>
                 {rows.map((r) => <ExpenseRowView key={r.id} r={r} businessId={businessId} canDelete={canDelete && !locked} />)}

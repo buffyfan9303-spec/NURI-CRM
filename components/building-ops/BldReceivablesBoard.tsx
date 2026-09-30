@@ -30,8 +30,8 @@ export interface BldReceivablesProps {
 }
 
 const CHANNEL: Record<string, string> = { print: "인쇄 통지", sms: "문자", email: "이메일", call: "전화", visit: "방문", alimtalk: "알림톡" };
-const STAGE: Record<1 | 2 | 3, string> = { 1: "1번째 안내", 2: "2번째 재촉", 3: "3번째 마지막 알림" };
-const KIND: Record<RecLine["kind"], string> = { bill: "관리비", late_fee: "연체료", correction: "고친 금액" };
+const STAGE: Record<1 | 2 | 3, string> = { 1: "1차 안내", 2: "2차 독촉", 3: "3차 최종 통지" };
+const KIND: Record<RecLine["kind"], string> = { bill: "관리비", late_fee: "연체료", correction: "정정 금액" };
 
 export function BldReceivablesBoard(p: BldReceivablesProps) {
   const [tab, setTab] = React.useState<Bucket | "all">("all");
@@ -45,17 +45,17 @@ export function BldReceivablesBoard(p: BldReceivablesProps) {
       <SummaryStrip
         items={[
           ...keys.map((k) => ({ label: BUCKET_LABEL[k], value: won(p.buckets[k]), tone: (k === "d61_90" || k === "d90p") && p.buckets[k] > 0 ? ("danger" as const) : ("default" as const) })),
-          { label: "못 받은 돈 합계", value: won(p.buckets.total), tone: p.buckets.total > 0 ? "danger" : "success", hint: `이 중 납기 지난 돈 ${won(p.buckets.overdue_total)}` },
+          { label: "미수금 합계", value: won(p.buckets.total), tone: p.buckets.total > 0 ? "danger" : "success", hint: `이 중 납기 경과 금액 ${won(p.buckets.overdue_total)}` },
         ]}
       />
       <p className="text-[length:var(--fs-meta)] text-t3">기준일 {p.asof}. 날수는 납부기한 다음 날부터 센 날입니다.{fees.length > 0 && ` 연체료는 관리비와 따로 쌓이며 위 합계에 들어 있습니다(연체료 ${fees.length}건, ${won(fees.reduce((s, r) => s + r.outstanding, 0))}).`}</p>
 
       {p.topUnits.length > 0 && (
         <Card className="p-4 sm:p-5">
-          <CardHead title="오래 못 받은 호실" description="납부기한이 지난 돈이 있는 호실을 가장 오래 밀린 순서로 5곳까지 보여 줍니다." />
+          <CardHead title="장기 미수 호실" description="납부기한이 지난 돈이 있는 호실을 가장 오래 밀린 순서로 5곳까지 보여 줍니다." />
           <div className="relative overflow-x-auto">
             <table className={TABLE}>
-              <thead className={THEAD}><tr><th className={TH}>호실</th><th className={TH}>입주자</th><th className={`${TH} text-right`}>기한 지난 돈</th><th className={`${TH} text-right`}>기한 전</th><th className={`${TH} text-right`}>가장 오래 밀린 날수</th><th className={`${TH} text-right`}>건수</th></tr></thead>
+              <thead className={THEAD}><tr><th className={TH}>호실</th><th className={TH}>입주자</th><th className={`${TH} text-right`}>기한 지난 돈</th><th className={`${TH} text-right`}>기한 전</th><th className={`${TH} text-right`}>가장 오래 연체 일수</th><th className={`${TH} text-right`}>건수</th></tr></thead>
               <tbody>
                 {p.topUnits.map((u) => (
                   <tr key={u.unit_id} className={TR}>
@@ -73,9 +73,9 @@ export function BldReceivablesBoard(p: BldReceivablesProps) {
 
       <Card className="p-4 sm:p-5">
         <CardHead
-          title="달마다 못 받은 돈"
+          title="월별 미수금"
           action={
-            <div className="flex flex-wrap gap-1" role="group" aria-label="밀린 날수로 거르기">
+            <div className="flex flex-wrap gap-1" role="group" aria-label="연체 일수로 거르기">
               <Button type="button" size="sm" variant={tab === "all" ? "primary" : "secondary"} aria-pressed={tab === "all"} onClick={() => setTab("all")}>전체 {p.rows.length}</Button>
               {keys.map((k) => (
                 <Button key={k} type="button" size="sm" variant={tab === k ? "primary" : "secondary"} aria-pressed={tab === k} onClick={() => setTab(k)}>{BUCKET_LABEL[k]} {p.rows.filter((r) => bucketOf(r.age) === k).length}</Button>
@@ -85,12 +85,12 @@ export function BldReceivablesBoard(p: BldReceivablesProps) {
           }
         />
         {rows.length === 0 ? (
-          <EmptyState title={p.rows.length === 0 ? "못 받은 돈이 없습니다." : "이 구간에 못 받은 돈이 없습니다."} description={p.rows.length === 0 ? "확정된 관리비를 모두 받았습니다." : undefined} />
+          <EmptyState title={p.rows.length === 0 ? "미수금이 없습니다." : "이 구간에 미수금이 없습니다."} description={p.rows.length === 0 ? "확정된 관리비를 모두 수납했습니다." : undefined} />
         ) : (
           <div className="relative overflow-x-auto">
             <table className={TABLE}>
               <thead className={THEAD}>
-                <tr><th className={TH}>호실</th><th className={TH}>입주자</th><th className={TH}>관리비 달</th><th className={TH}>구분</th><th className={TH}>납부기한</th><th className={`${TH} text-right`}>남은 돈</th><th className={`${TH} text-right`}>밀린 날수</th><th className={TH}>재촉 기록</th><th className={TH}><span className="sr-only">작업</span></th></tr>
+                <tr><th className={TH}>호실</th><th className={TH}>입주자</th><th className={TH}>관리비 달</th><th className={TH}>구분</th><th className={TH}>납부기한</th><th className={`${TH} text-right`}>미납액</th><th className={`${TH} text-right`}>연체 일수</th><th className={TH}>독촉 기록</th><th className={TH}><span className="sr-only">작업</span></th></tr>
               </thead>
               <tbody>
                 {rows.map((r) => {
@@ -106,7 +106,7 @@ export function BldReceivablesBoard(p: BldReceivablesProps) {
                         <td className={TD}>{r.dunning ? <span className="tabular-nums">{STAGE[r.dunning.stage]} · {r.dunning.date}{r.dunning.count > 1 ? ` (${r.dunning.count}회)` : ""}</span> : <span className="text-t3">없음</span>}</td>
                         <td className={`${TD} whitespace-nowrap text-right`}>
                           {p.lateFeeOn && r.kind === "bill" && <Button type="button" size="sm" variant="ghost" aria-expanded={isOpen && open?.mode === "fee"} onClick={() => setOpen(isOpen && open?.mode === "fee" ? null : { id: r.id, mode: "fee" })}>연체료</Button>}{" "}
-                          {p.canWrite && <Button type="button" size="sm" variant="secondary" aria-expanded={isOpen && open?.mode === "dun"} onClick={() => setOpen(isOpen && open?.mode === "dun" ? null : { id: r.id, mode: "dun" })}>재촉 기록</Button>}
+                          {p.canWrite && <Button type="button" size="sm" variant="secondary" aria-expanded={isOpen && open?.mode === "dun"} onClick={() => setOpen(isOpen && open?.mode === "dun" ? null : { id: r.id, mode: "dun" })}>독촉 기록</Button>}
                         </td>
                       </tr>
                       {isOpen && (
@@ -160,12 +160,12 @@ function DunningPanel({ businessId, rec, onDone }: { businessId: string; rec: Re
         <SelectField label="방법" wrapperClassName={FW.select} value={channel} onChange={(e) => setChannel(e.target.value)}>
           {Object.entries(CHANNEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </SelectField>
-        <Input label="내겠다고 한 날(선택)" type="date" value={promise} onChange={(e) => setPromise(e.target.value)} className="tabular-nums" wrapperClassName={FW.date} />
+        <Input label="납부 약속일(선택)" type="date" value={promise} onChange={(e) => setPromise(e.target.value)} className="tabular-nums" wrapperClassName={FW.date} />
         <Input label="메모" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} wrapperClassName={FW.memo} />
       </div>
       {error && <Alert kind="error" className="mb-3">{error}</Alert>}
       <div className={FORM_ACTIONS}>
-        <Button type="button" loading={pending} onClick={async () => { const r = await run(() => recordDunning(businessId, rec.id, { stage, channel: channel as "print", note: note.trim() || undefined, promise_date: promise || undefined }), { success: "재촉 기록을 저장했습니다." }); if (r.ok) onDone(); }}>기록 저장</Button>
+        <Button type="button" loading={pending} onClick={async () => { const r = await run(() => recordDunning(businessId, rec.id, { stage, channel: channel as "print", note: note.trim() || undefined, promise_date: promise || undefined }), { success: "독촉 기록을 저장했습니다." }); if (r.ok) onDone(); }}>기록 저장</Button>
         <Button type="button" variant="ghost" onClick={onDone}>닫기</Button>
       </div>
     </div>

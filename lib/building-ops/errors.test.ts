@@ -10,8 +10,8 @@ describe("BUILDING_ERROR_TEXT / BUILDING_ISSUE_TEXT", () => {
   it("모든 문장에 영어 단어가 없다", () => {
     for (const [k, v] of [...Object.entries(BUILDING_ERROR_TEXT), ...Object.entries(BUILDING_ISSUE_TEXT), ["fallback", BUILDING_ERROR_FALLBACK]]) expect(v, k).not.toMatch(ENGLISH);
   });
-  it("예전 어려운 말(승인·정정·원천·배분·검침·채권)이 없다", () => {
-    for (const [k, v] of Object.entries({ ...BUILDING_ERROR_TEXT, ...BUILDING_ISSUE_TEXT })) expect(v, k).not.toMatch(/승인(?!번호)|정정|원천|배분|검침|채권|미수|공급가액|revision/);
+  it("억지로 지어낸 말(낼 돈·낸 돈·남은 돈·못 받은 돈·미리 낸 돈·밀린 돈·금액 고치기·계량기 숫자)이 없다", () => {
+    for (const [k, v] of Object.entries({ ...BUILDING_ERROR_TEXT, ...BUILDING_ISSUE_TEXT })) expect(v, k).not.toMatch(/낼 돈|낸 돈|남은 돈|못 받은 돈|받을 돈|미리 낸 돈|밀린 돈|금액 고치기|계량기 숫자|revision/);
   });
   it("서버 migration(0031~0034)이 보내는 힌트 코드가 전부 표에 있다", () => {
     const dir = path.resolve(__dirname, "../../../supabase/migrations");
@@ -30,7 +30,7 @@ describe("plainBuildingError", () => {
     const r = plainBuildingError({ code: "22023", message: "period_locked: calc on approved period", hint: "period_locked" });
     expect(r.hint).toBe("period_locked");
     expect(r.message).toBe(BUILDING_ERROR_TEXT.period_locked);
-    expect(r.message).toContain("금액 고치기");
+    expect(r.message).toContain("금액 정정");
   });
   it("hint 열이 비어도 메시지 앞의 코드로 찾는다", () => {
     expect(plainBuildingError({ message: "feature_off: 꺼짐" }).message).toBe(BUILDING_ERROR_TEXT.feature_off);
@@ -51,7 +51,7 @@ describe("plainBuildingError", () => {
 
 describe("plainIssueMessage", () => {
   it("표에 있는 코드는 쉬운 말, 없는 코드는 서버 문장 그대로", () => {
-    expect(plainIssueMessage("missing_reading", "검침값이 없습니다")).toBe("계량기 숫자가 없습니다.");
+    expect(plainIssueMessage("missing_reading", "검침값이 없습니다")).toBe("검침값이 없습니다.");
     expect(plainIssueMessage("rate_missing", "정액 금액이 없습니다")).toBe("정액 금액이 없습니다");
   });
 });

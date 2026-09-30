@@ -40,7 +40,7 @@ export function DirectCharges({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSave || !parsed?.ok) return;
-    const r = await run(() => upsertDirectCharge(businessId, buildingId, { period, charge_type_id: typeId, unit_id: unitId, amount: parsed.value, reason: reason.trim() || undefined }), { success: existing ? "고쳐 저장했습니다." : "저장했습니다." });
+    const r = await run(() => upsertDirectCharge(businessId, buildingId, { period, charge_type_id: typeId, unit_id: unitId, amount: parsed.value, reason: reason.trim() || undefined }), { success: existing ? "수정했습니다." : "저장했습니다." });
     if (r.ok) { setUnitId(""); setAmount(""); setReason(""); }
     else setError(directErrorText(r.hint, r.message));
   }
@@ -50,13 +50,13 @@ export function DirectCharges({
 
   return (
     <Card className="p-4 sm:p-5">
-      <CardHead title="호실별 따로 넣는 금액(감면·일회성)" description="호실마다 금액이 다른 항목입니다. 깎아 주는 돈(감면)은 앞에 −를 붙여 적습니다. 이번 달 관리비 계산에 그대로 들어갑니다." action={<Badge kind="info">{rows.length}건</Badge>} />
+      <CardHead title="호실별 따로 넣는 금액(감면·일회성)" description="호실마다 금액이 다른 항목입니다. 감면액은 앞에 −를 붙여 적습니다. 이번 달 관리비 계산에 그대로 들어갑니다." action={<Badge kind="info">{rows.length}건</Badge>} />
       {locked && <Alert kind="warning" className="mb-3">{DIRECT_LOCKED_NOTE}</Alert>}
       {types.length === 0 ? (
         <EmptyState
           title="'직접 입력' 항목이 없습니다."
-          description="'관리비 항목 정하기'에서 '직접 입력' 항목(예: 감면, 수리비)을 먼저 만드세요."
-          action={<Link href={`/w/${businessId}/charges`} className="text-[length:var(--fs-body)] font-medium text-t underline">관리비 항목 정하기로</Link>}
+          description="'관리비 항목 설정'에서 '직접 입력' 항목(예: 감면, 수리비)을 먼저 만드세요."
+          action={<Link href={`/w/${businessId}/charges`} className="text-[length:var(--fs-body)] font-medium text-t underline">관리비 항목 설정으로</Link>}
         />
       ) : (
         <>
@@ -72,14 +72,14 @@ export function DirectCharges({
             <Input
               label="금액(원)" inputMode="text" required value={amount} onChange={(e) => setAmount(e.target.value)} disabled={locked}
               wrapperClassName={FW.money} className={MONEY_INPUT} placeholder="예: -10,000"
-              hint={parsed?.ok ? (parsed.value < 0 ? `깎아 줌 ${won(-parsed.value)}` : `더 받음 ${won(parsed.value)}`) : "감면이면 − 붙여 입력"}
+              hint={parsed?.ok ? (parsed.value < 0 ? `감면 ${won(-parsed.value)}` : `추가 부과 ${won(parsed.value)}`) : "감면이면 앞에 −를 붙이세요"}
               error={parsed && !parsed.ok ? parsed.message : undefined}
             />
             <Input label="사유" value={reason} onChange={(e) => setReason(e.target.value)} disabled={locked} maxLength={120} hint="예: 공사 소음 보상, 1회성 수리비" wrapperClassName={FW.memo} />
             <div className={`${FORM_ACTIONS} flex-col items-stretch sm:items-start`}>
               {error && <Alert kind="error">{error}</Alert>}
               {existing && <Alert kind="warning">이 항목·호실은 이미 {won(existing.amount)}이 들어 있습니다. 저장하면 새 금액으로 바뀝니다.</Alert>}
-              <div><Button type="submit" loading={pending} disabled={!canSave}>{existing ? "고쳐 저장" : "금액 저장"}</Button></div>
+              <div><Button type="submit" loading={pending} disabled={!canSave}>{existing ? "수정 저장" : "금액 저장"}</Button></div>
             </div>
           </form>
           <div className="mt-5">
@@ -89,7 +89,7 @@ export function DirectCharges({
               <div className="relative overflow-x-auto">
                 <table className={TABLE}>
                   <thead className={THEAD}>
-                    <tr><th className={TH}>호실</th><th className={TH}>항목</th><th className={`${TH} text-right`}>금액</th><th className={TH}>사유</th><th className={TH}><span className="sr-only">고치기·삭제</span></th></tr>
+                    <tr><th className={TH}>호실</th><th className={TH}>항목</th><th className={`${TH} text-right`}>금액</th><th className={TH}>사유</th><th className={TH}><span className="sr-only">수정·삭제</span></th></tr>
                   </thead>
                   <tbody>
                     {rows.map((r) => <Row key={r.id} r={r} unit={unitName.get(r.unitId) ?? "-"} type={typeName.get(r.typeId) ?? "(쓰지 않는 항목)"} businessId={businessId} locked={locked} canDelete={canDelete} onEdit={() => edit(r)} />)}
@@ -120,7 +120,7 @@ function Row({ r, unit, type, businessId, locked, canDelete, onEdit }: { r: Dire
       <td className={`${TD} whitespace-nowrap`}>
         {!locked && (
           <span className="inline-flex gap-1">
-            <Button type="button" size="sm" variant="ghost" onClick={onEdit}>고치기</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={onEdit}>수정</Button>
             {canDelete && (confirm ? (
               <>
                 <Button type="button" size="sm" variant="danger" loading={pending} onClick={() => void del()}>삭제 확정</Button>

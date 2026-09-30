@@ -15,7 +15,7 @@ import { METER_KIND_LABEL, num, unitLabel, won } from "@/components/building-ops
 import { periodLabel } from "@/components/building/period";
 import { getPeriod, listContracts, listCredits, listMeterReadings, listMeters, listParties, listReceivables, listUnitHistory, listUnits } from "@/lib/domain/building";
 
-const TABS = [["basic", "기본"], ["contract", "계약"], ["billing", "낼 돈·낸 돈"], ["tax", "세금계산서"], ["meters", "계량기"], ["history", "지난 기록"]] as const;
+const TABS = [["basic", "기본"], ["contract", "계약"], ["billing", "납부·수납"], ["tax", "세금계산서"], ["meters", "계량기"], ["history", "지난 기록"]] as const;
 type Tab = (typeof TABS)[number][0];
 
 export default async function UnitDetailPage({ params, searchParams }: { params: { businessId: string; unitId: string }; searchParams: SearchParams }) {
@@ -51,7 +51,7 @@ export default async function UnitDetailPage({ params, searchParams }: { params:
       </nav>
       {tab === "basic" && <UnitBasicForm businessId={ctx.businessId} unit={unit} canWrite={canWrite} />}
       {tab === "contract" && <ContractTab ctx={ctx} unitId={unit.id} canWrite={canWrite} />}
-      {tab === "billing" && (canMoney ? <BillingTab buildingId={ctx.building.id} unitId={unit.id} /> : <NoMoney what="낼 돈·낸 돈 기록" />)}
+      {tab === "billing" && (canMoney ? <BillingTab buildingId={ctx.building.id} unitId={unit.id} /> : <NoMoney what="납부·수납 기록" />)}
       {tab === "tax" && <TaxTab ctx={ctx} unitId={unit.id} canWrite={canWrite} />}
       {tab === "meters" && <MetersTab ctx={ctx} unitId={unit.id} />}
       {tab === "history" && (canMoney ? <HistoryTab unitId={unit.id} /> : <NoMoney what="달마다 관리비 기록" />)}
@@ -107,17 +107,17 @@ async function ContractTab({ ctx, unitId, canWrite }: { ctx: BuildingCtx; unitId
 async function BillingTab({ buildingId, unitId }: { buildingId: string; unitId: string }) {
   const [rRes, cRes] = await Promise.all([listReceivables(buildingId, { openOnly: false, unitId }), listCredits(unitId)]);
   if (!rRes.ok || !cRes.ok) return <ReadFail title="청구 내역을 불러오지 못했습니다." message={!rRes.ok ? rRes.message : !cRes.ok ? cRes.message : ""} />;
-  const KIND = { bill: "관리비", late_fee: "연체료", correction: "고친 금액" } as const;
+  const KIND = { bill: "관리비", late_fee: "연체료", correction: "정정 금액" } as const;
   const credit = cRes.data.reduce((s, c) => s + (c.remaining ?? 0), 0);
   return (
     <Card className="p-4 sm:p-5">
-      <CardHead title="낼 돈·낸 돈 기록" action={credit > 0 ? <Badge kind="info">{`미리 낸 돈 ${won(credit)}`}</Badge> : undefined} />
+      <CardHead title="납부·수납 기록" action={credit > 0 ? <Badge kind="info">{`선납금 ${won(credit)}`}</Badge> : undefined} />
       {rRes.data.length === 0 ? (
         <EmptyState title="아직 기록이 없습니다." description="관리비 금액을 확정하면 여기에 쌓입니다." />
       ) : (
         <div className="overflow-x-auto">
           <table className={TABLE}>
-            <thead className={THEAD}><tr><th className={TH}>관리비 달</th><th className={TH}>구분</th><th className={`${TH} text-right`}>낼 돈</th><th className={`${TH} text-right`}>낸 돈</th><th className={`${TH} text-right`}>남은 돈</th><th className={TH}>상태</th></tr></thead>
+            <thead className={THEAD}><tr><th className={TH}>관리비 달</th><th className={TH}>구분</th><th className={`${TH} text-right`}>납부할 금액</th><th className={`${TH} text-right`}>수납액</th><th className={`${TH} text-right`}>미납액</th><th className={TH}>상태</th></tr></thead>
             <tbody>
               {rRes.data.map((r) => {
                 const left = (r.amount ?? 0) - (r.paid ?? 0) - (r.credit_applied ?? 0);
@@ -128,7 +128,7 @@ async function BillingTab({ buildingId, unitId }: { buildingId: string; unitId: 
                     <td className={`${TD} text-right tabular-nums`}>{won(r.amount)}</td>
                     <td className={`${TD} text-right tabular-nums`}>{won(r.paid)}</td>
                     <td className={`${TD} text-right tabular-nums`}>{won(left)}</td>
-                    <td className={TD}>{r.status === "paid" ? <Badge kind="success">다 냄</Badge> : r.status === "void" ? <Badge kind="info">취소됨</Badge> : <Badge kind="warning">덜 냄</Badge>}</td>
+                    <td className={TD}>{r.status === "paid" ? <Badge kind="success">완납</Badge> : r.status === "void" ? <Badge kind="info">취소됨</Badge> : <Badge kind="warning">일부 납부</Badge>}</td>
                   </tr>
                 );
               })}
@@ -170,15 +170,15 @@ async function MetersTab({ ctx, unitId }: { ctx: BuildingCtx; unitId: string }) 
   return (
     <Card className="p-4 sm:p-5">
       <CardHead
-        title={`${periodLabel(ctx.period)} 계량기 숫자`}
-        action={<Link href={`/w/${ctx.businessId}/meters?b=${ctx.building.id}&p=${ctx.period}`} className="inline-flex min-h-[44px] items-center text-[length:var(--fs-body)] font-medium text-[var(--accent-ink)] underline-offset-2 hover:underline">계량기 숫자 적으러 가기</Link>}
+        title={`${periodLabel(ctx.period)} 검침값`}
+        action={<Link href={`/w/${ctx.businessId}/meters?b=${ctx.building.id}&p=${ctx.period}`} className="inline-flex min-h-[44px] items-center text-[length:var(--fs-body)] font-medium text-[var(--accent-ink)] underline-offset-2 hover:underline">검침값 적으러 가기</Link>}
       />
       {mine.length === 0 ? (
-        <EmptyState title="이 호실에 등록된 계량기가 없습니다." description="계량기 숫자 입력 화면 아래쪽에서 계량기를 등록하세요." />
+        <EmptyState title="이 호실에 등록된 계량기가 없습니다." description="검침값 입력 화면 아래쪽에서 계량기를 등록하세요." />
       ) : (
         <div className="overflow-x-auto">
           <table className={TABLE}>
-            <thead className={THEAD}><tr><th className={TH}>종류</th><th className={TH}>번호</th><th className={`${TH} text-right`}>지난달 숫자</th><th className={`${TH} text-right`}>이번 달 숫자</th><th className={TH}>상태</th></tr></thead>
+            <thead className={THEAD}><tr><th className={TH}>종류</th><th className={TH}>번호</th><th className={`${TH} text-right`}>전월 지침</th><th className={`${TH} text-right`}>당월 지침</th><th className={TH}>상태</th></tr></thead>
             <tbody>
               {mine.map((m) => {
                 const r = reads.get(m.id);
@@ -188,7 +188,7 @@ async function MetersTab({ ctx, unitId }: { ctx: BuildingCtx; unitId: string }) 
                     <td className={TD}>{m.serial ?? "-"}</td>
                     <td className={`${TD} text-right tabular-nums`}>{r ? num(r.prev_reading) : "-"}</td>
                     <td className={`${TD} text-right tabular-nums`}>{r ? num(r.curr_reading) : "-"}</td>
-                    <td className={TD}>{r ? <Badge kind="success">적음</Badge> : <Badge kind="warning">안 적음</Badge>}</td>
+                    <td className={TD}>{r ? <Badge kind="success">입력됨</Badge> : <Badge kind="warning">미입력</Badge>}</td>
                   </tr>
                 );
               })}
@@ -211,7 +211,7 @@ async function HistoryTab({ unitId }: { unitId: string }) {
       ) : (
         <div className="overflow-x-auto">
           <table className={TABLE}>
-            <thead className={THEAD}><tr><th className={TH}>관리비 달</th><th className={`${TH} text-right`}>이번 달 관리비</th><th className={`${TH} text-right`}>낼 돈(밀린 돈 포함)</th></tr></thead>
+            <thead className={THEAD}><tr><th className={TH}>관리비 달</th><th className={`${TH} text-right`}>이번 달 관리비</th><th className={`${TH} text-right`}>납부할 금액(전월 미납액 포함)</th></tr></thead>
             <tbody>
               {[...hRes.data].reverse().map((h) => (
                 <tr key={h.period} className={TR}>

@@ -47,7 +47,7 @@ export async function Law14View({ ctx, unitId }: { ctx: BuildingCtx; unitId?: st
 
   const units = new Map(uRes.data.map((u) => [u.id, unitLabel(u)]));
   const parties = new Map(pRes.data.map((p) => [p.id, p.name]));
-  const rows = law14ByUnit(bRes.data, (id) => units.get(id) ?? "(호실)", (id) => (id ? parties.get(id) ?? "—" : "내는 분 없음"));
+  const rows = law14ByUnit(bRes.data, (id) => units.get(id) ?? "(호실)", (id) => (id ? parties.get(id) ?? "—" : "납부자 없음"));
   const one = unitId ? rows.find((r) => r.unitId === unitId) : undefined;
   const commercial = ctx.building.kind === "commercial";
 
@@ -84,7 +84,7 @@ export async function Law14View({ ctx, unitId }: { ctx: BuildingCtx; unitId?: st
         <style>{"@media print { @page { size: A4 portrait; margin: 12mm; } }"}</style>
         <div id="print-area" className="bld-owners">
           <h1 className="mb-1 text-[18px] font-bold text-t print:text-[15pt]">{ctx.building.name} · {periodLabel(ctx.period)} 관리비 내역</h1>
-          <p className="mb-3 text-[length:var(--fs-body)] text-t2">호실 {one.unitLabel} · 내는 분 {one.party} · 근거 {LAW_NOTE}</p>
+          <p className="mb-3 text-[length:var(--fs-body)] text-t2">호실 {one.unitLabel} · 납부자 {one.party} · 근거 {LAW_NOTE}</p>
           <Card className="mb-4 p-4">
             <table className={TABLE}>
               <thead className={THEAD}><tr><th className={cn(TH, "w-[52px]")}>번호</th><th className={TH}>항목</th><th className={NUMH}>{t.amountsHidden ? "포함 여부" : "금액(원)"}</th></tr></thead>
@@ -137,7 +137,7 @@ export async function Law14View({ ctx, unitId }: { ctx: BuildingCtx; unitId?: st
             <table className={cn(TABLE, "text-[length:13px]")}>
               <thead className={THEAD}>
                 <tr>
-                  <th className={cn(TH, "sticky left-0 z-[1] bg-sf2")}>호실·내는 분</th>
+                  <th className={cn(TH, "sticky left-0 z-[1] bg-sf2")}>호실·납부자</th>
                   {LAW14.map((x) => <th key={x.no} className={NUMH}>{x.no}. {x.label}</th>)}
                   <th className={cn(NUMH, "border-l border-[var(--bd)]")} title="14항목에 없는 그 밖의 항목">그 밖의 항목</th>
                   <th className={NUMH}>월 관리비 합계</th>

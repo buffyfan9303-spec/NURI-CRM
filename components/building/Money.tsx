@@ -79,7 +79,7 @@ export function FourNumbers({
   vat,
   exempt,
   total,
-  totalLabel = "낼 돈",
+  totalLabel = "납부할 금액",
   rows,
   className,
 }: {
@@ -95,9 +95,9 @@ export function FourNumbers({
   const line = "flex items-baseline justify-between gap-4 py-1.5";
   return (
     <dl className={cn("text-[length:var(--fs-body)]", className)}>
-      <div className={line}><dt className="text-t2">부가세 빼기 전 금액</dt><dd><Money value={supply} /></dd></div>
+      <div className={line}><dt className="text-t2">공급가액</dt><dd><Money value={supply} /></dd></div>
       <div className={line}><dt className="text-t2">부가세</dt><dd><Money value={vat} /></dd></div>
-      <div className={line}><dt className="text-t2">부가세 없는 금액</dt><dd><Money value={exempt} /></dd></div>
+      <div className={line}><dt className="text-t2">면세 금액</dt><dd><Money value={exempt} /></dd></div>
       {rows?.map((r) => (
         <div key={r.label} className={line}><dt className="text-t2">{r.label}</dt><dd><Money value={r.value} tone={r.tone} /></dd></div>
       ))}

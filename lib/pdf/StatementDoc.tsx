@@ -2,7 +2,7 @@
  * 건물 관리비 명세서 A4 PDF(디자인 스펙 §5, gap-research C-4 배치). InvoiceDoc 의 스타일 규칙(머리 2px 경계·표 1px·합계 박스·바닥글)을
  * 이어받되 본문 11pt 이상(고령 수신자), 흑백 100%, 미납 강조는 굵기와 ※ 로. 호실 여러 장을 한 문서(다중 페이지)로 그린다.
  * 고정 문구 "이 문서는 세금계산서가 아닙니다" 는 설정으로 끌 수 없다. 선택 구역(공지·12개월 막대·절취선)은 features 값에 따른다.
- * 2026-09-30 P0 보강: 관리주체·호실 면적, 항목별 공급가/부가세/면세, 상가 14항목 소계, 밀린 돈 달별 내역, 연체료 산식, 이의·문의 안내(순수 함수는 statement-p0.ts).
+ * 2026-09-30 P0 보강: 관리주체·호실 면적, 항목별 공급가/부가세/면세, 상가 14항목 소계, 미납액 달별 내역, 연체료 산식, 이의·문의 안내(순수 함수는 statement-p0.ts).
  * A4 한 장이 원칙 — 줄이 많으면 dense(0~2)로 표 글자·간격을 줄이고, 그래도 넘치면 2쪽으로 흐른다.
  */
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
@@ -103,7 +103,7 @@ export interface StatementData {
   unitInfo: string;
   /** 상가일 때만: 14항목 소계표. */
   law14: Law14Table | null;
-  /** 밀린 돈 달별 내역(없으면 빈 배열). priorMismatch = 표 합계가 위 "안 낸 돈"과 다를 때. */
+  /** 미납액 달별 내역(없으면 빈 배열). priorMismatch = 표 합계가 위 "미납액"과 다를 때. */
   priorRows: PriorUnpaidRow[];
   priorMismatch: boolean;
   /** 연체료 산식 줄. */
@@ -122,7 +122,7 @@ export interface StatementData {
 /** Noto Sans KR 정적 TTF 에 없는 글리프(2026-09-29 fontTools 실측: ※ ㎥ ㎡ → ○ △ □ ◇ ☆ ▽ ■ ● ㈜ 등) 를 있는 글자로 바꾼다. 없으면 빈 네모·엉뚱한 글자로 찍힌다. */
 const GLYPH: Record<string, string> = { "※": "*", "㎥": "m³", "㎡": "m²", "→": ">", "←": "<", "⇒": "=>", "㈜": "(주)", "○": "O", "●": "*", "△": "^", "□": "[]", "■": "[]", "◇": "<>", "☆": "*", "★": "*", "▽": "v", "▶": ">" };
 export const pdfSafe = (v: string | null | undefined): string => (v ?? "").replace(/[※㎥㎡→←⇒㈜○●△□■◇☆★▽▶]/g, (c) => GLYPH[c] ?? c);
-/** 항목 표 칸 너비 비율(항목·부가세 전·부가세·부가세 없는 금액·이번 달·지난달·차이·계산 방법). */
+/** 항목 표 칸 너비 비율(항목·부가세 전·부가세·면세 금액·이번 달·지난달·차이·계산 방법). */
 const COL = [2.7, 1.15, 0.95, 1.1, 1.2, 1.2, 0.95, 1.45];
 const diff = (n: number | null) => (n == null ? "—" : n > 0 ? `+${won(n)}` : n < 0 ? won(n) : "0원");
 const qty = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -166,14 +166,14 @@ function StatementPage({ d: raw }: { d: StatementData }) {
           {d.unitInfo ? <Text style={[s.small, { marginTop: 2 }]}>{d.unitInfo}</Text> : null}
         </View>
         <View style={{ flex: 2 }}>
-          <Text style={s.colHead}>내는 분</Text>
+          <Text style={s.colHead}>납부자</Text>
           <Text style={s.partyName}>{d.payerName}</Text>
         </View>
       </View>
 
       <View style={[s.summaryBox, { padding: [10, 7, 5][d.dense] }]} wrap={false}>
         <View>
-          <Text style={s.dueLabel}>이번 달 낼 돈</Text>
+          <Text style={s.dueLabel}>이번 달 납부액</Text>
           <Text style={[s.dueValue, { fontSize: [22, 20, 18][d.dense] }]}>{won(d.amountDue)}</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
@@ -187,20 +187,20 @@ function StatementPage({ d: raw }: { d: StatementData }) {
         <View style={{ flex: 1 }}>
           {(d.priorRows.length > 0 || d.priorMismatch) && (
             <>
-              <Text style={[s.colHead, { marginBottom: 3 }]}>지난달까지 안 낸 돈, 달별 내역</Text>
+              <Text style={[s.colHead, { marginBottom: 3 }]}>전월까지 미납액, 달별 내역</Text>
               {d.priorRows.map((r, i) => (
                 <View key={i} style={[s.kvRow, { paddingVertical: kvp }]}><Text style={tds1}>{r.label}</Text><Text style={tds1}>{won(r.amount)}</Text></View>
               ))}
-              {d.priorMismatch && <Text style={[tds, { marginTop: 2 }]}>{d.priorRows.length > 0 ? "* 명세서를 만든 뒤 낸 돈이 있으면 위 금액과 다를 수 있습니다." : "* 달별 내역이 없습니다. 궁금하면 관리사무소에 문의해 주세요."}</Text>}
+              {d.priorMismatch && <Text style={[tds, { marginTop: 2 }]}>{d.priorRows.length > 0 ? "* 명세서를 만든 뒤 수납액이 있으면 위 금액과 다를 수 있습니다." : "* 달별 내역이 없습니다. 궁금하면 관리사무소에 문의해 주세요."}</Text>}
             </>
           )}
         </View>
         <View style={s.fourBox}>
           <View style={s.fourRow}><Text style={s.fourLabel}>이번 달 관리비</Text><Text style={s.fourValue}>{won(d.currentCharge)}</Text></View>
-          <View style={s.fourRow}><Text style={s.fourLabel}>{d.priorUnpaid > 0 ? "* 지난달까지 안 낸 돈" : "지난달까지 안 낸 돈"}</Text><Text style={[s.fourValue, d.priorUnpaid > 0 ? s.bold : {}]}>{won(d.priorUnpaid)}</Text></View>
+          <View style={s.fourRow}><Text style={s.fourLabel}>{d.priorUnpaid > 0 ? "* 전월까지 미납액" : "전월까지 미납액"}</Text><Text style={[s.fourValue, d.priorUnpaid > 0 ? s.bold : {}]}>{won(d.priorUnpaid)}</Text></View>
           {d.lateFee != null && <View style={s.fourRow}><Text style={s.fourLabel}>연체료</Text><Text style={s.fourValue}>{won(d.lateFee)}</Text></View>}
-          <View style={s.fourRow}><Text style={s.fourLabel}>미리 낸 돈·깎은 돈</Text><Text style={s.fourValue}>{won(-d.credit)}</Text></View>
-          <View style={s.fourGrand}><Text style={s.fourGrandText}>이번 달 낼 돈</Text><Text style={s.fourGrandText}>{won(d.amountDue)}</Text></View>
+          <View style={s.fourRow}><Text style={s.fourLabel}>선납금·감면액</Text><Text style={s.fourValue}>{won(-d.credit)}</Text></View>
+          <View style={s.fourGrand}><Text style={s.fourGrandText}>이번 달 납부액</Text><Text style={s.fourGrandText}>{won(d.amountDue)}</Text></View>
         </View>
       </View>
 
@@ -208,9 +208,9 @@ function StatementPage({ d: raw }: { d: StatementData }) {
       <View style={s.table}>
         <View style={s.thRow}>
           <Text style={[s.th, { flex: COL[0] }]}>항목</Text>
-          <Text style={[s.th, s.right, { flex: COL[1] }]}>부가세 전</Text>
+          <Text style={[s.th, s.right, { flex: COL[1] }]}>공급가액</Text>
           <Text style={[s.th, s.right, { flex: COL[2] }]}>부가세</Text>
-          <Text style={[s.th, s.right, { flex: COL[3] }]}>부가세 없는 금액</Text>
+          <Text style={[s.th, s.right, { flex: COL[3] }]}>면세 금액</Text>
           <Text style={[s.th, s.right, { flex: COL[4] }]}>이번 달</Text>
           <Text style={[s.th, s.right, { flex: COL[5] }]}>지난달</Text>
           <Text style={[s.th, s.right, { flex: COL[6] }]}>차이</Text>
@@ -282,12 +282,12 @@ function StatementPage({ d: raw }: { d: StatementData }) {
 
       {d.meters.length > 0 && (
         <View wrap={false}>
-          <Text style={s.sectionHead}>계량기 숫자</Text>
+          <Text style={s.sectionHead}>계량기 검침</Text>
           <View style={s.table}>
             <View style={s.thRow}>
               <Text style={[s.th, { flex: 1.5 }]}>종류</Text>
-              <Text style={[s.th, s.right, { flex: 1.2 }]}>지난달 숫자</Text>
-              <Text style={[s.th, s.right, { flex: 1.2 }]}>이번 달 숫자</Text>
+              <Text style={[s.th, s.right, { flex: 1.2 }]}>전월 지침</Text>
+              <Text style={[s.th, s.right, { flex: 1.2 }]}>당월 지침</Text>
               <Text style={[s.th, s.right, { flex: 0.7 }]}>배율</Text>
               <Text style={[s.th, s.right, { flex: 1.5 }]}>사용량</Text>
               <Text style={[s.th, s.right, { flex: 1.1 }]}>단가</Text>

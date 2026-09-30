@@ -39,7 +39,7 @@ export function law14Table(lines: { std_category: StdCategory; amount: number }[
   return { rows, outside, monthlyFee, amountsHidden: monthlyFee > 0 && monthlyFee < LAW14_MIN_TOTAL };
 }
 
-export const TAX_LABEL: Record<TaxTreatment, string> = { taxable: "부가세 있음", exempt: "부가세 없음", non_taxable: "부가세 대상 아님", pass_through: "받은 그대로 넘김(대납)" };
+export const TAX_LABEL: Record<TaxTreatment, string> = { taxable: "부가세 있음", exempt: "부가세 없음", non_taxable: "부가세 대상 아님", pass_through: "대납(실비)" };
 export const USE_LABEL: Record<UnitUseKind, string> = { retail: "상가", office: "사무실", residential: "주거", parking: "주차", common: "공용", other: "기타" };
 
 /** 관리주체(세금계산서 보내는 곳) 머리 줄. 값이 없는 조각은 줄에서 뺀다. 전부 없으면 빈 배열. */
@@ -67,10 +67,10 @@ export function unitInfoLine(u: Pick<UnitRow, "dong" | "floor" | "use_kind" | "a
 
 export interface PriorUnpaidRow { period: string; label: string; dueDate: string | null; amount: number }
 const monthLabel = (p: string) => `${Number(p.slice(0, 4))}년 ${Number(p.slice(5, 7))}월분`;
-const KIND_LABEL: Record<ReceivableRow["kind"], string> = { bill: "관리비", late_fee: "연체료", correction: "고친 금액" };
+const KIND_LABEL: Record<ReceivableRow["kind"], string> = { bill: "관리비", late_fee: "연체료", correction: "정정 금액" };
 /**
- * 밀린 돈을 달별로 나눈다. 서버가 "지난달까지 안 낸 돈"(prior_unpaid)을 만들 때 쓴 조건과 같다:
- * 열린 받을 돈 중 이 청구월 이전, 이 청구를 받는 분(bill_to) 것, 남은 금액 = 금액 − 낸 돈 − 선납 반영.
+ * 미납액을 달별로 나눈다. 서버가 "전월까지 미납액"(prior_unpaid)을 만들 때 쓴 조건과 같다:
+ * 열린 미수금 중 이 청구월 이전, 이 청구를 받는 분(bill_to) 것, 남은 금액 = 금액 − 수납액 − 선납 반영.
  */
 export function priorUnpaidRows(bill: { period: string; bill_to_party_id: string | null }, recs: ReceivableRow[]): { rows: PriorUnpaidRow[]; sum: number } {
   const rows = recs
@@ -90,11 +90,11 @@ export function lateFeeFormulaLines(items: LateFeeCalc[] | null | undefined, max
   const list = (items ?? []).filter((i) => i.amount > 0);
   const line = (i: LateFeeCalc) => {
     const parts = [
-      `${i.period ? `${monthLabel(i.period)} ` : ""}안 낸 ${i.principal != null ? won(i.principal) : "돈"}`,
+      `${i.period ? `${monthLabel(i.period)} ` : ""}미납액${i.principal != null ? ` ${won(i.principal)}` : ""}`,
       i.rate != null ? `${RATE_UNIT[i.unit ?? ""] ?? ""} ${num(i.rate)}%${i.method ? `(${METHOD_LABEL[i.method] ?? i.method})` : ""}`.trim() : null,
       i.from && i.to ? `${md(i.from)}~${md(i.to)} ${i.days}일` : `${i.days}일`,
     ].filter(Boolean);
-    const extra = [i.grace_days ? `납기 뒤 ${i.grace_days}일은 봐줌` : null, i.cap_pct != null ? `최대 ${num(i.cap_pct)}%` : null].filter(Boolean);
+    const extra = [i.grace_days ? `납기 뒤 ${i.grace_days}일은 유예` : null, i.cap_pct != null ? `최대 ${num(i.cap_pct)}%` : null].filter(Boolean);
     return `${parts.join(" × ")} = ${won(i.amount)}${extra.length ? ` (${extra.join(", ")})` : ""}`;
   };
   const shown = list.slice(0, max), rest = list.slice(max);
@@ -104,7 +104,7 @@ export function lateFeeFormulaLines(items: LateFeeCalc[] | null | undefined, max
 /** 이의·문의 안내(항상 표시). office 는 명세서에 이미 나가던 관리사무소 연락처 문자열(새 개인정보 아님). */
 export function disputeNotice(office: string | null): { text: string; office: string | null } {
   return {
-    text: "금액이 다르거나 궁금한 점이 있으면 관리사무소에 알려 주세요. '입주자 문의·이의'로 접수하고 답을 드립니다. 확정된 명세서는 덮어쓰지 않고, 고친 명세서를 새로 드립니다.",
+    text: "금액이 다르거나 궁금한 점이 있으면 관리사무소에 알려 주세요. '입주자 문의·이의'로 접수하고 답을 드립니다. 확정된 명세서는 덮어쓰지 않고, 정정한 명세서를 새로 드립니다.",
     office: office && office.trim() ? office : null,
   };
 }

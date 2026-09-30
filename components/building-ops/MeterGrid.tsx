@@ -33,7 +33,7 @@ export interface MeterLine {
   prev: number;
   saved: { curr: number; reason: ReadingReason | null; usageOverride: number | null } | null;
 }
-const REASON_LABEL: Record<ReadingReason, string> = { replaced: "계량기를 새로 바꿈", typo: "지난달 숫자를 잘못 적음", estimated: "직접 못 보고 어림함", rollover: "숫자가 한 바퀴 돌아 0부터" };
+const REASON_LABEL: Record<ReadingReason, string> = { replaced: "계량기 교체", typo: "전월 지침 오기입", estimated: "직접 확인하지 못해 추정", rollover: "지침이 한 바퀴 돌아 0부터" };
 
 /** 저장 뒤 서버 값으로 다시 그릴 때(remount) 저장하지 못한 역전 줄 입력이 사라지지 않게 잠시 들고 있는다. */
 const carry = new Map<string, { val: string; reason: ReadingReason | ""; override: string }>();
@@ -118,7 +118,7 @@ export function MeterGrid({
     carry.clear();
     for (const l of held) carry.set(l.meterId, { val: vals[l.meterId] ?? "", reason: reasons[l.meterId] ?? "", override: overrides[l.meterId] ?? "" });
     if (ok > 0) {
-      toast.success(held.length > 0 ? `${ok}건 저장했습니다. 지난달보다 숫자가 작은 ${held.length}건은 이유와 사용량을 적어야 저장돼 그대로 남겨 두었습니다.` : `${ok}건 저장했습니다.`);
+      toast.success(held.length > 0 ? `${ok}건 저장했습니다. 지난달보다 검침값이 작은 ${held.length}건은 이유와 사용량을 적어야 저장돼 그대로 남겨 두었습니다.` : `${ok}건 저장했습니다.`);
       router.refresh();
     }
     if (Object.keys(errs).length > 0) setError(`${Object.keys(errs).length}건은 저장하지 못했습니다. 줄마다 표시된 사유를 확인하세요.`);
@@ -126,11 +126,11 @@ export function MeterGrid({
 
   return (
     <div className="space-y-4">
-      {locked && <Alert kind="warning">이 달 금액은 이미 확정돼 계량기 숫자를 바꿀 수 없습니다. 고쳐야 하면 관리비 계산 화면에서 "금액 고치기"를 쓰세요.</Alert>}
+      {locked && <Alert kind="warning">이 달 금액은 이미 확정돼 검침값을 바꿀 수 없습니다. 정정해야 하면 관리비 계산 화면에서 "금액 정정"을 쓰세요.</Alert>}
       <Card className="p-4 sm:p-5">
         <CardHead
-          title="계량기 숫자 입력"
-          description="계량기에 보이는 이번 달 숫자를 적고 Enter 를 누르면 아래 칸으로 갑니다. 엑셀 한 열을 복사해 붙여 넣어도 됩니다."
+          title="검침값 입력"
+          description="계량기에 보이는 당월 지침을 적고 Enter 를 누르면 아래 칸으로 갑니다. 엑셀 한 열을 복사해 붙여 넣어도 됩니다."
           action={
             <div className="flex flex-wrap items-center gap-2">
               <span className={PILL}>적음 {lines.filter((l) => (vals[l.meterId] ?? "").trim()).length} / {lines.length}건</span>
@@ -159,7 +159,7 @@ export function MeterGrid({
               <thead className={THEAD}>
                 <tr>
                   <th className={TH}>호실</th><th className={TH}>종류</th>
-                  <th className={`${TH} text-right`}>지난달 숫자</th><th className={`${TH} text-right`}>이번 달 숫자</th>
+                  <th className={`${TH} text-right`}>전월 지침</th><th className={`${TH} text-right`}>당월 지침</th>
                   <th className={`${TH} text-right`}>사용량</th><th className={TH}>상태</th>
                 </tr>
               </thead>
@@ -176,7 +176,7 @@ export function MeterGrid({
                         <input
                           ref={(el) => { refs.current[l.meterId] = el; }}
                           inputMode="decimal"
-                          aria-label={`${l.unitLabel} ${METER_KIND_LABEL[l.kind]} 이번 달 숫자`}
+                          aria-label={`${l.unitLabel} ${METER_KIND_LABEL[l.kind]} 당월 지침`}
                           className={`${CONTROL_SM} w-[130px] text-right tabular-nums`}
                           value={vals[l.meterId] ?? ""}
                           disabled={locked}
@@ -205,7 +205,7 @@ export function MeterGrid({
                           <div className="flex flex-col gap-1">
                             {l.saved && !dirty(l) ? <Badge kind="success">저장됨(지난달보다 작음)</Badge> : <Badge kind="warning">지난달보다 작음 - 이유 필요</Badge>}
                             <select
-                              aria-label={`${l.unitLabel} 숫자가 작은 이유`}
+                              aria-label={`${l.unitLabel} 검침값이 작은 이유`}
                               className={CONTROL_SM}
                               value={reason}
                               disabled={locked}
@@ -220,9 +220,9 @@ export function MeterGrid({
                             </select>
                           </div>
                         ) : st === "invalid" ? <Badge kind="error">숫자가 아님</Badge>
-                          : st === "over_max" ? <Badge kind="error">계량기 최대 숫자보다 큼</Badge>
+                          : st === "over_max" ? <Badge kind="error">계량기 최대 지침보다 큼</Badge>
                           : l.saved && !dirty(l) ? <Badge kind="success">저장됨</Badge>
-                          : st === "ok" ? <Badge kind="info">저장 전</Badge> : <span className="text-t3">안 적음</span>}
+                          : st === "ok" ? <Badge kind="info">저장 전</Badge> : <span className="text-t3">미입력</span>}
                         {rowErr[l.meterId] && <p role="alert" className="mt-1 text-[length:var(--fs-meta)] text-et">{rowErr[l.meterId]}</p>}
                       </td>
                     </tr>
@@ -256,7 +256,7 @@ function NewMeter({ businessId, buildingId, units, disabled }: { businessId: str
           {(Object.keys(METER_KIND_LABEL) as MeterKind[]).map((k) => <option key={k} value={k}>{METER_KIND_LABEL[k]}</option>)}
         </SelectField>
         <Input label="계량기 번호" hint="계량기에 붙은 번호(선택)" value={serial} onChange={(e) => setSerial(e.target.value)} disabled={disabled} maxLength={40} wrapperClassName={FW.doc} />
-        <Input label="곱하는 수(배율)" hint="보통 1" type="number" min={0.001} step="any" value={mult} onChange={(e) => setMult(e.target.value)} disabled={disabled} className={MONEY_INPUT} wrapperClassName={FW.short} />
+        <Input label="배율" hint="보통 1" type="number" min={0.001} step="any" value={mult} onChange={(e) => setMult(e.target.value)} disabled={disabled} className={MONEY_INPUT} wrapperClassName={FW.short} />
         <div className={FORM_ACTIONS}>
           {error && <Alert kind="error" className="w-full">{error}</Alert>}
           <Button type="submit" variant="secondary" loading={pending} disabled={disabled || !unit}>계량기 등록</Button>

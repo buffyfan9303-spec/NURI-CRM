@@ -127,7 +127,7 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
           })}
         </div>
         <p className="mt-3 text-[length:var(--fs-meta)] leading-snug text-auth-tx2">
-          업종 선택은 진입 의도일 뿐이며, 실제 권한은 로그인 후 사업장 소속으로 결정됩니다.
+          업종 선택은 안내용일 뿐이며, 실제 권한은 로그인 후 사업장 소속에 따라 정해집니다.
         </p>
       </div>
     );
@@ -172,7 +172,7 @@ export function IndustryPicker({ industries, value, onChange, layout = "grid" }:
         })}
       </div>
       <p className="mt-3 text-[length:var(--fs-meta)] leading-snug text-auth-tx2">
-        업종 선택은 진입 의도일 뿐이며, 실제 권한은 로그인 후 사업장 소속으로 결정됩니다.
+        업종 선택은 안내용일 뿐이며, 실제 권한은 로그인 후 사업장 소속에 따라 정해집니다.
       </p>
     </div>
   );

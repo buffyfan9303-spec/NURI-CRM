@@ -23,13 +23,13 @@ export function tableFromReport(r: CategoryReport): ReportTable {
 
 const LABEL: Record<string, string> = {
   unit_no: "호실", dong: "동", floor: "층", use_kind: "용도", area: "전용면적", share: "지분", tenant: "입주자", biz_reg_no: "사업자번호", contract_from: "계약 시작", contract_to: "계약 종료",
-  name: "이름", std_category: "분류", source: "원천", alloc: "배분", payer: "부담", tax: "세무", rate: "단가·정액", tax_approved: "세무 승인",
-  kind: "구분", supply: "공급가", vat: "부가세", exempt: "면세", amount: "금액", vendor: "거래처", prev: "전월 지침", curr: "이번 지침", usage: "사용량", reason: "사유",
-  bill_to: "청구 대상", revision: "회차", current_charge: "당월 부과", prior_unpaid: "전월 미납", late_fee: "연체료", credit: "선납", amount_due: "납부 요청액", lines: "항목",
-  receiver: "받는 곳", receiver_bizno: "받는 곳 사업자번호", supplier: "공급자", total: "합계", status: "상태", nts_approval_no: "승인번호", blocks: "차단 사유",
-  period: "청구월", paid: "수납", credit_applied: "크레딧 사용", balance: "잔액", due_date: "납기", paid_at: "입금일", method: "방법", reversed: "취소됨", at: "일시", actor: "처리자", action: "작업", target: "대상",
+  name: "이름", std_category: "분류", source: "원천", alloc: "배분", payer: "부담 주체", tax: "부가세 구분", rate: "단가·정액", tax_approved: "부가세 확인",
+  kind: "구분", supply: "공급가액", vat: "부가세", exempt: "면세", amount: "금액", vendor: "거래처", prev: "전월 지침", curr: "당월 지침", usage: "사용량", reason: "사유",
+  bill_to: "청구 대상", revision: "회차", current_charge: "당월 부과액", prior_unpaid: "전월 미납액", late_fee: "연체료", credit: "선납금", amount_due: "납부 요청액", lines: "항목",
+  receiver: "공급받는자", receiver_bizno: "공급받는자 사업자번호", supplier: "공급자", total: "합계", status: "상태", nts_approval_no: "승인번호", blocks: "발행 불가 사유",
+  period: "청구월", paid: "수납액", credit_applied: "선납금 사용", balance: "잔액", due_date: "납기", paid_at: "입금일", method: "방법", reversed: "취소됨", at: "일시", actor: "처리자", action: "작업", target: "대상",
 };
-const SHEETS: [string, string][] = [["units", "호실"], ["charge_types", "항목"], ["sources", "자료"], ["bills", "청구"], ["tax_targets", "세무"], ["receivables", "미수"], ["payments", "수납"], ["audit", "감사"]];
+const SHEETS: [string, string][] = [["units", "호실"], ["charge_types", "항목"], ["sources", "자료"], ["bills", "청구"], ["tax_targets", "세금계산서"], ["receivables", "미수금"], ["payments", "수납"], ["audit", "감사"]];
 const MONEY = new Set(["supply", "vat", "exempt", "amount", "current_charge", "prior_unpaid", "late_fee", "credit", "amount_due", "total", "tax", "paid", "credit_applied", "balance"]);
 
 function cell(v: unknown): string | number | boolean | null {
@@ -48,7 +48,7 @@ function addSettlementSheet(wb: ExcelJS.Workbook, title: string, s: Settlement) 
   const hasLate = s.total.lateFee !== 0;
   const tail = (r: Omit<SettleRow, "unitId" | "unitLabel" | "party">) =>
     [r.supply + r.exempt, r.vat, r.current, r.priorUnpaid, ...(hasLate ? [r.lateFee] : []), r.due, r.paid, r.left];
-  ws.addRow(["호실", "입주자", ...s.items, "부가세 빼기 전", "부가세", "이번 달 관리비", "밀린 돈", ...(hasLate ? ["연체료"] : []), "이번 달 낼 돈", "낸 돈", "남은 돈"]).font = { bold: true };
+  ws.addRow(["호실", "입주자", ...s.items, "공급가액", "부가세", "이번 달 관리비", "전월 미납액", ...(hasLate ? ["연체료"] : []), "이번 달 납부액", "수납액", "미납액"]).font = { bold: true };
   for (const r of s.rows) ws.addRow([r.unitLabel, r.party, ...s.items.map((k) => r.items[k] ?? 0), ...tail(r)]);
   ws.addRow([`합계 ${s.rows.length}호실`, null, ...s.items.map((k) => s.total.items[k] ?? 0), ...tail(s.total)]).font = { bold: true };
   const width = 2 + s.items.length + (hasLate ? 8 : 7);

@@ -152,8 +152,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(out);
   }
 
-  // stage: 오류가 남은 파일은 저장하지 않는다(고친 파일로 다시).
-  if (errorRows > 0) return bad(`오류 ${errorRows}행이 남아 있어 저장하지 않았습니다. 파일을 고쳐 다시 올리거나 열 지정을 바꾸세요.`, 422);
+  // stage: 오류가 남은 파일은 저장하지 않는다(수정한 파일로 다시).
+  if (errorRows > 0) return bad(`오류 ${errorRows}행이 남아 있어 저장하지 않았습니다. 파일을 수정해 다시 올리거나 열 지정을 바꾸세요.`, 422);
   if (kept.length === 0) return bad("가져올 행이 없습니다. 머리글 행과 열 지정을 확인하세요.", 422);
   const saveTemplate = str(form.get("saveTemplate")) === "1";
   const total = expected !== "" && Number.isInteger(Number(expected)) ? Number(expected) : null;

@@ -75,7 +75,7 @@ export function BusinessPicker({ businesses, onPick, loading = false, error, onR
         </div>
         <p className="text-[14px] font-medium text-auth-tx">아직 소속된 사업장이 없습니다.</p>
         <p className="max-w-[320px] text-[12.5px] leading-relaxed text-auth-tx2">
-          사업장 관리자에게 초대를 요청하거나, 새 사업장 가입 신청 결과를 기다려주세요.
+          사업장 관리자에게 초대를 요청하거나, 새 사업장 가입 신청 결과를 기다려 주세요.
         </p>
       </div>
     );

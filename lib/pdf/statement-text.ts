@@ -18,5 +18,5 @@ export function basisText(basis: Record<string, unknown> | null | undefined): st
 
 /** 검침 사유 → 명세서 비고. */
 export function readingNote(reason: string | null | undefined): string | undefined {
-  return reason === "replaced" ? "* 계량기 교체" : reason === "estimated" ? "* 추정" : reason === "typo" ? "* 정정" : reason === "rollover" ? "* 지침 순환" : undefined;
+  return reason === "replaced" ? "* 계량기 교체" : reason === "estimated" ? "* 추정" : reason === "typo" ? "* 전월 지침 정정" : reason === "rollover" ? "* 지침 순환" : undefined;
 }

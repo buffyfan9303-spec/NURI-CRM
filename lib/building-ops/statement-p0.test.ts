@@ -74,11 +74,11 @@ describe("연체료 산식", () => {
   const item: LateFeeCalc = { amount: 1_273, days: 31, from: "2026-08-01", to: "2026-08-31", rate: 15, unit: "annual", method: "simple", grace_days: 0, cap_pct: null, principal: 100_000, period: "2026-07" };
   it("기준액·이율·기간·일수·금액을 한 줄로", () => {
     const r = lateFeeFormulaLines([item]);
-    expect(r.lines).toEqual(["2026년 7월분 안 낸 100,000원 × 연 15%(단리) × 8월 1일~8월 31일 31일 = 1,273원"]);
+    expect(r.lines).toEqual(["2026년 7월분 미납액 100,000원 × 연 15%(단리) × 8월 1일~8월 31일 31일 = 1,273원"]);
     expect(r.more).toBeNull();
   });
-  it("봐주는 날·최대 %는 괄호로, 금액 0 인 줄은 뺀다, 많으면 건수·합계로 묶는다", () => {
-    expect(lateFeeFormulaLines([{ ...item, grace_days: 5, cap_pct: 20 }]).lines[0]).toMatch(/\(납기 뒤 5일은 봐줌, 최대 20%\)$/);
+  it("유예 일수·최대 %는 괄호로, 금액 0 인 줄은 뺀다, 많으면 건수·합계로 묶는다", () => {
+    expect(lateFeeFormulaLines([{ ...item, grace_days: 5, cap_pct: 20 }]).lines[0]).toMatch(/\(납기 뒤 5일은 유예, 최대 20%\)$/);
     expect(lateFeeFormulaLines([{ ...item, amount: 0 }]).lines).toEqual([]);
     const many = lateFeeFormulaLines([item, item, item, item, item], 3);
     expect(many.lines).toHaveLength(3);

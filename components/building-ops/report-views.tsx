@@ -80,7 +80,7 @@ export async function BudgetView({ ctx }: { ctx: BuildingCtx }) {
 
 export async function RepairView({ ctx }: { ctx: BuildingCtx }) {
   const title = "장기수선충당금";
-  const head = <BuildingHeader ctx={ctx} title={title} description="건물을 고치려고 모아 두는 돈의 적립·이자·사용 장부와 잔액입니다." />;
+  const head = <BuildingHeader ctx={ctx} title={title} description="건물 수선을 위해 적립하는 돈(장기수선충당금)의 적립·이자·사용 장부와 잔액입니다." />;
   if (ctx.features.long_term_repair !== "on") return <PageBody>{head}<ReportTabs ctx={ctx} view="repair" /><Card><FeatureOff ctx={ctx} label="장기수선충당금" /></Card></PageBody>;
   const r = await listRepairFund(ctx.building.id);
   if (!r.ok) return <Fail ctx={ctx} view="repair" title={title} message={r.message} />;
@@ -103,7 +103,7 @@ export async function RepairView({ ctx }: { ctx: BuildingCtx }) {
 /** 소유자·관리단 월 보고서: 한 장 인쇄(A4 세로). 월별 정산 보고서와 같은 확정 자료를 요약한다. */
 export async function OwnersView({ ctx }: { ctx: BuildingCtx }) {
   const title = "소유자·관리단 월 보고서";
-  const desc = "이번 달 관리비, 받은 돈과 못 받은 돈, 예산 대비 실적, 장기수선충당금 잔액, 주요 지출을 한 장에 봅니다.";
+  const desc = "이번 달 관리비, 수납액과 미수금, 예산 대비 실적, 장기수선충당금 잔액, 주요 지출을 한 장에 봅니다.";
   if (ctx.features.owners_report !== "on") {
     return <PageBody><BuildingHeader ctx={ctx} title={title} description={desc} /><ReportTabs ctx={ctx} view="owners" /><Card><FeatureOff ctx={ctx} label="관리단 보고서" /></Card></PageBody>;
   }
@@ -131,12 +131,12 @@ export async function OwnersView({ ctx }: { ctx: BuildingCtx }) {
         <h1 className="mb-3 hidden text-[18px] font-bold text-t print:block">{ctx.building.name} · {periodLabel(ctx.period)} 소유자·관리단 보고서</h1>
 
         <Card className="mb-4 p-4">
-          <CardHead title="① 이번 달 관리비" description={sRes.data ? "금액을 확정한 청구만 셉니다. 못 받은 돈은 오늘 기준입니다." : undefined} />
+          <CardHead title="① 이번 달 관리비" description={sRes.data ? "금액을 확정한 청구만 셉니다. 미수금은 오늘 기준입니다." : undefined} />
           {t ? (
             <SummaryStrip className="mb-0" items={[
               { label: "이번 달 관리비 합계", value: won(t.current) },
-              { label: "받은 돈", value: won(t.paid), tone: "success" },
-              { label: "못 받은 돈", value: won(t.left), tone: t.left > 0 ? "danger" : "muted" },
+              { label: "수납액", value: won(t.paid), tone: "success" },
+              { label: "미수금", value: won(t.left), tone: t.left > 0 ? "danger" : "muted" },
             ]} />
           ) : <EmptyState title={`${periodLabel(ctx.period)} 금액이 아직 확정되지 않았습니다.`} description="관리비 계산·확정 화면에서 확정하면 채워집니다." />}
         </Card>

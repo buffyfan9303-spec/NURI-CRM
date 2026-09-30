@@ -51,22 +51,22 @@ const TZ = "Asia/Seoul";
 const hhmm = (iso: string) => fmtLocal(iso, TZ).slice(11);
 const ymd = (iso: string) => fmtLocal(iso, TZ).slice(0, 10);
 const unitText = (u: { dong: string | null; unit_no: string }) => [u.dong ? (/동$/.test(u.dong) ? u.dong : `${u.dong}동`) : "", /호$/.test(u.unit_no) ? u.unit_no : `${u.unit_no}호`].filter(Boolean).join(" ");
-const billTitle = (b: Pick<PortalBillSummary, "period" | "bill_kind" | "revision">) => `${periodLabel(b.period)}${b.bill_kind === "correction" ? ` 고친 명세서(${b.revision}차)` : ""}`;
+const billTitle = (b: Pick<PortalBillSummary, "period" | "bill_kind" | "revision">) => `${periodLabel(b.period)}${b.bill_kind === "correction" ? ` 정정 명세서(${b.revision}차)` : ""}`;
 
 const KIND_INFO: Record<PortalDisputeKind, { label: string; desc: string }> = {
-  dispute: { label: "금액 이의", desc: "금액이 틀렸다고 생각될 때(예: 전기요금이 너무 많이 나왔다)." },
-  correction_request: { label: "고쳐 달라는 요청", desc: "이름·면적·호실 정보 등이 틀려 고쳐 주길 바랄 때." },
-  info_request: { label: "정보 요청", desc: "14개 항목별 금액, 계산 근거, 영수증 사본 등 자료를 보여 달라고 할 때." },
+  dispute: { label: "금액 이의", desc: "금액이 잘못되었다고 생각될 때(예: 전기요금이 너무 많이 나왔을 때)." },
+  correction_request: { label: "정정 요청", desc: "이름·면적·호실 정보 등이 잘못되어 정정을 요청할 때." },
+  info_request: { label: "정보 요청", desc: "14개 항목별 금액, 계산 근거, 영수증 사본 등 자료를 요청할 때." },
 };
 const DISPUTE_STATUS: Record<"open" | "resolved" | "rejected", { label: string; kind: "warning" | "success" | "error" }> = {
-  open: { label: "처리 중", kind: "warning" }, resolved: { label: "처리됨", kind: "success" }, rejected: { label: "받아들이지 않음", kind: "error" },
+  open: { label: "처리 중", kind: "warning" }, resolved: { label: "처리 완료", kind: "success" }, rejected: { label: "반려", kind: "error" },
 };
 /** 서버 문구가 없거나 새로 생긴 hint 의 화면 문구(서버 수정 중 추가되는 코드 대비). 있으면 서버 message 보다 먼저 쓴다. */
 const HINT_TEXT: Record<string, string> = {
   upcoming_contract: "아직 입주(계약 시작) 전이라 조회할 수 없습니다. 계약 시작일부터 볼 수 있습니다. 궁금하면 관리사무소에 문의해 주세요.",
 };
 const failText = (f: Fail) => HINT_TEXT[f.hint as string] ?? f.message;
-const CORRECTION_NOTE = "확정된 명세서는 덮어쓰지 않습니다. 금액을 고치게 되면 '고친 명세서'가 목록에 새로 나옵니다.";
+const CORRECTION_NOTE = "확정된 명세서는 덮어쓰지 않습니다. 금액을 고치게 되면 '정정 명세서'가 목록에 새로 나옵니다.";
 
 // ═══ 최상위 ═══
 export function TenantPortal({ token, api = SERVER_API }: { token: string; api?: TenantApi }) {
@@ -87,7 +87,7 @@ export function TenantPortal({ token, api = SERVER_API }: { token: string; api?:
     const [b, s] = await Promise.all([call(() => api.getPortalBuilding(token)), call(() => api.getPortalSummary())]);
     if (!b.ok) { setBuilding({ state: "error", fail: b }); return; }
     setBuilding({ state: "ok", data: b.data });
-    // 다른 건물 QR 로 연 세션이면 그 건물 화면을 보여 주지 않는다(건물 이름으로만 구분 가능).
+    // 다른 건물 QR로 연 세션이면 그 건물 화면을 보여 주지 않는다(건물 이름으로만 구분 가능).
     if (s.ok && s.data.building.name === b.data.building_name) { setSummary(s.data); setView("home"); }
     else setView("login");
   }, [api, token]);
@@ -115,7 +115,7 @@ export function TenantPortal({ token, api = SERVER_API }: { token: string; api?:
             <p className="truncate text-[15px] font-semibold leading-tight">{building.state === "ok" ? building.data.building_name : "관리비 조회"}</p>
             <p className="truncate text-[length:var(--fs-meta)] text-t2">{summary ? `${unitText(summary.unit)} 관리비 조회` : "입주자 관리비 조회"}</p>
           </div>
-          {view === "home" && summary && <LogoutButton api={api} onDone={() => { setSummary(null); setNotice("조회를 끝냈습니다. 다시 보려면 호실과 접속코드를 넣어 주세요."); setView("login"); }} />}
+          {view === "home" && summary && <LogoutButton api={api} onDone={() => { setSummary(null); setNotice("조회를 종료했습니다. 다시 보려면 호실과 접속코드를 입력해 주세요."); setView("login"); }} />}
           <ThemeToggle />
         </div>
       </header>
@@ -145,7 +145,7 @@ function LogoutButton({ api, onDone }: { api: TenantApi; onDone: () => void }) {
   return (
     <Button variant="secondary" size="sm" loading={busy} className="[@media(pointer:coarse)]:min-h-[44px]" onClick={async () => { setBusy(true); await call(() => api.portalLogout()); setBusy(false); onDone(); }}>
       {!busy && <LogOut size={15} aria-hidden />}
-      <span>조회 끝내기</span>
+      <span>조회 종료</span>
     </Button>
   );
 }
@@ -192,7 +192,7 @@ function LoginView({ token, building, api, notice, onLoggedIn }: { token: string
     e.preventDefault();
     if (locked) return;
     if (!unit.trim() || code.replace(/-/g, "").length < 8 || (building.has_dong && !dong.trim())) {
-      setErr({ ok: false, hint: "invalid_input", message: building.has_dong ? "동·호실과 8자리 접속코드를 모두 넣어 주세요." : "호실과 8자리 접속코드를 모두 넣어 주세요." });
+      setErr({ ok: false, hint: "invalid_input", message: building.has_dong ? "동·호실과 8자리 접속코드를 모두 입력해 주세요." : "호실과 8자리 접속코드를 모두 입력해 주세요." });
       return;
     }
     setBusy(true);
@@ -205,8 +205,8 @@ function LoginView({ token, building, api, notice, onLoggedIn }: { token: string
   };
   const mins = Math.floor(leftSec / 60), secs = leftSec % 60;
   const errText = !err ? null
-    : err.hint === "locked" ? (locked ? `여러 번 틀려 잠시 잠겼습니다. ${mins > 0 ? `${mins}분 ` : ""}${secs}초 뒤에 다시 넣을 수 있습니다.` : err.message)
-    : err.hint === "invalid_credentials" && err.remainingAttempts != null ? `${err.message} 남은 시도 ${err.remainingAttempts}번(모두 틀리면 잠시 잠깁니다).`
+    : err.hint === "locked" ? (locked ? `여러 번 틀려 잠시 잠겼습니다. ${mins > 0 ? `${mins}분 ` : ""}${secs}초 뒤에 다시 입력할 수 있습니다.` : err.message)
+    : err.hint === "invalid_credentials" && err.remainingAttempts != null ? `${err.message} 남은 시도 ${err.remainingAttempts}회(모두 틀리면 잠시 잠깁니다).`
     : failText(err);
 
   return (
@@ -214,7 +214,7 @@ function LoginView({ token, building, api, notice, onLoggedIn }: { token: string
       <section className="md:pt-4">
         <h1 className="text-[24px] font-bold leading-tight tracking-[-0.01em] sm:text-[28px]">내 관리비 보기</h1>
         <p className="mt-2 text-[15px] leading-relaxed text-t2">
-          관리사무소에서 받은 <strong className="font-semibold text-t">호실 접속코드</strong>를 넣으면 우리 호실의 확정된 관리비 명세서를 볼 수 있습니다.
+          관리사무소에서 받은 <strong className="font-semibold text-t">호실 접속코드</strong>를 입력하면 내 호실의 확정된 관리비 명세서를 볼 수 있습니다.
           다른 호실의 금액은 볼 수 없습니다.
         </p>
         <ul className="mt-4 space-y-1.5 text-[length:var(--fs-body)] text-t2">
@@ -236,7 +236,7 @@ function LoginView({ token, building, api, notice, onLoggedIn }: { token: string
           <Input
             label="접속코드" value={code} onChange={(e) => setCode(formatCode(e.target.value))} required maxLength={9}
             autoComplete="one-time-code" autoCapitalize="characters" spellCheck={false} placeholder="XXXX-XXXX"
-            className="font-mono tracking-[0.12em]" hint="대소문자·하이픈은 신경 쓰지 않아도 됩니다." aria-invalid={fieldErr || undefined}
+            className="font-mono tracking-[0.12em]" hint="대소문자·하이픈은 구분하지 않습니다." aria-invalid={fieldErr || undefined}
           />
           <div id="login-status" aria-live="polite" className="min-h-0">
             {errText && <Alert kind="error" className="mb-4">{errText}</Alert>}
@@ -284,13 +284,13 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 
 function PayStatus({ b }: { b: PortalBillSummary }) {
   if (b.paid) return <Badge kind="success">납부 완료</Badge>;
-  if (b.remaining != null && b.remaining > 0) return <Badge kind="warning">남은 돈 {won(b.remaining)}</Badge>;
-  if (b.remaining != null && b.remaining <= 0) return <Badge kind="success">낼 돈 없음</Badge>;
+  if (b.remaining != null && b.remaining > 0) return <Badge kind="warning">미납액 {won(b.remaining)}</Badge>;
+  if (b.remaining != null && b.remaining <= 0) return <Badge kind="success">미납 없음</Badge>;
   return null;
 }
 
 function HomeView({ summary: s, building, onOpen, notice }: { summary: PortalSummary; building: PortalBuilding; onOpen: (id: string) => void; notice: string | null }) {
-  // 지금 낼 돈 = 이 계약의 열린 채권 잔액 합계(밀린 돈·연체료·고친 명세서 포함), 기한 = 가장 이른 남은 기한(계약 r2 §5).
+  // 지금 낼 돈 = 이 계약의 열린 채권 잔액 합계(미납액·연체료·정정 명세서 포함), 기한 = 가장 이른 남은 기한(계약 r2 §5).
   // 달별 명세 금액은 아래 목록에 그대로 둔다.
   const latest = s.bills[0] ?? null;
   const due = s.next_due_date ?? null;
@@ -307,20 +307,20 @@ function HomeView({ summary: s, building, onOpen, notice }: { summary: PortalSum
         {/* 맨 위: 이번 달 낼 돈 — 가장 큰 글씨. */}
         <Card className="overflow-hidden p-0">
           <div className="border-b border-[var(--bd)] bg-[var(--accent-soft)] px-5 py-4">
-            <p className="text-[length:var(--fs-body)] font-medium text-t2">지금 낼 돈</p>
+            <p className="text-[length:var(--fs-body)] font-medium text-t2">지금 납부할 금액</p>
             <p className="mt-1 text-[34px] font-bold leading-none tracking-[-0.02em] tabular-nums sm:text-[40px]">{won(s.outstanding)}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {s.outstanding > 0 ? (overdue ? <Badge kind="error">기한 지남</Badge> : <Badge kind="warning">아직 안 냄</Badge>) : <Badge kind="success">낼 돈 없음</Badge>}
-              {due && s.outstanding > 0 && <span className="text-[length:var(--fs-body)] text-t2">납부기한 <strong className="font-semibold text-t tabular-nums">{due}</strong></span>}
+              {s.outstanding > 0 ? (overdue ? <Badge kind="error">기한 초과</Badge> : <Badge kind="warning">미납</Badge>) : <Badge kind="success">미납 없음</Badge>}
+              {due && s.outstanding > 0 && <span className="text-[length:var(--fs-body)] text-t2">납부 기한 <strong className="font-semibold text-t tabular-nums">{due}</strong></span>}
             </div>
             <p className="mt-2 text-[length:var(--fs-meta)] text-t2">
-              {latest ? "밀린 돈·연체료·고친 명세서까지 합친 금액입니다. 달별 금액은 아래 명세서 목록에 있습니다." : "아직 확정된 관리비 명세서가 없습니다. 관리사무소가 금액을 확정하면 여기에 나옵니다."}
+              {latest ? "미납액·연체료·정정 명세서까지 합친 금액입니다. 달별 금액은 아래 명세서 목록에 있습니다." : "아직 확정된 관리비 명세서가 없습니다. 관리사무소가 금액을 확정하면 여기에 나옵니다."}
             </p>
           </div>
           <dl className="divide-y divide-[var(--bd)] px-5">
             {credit > 0 && (
               <div className="flex items-baseline justify-between gap-3 py-3">
-                <dt className="text-[length:var(--fs-body)] text-t2">미리 낸 돈(다음 관리비에서 뺍니다)</dt>
+                <dt className="text-[length:var(--fs-body)] text-t2">선납금(다음 관리비에서 차감됩니다)</dt>
                 <dd className="text-[16px] font-semibold tabular-nums text-[var(--accent-ink)]">{won(credit)}</dd>
               </div>
             )}
@@ -333,16 +333,16 @@ function HomeView({ summary: s, building, onOpen, notice }: { summary: PortalSum
                   <CopyButton text={bd.bank_account!.replace(/[^0-9]/g, "") || bd.bank_account!} label="계좌번호 복사" />
                 </dd>
               ) : (
-                <dd className="mt-1 text-[length:var(--fs-body)] text-t2">관리사무소에 입금 계좌를 물어보세요.</dd>
+                <dd className="mt-1 text-[length:var(--fs-body)] text-t2">입금 계좌는 관리사무소에 문의하세요.</dd>
               )}
-              <p className="mt-2 text-[length:var(--fs-meta)] text-t3">입금은 관리사무소가 확인한 뒤 이 화면에 &lsquo;납부 완료&rsquo;로 바뀝니다. 바로 바뀌지 않을 수 있습니다.</p>
+              <p className="mt-2 text-[length:var(--fs-meta)] text-t3">입금은 관리사무소가 확인한 뒤 이 화면의 상태가 &lsquo;납부 완료&rsquo;로 바뀝니다. 바로 바뀌지 않을 수 있습니다.</p>
             </div>
           </dl>
         </Card>
         <Card className="p-5">
           <h2 className="text-[15px] font-semibold">관리사무소</h2>
           <OfficeContact b={building} className="mt-1" />
-          <p className="mt-2 text-[length:var(--fs-meta)] text-t2">{s.payer_name ? `${s.payer_name} · ` : ""}{unitText(s.unit)} · 조회는 {hhmm(s.expires_at)}까지 열려 있습니다.</p>
+          <p className="mt-2 text-[length:var(--fs-meta)] text-t2">{s.payer_name ? `${s.payer_name} · ` : ""}{unitText(s.unit)} · 조회는 {hhmm(s.expires_at)}까지 가능합니다.</p>
         </Card>
       </div>
 
@@ -353,7 +353,7 @@ function HomeView({ summary: s, building, onOpen, notice }: { summary: PortalSum
             <p className="mt-0.5 text-[length:var(--fs-meta)] text-t2">누르면 항목별 금액과 계산 근거를 볼 수 있습니다.</p>
           </div>
           {s.bills.length === 0 ? (
-            <EmptyState title="확정된 명세서가 없습니다." description="관리사무소가 금액을 확정하면 달마다 여기에 쌓입니다." />
+            <EmptyState title="확정된 명세서가 없습니다." description="관리사무소가 금액을 확정하면 달마다 여기에 표시됩니다." />
           ) : (
             <ul className="divide-y divide-[var(--bd)] border-t border-[var(--bd)]">
               {s.bills.map((b) => (
@@ -362,7 +362,7 @@ function HomeView({ summary: s, building, onOpen, notice }: { summary: PortalSum
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-1.5">
                         <span className="text-[15px] font-medium">{periodLabel(b.period)}</span>
-                        {b.bill_kind === "correction" && <span className={PILL}>고친 명세서 {b.revision}차</span>}
+                        {b.bill_kind === "correction" && <span className={PILL}>정정 명세서 {b.revision}차</span>}
                       </span>
                       <span className="mt-1.5 block h-[4px] rounded-full bg-sf2" aria-hidden>
                         <span className="block h-full rounded-full bg-[var(--accent)] opacity-60" style={{ width: `${Math.round((Math.abs(b.amount_due) / maxDue) * 100)}%` }} />
@@ -392,11 +392,11 @@ function MyDisputes({ summary: s, billId }: { summary: PortalSummary; billId?: s
   return (
     <Card className="p-0">
       <div className="px-5 pb-3 pt-4">
-        <h2 className="text-[16px] font-semibold">{billId ? "이 명세서로 낸 문의·이의" : "내가 낸 문의·이의"}</h2>
-        <p className="mt-0.5 text-[length:var(--fs-meta)] text-t2">관리사무소가 처리하면 답변이 여기에 나옵니다. 문의는 명세서를 열고 남길 수 있습니다.</p>
+        <h2 className="text-[16px] font-semibold">{billId ? "이 명세서의 문의·이의 내역" : "내 문의·이의 내역"}</h2>
+        <p className="mt-0.5 text-[length:var(--fs-meta)] text-t2">관리사무소가 처리하면 답변이 여기에 나옵니다. 문의는 명세서를 열어 신청할 수 있습니다.</p>
       </div>
       {rows.length === 0 ? (
-        <p className="border-t border-[var(--bd)] px-5 py-6 text-center text-[length:var(--fs-body)] text-t2">아직 남긴 문의·이의가 없습니다.</p>
+        <p className="border-t border-[var(--bd)] px-5 py-6 text-center text-[length:var(--fs-body)] text-t2">접수한 문의·이의가 없습니다.</p>
       ) : (
         <ul className="divide-y divide-[var(--bd)] border-t border-[var(--bd)]">
           {rows.map((d) => {
@@ -406,7 +406,7 @@ function MyDisputes({ summary: s, billId }: { summary: PortalSummary; billId?: s
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge kind={st.kind}>{st.label}</Badge>
                   <span className="text-[length:var(--fs-body)] font-medium">{KIND_INFO[d.kind]?.label ?? d.kind}</span>
-                  <span className="text-[length:var(--fs-meta)] text-t2">{periodLabel(d.period)} · 접수번호 <span className="font-mono">{d.receipt_no}</span> · {ymd(d.created_at)}</span>
+                  <span className="text-[length:var(--fs-meta)] text-t2">{periodLabel(d.period)} · 접수 번호 <span className="font-mono">{d.receipt_no}</span> · {ymd(d.created_at)}</span>
                 </div>
                 <p className="mt-1.5 whitespace-pre-wrap break-words text-[length:var(--fs-body)] text-t">{d.note}</p>
                 {d.resolution && (
@@ -465,19 +465,19 @@ function BillDetailView({ billId, summary, api, onBack, onLost, onRefresh }: { b
       <Card className="p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[length:var(--fs-body)] text-t2">이 명세서로 낼 돈</p>
+            <p className="text-[length:var(--fs-body)] text-t2">이 명세서의 납부할 금액</p>
             <p className="text-[30px] font-bold leading-tight tabular-nums">{won(b.amount_due)}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2"><PayStatus b={b} />{b.due_date && <span className="text-[length:var(--fs-body)] text-t2">납부기한 <strong className="text-t tabular-nums">{b.due_date}</strong></span>}</div>
+          <div className="flex flex-wrap items-center gap-2"><PayStatus b={b} />{b.due_date && <span className="text-[length:var(--fs-body)] text-t2">납부 기한 <strong className="text-t tabular-nums">{b.due_date}</strong></span>}</div>
         </div>
         <dl className="mt-4 grid gap-x-6 gap-y-2 border-t border-[var(--bd)] pt-3 text-[length:var(--fs-body)] sm:grid-cols-2">
           <Row label="이번 달 관리비" value={won(b.current_charge)} />
-          {b.prior_unpaid !== 0 && <Row label="지난달까지 밀린 돈" value={won(b.prior_unpaid)} />}
+          {b.prior_unpaid !== 0 && <Row label="지난달까지의 미납액" value={won(b.prior_unpaid)} />}
           {d.features.late_fee && b.late_fee != null && b.late_fee !== 0 && <Row label="연체료" value={won(b.late_fee)} />}
-          {b.credit !== 0 && <Row label="미리 낸 돈에서 뺀 금액" value={won(-Math.abs(b.credit))} />}
+          {b.credit !== 0 && <Row label="선납금 차감" value={won(-Math.abs(b.credit))} />}
           <Row label="공급가액" value={won(b.supply)} muted />
           <Row label="부가세" value={won(b.vat)} muted />
-          {b.exempt !== 0 && <Row label="부가세 없는 금액" value={won(b.exempt)} muted />}
+          {b.exempt !== 0 && <Row label="면세 금액" value={won(b.exempt)} muted />}
         </dl>
         <div className="mt-4 flex flex-wrap gap-2">
           <a
@@ -486,7 +486,7 @@ function BillDetailView({ billId, summary, api, onBack, onLost, onRefresh }: { b
           >
             <Download size={16} aria-hidden />명세서 PDF 받기
           </a>
-          <Button onClick={() => setDisputeOpen(true)}><MessageSquare size={16} aria-hidden />문의·이의 남기기</Button>
+          <Button onClick={() => setDisputeOpen(true)}><MessageSquare size={16} aria-hidden />문의·이의 신청</Button>
         </div>
         <p className="mt-3 text-[length:var(--fs-meta)] text-t2">{CORRECTION_NOTE}</p>
       </Card>
@@ -525,7 +525,7 @@ function BillDetailView({ billId, summary, api, onBack, onLost, onRefresh }: { b
                       {prev != null && <Row label="지난달 금액" value={won(prev)} />}
                       <Row label="공급가액" value={won(l.supply)} muted />
                       <Row label="부가세" value={won(l.vat)} muted />
-                      {l.exempt !== 0 && <Row label="부가세 없는 금액" value={won(l.exempt)} muted />}
+                      {l.exempt !== 0 && <Row label="면세 금액" value={won(l.exempt)} muted />}
                       {l.tax_treatment && <Row label="부가세 구분" value={TAX_LABEL[l.tax_treatment] ?? ""} muted />}
                     </dl>
                   </details>
@@ -541,7 +541,7 @@ function BillDetailView({ billId, summary, api, onBack, onLost, onRefresh }: { b
           <div className="px-5 pb-2 pt-4">
             <h2 className="text-[16px] font-semibold">관리비 14개 항목(상가건물 임대차보호법)</h2>
             <p className="mt-0.5 text-[length:var(--fs-meta)] text-t2">
-              {l14.amountsHidden ? "월 관리비가 10만 원 미만이라 법에 따라 포함된 항목만 표시합니다. 금액이 궁금하면 '정보 요청'을 남기세요." : "법이 정한 14개 항목으로 다시 묶은 금액입니다."}
+              {l14.amountsHidden ? "월 관리비가 10만 원 미만이라 법에 따라 포함된 항목만 표시합니다. 금액이 궁금하면 '정보 요청'으로 문의하세요." : "법이 정한 14개 항목으로 다시 묶은 금액입니다."}
             </p>
           </div>
           <ol className="grid border-t border-[var(--bd)] sm:grid-cols-2">
@@ -562,7 +562,7 @@ function BillDetailView({ billId, summary, api, onBack, onLost, onRefresh }: { b
 
       {d.meters.length > 0 && (
         <Card className="p-5">
-          <h2 className="text-[16px] font-semibold">검침(계량기 숫자)</h2>
+          <h2 className="text-[16px] font-semibold">검침값(계량기 수치)</h2>
           <ul className="mt-2 divide-y divide-[var(--bd)]">
             {d.meters.map((m, i) => (
               <li key={`${m.kind}-${m.serial ?? i}`} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5 text-[length:var(--fs-body)]">
@@ -577,11 +577,11 @@ function BillDetailView({ billId, summary, api, onBack, onLost, onRefresh }: { b
 
       {d.prior.length > 0 && (
         <Card className="p-5">
-          <h2 className="text-[16px] font-semibold">밀린 돈(달별)</h2>
+          <h2 className="text-[16px] font-semibold">미납액(달별)</h2>
           <ul className="mt-2 divide-y divide-[var(--bd)] text-[length:var(--fs-body)]">
             {d.prior.map((p, i) => (
               <li key={`${p.period}-${p.kind}-${i}`} className="flex justify-between gap-3 py-2">
-                <span>{periodLabel(p.period)} {p.kind === "late_fee" ? "연체료" : p.kind === "correction" ? "고친 명세서" : "관리비"}{p.due_date ? <span className="text-t2"> · 기한 {p.due_date}</span> : null}</span>
+                <span>{periodLabel(p.period)} {p.kind === "late_fee" ? "연체료" : p.kind === "correction" ? "정정 명세서" : "관리비"}{p.due_date ? <span className="text-t2"> · 기한 {p.due_date}</span> : null}</span>
                 <span className="font-medium tabular-nums">{won(p.amount - p.paid - p.credit_applied)}</span>
               </li>
             ))}
@@ -620,7 +620,7 @@ function Row({ label, value, muted }: { label: string; value: string; muted?: bo
   );
 }
 
-// ═══ 문의·이의 남기기 ═══
+// ═══ 문의·이의 신청 ═══
 function DisputeModal({ open, onClose, detail, quotaLeft, api, onLost, onSubmitted }: {
   open: boolean; onClose: () => void; detail: PortalBillDetail; quotaLeft: number; api: TenantApi; onLost: (f: Fail) => void; onSubmitted: () => void;
 }) {
@@ -650,7 +650,7 @@ function DisputeModal({ open, onClose, detail, quotaLeft, api, onLost, onSubmitt
   const fe = (h: string) => (err?.hint === h ? err.message : undefined);
 
   return (
-    <Modal open={open} onClose={onClose} title={done ? "접수했습니다" : "문의·이의 남기기"} className="sm:max-w-[560px]"
+    <Modal open={open} onClose={onClose} title={done ? "접수했습니다" : "문의·이의 신청"} className="sm:max-w-[560px]"
       footer={done ? <Button onClick={onClose}>닫기</Button> : (
         <>
           <Button variant="ghost" onClick={onClose}>취소</Button>
@@ -660,17 +660,17 @@ function DisputeModal({ open, onClose, detail, quotaLeft, api, onLost, onSubmitt
     >
       {done ? (
         <div role="status" className="space-y-3 py-2 text-[length:var(--fs-body)]">
-          <p className="text-[15px]">관리사무소에 전달했습니다. 처리되면 &lsquo;내가 낸 문의·이의&rsquo;에 답변이 나옵니다.</p>
+          <p className="text-[15px]">관리사무소에 전달했습니다. 처리되면 &lsquo;내 문의·이의 내역&rsquo;에 답변이 나옵니다.</p>
           <div className="rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2 px-4 py-3">
-            <p className="text-t2">접수번호</p>
+            <p className="text-t2">접수 번호</p>
             <p className="font-mono text-[22px] font-bold tracking-[0.08em]">{done.receiptNo}</p>
           </div>
-          <p className="text-t2">오늘 더 남길 수 있는 건수: {done.remainingToday}건. {CORRECTION_NOTE}</p>
+          <p className="text-t2">오늘 더 접수할 수 있는 건수: {done.remainingToday}건. {CORRECTION_NOTE}</p>
         </div>
       ) : (
         <form id="tenant-dispute-form" onSubmit={submit} noValidate>
-          <p className="mb-3 text-[length:var(--fs-body)] text-t2">{billTitle(detail.bill)} 명세서에 대해 남깁니다. 오늘 더 남길 수 있는 건수: {quotaLeft}건.</p>
-          {blocked && <Alert kind="warning" className="mb-3">오늘은 더 남길 수 없습니다. 급한 일은 관리사무소로 전화해 주세요.</Alert>}
+          <p className="mb-3 text-[length:var(--fs-body)] text-t2">{billTitle(detail.bill)} 명세서에 대한 문의·이의입니다. 오늘 더 접수할 수 있는 건수: {quotaLeft}건.</p>
+          {blocked && <Alert kind="warning" className="mb-3">오늘은 더 접수할 수 없습니다. 급한 일은 관리사무소로 전화해 주세요.</Alert>}
           <fieldset className="mb-4" aria-describedby={fe("invalid_kind") ? `${kindId}-err` : undefined}>
             <legend className="mb-1.5 text-[length:var(--fs-body)] font-medium text-t2">종류<span className="ml-0.5 text-et" aria-hidden>*</span><span className="sr-only"> (필수)</span></legend>
             <div className="space-y-2">
@@ -699,8 +699,8 @@ function DisputeModal({ open, onClose, detail, quotaLeft, api, onLost, onSubmitt
               className={cn(TEXTAREA, "min-h-[120px]")} placeholder="예: 이번 달 전기요금이 지난달의 두 배입니다. 계량기 숫자를 다시 확인해 주세요." />
             <p id={`${noteId}-count`} className={cn("mt-1 text-right text-[length:var(--fs-meta)] tabular-nums", fe("invalid_note") ? "text-et" : "text-t3")}>{fe("invalid_note") ?? `${note.length} / 1000자`}</p>
           </div>
-          <Input label="답을 받을 연락처 (선택)" value={contact} onChange={(e) => setContact(e.target.value)} maxLength={40} disabled={blocked} autoComplete="tel" inputMode="tel"
-            hint="비워 두면 이 화면에서만 답을 확인합니다. 관리사무소 담당자만 봅니다." error={fe("invalid_contact")} />
+          <Input label="답변받을 연락처 (선택)" value={contact} onChange={(e) => setContact(e.target.value)} maxLength={40} disabled={blocked} autoComplete="tel" inputMode="tel"
+            hint="비워 두면 이 화면에서만 답변을 확인할 수 있습니다. 연락처는 관리사무소 담당자만 볼 수 있습니다." error={fe("invalid_contact")} />
           <div aria-live="polite">
             {err && !["invalid_kind", "invalid_note", "invalid_contact", "invalid_charge_type"].includes(err.hint) && <Alert kind="error">{err.message}</Alert>}
           </div>

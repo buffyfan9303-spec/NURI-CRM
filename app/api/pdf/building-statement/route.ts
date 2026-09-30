@@ -2,7 +2,7 @@
  * 건물 관리비 명세서 PDF. `?businessId=&bill=<id>` 한 장 또는 `?businessId=&bills=<id,id,…>` 여러 장(한 문서, 인쇄용).
  * revenue.read 게이트(명세서 화면과 같다). 승인 여부는 화면이 안내하고 여기서는 미리보기를 위해 초안도 그린다(문서 No. 에 "초안" 표시).
  * 선택 구역은 features(statement_notice·statement_chart·statement_stub·late_fee)에 따른다. QR(statement_qr)은 PDF 인코더가 없어 계좌 문자열로 대체(§미해결).
- * P0 보강(2026-09-30): 관리주체·호실 면적·항목별 부가세·상가 14항목·밀린 돈 달별·연체료 산식·이의 안내. 금액은 서버가 준 값만(계산 없음), 순수 함수는 lib/pdf/statement-p0.ts.
+ * P0 보강(2026-09-30): 관리주체·호실 면적·항목별 부가세·상가 14항목·미납액 달별·연체료 산식·이의 안내. 금액은 서버가 준 값만(계산 없음), 순수 함수는 lib/pdf/statement-p0.ts.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
         if (!r) continue;
         const usage = usageOf(r, m);
         const amount = (t?.lines ?? []).filter((l) => ctMeterKind.get(l.charge_type_id) === m.kind).reduce((a, l) => a + l.amount, 0);
-        meterRows.push({ label: `${METER_LABEL[m.kind] ?? m.kind}${m.serial ? ` ${m.serial}` : ""}`, prev: r.prev_reading, curr: r.curr_reading, usage, unit: m.unit_label, multiplier: m.multiplier || 1, price: meterUnitPrice(t?.lines ?? [], (id) => ctMeterKind.get(id) === m.kind), avg: avgText(usage, avgFor(usageAvg, m.kind, m.unit_label), m.unit_label), amount: amount || null, note: r.reason === "replaced" ? "* 계량기 교체" : r.reason === "estimated" ? "* 추정" : r.reason === "typo" ? "* 정정" : r.reason === "rollover" ? "* 지침 순환" : undefined });
+        meterRows.push({ label: `${METER_LABEL[m.kind] ?? m.kind}${m.serial ? ` ${m.serial}` : ""}`, prev: r.prev_reading, curr: r.curr_reading, usage, unit: m.unit_label, multiplier: m.multiplier || 1, price: meterUnitPrice(t?.lines ?? [], (id) => ctMeterKind.get(id) === m.kind), avg: avgText(usage, avgFor(usageAvg, m.kind, m.unit_label), m.unit_label), amount: amount || null, note: r.reason === "replaced" ? "* 계량기 교체" : r.reason === "estimated" ? "* 추정" : r.reason === "typo" ? "* 전월 지침 정정" : r.reason === "rollover" ? "* 지침 순환" : undefined });
       }
     }
     let chart: StatementData["chart"] = null;

@@ -1,5 +1,5 @@
 /**
- * 건물 관리비 — 명세서 보내기(§4.7). revenue.read 게이트. 승인된 run 의 청구만 보낼 수 있다(서버 RPC 도 거부).
+ * 건물 관리비 — 명세서 발송(§4.7). revenue.read 게이트. 승인된 run 의 청구만 보낼 수 있다(서버 RPC 도 거부).
  * 발송 이력(bld_deliveries)은 읽기 함수가 없어 여기서 직접 조회한다(RLS is_member) — lib/domain/building.ts 에 listDeliveries 가 생기면 교체.
  */
 import { Card } from "@/components/ui/Card";
@@ -17,7 +17,7 @@ import { StatementsBoard, type DeliveryRow } from "@/components/building/Stateme
 import { LinkButton } from "@/components/building/StepCard";
 import { getAccess } from "../access";
 
-const TITLE = "명세서 보내기";
+const TITLE = "명세서 발송";
 
 export default async function StatementsPage({ params, searchParams }: { params: { businessId: string }; searchParams?: { b?: string; p?: string } }) {
   const access = await getAccess(params.businessId, "revenue.read");
@@ -52,7 +52,7 @@ export default async function StatementsPage({ params, searchParams }: { params:
       bills = b.data;
       if (bills.length) {
         const { data, error } = await getServerSupabase().schema("crm").from("bld_deliveries").select("bill_id,channel,status,note,created_at").in("bill_id", bills.map((x) => x.id)).order("created_at", { ascending: false });
-        if (error) return fail("보낸 기록을 불러오지 못했습니다.");
+        if (error) return fail("발송 기록을 불러오지 못했습니다.");
         deliveries = (data ?? []) as DeliveryRow[];
       }
     }

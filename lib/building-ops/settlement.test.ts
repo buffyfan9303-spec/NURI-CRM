@@ -28,7 +28,7 @@ describe("buildSettlement", () => {
     expect(s.total.items["전기"]).toBe(2900);
     expect(s.total.current).toBe(3400);
   });
-  it("남은 돈은 이 달까지 열린 잔액만, 낸 돈 = 낼 돈 − 남은 돈", () => {
+  it("미납액은 이 달까지 열린 잔액만, 수납액 = 납부할 금액 − 미납액", () => {
     const r = s.rows[1];
     expect(r.left).toBe(800); // 300 + 500, 10월분 제외
     expect(r.paid).toBe(1000);
@@ -52,7 +52,7 @@ describe("buildSettlement", () => {
     expect(total.getCell(1).value).toBe("합계 2호실");
     expect(total.getCell(head.indexOf("전기")).value).toBe(2900);
     expect(total.getCell(head.indexOf("이번 달 관리비")).value).toBe(3400);
-    expect(total.getCell(head.indexOf("남은 돈")).value).toBe(800);
+    expect(total.getCell(head.indexOf("미납액")).value).toBe(800);
     expect(head).not.toContain("연체료");
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 명세서 보내기(§4.7): ① 샘플 보기(PDF iframe) ② 대상 표(채널·연락처 뒤 4자리·금액·발송 상태) ③ 확인 문장 + 큰 보내기.
+ * 명세서 발송(§4.7): ① 샘플 보기(PDF iframe) ② 대상 표(채널·연락처 뒤 4자리·금액·발송 상태) ③ 확인 문장 + 큰 보내기.
  * "발송 요청" 과 "발송 성공" 을 구분한다: 인쇄·다운로드·복사는 브라우저가 실제로 했을 때만 sent 로 기록하고,
  * 문자·이메일은 OS 앱을 여는 것까지라 note="요청" 으로 기록해 "요청됨" 으로 보인다. 승인 전에는 전부 비활성(서버 RPC 도 not_approved 로 거부).
  */
@@ -65,8 +65,8 @@ export function StatementsBoard({
   const pdfUrl = (ids: string[], download = false) => `/api/pdf/building-statement?businessId=${businessId}&${ids.length === 1 ? `bill=${ids[0]}` : `bills=${ids.join(",")}`}${download ? "&download=1" : ""}`;
   const smsText = (b: BillRow) => [
     `[${building.name}] ${unitNo[b.unit_id] ?? ""}호 ${party(b)?.name ?? ""}님, ${periodLabel(ctx.period)} 관리비 안내입니다.`,
-    `이번 달 낼 돈: ${fmtMoney(b.amount_due)}`,
-    b.prior_unpaid ? `(지난달까지 안 낸 돈 ${fmtMoney(b.prior_unpaid)} 포함)` : null,
+    `이번 달 납부액: ${fmtMoney(b.amount_due)}`,
+    b.prior_unpaid ? `(전월까지 미납액 ${fmtMoney(b.prior_unpaid)} 포함)` : null,
     dueDate ? `납부기한: ${dueDate}` : null,
     bank ? `입금 계좌: ${bank}` : null,
     "이 안내는 세금계산서가 아닙니다.",
@@ -135,7 +135,7 @@ export function StatementsBoard({
         <SavedStatus state={save.state} />
       </BuildingPeriodBar>
       <PageHeader
-        title="명세서 보내기"
+        title="명세서 발송"
         description={`${building.name} · ${periodLabel(ctx.period)}${run ? ` · ${run.revision}번째 계산` : ""}`}
         actions={approved && rows.length > 0 ? (
           <a href={pdfUrl(rows.map((r) => r.id))} target="_blank" rel="noopener" className="inline-flex min-h-[44px] items-center gap-2 rounded-[var(--r-md)] border border-[var(--bd-strong)] bg-sf px-4 text-[length:var(--fs-body)] font-medium text-t shadow-card hover:bg-sf2">
@@ -154,7 +154,7 @@ export function StatementsBoard({
 
   const deliveryCell = (b: BillRow) => {
     const d = lastBy.get(b.id);
-    if (!d) return <span className="text-t3">안 보냄</span>;
+    if (!d) return <span className="text-t3">미발송</span>;
     const requested = d.note === REQUESTED;
     return (
       <span className="inline-flex flex-wrap items-center gap-1.5">
@@ -179,7 +179,7 @@ export function StatementsBoard({
   const channelSelect = (b: BillRow) => {
     const p = party(b);
     return (
-      <select aria-label={`${unitNo[b.unit_id] ?? ""}호 보내는 방법`} className={cn(CONTROL, "w-auto min-w-[110px]")} value={chanOf(b)} disabled={!approved || busy} onChange={(e) => setChannel((m) => ({ ...m, [b.id]: e.target.value as Channel }))}>
+      <select aria-label={`${unitNo[b.unit_id] ?? ""}호 발송 방법`} className={cn(CONTROL, "w-auto min-w-[110px]")} value={chanOf(b)} disabled={!approved || busy} onChange={(e) => setChannel((m) => ({ ...m, [b.id]: e.target.value as Channel }))}>
         <option value="print">인쇄</option>
         <option value="download">PDF 저장</option>
         {canReadPii && p?.phone && <option value="sms">문자</option>}
@@ -198,11 +198,11 @@ export function StatementsBoard({
               <label className={CHECK_WRAP}><input type="checkbox" aria-label="전체 선택" className={CHECK} checked={allOn} disabled={!approved || busy} onChange={() => setSelected(allOn ? new Set() : new Set(rows.map((r) => r.id)))} /></label>
             </th>
             <th className={TH} scope="col">호실</th>
-            <th className={TH} scope="col">내는 분</th>
-            <th className={TH} scope="col">보내는 방법</th>
+            <th className={TH} scope="col">납부자</th>
+            <th className={TH} scope="col">발송 방법</th>
             <th className={cn(TH, "max-xl:hidden")} scope="col">연락처</th>
-            <th className={cn(TH, "text-right")} scope="col">이번 달 낼 돈</th>
-            <th className={TH} scope="col">보낸 상태</th>
+            <th className={cn(TH, "text-right")} scope="col">이번 달 납부액</th>
+            <th className={TH} scope="col">발송 상태</th>
             <th className={cn(TH, "text-right")} scope="col">보내기</th>
           </tr>
         </thead>
@@ -214,7 +214,7 @@ export function StatementsBoard({
               <tr key={b.id} className={cn(TR, isFail && "border-l-[3px] border-l-[var(--et)]")}>
                 <td className={TD}><label className={CHECK_WRAP}><input type="checkbox" aria-label={`${unitNo[b.unit_id] ?? ""}호 선택`} className={CHECK} checked={selected.has(b.id)} disabled={!approved || busy} onChange={() => toggle(b.id)} /></label></td>
                 <td className={cn(TD, "font-semibold tabular-nums text-t")}>{unitNo[b.unit_id] ?? "—"}호</td>
-                <td className={cn(TD, "text-t")}>{p?.name ?? <span className="text-et">내는 분 없음</span>}</td>
+                <td className={cn(TD, "text-t")}>{p?.name ?? <span className="text-et">납부자 없음</span>}</td>
                 <td className={TD}>{channelSelect(b)}</td>
                 <td className={cn(TD, "whitespace-nowrap tabular-nums text-t2 max-xl:hidden")}>{canReadPii ? (last4(p?.phone) ?? (p?.email ? "이메일" : "없음")) : <span className="text-t3">권한 없음</span>}</td>
                 <MoneyCell value={b.amount_due} strong />
@@ -246,20 +246,20 @@ export function StatementsBoard({
       )}
       <div className="grid grid-cols-1 gap-4 [@media(min-width:1400px)]:grid-cols-[minmax(320px,2fr)_3fr]">
         <Card className="p-4">
-          <CardHead title="① 이렇게 보입니다" description={`${unitNo[rows[0].unit_id] ?? ""}호 명세서 — 실제로 보내는 그대로`} action={<a href={pdfUrl([rows[0].id])} target="_blank" rel="noopener" className="inline-flex min-h-[44px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2">새 탭 <ExternalLink size={14} aria-hidden /></a>} />
+          <CardHead title="① 이렇게 보입니다" description={`${unitNo[rows[0].unit_id] ?? ""}호 명세서 — 실제 발송되는 그대로`} action={<a href={pdfUrl([rows[0].id])} target="_blank" rel="noopener" className="inline-flex min-h-[44px] items-center gap-1 rounded-[var(--r-sm)] px-2 text-[length:var(--fs-meta)] font-medium text-[var(--accent-ink)] hover:bg-sf2">새 탭 <ExternalLink size={14} aria-hidden /></a>} />
           <iframe title={`${unitNo[rows[0].unit_id] ?? ""}호 명세서 미리보기`} src={`${pdfUrl([rows[0].id])}#toolbar=0`} className="h-[520px] w-full rounded-[var(--r-md)] border border-[var(--bd)] bg-sf2" />
         </Card>
         <Card className={cn("sm:p-0", MOBILE_BARE)}>
-          <div className="px-4 pt-4 sm:px-5"><CardHead title="② 보낼 대상" description="보내는 방법을 고르고, 체크한 호실만 보냅니다. 문자·복사는 줄마다 있는 버튼으로 한 건씩." /></div>
+          <div className="px-4 pt-4 sm:px-5"><CardHead title="② 보낼 대상" description="발송 방법을 고르고, 체크한 호실만 보냅니다. 문자·복사는 줄마다 있는 버튼으로 한 건씩." /></div>
           <TableOrCards
             rows={rows}
             keyOf={(b) => b.id}
             table={table}
             card={(b) => (
               <MobileCard
-                title={`${unitNo[b.unit_id] ?? "—"}호 · ${party(b)?.name ?? "내는 분 없음"}`}
+                title={`${unitNo[b.unit_id] ?? "—"}호 · ${party(b)?.name ?? "납부자 없음"}`}
                 badge={deliveryCell(b)}
-                fields={[["이번 달 낼 돈", <Money key="a" value={b.amount_due} strong className="text-[length:var(--fs-money)]" />], ["연락처", canReadPii ? (last4(party(b)?.phone) ?? "없음") : "권한 없음"]]}
+                fields={[["이번 달 납부액", <Money key="a" value={b.amount_due} strong className="text-[length:var(--fs-money)]" />], ["연락처", canReadPii ? (last4(party(b)?.phone) ?? "없음") : "권한 없음"]]}
                 actions={actionsFor(b, "md")}
               >
                 <label className="flex items-center gap-2 text-[length:var(--fs-body)] text-t2">
@@ -282,12 +282,12 @@ export function StatementsBoard({
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button size="lg" disabled={!approved || !canWrite || picked.length === 0 || busy} loading={busy} onClick={() => sendAll()}>
-            <Send size={18} aria-hidden />명세서 보내기
+            <Send size={18} aria-hidden />명세서 발송
           </Button>
           {failed.length > 0 && (
             <Button size="lg" variant="secondary" disabled={busy} onClick={() => sendAll(rows.filter((b) => failed.includes(b.id)))}>실패 {failed.length}건만 다시 보내기</Button>
           )}
-          {!canWrite && approved && <span className="text-[length:var(--fs-body)] text-t2">보낸 기록을 남기려면 고칠 권한이 필요합니다.</span>}
+          {!canWrite && approved && <span className="text-[length:var(--fs-body)] text-t2">발송 기록을 남기려면 수정 권한이 필요합니다.</span>}
         </div>
       </Card>
     </>

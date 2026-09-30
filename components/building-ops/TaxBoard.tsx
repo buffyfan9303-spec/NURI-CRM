@@ -36,7 +36,7 @@ export function TaxBoard(p: TaxBoardProps) {
       <SummaryStrip
         items={[
           { label: "발행 대상", value: `${p.lines.length}건` },
-          { label: "차단", value: `${t.blocked}건`, tone: t.blocked > 0 ? "danger" : "default", hint: t.blocked > 0 ? "사유를 해결해야 파일에 들어갑니다." : undefined },
+          { label: "발행 불가", value: `${t.blocked}건`, tone: t.blocked > 0 ? "danger" : "default", hint: t.blocked > 0 ? "사유를 해결해야 파일에 들어갑니다." : undefined },
           { label: "파일 만들기 전", value: `${t.ready}건`, hint: "파일을 아직 내려받지 않은 대상" },
           { label: "파일 생성됨(발행 확인 대기)", value: `${t.file_generated}건`, hint: "홈택스에서 발급한 뒤 승인번호를 기록하세요." },
           { label: "발행 완료(승인번호 기록)", value: `${t.issued}건`, tone: t.issued > 0 ? "success" : "default" },
@@ -57,7 +57,7 @@ function TargetsStep(p: TaxBoardProps) {
     <Card className="p-4 sm:p-5">
       <CardHead
         title="1. 이번 달 발행할 목록"
-        description="승인된 청구에서 세금계산서와 계산서를 낼 곳을 모두 모았습니다. 막힌 건은 사유를 고친 뒤 목록을 다시 만드세요."
+        description="승인된 청구에서 세금계산서와 계산서를 낼 곳을 모두 모았습니다. 발행 불가 건은 사유를 해소한 뒤 목록을 다시 만드세요."
         action={p.canIssue && p.runId && p.runApproved ? (
           <Button type="button" size="sm" loading={pending} onClick={async () => { setNote(null); const r = await run(() => buildTaxTargets(p.businessId, p.runId!), { success: "발행할 목록을 만들었습니다." }); if (r.ok) setNote(`엑셀로 만들 수 있는 건 ${r.data.ready}건, 막힌 건 ${r.data.blocked}건입니다.`); }}>{p.lines.length ? "목록 다시 만들기" : "이번 달 발행 목록 만들기"}</Button>
         ) : undefined}

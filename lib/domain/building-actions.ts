@@ -207,7 +207,7 @@ export async function deleteExpense(businessId: string, expenseId: string): Prom
 /** 호실별 직접 배정 금액(선납·감면·직접 입력 항목). */
 export async function upsertDirectCharge(businessId: string, buildingId: string, input: { period: string; charge_type_id: string; unit_id: string; amount: number; reason?: string }): Promise<ActionResult<{ id: string }>> {
   return withCap(businessId, "write", async () => {
-    if (!Number.isSafeInteger(input.amount) || input.amount === 0) return { ok: false, message: "금액은 0이 아닌 원 단위 숫자여야 합니다. 깎아 주는 돈이면 앞에 −를 붙이세요.", hint: "invalid_amount" };
+    if (!Number.isSafeInteger(input.amount) || input.amount === 0) return { ok: false, message: "금액은 0이 아닌 원 단위 숫자여야 합니다. 감면이면 앞에 −를 붙이세요.", hint: "invalid_amount" };
     const b = await assertBuilding(businessId, buildingId); if (!b.ok) return b;
     // 계산은 '직접 입력' 항목만 이 표를 읽는다. 다른 방식 항목에 넣으면 조용히 무시되므로 여기서 막는다.
     const ct = await crm().from("bld_charge_types").select("source_kind").eq("id", input.charge_type_id).eq("building_id", buildingId).maybeSingle();
@@ -506,7 +506,7 @@ export async function addRepairFundEntry(businessId: string, buildingId: string,
   return withCap(businessId, ["write", "revenue.read"], async () => {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(input.period)) return { ok: false, message: "월은 2026-09 처럼 적어 주세요.", hint: "invalid_period" };
     if (!["contribution", "spend", "interest", "adjust"].includes(input.kind)) return { ok: false, message: "종류를 골라 주세요.", hint: "invalid_kind" };
-    if (!Number.isSafeInteger(input.amount) || input.amount === 0 || (input.kind !== "adjust" && input.amount < 0)) return { ok: false, message: input.kind === "adjust" ? "바로잡을 금액은 0이 아닌 원 단위 숫자여야 합니다. 줄이는 돈이면 앞에 −를 붙이세요." : "금액은 0보다 큰 원 단위 숫자여야 합니다.", hint: "invalid_amount" };
+    if (!Number.isSafeInteger(input.amount) || input.amount === 0 || (input.kind !== "adjust" && input.amount < 0)) return { ok: false, message: input.kind === "adjust" ? "바로잡을 금액은 0이 아닌 원 단위 숫자여야 합니다. 감액이면 앞에 −를 붙이세요." : "금액은 0보다 큰 원 단위 숫자여야 합니다.", hint: "invalid_amount" };
     const f = await crm().rpc("bld_feature_status", { p_business: businessId, p_key: "long_term_repair" });
     if (f.error) return err(f.error);
     if (f.data !== "on") return { ok: false, message: pgError({ message: "feature_off:" }).message, hint: "feature_off" };

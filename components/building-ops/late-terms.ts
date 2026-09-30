@@ -23,7 +23,7 @@ export const emptyLateForm = (): LateForm => ({ rate: "", unit: "", method: "", 
  * 지금 계산이 단일 이율만 지원해 넣지 않았다(장기 연체분은 표준보다 낮게 = 안전한 쪽).
  */
 export const STANDARD_LATE_FORM: LateForm = { rate: "12", unit: "annual", method: "simple", grace: "0", basis: "principal", order: "fee_first", capPct: "", capNone: true };
-export const STANDARD_LATE_NOTE = "법무부 상가 표준관리규약 기준: 연 12%, 안 낸 관리비에만 하루 단위(일수/365) 단리, 납부기한 다음 날부터, 일부만 내면 연체료부터 갚음. 관리규약·계약서에 다른 이율이 있으면 그 값으로 고치세요.";
+export const STANDARD_LATE_NOTE = "법무부 상가 표준관리규약 기준: 연 12%, 미납 관리비에만 하루 단위(일수/365) 단리, 납부기한 다음 날부터, 일부 납부 시 연체료부터 충당. 관리규약·계약서에 다른 이율이 있으면 그 값으로 수정하세요.";
 
 export function lateFormFrom(t: Partial<LateTerms> | null | undefined): LateForm {
   if (!t) return emptyLateForm();

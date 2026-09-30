@@ -37,12 +37,12 @@ export function UnitBasicForm({ businessId, unit, canWrite }: { businessId: stri
         <Input label="전용면적(㎡)" type="number" step="any" min={0} value={f.ex} onChange={set("ex")} disabled={!canWrite} className={MONEY_INPUT} wrapperClassName={FW.short} />
         <Input label="공용면적(㎡)" type="number" step="any" min={0} value={f.co} onChange={set("co")} disabled={!canWrite} className={MONEY_INPUT} wrapperClassName={FW.short} />
         <Input label="지분(%)" type="number" step="any" min={0} value={f.share} onChange={set("share")} disabled={!canWrite} className={MONEY_INPUT} wrapperClassName={FW.short} />
-        <Input label="나누는 비율" hint="보통 1, 더 내면 2" type="number" step="any" min={0} value={f.weight} onChange={set("weight")} disabled={!canWrite} className={MONEY_INPUT} wrapperClassName={FW.short} />
+        <Input label="배분 비율" hint="보통 1, 더 부담하면 2" type="number" step="any" min={0} value={f.weight} onChange={set("weight")} disabled={!canWrite} className={MONEY_INPUT} wrapperClassName={FW.short} />
         <div className="w-full sm:max-w-[720px]">
           <label htmlFor="unit-memo" className="mb-1.5 block text-[length:var(--fs-body)] font-medium text-t2">메모</label>
           <textarea id="unit-memo" className={`${TEXTAREA} mb-3 min-h-[80px]`} value={f.memo} onChange={set("memo")} disabled={!canWrite} maxLength={500} />
           {error && <Alert kind="error" className="mb-3">{error}</Alert>}
-          {canWrite ? <Button type="submit" loading={pending}>저장</Button> : <Alert kind="warning">고칠 권한이 없어 볼 수만 있습니다.</Alert>}
+          {canWrite ? <Button type="submit" loading={pending}>저장</Button> : <Alert kind="warning">수정 권한이 없어 볼 수만 있습니다.</Alert>}
         </div>
       </form>
     </Card>
@@ -50,14 +50,14 @@ export function UnitBasicForm({ businessId, unit, canWrite }: { businessId: stri
 }
 
 const RATE_UNIT: Record<LateRateUnit, string> = { annual: "연", monthly: "월", daily: "일" };
-const METHOD: Record<LateMethod, string> = { simple: "단리(안 낸 돈에만)", compound_monthly: "월 복리(연체료에도 또)" };
+const METHOD: Record<LateMethod, string> = { simple: "단리(미납액에만)", compound_monthly: "월 복리(연체료에도 또)" };
 
 /** 연체 조건 입력칸. 기본값 없음 — 계약서 문구대로 전부 사람이 입력한다. */
 export function LateTermsFields({ value, onChange, disabled }: { value: LateForm; onChange: (v: LateForm) => void; disabled?: boolean }) {
   const set = <K extends keyof LateForm>(k: K, v: LateForm[K]) => onChange({ ...value, [k]: v });
   return (
     <fieldset className={`${FORM_ROW} mb-4`} disabled={disabled}>
-      <legend className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">늦게 내면 붙는 돈(연체료) — 계약서에 적힌 대로</legend>
+      <legend className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">연체료 — 계약서에 적힌 대로</legend>
       <div className="mb-1 flex w-full flex-wrap items-center gap-2">
         <Button type="button" variant="secondary" size="sm" onClick={() => onChange({ ...STANDARD_LATE_FORM })}>기준 조건으로 채우기(연 12%)</Button>
         <p className="min-w-0 flex-1 text-[length:var(--fs-meta)] text-t3" style={{ wordBreak: "keep-all" }}>{STANDARD_LATE_NOTE}</p>
@@ -69,14 +69,14 @@ export function LateTermsFields({ value, onChange, disabled }: { value: LateForm
       <SelectField label="계산 방식" wrapperClassName={FW.select} value={value.method} onChange={(e) => set("method", e.target.value as LateForm["method"])}>
         <option value="">선택</option>{(Object.keys(METHOD) as LateMethod[]).map((k) => <option key={k} value={k}>{METHOD[k]}</option>)}
       </SelectField>
-      <Input label="봐주는 날수" type="number" step={1} min={0} value={value.grace} onChange={(e) => set("grace", e.target.value)} className={MONEY_INPUT} wrapperClassName={FW.short} hint="납부기한 뒤 이 날수까지는 안 붙음" />
-      <SelectField label="무엇에 붙이나" wrapperClassName={FW.select} value={value.basis} onChange={(e) => set("basis", e.target.value as LateForm["basis"])}>
-        <option value="">선택</option><option value="principal">안 낸 관리비에만</option><option value="principal_and_fee">안 낸 관리비+이전 연체료</option>
+      <Input label="유예 일수" type="number" step={1} min={0} value={value.grace} onChange={(e) => set("grace", e.target.value)} className={MONEY_INPUT} wrapperClassName={FW.short} hint="납부기한 후 이 일수까지는 연체료를 부과하지 않음" />
+      <SelectField label="연체료 부과 기준" wrapperClassName={FW.select} value={value.basis} onChange={(e) => set("basis", e.target.value as LateForm["basis"])}>
+        <option value="">선택</option><option value="principal">미납 관리비에만</option><option value="principal_and_fee">미납 관리비+이전 연체료</option>
       </SelectField>
-      <SelectField label="일부만 내면 먼저 갚는 것" wrapperClassName={FW.select} value={value.order} onChange={(e) => set("order", e.target.value as LateForm["order"])}>
+      <SelectField label="일부 납부 시 충당 순서" wrapperClassName={FW.select} value={value.order} onChange={(e) => set("order", e.target.value as LateForm["order"])}>
         <option value="">선택</option><option value="oldest_first">오래된 달부터</option><option value="fee_first">연체료부터</option>
       </SelectField>
-      <Input label="최대(안 낸 돈의 %)" wrapperClassName={FW.short} type="number" step="any" min={0} value={value.capNone ? "" : value.capPct} disabled={value.capNone} onChange={(e) => set("capPct", e.target.value)} className={MONEY_INPUT} />
+      <Input label="최대(미납액의 %)" wrapperClassName={FW.short} type="number" step="any" min={0} value={value.capNone ? "" : value.capPct} disabled={value.capNone} onChange={(e) => set("capPct", e.target.value)} className={MONEY_INPUT} />
       <label className="flex min-h-[44px] items-center gap-2 self-end sm:mt-[30px] text-[length:var(--fs-body)] text-t">
         <input type="checkbox" checked={value.capNone} onChange={(e) => set("capNone", e.target.checked)} className="h-[20px] w-[20px]" />
         최대 없음(계약서에 없을 때만)
@@ -85,7 +85,7 @@ export function LateTermsFields({ value, onChange, disabled }: { value: LateForm
   );
 }
 
-const STATUS_PILL = { approved: ["success", "확정됨"], pending: ["warning", "확정 기다림"], incomplete: ["error", "덜 적음"], unset: ["info", "안 정함"] } as const;
+const STATUS_PILL = { approved: ["success", "확정됨"], pending: ["warning", "승인 대기"], incomplete: ["error", "입력 미완"], unset: ["info", "미설정"] } as const;
 
 /** 활성 계약 카드: 연체 조건 입력 → 저장 → (다른 담당자가) 승인. */
 export function ContractCard({ businessId, contract, tenantName, canWrite, canApprove, lateFeeOn }: { businessId: string; contract: ContractRow; tenantName: string; canWrite: boolean; canApprove: boolean; lateFeeOn: boolean }) {
@@ -97,7 +97,7 @@ export function ContractCard({ businessId, contract, tenantName, canWrite, canAp
   const [kind, label] = STATUS_PILL[st];
   return (
     <Card className="p-4 sm:p-5">
-      <CardHead title={`${tenantName} 계약`} description={`${range.from} ~ ${range.to ?? "기한 없음"} · ${contract.status === "active" ? "진행 중" : "종료"}`} action={lateFeeOn ? <Badge kind={kind}>{`연체료 조건 ${label}`}</Badge> : <Badge kind="info">연체료 안 씀</Badge>} />
+      <CardHead title={`${tenantName} 계약`} description={`${range.from} ~ ${range.to ?? "기한 없음"} · ${contract.status === "active" ? "진행 중" : "종료"}`} action={lateFeeOn ? <Badge kind={kind}>{`연체료 조건 ${label}`}</Badge> : <Badge kind="info">연체료 미사용</Badge>} />
       {lateFeeOn ? (
         <>
           <LateTermsFields value={late} onChange={setLate} disabled={!canWrite} />
@@ -163,14 +163,14 @@ export function ContractCreate({ businessId, buildingId, unitId, parties, canWri
           <Input label="계약 끝나는 날" hint="비우면 기한 없음" type="date" value={f.to} onChange={setv("to")} wrapperClassName={FW.date} error={f.to && f.from && f.to <= f.from ? "끝나는 날은 시작일보다 뒤여야 합니다." : undefined} />
           <Input label="월세(원)" inputMode="numeric" value={f.rent} onChange={setv("rent")} className={MONEY_INPUT} wrapperClassName={FW.money} />
           <Input label="보증금(원)" inputMode="numeric" value={f.deposit} onChange={setv("deposit")} className={MONEY_INPUT} wrapperClassName={FW.money} />
-          <SelectField label="달 중간에 들고 날 때" value={f.proration} onChange={setv("proration")} wrapperClassName={FW.select}>
-            <option value="none">한 달 치 그대로</option><option value="daily">있던 날만큼만</option>
+          <SelectField label="월 중 입주·퇴거 시" value={f.proration} onChange={setv("proration")} wrapperClassName={FW.select}>
+            <option value="none">한 달 치 그대로</option><option value="daily">사용 일수만큼만</option>
           </SelectField>
           <div className="w-full">
             {lateFeeOn && (
               <>
                 <label className="mb-3 flex min-h-[44px] items-center gap-2 text-[length:var(--fs-body)] text-t"><input type="checkbox" className="h-[20px] w-[20px]" checked={lateOn} onChange={(e) => setLateOn(e.target.checked)} />연체료 조건을 지금 적기(나중에 적어도 됩니다)</label>
-                {lateOn && <><LateTermsFields value={late} onChange={setLate} />{!lateFormComplete(late) && <p className="mb-3 text-[length:var(--fs-meta)] text-t3">일부만 적으면 &lsquo;덜 적음&rsquo;으로 저장되고 연체료는 붙지 않습니다.</p>}</>}
+                {lateOn && <><LateTermsFields value={late} onChange={setLate} />{!lateFormComplete(late) && <p className="mb-3 text-[length:var(--fs-meta)] text-t3">일부만 적으면 &lsquo;입력 미완&rsquo;으로 저장되고 연체료는 붙지 않습니다.</p>}</>}
               </>
             )}
             {error && <Alert kind="error" className="mb-3">{error}</Alert>}

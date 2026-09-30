@@ -63,7 +63,7 @@ export function ChargesBoard(p: ChargesProps) {
             description="관리비에 들어가는 항목입니다. 부가세 여부나 공급자를 바꾸면 부가세 확인을 다시 받아야 합니다."
             action={
               <>
-                <Button type="button" size="sm" variant="ghost" aria-pressed={showOff} onClick={() => setShowOff((v) => !v)}>{showOff ? "안 쓰는 항목 숨기기" : "안 쓰는 항목 보기"}</Button>
+                <Button type="button" size="sm" variant="ghost" aria-pressed={showOff} onClick={() => setShowOff((v) => !v)}>{showOff ? "사용하지 않는 항목 숨기기" : "사용하지 않는 항목 보기"}</Button>
                 {p.canConfigure && <Button type="button" size="sm" onClick={() => setEditing({ id: null })}>항목 추가</Button>}
               </>
             }
@@ -93,13 +93,13 @@ function ChargeRow({ r, p, onEdit }: { r: ChargeTypeRow; p: ChargesProps; onEdit
   return (
     <>
       <tr className={TR}>
-        <td className={TD}>{r.name}{!r.active && <> <Badge kind="warning">안 씀</Badge></>}</td>
+        <td className={TD}>{r.name}{!r.active && <> <Badge kind="warning">미사용</Badge></>}</td>
         <td className={TD}>{STD_CATEGORY_LABEL[r.std_category]}</td>
         <td className={TD}>{SOURCE_LABEL[r.source_kind].split("(")[0]}</td>
         <td className={TD}>{ALLOC_LABEL[r.alloc_method]}{r.meter_kind ? ` · ${METER_KIND_LABEL[r.meter_kind]}` : ""}</td>
         <td className={TD}>{PAYER_LABEL[r.payer].split("(")[0]}</td>
         <td className={TD}>{TAX_LABEL[r.tax_treatment].split("(")[0]}</td>
-        <td className={TD}>{!needsApproval ? <span className="text-t3">해당 없음</span> : approved ? <Badge kind="success">확인됨</Badge> : <Badge kind="warning">확인 기다림</Badge>}</td>
+        <td className={TD}>{!needsApproval ? <span className="text-t3">해당 없음</span> : approved ? <Badge kind="success">확인됨</Badge> : <Badge kind="warning">확인 대기</Badge>}</td>
         <td className={`${TD} whitespace-nowrap text-right`}>
           {p.canApproveTax && needsApproval && !approved && r.active && <Button type="button" size="sm" variant="secondary" loading={pending} onClick={async () => {
             setHint(undefined);
@@ -115,7 +115,7 @@ function ChargeRow({ r, p, onEdit }: { r: ChargeTypeRow; p: ChargesProps; onEdit
         <tr><td colSpan={8} className="px-3 pb-3">
           {error && <Alert kind="error">{error}
             {hint === "approver_must_differ" && (
-              <span className="mt-1 block">담당자가 한 명뿐이면 <Link href={`/w/${p.businessId}/settings`} className="font-medium underline">선택 기능 설정</Link>에서 「혼자 확정 허용」을 켜면 만든 사람이 이유를 남기고 직접 확인할 수 있습니다.</span>
+              <span className="mt-1 block">담당자가 한 명뿐이면 <Link href={`/w/${p.businessId}/settings`} className="font-medium underline">선택 기능 설정</Link>에서 「직접 확정 허용」을 켜면 만든 사람이 이유를 남기고 직접 확인할 수 있습니다.</span>
             )}
           </Alert>}
           {reason !== null && <Input label="직접 확인하는 이유(필수)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} wrapperClassName="mt-2 w-full sm:w-[360px]" />}
@@ -175,7 +175,7 @@ function Wizard(p: ChargesProps & { row?: ChargeTypeRow; onClose: () => void }) 
         {step === 2 && (
           <Choice legend="누가 내나요" value={d.payer} onChange={(v: Payer) => set("payer", v)}
             options={(["tenant", "owner", "association"] as const).map((v) => ({ v, label: PAYER_LABEL[v] }))}
-            hint="관리단이 내는 돈은 호실 관리비에 넣지 않습니다. 호실에 나누려면 입주자나 소유자를 고르세요." />
+            hint="관리단이 부담하는 비용은 호실 관리비에 넣지 않습니다. 호실에 나누려면 입주자나 소유자를 고르세요." />
         )}
         {step === 3 && (
           <>
@@ -183,7 +183,7 @@ function Wizard(p: ChargesProps & { row?: ChargeTypeRow; onClose: () => void }) 
               options={allocOptions(d.source_kind).map((v) => ({ v, label: ALLOC_LABEL[v] }))}
               hint={d.source_kind === "direct" ? "직접 적는 항목은 나누는 방법을 바꿀 수 없습니다." : undefined} />
             {d.alloc_method === "meter_usage" && (
-              <SelectField label="어떤 계량기인가요" required value={d.meter_kind} onChange={(e) => set("meter_kind", e.target.value as MeterKind)} hint="그 달 모든 호실의 계량기 숫자를 적어야 계산됩니다." wrapperClassName="w-full sm:w-auto sm:min-w-[128px] sm:max-w-[280px]">
+              <SelectField label="어떤 계량기인가요" required value={d.meter_kind} onChange={(e) => set("meter_kind", e.target.value as MeterKind)} hint="그 달 모든 호실의 검침값을 적어야 계산됩니다." wrapperClassName="w-full sm:w-auto sm:min-w-[128px] sm:max-w-[280px]">
                 <option value="">선택하세요</option>
                 {(Object.keys(METER_KIND_LABEL) as MeterKind[]).map((k) => <option key={k} value={k}>{METER_KIND_LABEL[k]}</option>)}
               </SelectField>
@@ -200,14 +200,14 @@ function Wizard(p: ChargesProps & { row?: ChargeTypeRow; onClose: () => void }) 
         {step === 4 && (
           <>
             <Choice legend="부가세가 있나요" value={d.tax_treatment} onChange={(v: TaxTreatment) => set("tax_treatment", v)} options={(["taxable", "exempt", "non_taxable", "pass_through"] as const).map((v) => ({ v, label: TAX_LABEL[v] }))} />
-            <SelectField label="세금계산서 보내는 곳(선택)" value={d.supplier_party_id} onChange={(e) => set("supplier_party_id", e.target.value)} hint="세금계산서에 '공급자'로 적히는 곳입니다." wrapperClassName="w-full sm:w-auto sm:min-w-[128px] sm:max-w-[320px]">
+            <SelectField label="세금계산서 발행처(선택)" value={d.supplier_party_id} onChange={(e) => set("supplier_party_id", e.target.value)} hint="세금계산서에 '공급자'로 적히는 곳입니다." wrapperClassName="w-full sm:w-auto sm:min-w-[128px] sm:max-w-[320px]">
               <option value="">정하지 않음</option>
               {p.parties.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
             </SelectField>
             {(d.tax_treatment === "taxable" || d.tax_treatment === "exempt") && (
               <Alert kind="warning" className="mb-4">부가세 있음·없음 항목은 저장한 뒤, 만든 사람이 아닌 다른 담당자가 확인해야 세금계산서 대상에 들어갑니다.</Alert>
             )}
-            {taxChanged && <Alert kind="warning" className="mb-4">부가세 여부, 보내는 곳, 부가세 포함 여부를 바꾸면 부가세 확인을 다시 받아야 합니다.</Alert>}
+            {taxChanged && <Alert kind="warning" className="mb-4">부가세 여부, 발행처, 부가세 포함 여부를 바꾸면 부가세 확인을 다시 받아야 합니다.</Alert>}
             <h3 className="mb-2 text-[length:var(--fs-body)] font-semibold text-t">호실에 나누면 이렇게 됩니다 <Badge kind="info">참고용</Badge></h3>
             {d.source_kind === "expense" && d.payer !== "association" && d.alloc_method !== "meter_usage" && (
               <Input label="예시 총액(원)" inputMode="numeric" value={sample} onChange={(e) => setSample(e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} wrapperClassName="w-full sm:w-[200px]" hint="나누는 모습을 보려는 예시 숫자입니다. 실제 금액은 비용 입력에서 적습니다." />

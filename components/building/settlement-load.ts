@@ -40,7 +40,7 @@ export async function loadSettlement(businessId: string, buildingId: string, per
   const parties = new Map(pRes.data.map((p) => [p.id, p.name]));
   const s = buildSettlement({
     period, bills: cur.data, prevBills: prev.data ?? [], receivables: rRes.data,
-    unitLabel: (id) => units.get(id) ?? "(호실)", partyName: (id) => (id ? parties.get(id) ?? "—" : "내는 분 없음"),
+    unitLabel: (id) => units.get(id) ?? "(호실)", partyName: (id) => (id ? parties.get(id) ?? "—" : "납부자 없음"),
   });
   return { ok: true, data: { s, hasPrev: !!prev.data } };
 }

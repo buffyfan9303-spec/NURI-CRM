@@ -69,7 +69,7 @@ export function BudgetTable({ businessId, buildingId, year, canEdit, lines }: { 
         {error && <Alert kind="error" className="mt-3">{error}</Alert>}
         {canEdit
           ? <div className={`${FORM_ACTIONS} mt-3`}><Button type="submit" loading={pending} disabled={changed.length === 0}>{changed.length ? `예산 저장(${changed.length}곳 바뀜)` : "예산 저장"}</Button></div>
-          : <p className="mt-3 text-[length:var(--fs-meta)] text-t3">예산을 고치는 권한이 없어 보기만 할 수 있습니다.</p>}
+          : <p className="mt-3 text-[length:var(--fs-meta)] text-t3">예산을 수정할 권한이 없어 보기만 할 수 있습니다.</p>}
       </form>
     </Card>
   );
@@ -97,14 +97,14 @@ export function RepairFundLedger({ businessId, buildingId, period, canWrite, row
   };
   return (
     <Card className="p-4 sm:p-5">
-      <CardHead title="장기수선충당금 장부" description="적립한 돈·이자·쓴 돈을 달마다 적습니다. 잔액 = 적립 + 이자 + 바로잡기 − 사용." />
+      <CardHead title="장기수선충당금 장부" description="적립금·이자·사용액을 달마다 입력합니다. 잔액 = 적립 + 이자 + 바로잡기 − 사용." />
       {canWrite && (
         <form onSubmit={submit} className={`mb-4 rounded-[var(--radius-md)] border border-[var(--bd)] bg-sf2/40 p-4 ${FORM_ROW}`}>
           <Input label="월" type="month" required value={month} onChange={(e) => setMonth(e.target.value)} wrapperClassName={FW.date} />
           <SelectField label="종류" value={kind} onChange={(e) => setKind(e.target.value as RepairFundKind)} wrapperClassName={FW.select}>
             {(Object.keys(KIND_LABEL) as RepairFundKind[]).map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
           </SelectField>
-          <Input label="금액(원)" required inputMode={kind === "adjust" ? "text" : "numeric"} value={amount} onChange={(e) => setAmount(e.target.value)} className={MONEY_INPUT} wrapperClassName={FW.money} hint={kind === "adjust" ? "줄이는 돈이면 앞에 −를 붙이세요." : bad || !amount ? undefined : `${num(value)}원`} />
+          <Input label="금액(원)" required inputMode={kind === "adjust" ? "text" : "numeric"} value={amount} onChange={(e) => setAmount(e.target.value)} className={MONEY_INPUT} wrapperClassName={FW.money} hint={kind === "adjust" ? "감액이면 앞에 −를 붙이세요." : bad || !amount ? undefined : `${num(value)}원`} />
           <Input label="메모(선택)" value={memo} maxLength={200} onChange={(e) => setMemo(e.target.value)} hint="예: 옥상 방수 공사 대금" wrapperClassName={FW.memo} />
           {error && <Alert kind="error" className="w-full">{error}</Alert>}
           <div className={FORM_ACTIONS}><Button type="submit" loading={pending} disabled={bad}>장부에 적기</Button></div>

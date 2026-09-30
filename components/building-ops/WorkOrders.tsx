@@ -43,7 +43,7 @@ export function WorkOrdersBoard(p: WorkOrdersProps) {
       ) : (
         <div className="relative overflow-x-auto">
           <table className={TABLE}>
-            <thead className={THEAD}><tr><th className={TH}>접수일</th><th className={TH}>내용</th><th className={TH}>호실</th><th className={TH}>담당자</th><th className={TH}>상태</th>{p.canCost && <th className={`${TH} text-right`}>든 돈</th>}<th className={TH}><span className="sr-only">작업</span></th></tr></thead>
+            <thead className={THEAD}><tr><th className={TH}>접수일</th><th className={TH}>내용</th><th className={TH}>호실</th><th className={TH}>담당자</th><th className={TH}>상태</th>{p.canCost && <th className={`${TH} text-right`}>든 비용</th>}<th className={TH}><span className="sr-only">작업</span></th></tr></thead>
             <tbody>{shown.map((r) => <Row key={r.id} r={r} p={p} unit={r.unit_id ? unitName.get(r.unit_id) ?? "-" : "공용"} who={r.assignee ? memberName.get(r.assignee) ?? "(알 수 없음)" : "담당자 없음"} />)}</tbody>
           </table>
         </div>
@@ -111,7 +111,7 @@ function Edit({ r, p, onDone }: { r: WorkOrderRow; p: WorkOrdersProps; onDone: (
       <div className={`${FORM_ROW} mb-3`}>
         <SelectField label="상태" value={status} onChange={(e) => setStatus(e.target.value as WorkOrderStatus)} wrapperClassName={FW.select}>{(Object.keys(STATUS) as WorkOrderStatus[]).map((k) => <option key={k} value={k}>{STATUS[k].label}</option>)}</SelectField>
         <SelectField label="담당자" value={who} onChange={(e) => setWho(e.target.value)} wrapperClassName={FW.select}><option value="">담당자 없음</option>{p.members.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}</SelectField>
-        {p.canCost && <Input label="든 돈(원)" inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} wrapperClassName={FW.money} error={costBad ? "숫자만 적으세요." : undefined} hint={cost ? `${num(Number(cost))}원. 비용 입력과 따로 적힙니다.` : "비용 입력과 따로 적힙니다."} />}
+        {p.canCost && <Input label="든 비용(원)" inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value.replace(/[^\d]/g, ""))} className={MONEY_INPUT} wrapperClassName={FW.money} error={costBad ? "숫자만 적으세요." : undefined} hint={cost ? `${num(Number(cost))}원. 비용 입력과 따로 적힙니다.` : "비용 입력과 따로 적힙니다."} />}
       </div>
       {error && <Alert kind="error" className="mb-3">{error}</Alert>}
       <div className="flex gap-2"><Button type="button" loading={pending} disabled={costBad} onClick={save}>저장</Button><Button type="button" variant="ghost" onClick={onDone}>닫기</Button></div>

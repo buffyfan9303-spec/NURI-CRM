@@ -27,29 +27,29 @@ export function buildSteps(t: TodoSummary, base: string, qs: string): Step[] {
   const sendDone = approved && t.bills > 0 && t.delivered >= t.bills;
   const raw: Omit<Step, "state">[] = [
     {
-      title: "계량기 숫자 적기",
+      title: "검침값 적기",
       detail: t.meters_total === 0 ? "계량기가 없습니다(호실 상세에서 추가)" : metersDone ? `완료 ${t.meters_read}/${t.meters_total}대` : `${t.meters_total - t.meters_read}대 남음 · ${t.meters_read}/${t.meters_total}`,
-      cta: { label: "계량기 숫자 적기", href: `${base}/meters${qs}` }, href: `${base}/meters${qs}`,
+      cta: { label: "검침값 적기", href: `${base}/meters${qs}` }, href: `${base}/meters${qs}`,
     },
     {
       title: "비용 적기",
-      detail: t.expense_charge_types === 0 ? "매달 비용을 적는 항목이 없습니다" : expensesDone ? `완료 ${t.expense_charge_types_filled}건` : `${t.expense_charge_types - t.expense_charge_types_filled}개 항목의 비용을 아직 안 적었습니다`,
+      detail: t.expense_charge_types === 0 ? "매달 비용을 적는 항목이 없습니다" : expensesDone ? `완료 ${t.expense_charge_types_filled}건` : `${t.expense_charge_types - t.expense_charge_types_filled}개 항목의 비용을 아직 입력하지 않았습니다`,
       cta: { label: "비용 적기", href: `${base}/expenses${qs}` }, href: `${base}/expenses${qs}`,
     },
     {
       title: "관리비 계산하기",
-      detail: !t.run ? "계량기 숫자·비용을 다 적으면 계산할 수 있습니다" : t.run.blocks > 0 ? `고쳐야 할 것 ${t.run.blocks}건 · 확인할 것 ${t.run.warnings}건 — 고친 뒤 다시 계산` : `완료 · ${t.bills}호실${t.run.warnings > 0 ? ` · 확인할 것 ${t.run.warnings}건` : ""}`,
-      cta: { label: t.run && t.run.blocks > 0 ? "고치고 다시 계산하기" : "관리비 계산하기", href: `${base}/billing${qs}` }, href: `${base}/billing${qs}`,
+      detail: !t.run ? "검침값·비용을 다 적으면 계산할 수 있습니다" : t.run.blocks > 0 ? `수정할 사항 ${t.run.blocks}건 · 확인할 것 ${t.run.warnings}건 — 수정한 뒤 다시 계산` : `완료 · ${t.bills}호실${t.run.warnings > 0 ? ` · 확인할 것 ${t.run.warnings}건` : ""}`,
+      cta: { label: t.run && t.run.blocks > 0 ? "수정하고 다시 계산하기" : "관리비 계산하기", href: `${base}/billing${qs}` }, href: `${base}/billing${qs}`,
     },
     {
       title: "이번 달 금액 확정하기",
-      detail: approved ? `${periodLabel(t.period)} 확정됨${t.pending_corrections > 0 ? ` · 고친 금액 ${t.pending_corrections}건 확정 기다림` : ""}` : calcDone ? "표에서 금액을 보고 확정하세요(계산한 사람이 아닌 다른 담당자)" : "계산을 마친 뒤 할 수 있음",
+      detail: approved ? `${periodLabel(t.period)} 확정됨${t.pending_corrections > 0 ? ` · 정정 금액 ${t.pending_corrections}건 승인 대기` : ""}` : calcDone ? "표에서 금액을 보고 확정하세요(계산한 사람이 아닌 다른 담당자)" : "계산을 마친 뒤 할 수 있음",
       cta: { label: "이번 달 금액 확정하기", href: `${base}/billing${qs}` }, href: `${base}/billing${qs}`,
     },
     {
-      title: "명세서 보내기",
+      title: "명세서 발송",
       detail: sendDone ? `완료 ${t.delivered}/${t.bills}호실` : approved ? `${t.bills - t.delivered}호실 남음 · ${t.delivered}/${t.bills}` : "금액 확정 뒤 할 수 있음",
-      cta: { label: "명세서 보내기", href: `${base}/statements${qs}` }, href: `${base}/statements${qs}`,
+      cta: { label: "명세서 발송", href: `${base}/statements${qs}` }, href: `${base}/statements${qs}`,
     },
   ];
   const done = [metersDone, expensesDone, calcDone, approved, sendDone];
@@ -92,7 +92,7 @@ export function BuildingHome({
     return (
       <PageBody>
         <PageHeader title="이번 달 할 일" />
-        <Card><EmptyState title="아직 건물이 없습니다." description="건물을 먼저 등록하면 호실·계량기 숫자·관리비 계산을 시작할 수 있습니다." action={<LinkButton href={`${base}/units`} size="md">건물 등록하기</LinkButton>} /></Card>
+        <Card><EmptyState title="아직 건물이 없습니다." description="건물을 먼저 등록하면 호실·검침값·관리비 계산을 시작할 수 있습니다." action={<LinkButton href={`${base}/units`} size="md">건물 등록하기</LinkButton>} /></Card>
       </PageBody>
     );
   }
@@ -102,7 +102,7 @@ export function BuildingHome({
       <PageBody>
         {bar}
         <PageHeader title="이번 달 할 일" />
-        <Card><EmptyState title="호실을 먼저 등록하세요." description="호실이 있어야 계량기 숫자·비용·관리비 계산을 할 수 있습니다. 엑셀로 한꺼번에 넣거나 한 호실씩 넣으세요." action={<LinkButton href={`${base}/units${ctx.qs}`} size="md">호실 등록하기</LinkButton>} /></Card>
+        <Card><EmptyState title="호실을 먼저 등록하세요." description="호실이 있어야 검침값·비용·관리비 계산을 할 수 있습니다. 엑셀로 한꺼번에 넣거나 한 호실씩 넣으세요." action={<LinkButton href={`${base}/units${ctx.qs}`} size="md">호실 등록하기</LinkButton>} /></Card>
       </PageBody>
     );
   }
@@ -111,13 +111,13 @@ export function BuildingHome({
   const Warn = STATUS_ICON.warn;
   const attention: { text: string; href: string; label: string }[] = [];
   // 0033: 정정은 초안으로 만들어지고 다른 담당자가 승인해야 채권·크레딧이 생긴다.
-  if (t.pending_corrections > 0) attention.push({ text: `확정 기다리는 고친 금액 ${t.pending_corrections}건 — 고친 사람이 아닌 다른 담당자가 확정해야 반영됩니다`, href: `${base}/billing${ctx.qs}`, label: "관리비 계산·확정으로" });
+  if (t.pending_corrections > 0) attention.push({ text: `확정 기다리는 정정 금액 ${t.pending_corrections}건 — 정정한 사람이 아닌 다른 담당자가 확정해야 반영됩니다`, href: `${base}/billing${ctx.qs}`, label: "관리비 계산·확정으로" });
   if (lateFeeOn && t.late_terms_unapproved > 0) attention.push({ text: `연체료 조건을 확정하지 않은 계약 ${t.late_terms_unapproved}건 — 연체료가 0원으로 계산됩니다`, href: `${base}/units${ctx.qs}`, label: "계약 보러 가기" });
-  if (t.tax_unapproved_charge_types > 0) attention.push({ text: `부가세 확인을 안 받은 항목 ${t.tax_unapproved_charge_types}개`, href: `${base}/charges${ctx.qs}`, label: "항목 정하기로" });
-  if (t.unallocated_payments > 0) attention.push({ text: `호실을 못 찾은 입금 ${t.unallocated_payments}건`, href: `${base}/payments${ctx.qs}`, label: "받은 돈 확인으로" });
+  if (t.tax_unapproved_charge_types > 0) attention.push({ text: `부가세 확인을 받지 않은 항목 ${t.tax_unapproved_charge_types}개`, href: `${base}/charges${ctx.qs}`, label: "항목 설정으로" });
+  if (t.unallocated_payments > 0) attention.push({ text: `호실을 찾지 못한 입금 ${t.unallocated_payments}건`, href: `${base}/payments${ctx.qs}`, label: "수납 확인으로" });
   if (t.tax_blocked > 0) attention.push({ text: `세금계산서 발행이 막힌 대상 ${t.tax_blocked}건`, href: `${base}/tax${ctx.qs}`, label: "세금계산서로" });
   // 0033: 연체료는 별도 채권(kind late_fee)이라 건수에 함께 잡힌다. 금액은 revenue.read 없으면 null → 건수만.
-  if (t.unpaid_count > 0) attention.push({ text: `못 받은 돈 ${t.unpaid_count}건${lateFeeOn ? "(연체료 포함)" : ""}${t.unpaid_total != null ? ` · ${fmtMoney(t.unpaid_total)}` : " · 금액은 매출을 볼 권한이 있어야 보임"}`, href: `${base}/receivables${ctx.qs}`, label: "못 받은 돈으로" });
+  if (t.unpaid_count > 0) attention.push({ text: `미수금 ${t.unpaid_count}건${lateFeeOn ? "(연체료 포함)" : ""}${t.unpaid_total != null ? ` · ${fmtMoney(t.unpaid_total)}` : " · 금액은 매출을 볼 권한이 있어야 보임"}`, href: `${base}/receivables${ctx.qs}`, label: "미수금으로" });
 
   return (
     <PageBody>

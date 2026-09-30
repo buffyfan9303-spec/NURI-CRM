@@ -73,7 +73,7 @@ export function BankBulkImport({ businessId, buildingId, units, tz }: { business
         }
         setProgress(Math.min(live.length, i + CHUNK));
       }
-    } catch { s.failed += live.length; s.failMessages.push("요청을 보내지 못했습니다. 이미 넣은 입금은 수납 내역에서 확인하세요."); }
+    } catch { s.failed += live.length; s.failMessages.push("요청을 보내지 못했습니다. 이미 등록한 입금은 수납 내역에서 확인하세요."); }
     setSummary(s); setData(null); setPick({}); setBusy(null);
     if (s.failed === 0) toast.success("은행 입금을 넣었습니다.");
     router.refresh();
@@ -96,10 +96,10 @@ export function BankBulkImport({ businessId, buildingId, units, tz }: { business
       {summary && (
         <Alert kind={summary.failed > 0 ? "warning" : "success"} className="mb-3">
           <span className="block font-medium">입금을 넣었습니다.</span>
-          <span className="block tabular-nums">호실에 넣음 {summary.auto + summary.picked}건(자동 {summary.auto}건, 직접 고름 {Math.max(0, summary.picked)}건) · 호실 안 정해짐 {summary.none}건 · 이미 있어 건너뜀 {summary.dup}건{summary.failed > 0 ? ` · 실패 ${summary.failed}건` : ""}</span>
-          {(summary.allocated > 0 || summary.credit > 0) && <span className="block tabular-nums">청구에 채운 돈 {won(summary.allocated)}{summary.credit > 0 ? ` · 미리 낸 돈 ${won(summary.credit)}` : ""}</span>}
+          <span className="block tabular-nums">호실 배정 {summary.auto + summary.picked}건(자동 {summary.auto}건, 직접 고름 {Math.max(0, summary.picked)}건) · 호실 미지정 {summary.none}건 · 이미 있어 건너뜀 {summary.dup}건{summary.failed > 0 ? ` · 실패 ${summary.failed}건` : ""}</span>
+          {(summary.allocated > 0 || summary.credit > 0) && <span className="block tabular-nums">청구 충당액 {won(summary.allocated)}{summary.credit > 0 ? ` · 선납금 ${won(summary.credit)}` : ""}</span>}
           {summary.failMessages.map((m, i) => <span key={i} className="block">{m}</span>)}
-          {summary.none > 0 && <span className="block">호실 안 정해진 입금은 아래 입금 내역에서 &quot;호실 지정&quot;으로 나중에 넣을 수 있습니다.</span>}
+          {summary.none > 0 && <span className="block">호실 미지정 입금은 아래 입금 내역에서 &quot;호실 지정&quot;으로 나중에 넣을 수 있습니다.</span>}
         </Alert>
       )}
       {!data && (
@@ -118,15 +118,15 @@ export function BankBulkImport({ businessId, buildingId, units, tz }: { business
             <span className="font-medium">{data.fileName}</span>
             <Badge kind="success">{`자동 ${live.filter((x) => x.status === "auto").length}건`}</Badge>
             <Badge kind="warning">{`확인 필요 ${live.filter((x) => x.status === "review").length}건`}</Badge>
-            <Badge kind="info">{`호실 못 찾음 ${live.filter((x) => x.status === "none").length}건`}</Badge>
+            <Badge kind="info">{`호실 미확인 ${live.filter((x) => x.status === "none").length}건`}</Badge>
             {nExisting > 0 && <Badge kind="info">{`이미 등록됨 ${nExisting}건`}</Badge>}
           </div>
           <p className="text-[length:var(--fs-meta)] text-t3">
             출금 {data.stats.withdraw}건은 넣지 않습니다{data.stats.duplicateInFile > 0 ? ` · 파일 안 같은 거래 ${data.stats.duplicateInFile}건은 한 번만 셉니다` : ""}{data.stats.noDate > 0 ? ` · 거래일시를 못 읽은 ${data.stats.noDate}건은 뺐습니다` : ""}.
-            호실은 아래에서 바꿀 수 있고, 비워 두면 &quot;호실 안 정해짐&quot;으로 저장됩니다.
+            호실은 아래에서 바꿀 수 있고, 비워 두면 &quot;호실 미지정&quot;으로 저장됩니다.
           </p>
           <div className="flex gap-1" role="group" aria-label="보기">
-            {([["all", `전체 ${data.rows.length}`], ["review", `확인 필요 ${live.filter((x) => x.status === "review").length}`], ["none", `호실 안 정해짐 ${nUnset}`]] as const).map(([k, l]) => (
+            {([["all", `전체 ${data.rows.length}`], ["review", `확인 필요 ${live.filter((x) => x.status === "review").length}`], ["none", `호실 미지정 ${nUnset}`]] as const).map(([k, l]) => (
               <Button key={k} type="button" size="sm" variant={filter === k ? "primary" : "secondary"} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</Button>
             ))}
           </div>
@@ -149,7 +149,7 @@ export function BankBulkImport({ businessId, buildingId, units, tz }: { business
                         <td className={TD}>
                           {x.existing ? <span className="text-t3">—</span> : (
                             <select aria-label={`${x.payer || "입금"} ${won(x.amount)} 호실`} className={`${CONTROL_SM} w-auto min-w-[8rem] max-w-[14rem]`} value={chosen(x)} onChange={(e) => setPick((p) => ({ ...p, [x.key]: e.target.value }))}>
-                              <option value="">호실 안 정해짐</option>
+                              <option value="">호실 미지정</option>
                               {x.unitIds.length > 0 && <optgroup label="찾은 호실">{x.unitIds.map((id) => <option key={id} value={id}>{label.get(id) ?? "호실"}</option>)}</optgroup>}
                               <optgroup label="전체 호실">{units.filter((u) => !cand.has(u.id)).map((u) => <option key={u.id} value={u.id}>{u.label}</option>)}</optgroup>
                             </select>
@@ -159,7 +159,7 @@ export function BankBulkImport({ businessId, buildingId, units, tz }: { business
                           {x.existing ? <Badge kind="info">이미 등록됨</Badge>
                             : x.status === "auto" ? <Badge kind="success">{`자동 · ${x.by ? MATCH_BY_LABEL[x.by] : ""}`}</Badge>
                             : x.status === "review" ? <Badge kind="warning">확인 필요</Badge>
-                            : <Badge kind="info">호실 못 찾음</Badge>}
+                            : <Badge kind="info">호실 미확인</Badge>}
                         </td>
                       </tr>
                     );
@@ -168,13 +168,13 @@ export function BankBulkImport({ businessId, buildingId, units, tz }: { business
               </table>
             </div>
           )}
-          {nReview > 0 && <Alert kind="warning">확인 필요 {nReview}건은 호실이 여럿으로 보입니다. 골라 주지 않으면 &quot;호실 안 정해짐&quot;으로 저장됩니다.</Alert>}
+          {nReview > 0 && <Alert kind="warning">확인 필요 {nReview}건은 호실이 여럿으로 보입니다. 골라 주지 않으면 &quot;호실 미지정&quot;으로 저장됩니다.</Alert>}
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" loading={busy === "save"} disabled={live.length === 0} onClick={confirm}>{`입금 ${live.length}건 넣기`}</Button>
             <Button type="button" variant="ghost" disabled={busy === "save"} onClick={reset}>다른 파일 고르기</Button>
             {busy === "save" && <span className="text-[length:var(--fs-meta)] text-t3 tabular-nums">{progress}/{live.length}건 처리 중</span>}
           </div>
-          <p className="text-[length:var(--fs-meta)] text-t3">호실에 넣은 입금은 그 호실의 오래된 미납부터 자동으로 채우고, 남는 돈은 미리 낸 돈으로 쌓입니다. 같은 파일을 다시 올려도 이미 등록된 거래는 건너뜁니다.</p>
+          <p className="text-[length:var(--fs-meta)] text-t3">호실에 배정한 입금은 그 호실의 오래된 미납부터 자동으로 충당하고, 남는 금액은 선납금으로 쌓입니다. 같은 파일을 다시 올려도 이미 등록된 거래는 건너뜁니다.</p>
         </div>
       )}
     </Card>

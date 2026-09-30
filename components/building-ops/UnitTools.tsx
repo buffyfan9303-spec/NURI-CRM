@@ -57,7 +57,7 @@ function OneUnit({ businessId, buildingId }: { businessId: string; buildingId: s
       <Input label="전용면적(㎡)" type="number" step="any" min={0} value={f.ex} onChange={set("ex")} className={MONEY_INPUT} wrapperClassName={FW.short} />
       <Input label="공용면적(㎡)" type="number" step="any" min={0} value={f.co} onChange={set("co")} className={MONEY_INPUT} wrapperClassName={FW.short} />
       <Input label="지분(%)" type="number" step="any" min={0} value={f.share} onChange={set("share")} className={MONEY_INPUT} wrapperClassName={FW.short} />
-      <Input label="나누는 비율" hint="보통 1, 더 내면 2" type="number" step="any" min={0} value={f.weight} onChange={set("weight")} className={MONEY_INPUT} wrapperClassName={FW.short} />
+      <Input label="배분 비율" hint="보통 1, 더 부담하면 2" type="number" step="any" min={0} value={f.weight} onChange={set("weight")} className={MONEY_INPUT} wrapperClassName={FW.short} />
       <div className={FORM_ACTIONS}>
         {error && <Alert kind="error" className="w-full">{error}</Alert>}
         <Button type="submit" loading={pending} disabled={!f.unit_no.trim()}>호실 등록</Button>
@@ -115,7 +115,7 @@ function BulkUnits({ businessId, buildingId }: { businessId: string; buildingId:
           {preview ? `${preview.valid}개 등록` : "등록"}
         </Button>
       </div>
-      {localErrors.length > 0 && <p className="text-[length:var(--fs-meta)] text-t3">붙여 넣은 표에 잘못된 줄이 있으면 등록할 수 없습니다. 표를 고친 뒤 다시 "먼저 확인하기"를 누르세요.</p>}
+      {localErrors.length > 0 && <p className="text-[length:var(--fs-meta)] text-t3">붙여 넣은 표에 잘못된 줄이 있으면 등록할 수 없습니다. 표를 수정한 뒤 다시 "먼저 확인하기"를 누르세요.</p>}
     </div>
   );
 }

@@ -14,24 +14,24 @@ import { fmtMoney } from "./Money";
 /** 코드별 이동 화면(base 기준 nav path). 없으면 링크 없이 문장만. */
 const FIX_NAV: Record<string, { path: string; label: string }> = {
   no_units: { path: "units", label: "호실 등록으로" },
-  no_charge_types: { path: "charges", label: "항목 정하기로" },
-  vacant_no_payer: { path: "units", label: "호실에서 고치기" },
-  missing_reading: { path: "meters", label: "계량기 숫자 적으러" },
+  no_charge_types: { path: "charges", label: "항목 설정으로" },
+  vacant_no_payer: { path: "units", label: "호실에서 수정" },
+  missing_reading: { path: "meters", label: "검침값 적으러" },
   no_meter: { path: "units", label: "호실 계량기로" },
   no_expense: { path: "expenses", label: "비용 입력으로" },
-  zero_denominator: { path: "charges", label: "항목 정하기로" },
-  rate_missing: { path: "charges", label: "항목 정하기로" },
-  association_payer: { path: "charges", label: "항목 정하기로" },
+  zero_denominator: { path: "charges", label: "항목 설정으로" },
+  rate_missing: { path: "charges", label: "항목 설정으로" },
+  association_payer: { path: "charges", label: "항목 설정으로" },
   feature_off: { path: "settings", label: "선택 기능으로" },
   late_terms_unapproved: { path: "units", label: "계약 보러 가기" },
   big_change: { path: "billing", label: "표에서 확인" },
   // 0033
   partial_month_contract: { path: "units", label: "계약 기간 맞추기" },
   partial_month_unit: { path: "units", label: "호실 확인" },
-  owner_payer_excluded: { path: "charges", label: "항목 정하기로" },
+  owner_payer_excluded: { path: "charges", label: "항목 설정으로" },
   expense_excluded: { path: "expenses", label: "비용 입력으로" },
   direct_excluded: { path: "expenses", label: "비용 입력으로" },
-  other_party_unpaid: { path: "receivables", label: "못 받은 돈으로" },
+  other_party_unpaid: { path: "receivables", label: "미수금으로" },
   already_approved: { path: "billing", label: "" },
 };
 
@@ -87,7 +87,7 @@ export function BlockWarnList({
     <div className={cn("flex flex-col gap-3", className)}>
       {blocks.length > 0 && (
         <section role="alert" className="rounded-[var(--r-md)] border-l-[3px] border-l-[var(--et)] bg-eb/60 px-4 py-3">
-          <h3 className="mb-1.5 text-[length:var(--fs-body)] font-semibold text-et">고쳐야 할 것 {blocks.length}건 — 고치기 전에는 금액을 확정할 수 없습니다</h3>
+          <h3 className="mb-1.5 text-[length:var(--fs-body)] font-semibold text-et">수정할 사항 {blocks.length}건 — 수정하기 전에는 금액을 확정할 수 없습니다</h3>
           {render(blocks, "error")}
         </section>
       )}

@@ -7,7 +7,7 @@ import { addMonths } from "@/components/building/period";
 import { getPeriod, listMeterReadings, listMeters, listUnits } from "@/lib/domain/building";
 
 export default async function MetersPage({ params, searchParams }: { params: { businessId: string }; searchParams: SearchParams }) {
-  const g = await buildingGate(params.businessId, "write", searchParams, "계량기 숫자 입력");
+  const g = await buildingGate(params.businessId, "write", searchParams, "검침값 입력");
   if (!g.ctx) return g.node;
   const { ctx } = g;
   const [uRes, mRes, curRes, prevRes, pRes] = await Promise.all([
@@ -21,8 +21,8 @@ export default async function MetersPage({ params, searchParams }: { params: { b
   if (fail && !fail.ok) {
     return (
       <PageBody>
-        <BuildingHeader ctx={ctx} title="계량기 숫자 입력" />
-        <ReadFail title="계량기 숫자를 불러오지 못했습니다." message={fail.message} />
+        <BuildingHeader ctx={ctx} title="검침값 입력" />
+        <ReadFail title="검침값을 불러오지 못했습니다." message={fail.message} />
       </PageBody>
     );
   }
@@ -52,7 +52,7 @@ export default async function MetersPage({ params, searchParams }: { params: { b
   const key = `${ctx.building.id}:${ctx.period}:${lines.map((l) => `${l.meterId}=${l.saved?.curr ?? ""}/${l.saved?.reason ?? ""}/${l.saved?.usageOverride ?? ""}`).join("|")}`;
   return (
     <PageBody wide>
-      <BuildingHeader ctx={ctx} title="계량기 숫자 입력" description="호실마다 계량기에 보이는 이번 달 숫자를 적습니다." />
+      <BuildingHeader ctx={ctx} title="검침값 입력" description="호실마다 계량기에 보이는 당월 지침을 적습니다." />
       <MeterGrid
         key={key}
         businessId={ctx.businessId}

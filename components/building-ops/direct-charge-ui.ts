@@ -16,7 +16,7 @@ export function parseSignedWon(text: string): SignedWon {
 }
 
 /** 잠긴 달에 직접 입력을 막는 안내 문장(서버 문장을 그대로 노출하지 않는다). */
-export const DIRECT_LOCKED_NOTE = "이 달은 관리비가 이미 확정돼 호실별 금액을 바꿀 수 없습니다. 고칠 일이 있으면 '관리비 계산·확정' 화면의 '금액 고치기'로 하세요.";
+export const DIRECT_LOCKED_NOTE = "이 달은 관리비가 이미 확정돼 호실별 금액을 바꿀 수 없습니다. 고칠 일이 있으면 '관리비 계산·확정' 화면의 '금액 정정'으로 하세요.";
 
 /** 서버 오류 힌트 → 쉬운 말(없으면 서버 문장 그대로). */
 export function directErrorText(hint: string | undefined, message: string): string {

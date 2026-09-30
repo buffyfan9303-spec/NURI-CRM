@@ -40,7 +40,7 @@ function mapAuthError(raw: string): { code: AuthErrorCode; message: string; deta
     return {
       code: "email-unconfirmed",
       message: "이메일 인증이 완료되지 않았습니다",
-      detail: "가입 시 받은 메일의 인증 링크를 먼저 눌러주세요.",
+      detail: "가입 시 받은 메일의 인증 링크를 먼저 눌러 주세요.",
     };
   if (/too many requests|rate limit/.test(m))
     return {
@@ -250,7 +250,7 @@ export type CheckBusinessNumberResult =
  */
 export async function checkBusinessNumber(bno: string): Promise<CheckBusinessNumberResult> {
   const digits = normalizeBizRegNo(bno ?? "");
-  if (!isValidBizRegNo(digits)) return { ok: false, message: "사업자등록번호 형식(10자리·검증숫자)이 올바르지 않습니다" };
+  if (!isValidBizRegNo(digits)) return { ok: false, message: "사업자등록번호 형식(10자리)이 올바르지 않습니다" };
   const base = { ok: true as const, digits, formatted: formatBizRegNo(digits) };
   if (!ntsConfigured()) return { ...base, nts: null };
   const { user } = await getAuthUser();

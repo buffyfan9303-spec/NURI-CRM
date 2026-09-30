@@ -12,11 +12,11 @@ export interface SettleRow {
   supply: number; vat: number; exempt: number;
   /** 이번 달 관리비(부가세 포함) */
   current: number; priorUnpaid: number; lateFee: number; credit: number;
-  /** 이번 달 낼 돈(밀린 돈·연체료 포함, 미리 낸 돈 뺌) */
+  /** 이번 달 납부액(미납액·연체료 포함, 선납금 뺌) */
   due: number;
-  /** 낸 돈 = 낼 돈 − 남은 돈(0 아래로 내려가지 않음) */
+  /** 수납액 = 납부할 금액 − 미납액(0 아래로 내려가지 않음) */
   paid: number;
-  /** 오늘 기준 이 달까지 남은 돈(열린 받을 돈의 잔액 합) */
+  /** 오늘 기준 이 달까지 미납액(열린 미수금의 잔액 합) */
   left: number;
 }
 export interface CompareRow { name: string; cur: number; prev: number; diff: number; pct: number | null }
@@ -40,7 +40,7 @@ function lineSums(bills: BillRow[]): { order: string[]; byName: Map<string, numb
   return { order, byName };
 }
 
-/** 잔액 = 금액 − 받은 돈 − 미리 낸 돈 사용분(0 아래 없음). 열린(open) 것만. */
+/** 잔액 = 금액 − 수납액 − 선납금 사용분(0 아래 없음). 열린(open) 것만. */
 export const receivableLeft = (r: ReceivableRow) => (r.status === "open" ? Math.max(0, n(r.amount) - n(r.paid) - n(r.credit_applied)) : 0);
 
 export function buildSettlement(input: {
@@ -70,7 +70,7 @@ export function buildSettlement(input: {
     row.supply += n(b.supply); row.vat += n(b.vat); row.exempt += n(b.exempt);
     row.current += n(b.current_charge); row.priorUnpaid += n(b.prior_unpaid); row.lateFee += n(b.late_fee); row.credit += n(b.credit); row.due += n(b.amount_due);
   }
-  // ponytail: 낸 돈은 "낼 돈 − 오늘 남은 돈"으로 본다. 이 달 뒤에 생긴 고침·연체료가 있으면 조금 어긋날 수 있다(정확히는 입금 배정 행 합계가 필요).
+  // ponytail: 수납액은 "납부할 금액 − 오늘 미납액"으로 본다. 이 달 뒤에 생긴 고침·연체료가 있으면 조금 어긋날 수 있다(정확히는 입금 배정 행 합계가 필요).
   for (const row of by.values()) {
     row.left = leftByUnit.get(row.unitId) ?? 0;
     row.paid = Math.max(0, row.due - row.left);
